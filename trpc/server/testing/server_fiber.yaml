@@ -1,0 +1,36 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 8
+        reactor_num_per_scheduling_group: 1
+
+server:
+  app: test
+  server: test_server
+  service:
+    - name: trpc.test.helloworld.StreamGreeter
+      protocol: trpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13451
+    - name: http.test.helloworld
+      protocol: http
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13452
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13453
+    - name: trpc.test.helloworld.GreeterOverHTTP
+      protocol: http
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13454

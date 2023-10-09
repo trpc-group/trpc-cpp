@@ -1,0 +1,11 @@
+global:
+    namespace: informal
+    env_name: test1
+    container_name: test_container1
+    local_ip: 0.0.0.0
+    coroutine:
+        enable: false
+
+plugins:
+    metrics:
+        test_metrics: {}

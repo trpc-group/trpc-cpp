@@ -1,0 +1,43 @@
+global:
+  local_ip: 127.0.0.1
+  enable_version_report: false
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 4
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: route_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19010
+      protocol: trpc
+      timeout: 500
+    - name: route_transparent_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19011
+      protocol: trpc
+    - name: no_fulllinlk_route_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19012
+      protocol: trpc
+      timeout: 500
+      disable_request_timeout: true
+
+client:
+  service:
+    - name: trpc_test_client
+      selector_name: direct
+      target: 127.0.0.1:19000
+      protocol: trpc
+      network: tcp
+      conn_type: long
+      timeout: 500

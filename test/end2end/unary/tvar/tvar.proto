@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package trpc.testing.tvar;
+
+service Tvar {
+  // Counter
+  rpc FireDynamicCounter (TestRequest) returns (TestReply) {}
+  rpc FireCounterAdd (TestRequest) returns (TestReply) {}
+  rpc FireCounterIncrement (TestRequest) returns (TestReply) {}
+  rpc GetCounterPath (TestRequest) returns (TestReply) {}
+  rpc GetCounterNotExposedPath (TestRequest) returns (TestReply) {}
+  // Gauge
+  rpc FireDynamicGauge (TestRequest) returns (TestReply) {}
+  rpc FireGaugeAdd (TestRequest) returns (TestReply) {}
+  rpc FireGaugeSubtract (TestRequest) returns (TestReply) {}
+  rpc FireGaugeIncrement (TestRequest) returns (TestReply) {}
+  rpc FireGaugeDecrement (TestRequest) returns (TestReply) {}
+  rpc GetGaugePath (TestRequest) returns (TestReply) {}
+  rpc GetGaugeNotExposedPath (TestRequest) returns (TestReply) {}
+  // Miner
+  rpc FireDynamicMiner (TestRequest) returns (TestReply) {}
+  rpc FireMinerUpdate (TestRequest) returns (TestReply) {}
+  rpc FireMinerNotUpdate (TestRequest) returns (TestReply) {}
+  rpc GetMinerPath (TestRequest) returns (TestReply) {}
+  rpc GetMinerNotExposedPath (TestRequest) returns (TestReply) {}
+  // Maxer
+  rpc FireDynamicMaxer (TestRequest) returns (TestReply) {}
+  rpc FireMaxerUpdate (TestRequest) returns (TestReply) {}
+  rpc FireMaxerNotUpdate (TestRequest) returns (TestReply) {}
+  rpc GetMaxerPath (TestRequest) returns (TestReply) {}
+  rpc GetMaxerNotExposedPath (TestRequest) returns (TestReply) {}
+  // Status
+  rpc FireDynamicStatus (TestRequest) returns (TestReply) {}
+  rpc FireStatusUpdate (TestRequest) returns (TestReply) {}
+  rpc GetStatusPath (TestRequest) returns (TestReply) {}
+  rpc GetStatusNotExposedPath (TestRequest) returns (TestReply) {}
+  // PassiveStatus
+  rpc FireDynamicPassiveStatus (TestRequest) returns (TestReply) {}
+  rpc GetPassiveStatusPath (TestRequest) returns (TestReply) {}
+  rpc GetPassiveStatusNotExposedPath (TestRequest) returns (TestReply) {}
+  // Averager
+  rpc FireDynamicAverager (TestRequest) returns (TestReply) {}
+  rpc FireAveragerUpdate (TestRequest) returns (TestReply) {}
+  rpc GetAveragerPath (TestRequest) returns (TestReply) {}
+  rpc GetAveragerNotExposedPath (TestRequest) returns (TestReply) {}
+  // IntRecorder
+  rpc FireDynamicIntRecorder (TestRequest) returns (TestReply) {}
+  rpc FireIntRecorderUpdate (TestRequest) returns (TestReply) {}
+  rpc GetIntRecorderPath (TestRequest) returns (TestReply) {}
+  rpc GetIntRecorderNotExposedPath (TestRequest) returns (TestReply) {}
+  // Window
+  rpc FireDynamicWindowCounter (TestRequest) returns (TestReply) {}
+  rpc GetWindowCounterPath (TestRequest) returns (TestReply) {}
+  rpc GetWindowCounterNotExposedPath (TestRequest) returns (TestReply) {}
+  // PerSecond
+  rpc FireDynamicPerSecondCounter (TestRequest) returns (TestReply) {}
+  rpc GetPerSecondCounterPath (TestRequest) returns (TestReply) {}
+  rpc GetPerSecondCounterNotExposedPath (TestRequest) returns (TestReply) {}
+  // LatencyRecorder
+  rpc FireDynamicLatencyRecorder (TestRequest) returns (TestReply) {}
+  rpc FireLatencyRecorderUpdate (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+  string msg = 1;
+}
+
+message TestReply {
+  string msg = 1;
+}

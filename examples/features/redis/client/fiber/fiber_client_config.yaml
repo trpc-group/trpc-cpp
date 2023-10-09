@@ -1,0 +1,34 @@
+global: #全局配置
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+client:
+  service:
+    - name: redis_server
+      target: 127.0.0.1:6379
+      protocol: redis
+      timeout: 1000
+      network: tcp
+      conn_type: long
+      selector_name: direct
+      # For high performance,if the backend Redis Server support the Pipeline mode (responding in the order of requests within the connection)
+      # you can use connection-pipeline which config like this:
+      # support_pipeline: true
+      redis:
+        # if backend Redis Server enable authentication
+        password: xxx
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: redis_fiber_client.log

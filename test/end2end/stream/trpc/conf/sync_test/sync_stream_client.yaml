@@ -1,0 +1,43 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 4
+
+client:
+  service:
+    - name: trpc.testing.stream_test.SyncStreamService
+      selector_name: direct
+      target: 127.0.0.1:14216
+      protocol: trpc
+    - name: trpc.testing.stream_test.AsyncStreamService
+      selector_name: direct
+      target: 127.0.0.1:14217
+      protocol: trpc
+    - name: trpc.testing.stream_test.SyncStreamServiceConnIdle
+      selector_name: direct
+      target: 127.0.0.1:14218
+      protocol: trpc
+    - name: trpc.testing.stream_test.AsyncStreamServiceConnIdle
+      selector_name: direct
+      target: 127.0.0.1:14219
+      protocol: trpc
+    - name: trpc.testing.stream_test.SyncStreamServiceConnIdleAtClient
+      selector_name: direct
+      target: 127.0.0.1:14216
+      protocol: trpc
+      idle_time: 500
+    - name: trpc.testing.stream_test.AsyncStreamServiceConnIdleAtClient
+      selector_name: direct
+      target: 127.0.0.1:14217
+      protocol: trpc
+      idle_time: 500
+    - name: trpc.testing.stream_test.SyncStreamServiceNoFlowControl
+      selector_name: direct
+      target: 127.0.0.1:14220
+      protocol: trpc
+    - name: trpc.testing.stream_test.SyncStreamServiceNoFlowControlAtClient
+      selector_name: direct
+      target: 127.0.0.1:14216
+      protocol: trpc
+      stream_max_window_size: 0

@@ -1,0 +1,21 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 4
+
+server:
+  app: testing
+  server: stream_test
+  service:
+    - name: trpc.testing.stream_test.SyncStreamService
+      protocol: trpc
+      port: 13216
+    - name: trpc.testing.stream_test.SyncStreamServiceConnIdle
+      protocol: trpc
+      port: 13218
+      idle_time: 2000
+    - name: trpc.testing.stream_test.SyncStreamServiceNoFlowControl
+      protocol: trpc
+      port: 13220
+      stream_max_window_size: 0

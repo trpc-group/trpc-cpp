@@ -1,0 +1,87 @@
+From 3feb057a002094d2fb77e671ab7a2b890ab3e72c Mon Sep 17 00:00:00 2001
+From: peggiezhu <peggiezhu@tencent.com>
+Date: Fri, 27 May 2022 15:47:32 +0800
+Subject: [PATCH]
+feat: Pre-allocate FileBufferSize
+---
+ include/spdlog/details/file_helper-inl.h     |  1 -
+ include/spdlog/details/file_helper.h         |  2 ++
+ include/spdlog/details/os-inl.h              | 16 ++++++++++++++++
+ include/spdlog/details/os.h                  |  4 ++++
+ 10 files changed, 29 insertions(+), 8 deletions(-)
+diff --git a/include/spdlog/details/file_helper-inl.h b/include/spdlog/details/file_helper-inl.h
+index d4528711..a6e5c4e2 100644
+--- a/include/spdlog/details/file_helper-inl.h
++++ b/include/spdlog/details/file_helper-inl.h
+@@ -101,7 +101,6 @@ SPDLOG_INLINE void file_helper::close()
+
+         std::fclose(fd_);
+         fd_ = nullptr;
+-
+         if (event_handlers_.after_close)
+         {
+             event_handlers_.after_close(filename_);
+diff --git a/include/spdlog/details/file_helper.h b/include/spdlog/details/file_helper.h
+index 0f5988b9..8bdc793c 100644
+--- a/include/spdlog/details/file_helper.h
++++ b/include/spdlog/details/file_helper.h
+@@ -15,6 +15,7 @@ namespace details {
+
+ class SPDLOG_API file_helper
+ {
++    static constexpr size_t FileBufferSize = 10 * 1024 * 1024;  // 10MB
+ public:
+     file_helper() = default;
+     explicit file_helper(const file_event_handlers &event_handlers);
+@@ -50,6 +51,7 @@ private:
+     const int open_tries_ = 5;
+     const unsigned int open_interval_ = 10;
+     std::FILE *fd_{nullptr};
++    char *buffer_{nullptr};
+     filename_t filename_;
+     file_event_handlers event_handlers_;
+ };
+diff --git a/include/spdlog/details/os-inl.h b/include/spdlog/details/os-inl.h
+index c3bf691c..efbc6b42 100644
+--- a/include/spdlog/details/os-inl.h
++++ b/include/spdlog/details/os-inl.h
+@@ -160,6 +160,22 @@ SPDLOG_INLINE bool fopen_s(FILE **fp, const filename_t &filename, const filename
+     return *fp == nullptr;
+ }
+
++SPDLOG_INLINE void setbuffer(FILE *f, char *buf, size_t size)
++{
++    #ifdef _WIN32
++    #else // unix
++    ::setbuffer(f, buf, size);
++    #endif
++}
++
++SPDLOG_INLINE void setlinebuf(FILE *f)
++{
++    #ifdef _WIN32
++    #else // unix
++    ::setlinebuf(f);
++    #endif
++}
++
+ SPDLOG_INLINE int remove(const filename_t &filename) SPDLOG_NOEXCEPT
+ {
+ #if defined(_WIN32) && defined(SPDLOG_WCHAR_FILENAMES)
+diff --git a/include/spdlog/details/os.h b/include/spdlog/details/os.h
+index b154bc47..2b23e913 100644
+--- a/include/spdlog/details/os.h
++++ b/include/spdlog/details/os.h
+@@ -46,6 +46,10 @@ SPDLOG_CONSTEXPR static const filename_t::value_type folder_seps_filename[] = SP
+ // fopen_s on non windows for writing
+ SPDLOG_API bool fopen_s(FILE **fp, const filename_t &filename, const filename_t &mode);
+
++SPDLOG_API void setlinebuf(FILE *f);
++
++SPDLOG_API void setbuffer(FILE *f, char *buf, size_t size);
++
+ // Remove filename. return 0 on success
+ SPDLOG_API int remove(const filename_t &filename) SPDLOG_NOEXCEPT;
+
+--
+2.32.0 (Apple Git-132)

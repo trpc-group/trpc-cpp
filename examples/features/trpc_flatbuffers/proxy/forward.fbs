@@ -1,0 +1,7 @@
+include "greeter.fbs";
+
+namespace trpc.test.forward;
+
+rpc_service FbForward {
+  Forward(trpc.test.helloworld.FbRequest):trpc.test.helloworld.FbReply;
+}

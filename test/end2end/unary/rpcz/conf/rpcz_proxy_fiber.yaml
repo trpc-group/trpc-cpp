@@ -1,0 +1,44 @@
+global:
+  local_ip: 0.0.0.0
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+  rpcz:
+    # Make it small, as collector window is 1s, and client send reqs in series.
+    lower_water_level: 10
+    high_water_level: 20
+    sample_rate: 2
+    cache_expire_interval: 10
+    collect_interval_ms: 500
+    remove_interval_ms: 1000
+    print_spans_num: 500
+
+server:
+  app: test
+  server: test1
+  admin_ip: 0.0.0.0
+  admin_port: 32113
+  filter:
+    - rpcz
+  service:
+    - name: rpcz_service
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 15005
+
+client:
+  filter:
+    - rpcz
+  service:
+    - name: real_service
+      selector_name: direct
+      target: 127.0.0.1:15006
+      protocol: trpc
+      network: tcp
+      conn_type: long
+      is_conn_complex: true
+      timeout: 1000

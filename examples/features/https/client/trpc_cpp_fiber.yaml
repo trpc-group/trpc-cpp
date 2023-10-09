@@ -1,0 +1,55 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+client:
+  timeout: 1000
+  service:
+    - name: http_client
+      selector_name: direct
+      target: 127.0.0.1:24859
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        sni_name: www.xxops.com
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        # For testing purpose only.
+        ca_cert_path: ./examples/features/https/cert/client_ca_cert.pem
+        protocols:
+          - SSLv2
+          - SSLv3
+          - TLSv1
+          - TLSv1.1
+          - TLSv1.2
+    - name: www_http_client
+      selector_name: domain
+      target: github.com:443
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        sni_name: github.com
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        protocols:
+          - SSLv2
+          - SSLv3
+          - TLSv1
+          - TLSv1.1
+          - TLSv1.2
+
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 1  # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: https_client.log

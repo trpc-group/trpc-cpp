@@ -1,0 +1,31 @@
+global:
+  threadmodel:
+    default:                            # Use Io/handle merge/separate threadmodel
+      - instance_name: default_instance # Need to be unique if you config mutiple default threadmodel instances
+        io_handle_type: separate        # merge(io and handle thread are the same) or separate(io and handle thread are different)
+        io_thread_num: 2                # Num of network io thread, Must be greater than or equal to 1
+        handle_thread_num: 6            # Business logic hanlde thread num
+      # If need merge type, uncomment below config
+      # - instance_name: default_instance
+      #   io_handle_type: merge
+      #   io_thread_num: 8              # io and handle logic are in the same thread
+
+server:
+  app: test
+  server: helloworld
+  admin_port: 8888                     # Start server with admin service which can manage service
+  admin_ip: 0.0.0.0
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc                    # Application layer protocol, eg: trpc/http/...
+      network: tcp                      # Network type, Support two types: tcp/udp
+      ip: 0.0.0.0                       # Service bind ip
+      port: 12345                       # Service bind port
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: helloworld.log

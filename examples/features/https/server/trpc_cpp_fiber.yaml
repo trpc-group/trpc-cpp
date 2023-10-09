@@ -1,0 +1,37 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: https_service
+      network: tcp
+      ip: 0.0.0.0
+      port: 24859
+      protocol: http
+      ssl:
+        enable: true
+        cert_path: ./examples/features/https/cert/server_cert.pem
+        private_key_path: ./examples/features/https/cert/server_key.pem
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        protocols:
+          - SSLv2
+          - SSLv3
+          - TLSv1
+          - TLSv1.1
+          - TLSv1.2
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2  # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: https_server.log

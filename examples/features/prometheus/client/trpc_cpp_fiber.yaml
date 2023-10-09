@@ -1,0 +1,28 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 4
+        scheduling_group_size: 4
+        reactor_num_per_scheduling_group: 1
+
+client:
+  filter:
+    - prometheus
+
+plugins:
+  metrics:
+    prometheus:
+      histogram_module_cfg:
+        - 1
+        - 5
+        - 10
+      const_labels:
+        const_key1: const_value1
+        const_key2: const_value2
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: client.log

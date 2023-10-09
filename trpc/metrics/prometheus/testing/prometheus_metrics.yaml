@@ -1,0 +1,10 @@
+plugins:
+  metrics:
+    prometheus:
+      histogram_module_cfg:
+        - 1
+        - 2
+        - 3
+      const_labels:
+        key1: value1
+        key2: value2

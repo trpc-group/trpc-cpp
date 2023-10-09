@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package trpc.testing.stream_test;
+
+service TestStreamService {
+  rpc StreamAtConnCloseStatus(TestRequest) returns (TestResponse) {}
+
+  rpc ServerStream (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamReadTimeout (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamNoData (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamFinishTimeout (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamAtIdleConn (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamCloseConnectionAtServer (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamCloseConnectionAtClient (TestRequest) returns (stream TestResponse) {}
+  rpc ServerStreamFlowControl (TestRequest) returns (stream TestResponse) {}
+
+  rpc ClientStream (stream TestRequest) returns (TestResponse) {}
+  rpc ClientStreamReadTimeout (stream TestRequest) returns (TestResponse) {}
+  rpc ClientStreamNoData (stream TestRequest) returns (TestResponse) {}
+  rpc ClientStreamFinishTimeout (stream TestRequest) returns (TestResponse) {}
+  rpc ClientStreamCloseConnectionAtServer (stream TestRequest) returns (TestResponse) {}
+  rpc ClientStreamCloseConnectionAtClient (stream TestRequest) returns (TestResponse) {}
+  rpc ClientStreamFlowControl (stream TestRequest) returns (TestResponse) {}
+
+  rpc BidiStream (stream TestRequest) returns (stream TestResponse) {}
+  rpc BidiStreamReadTimeout (stream TestRequest) returns (stream TestResponse) {}
+  rpc BidiStreamNoData (stream TestRequest) returns (stream TestResponse) {}
+  rpc BidiStreamFinishTimeout (stream TestRequest) returns (stream TestResponse) {}
+  rpc BidiStreamCloseConnectionAtServer (stream TestRequest) returns (stream TestResponse) {}
+  rpc BidiStreamCloseConnectionAtClient (stream TestRequest) returns (stream TestResponse) {}
+}
+
+message TestRequest {
+  string msg = 1;
+}
+
+message TestResponse {
+  string msg = 1;
+}

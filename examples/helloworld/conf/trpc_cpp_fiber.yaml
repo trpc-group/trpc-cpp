@@ -1,0 +1,29 @@
+global:
+  threadmodel:
+    fiber:                            # Use Fiber(m:n coroutine) threadmodel
+      - instance_name: fiber_instance # Need to be unique if you config mutiple fiber threadmodel instances
+        # Fiber worker thread num
+        # If not specified, will use number of cores on the machine.
+        # In a Numa architecture, the workers will be automatically grouped (8-15 cores per group),
+        # while in Uma architecture, they will not be grouped.
+        concurrency_hint: 8
+
+server:
+  app: test
+  server: helloworld
+  admin_port: 8888                    # Start server with admin service which can manage service
+  admin_ip: 0.0.0.0
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc                  # Application layer protocol, eg: trpc/http/...
+      network: tcp                    # Network type, Support two types: tcp/udp
+      ip: 0.0.0.0                     # Service bind ip
+      port: 12345                     # Service bind port
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: helloworld_fiber.log

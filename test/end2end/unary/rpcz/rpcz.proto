@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package trpc.testing.rpcz;
+
+service Rpcz {
+  // Client rpcz.
+  rpc ClientGetRpczOk (RpczRequest) returns (RpczReply) {}
+  rpc ClientGetSpanIdOk (RpczRequest) returns (RpczReply) {}
+  rpc ClientProbableSample (RpczRequest) returns (RpczReply) {}
+  rpc ClientSpanExpired (RpczRequest) returns (RpczReply) {}
+  rpc ChangeClientSampleFunction (RpczRequest) returns (RpczReply) {}
+  rpc RestoreClientSampleFunction (RpczRequest) returns (RpczReply) {}
+  rpc FireClientSampleFunction (RpczRequest) returns (RpczReply) {}
+  // Server rpcz.
+  rpc ServerGetRpczOk (RpczRequest) returns (RpczReply) {}
+  rpc ServerGetSpanIdOk (RpczRequest) returns (RpczReply) {}
+  rpc ServerProbableSample (RpczRequest) returns (RpczReply) {}
+  rpc ServerSpanExpired (RpczRequest) returns (RpczReply) {}
+  rpc ChangeServerSampleFunction (RpczRequest) returns (RpczReply) {}
+  rpc RestoreServerSampleFunction (RpczRequest) returns (RpczReply) {}
+  rpc FireServerSampleFunction (RpczRequest) returns (RpczReply) {}
+  rpc ServerRpczPrint (RpczRequest) returns (RpczReply) {}
+  // Route rpcz.
+  rpc RouteGetRpczOk (RpczRequest) returns (RpczReply) {}
+  rpc RouteGetSpanIdOk (RpczRequest) returns (RpczReply) {}
+  rpc RouteProbableSample (RpczRequest) returns (RpczReply) {}
+  rpc RouteSpanExpired (RpczRequest) returns (RpczReply) {}
+  // User-defined rpcz.
+  rpc UserGetSpanIdOk (RpczRequest) returns (RpczReply) {}
+}
+
+message RpczRequest {
+  string msg = 1;
+}
+
+message RpczReply {
+  string msg = 1;
+}

@@ -1,0 +1,41 @@
+global:
+  local_ip: 127.0.0.1
+  enable_version_report: false
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 8
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: route_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19110
+      protocol: trpc
+      timeout: 500
+    - name: route_transparent_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19111
+      protocol: trpc
+    - name: no_fulllinlk_route_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19112
+      protocol: trpc
+      timeout: 500
+      disable_request_timeout: true
+
+client:
+  service:
+    - name: trpc_test_client
+      selector_name: direct
+      target: 127.0.0.1:19100
+      protocol: trpc
+      network: tcp
+      conn_type: long
+      timeout: 500

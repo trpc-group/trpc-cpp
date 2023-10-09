@@ -1,0 +1,22 @@
+global:
+  local_ip: 0.0.0.0
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+
+client:
+  service:
+    - name: http_client
+      selector_name: direct
+      target: 127.0.0.1:31111
+      protocol: http
+      network: tcp
+      conn_type: long
+    - name: tvar_client
+      selector_name: direct
+      target: 127.0.0.1:13001
+      protocol: trpc
+      network: tcp
+      conn_type: long

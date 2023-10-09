@@ -1,0 +1,33 @@
+{
+  "integer": -42,
+  "unsigned_integer": 123,
+  "float": 3.14,
+  "boolean": true,
+  "string": "Hello, World!",
+  "array": [1, 2, 3, 4, 5],
+  "nested_object": {
+    "key1": "value1",
+    "key2": {
+      "sub_key1": 1,
+      "sub_key2": false
+    },
+    "key3": [
+      {
+        "name": "Alice",
+        "age": 30
+      },
+      {
+        "name": "Bob",
+        "age": 25
+      }
+    ]
+  },
+  "mixed": {
+    "key1": ["item1", 333],
+    "key2": ["item2", 444]
+  },
+  "nested_list": [
+    ["nested_item1", 111],
+    ["nested_item2", 222]
+  ]
+}

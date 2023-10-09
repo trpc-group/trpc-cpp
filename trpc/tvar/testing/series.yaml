@@ -1,0 +1,17 @@
+global:
+  local_ip: 127.0.0.1
+  tvar:
+    window_size: 20
+    save_series: true
+    latency_p1: 85
+    latency_p2: 95
+    latency_p3: 99
+
+server:
+  app: test
+  server: test_server
+  bin_path: ./
+  conf_path: ./
+  data_path: ./
+  server_stats_interval: 1000
+  service:

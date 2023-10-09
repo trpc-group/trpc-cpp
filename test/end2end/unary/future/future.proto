@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package trpc.testing.future;
+
+service Future {
+  rpc SayHello (TestRequest) returns (TestReply) {}
+  rpc SayHelloTimeout (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+  string msg = 1;
+}
+
+message TestReply {
+  string msg = 1;
+}

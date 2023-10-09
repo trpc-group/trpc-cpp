@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package trpc.examples.rpcz;
+
+import "examples/helloworld/helloworld.proto";
+
+service Rpcz {
+  // Client rpcz / server rpcz.
+  rpc Normal (trpc.test.helloworld.HelloRequest) returns (trpc.test.helloworld.HelloReply) {}
+  // Route rpcz.
+  rpc Route (trpc.test.helloworld.HelloRequest) returns (trpc.test.helloworld.HelloReply) {}
+}

@@ -1,0 +1,212 @@
+From 4814d7109d970924cc9dba3b834387858be2877a Mon Sep 17 00:00:00 2001
+From: raylchen <raylchen@tencent.com>
+Date: Tue, 25 Jul 2023 20:04:00 +0800
+Subject: [PATCH] feat: Modify bazel file
+
+---
+ src/BUILD.bazel     | 49 ++++++++++++++++++++++++++++++++++++++++---------
+ src/idl_gen_cpp.cpp | 49 +++++++++++--------------------------------------
+ src/idl_gen_cpp.h   | 37 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 88 insertions(+), 47 deletions(-)
+
+diff --git a/src/BUILD.bazel b/src/BUILD.bazel
+index 1084e76..1e966f7 100644
+--- a/src/BUILD.bazel
++++ b/src/BUILD.bazel
+@@ -35,6 +35,37 @@ cc_library(
+     deps = [":code_generators"],
+ )
+ 
++cc_library(
++    name = "idl_gen_grpc",
++    srcs = ["idl_gen_grpc.cpp"],
++    hdrs = [
++        "//:public_headers",
++    ],
++    strip_include_prefix = "/include",
++    visibility = ["//:__subpackages__"],
++    deps = [
++        ":code_generators",
++        "//grpc/src/compiler:cpp_generator",
++        "//grpc/src/compiler:go_generator",
++        "//grpc/src/compiler:java_generator",
++        "//grpc/src/compiler:python_generator",
++        "//grpc/src/compiler:swift_generator",
++        "//grpc/src/compiler:ts_generator",
++    ],
++)
++
++cc_library(
++    name = "generate_cpp",
++    srcs = ["idl_gen_cpp.cpp"],
++    hdrs = ["idl_gen_cpp.h"],
++    strip_include_prefix = "/src",
++    visibility = ["//:__subpackages__"],
++    deps = [
++        ":code_generators",
++        ":idl_gen_grpc",
++    ],
++)
++
+ # Public flatc library to compile flatbuffer files at runtime.
+ cc_library(
+     name = "flatbuffers",
+@@ -108,15 +139,13 @@ cc_library(
+         "flatc_main.cpp",
+         "idl_gen_binary.cpp",
+         "idl_gen_binary.h",
+-        "idl_gen_cpp.cpp",
+-        "idl_gen_cpp.h",
+         "idl_gen_csharp.cpp",
+         "idl_gen_csharp.h",
+         "idl_gen_dart.cpp",
+         "idl_gen_dart.h",
+         "idl_gen_go.cpp",
+         "idl_gen_go.h",
+-        "idl_gen_grpc.cpp",
++        # "idl_gen_grpc.cpp",
+         "idl_gen_java.cpp",
+         "idl_gen_java.h",
+         "idl_gen_json_schema.cpp",
+@@ -148,11 +177,13 @@ cc_library(
+     visibility = ["//:__pkg__"],
+     deps = [
+         ":flatc_library",
+-        "//grpc/src/compiler:cpp_generator",
+-        "//grpc/src/compiler:go_generator",
+-        "//grpc/src/compiler:java_generator",
+-        "//grpc/src/compiler:python_generator",
+-        "//grpc/src/compiler:swift_generator",
+-        "//grpc/src/compiler:ts_generator",
++        ":generate_cpp",
++        ":idl_gen_grpc",
++        # "//grpc/src/compiler:cpp_generator",
++        # "//grpc/src/compiler:go_generator",
++        # "//grpc/src/compiler:java_generator",
++        # "//grpc/src/compiler:python_generator",
++        # "//grpc/src/compiler:swift_generator",
++        # "//grpc/src/compiler:ts_generator",
+     ],
+ )
+diff --git a/src/idl_gen_cpp.cpp b/src/idl_gen_cpp.cpp
+index b602724..89157ac 100644
+--- a/src/idl_gen_cpp.cpp
++++ b/src/idl_gen_cpp.cpp
+@@ -4122,55 +4122,28 @@ static std::string CPPMakeRule(const Parser &parser, const std::string &path,
+   return make_rule;
+ }
+ 
+-namespace {
+ 
+-class CppCodeGenerator : public CodeGenerator {
+- public:
+-  Status GenerateCode(const Parser &parser, const std::string &path,
+-                      const std::string &filename) override {
++
++CodeGenerator::Status CppCodeGenerator::GenerateCode(const Parser &parser, const std::string &path,
++                      const std::string &filename)  {
+     if (!GenerateCPP(parser, path, filename)) { return Status::ERROR; }
+     return Status::OK;
+-  }
++}
+ 
+-  // Generate code from the provided `buffer` of given `length`. The buffer is a
+-  // serialized reflection.fbs.
+-  Status GenerateCode(const uint8_t *, int64_t,
+-                      const CodeGenOptions &) override {
+-    return Status::NOT_IMPLEMENTED;
+-  }
+ 
+-  Status GenerateMakeRule(const Parser &parser, const std::string &path,
++CodeGenerator::Status CppCodeGenerator::GenerateMakeRule(const Parser &parser, const std::string &path,
+                           const std::string &filename,
+-                          std::string &output) override {
++                          std::string &output)  {
+     output = CPPMakeRule(parser, path, filename);
+     return Status::OK;
+-  }
++}
++
+ 
+-  Status GenerateGrpcCode(const Parser &parser, const std::string &path,
+-                          const std::string &filename) override {
++CodeGenerator::Status CppCodeGenerator::GenerateGrpcCode(const Parser &parser, const std::string &path,
++                          const std::string &filename)  {
+     if (!GenerateCppGRPC(parser, path, filename)) { return Status::ERROR; }
+     return Status::OK;
+-  }
+-
+-  Status GenerateRootFile(const Parser &parser,
+-                          const std::string &path) override {
+-    (void)parser;
+-    (void)path;
+-    return Status::NOT_IMPLEMENTED;
+-  }
+-
+-  bool IsSchemaOnly() const override { return true; }
+-
+-  bool SupportsBfbsGeneration() const override { return false; }
+-
+-  bool SupportsRootFileGeneration() const override { return false; }
+-
+-  IDLOptions::Language Language() const override { return IDLOptions::kCpp; }
+-
+-  std::string LanguageName() const override { return "C++"; }
+-};
+-
+-}  // namespace
++}
+ 
+ std::unique_ptr<CodeGenerator> NewCppCodeGenerator() {
+   return std::unique_ptr<CppCodeGenerator>(new CppCodeGenerator());
+diff --git a/src/idl_gen_cpp.h b/src/idl_gen_cpp.h
+index fcca063..b4a8558 100644
+--- a/src/idl_gen_cpp.h
++++ b/src/idl_gen_cpp.h
+@@ -21,6 +21,43 @@
+ 
+ namespace flatbuffers {
+ 
++class CppCodeGenerator : public CodeGenerator {
++ public:
++  Status GenerateCode(const Parser &parser, const std::string &path,
++                      const std::string &filename) override;
++
++  // Generate code from the provided `buffer` of given `length`. The buffer is a
++  // serialized reflection.fbs.
++  Status GenerateCode(const uint8_t *, int64_t,
++                      const CodeGenOptions &) override {
++    return Status::NOT_IMPLEMENTED;
++  }
++
++  Status GenerateMakeRule(const Parser &parser, const std::string &path,
++                          const std::string &filename,
++                          std::string &output) override;
++
++  Status GenerateGrpcCode(const Parser &parser, const std::string &path,
++                          const std::string &filename) override;
++
++  Status GenerateRootFile(const Parser &parser,
++                          const std::string &path) override {
++    (void)parser;
++    (void)path;
++    return Status::NOT_IMPLEMENTED;
++  }
++
++  bool IsSchemaOnly() const override { return true; }
++
++  bool SupportsBfbsGeneration() const override { return false; }
++
++  bool SupportsRootFileGeneration() const override { return false; }
++
++  IDLOptions::Language Language() const override { return IDLOptions::kCpp; }
++
++  std::string LanguageName() const override { return "C++"; }
++};
++
+ // Constructs a new Cpp code generator.
+ std::unique_ptr<CodeGenerator> NewCppCodeGenerator();
+ 
+-- 
+1.8.3.1
+

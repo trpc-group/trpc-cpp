@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package trpc.testing.unarytrpc;
+
+service TrpcTest {
+  // Common interface. Do nothing
+  rpc TestCommon (CommonRequest) returns (CommonReply) {}
+
+  // Used to test compressor
+  rpc TestCompressor (CompressorRequest) returns (CompressorResponse) {}
+
+  // Used to test pb serialization
+  rpc TestPbSerialization (SerializationRequest) returns (SerializationResponse) {}
+
+  // Used to test transinfo
+  rpc TestTransInfo (TransRequest) returns (TransResponse) {}
+
+  // Used to test attachment
+  rpc TestAttachment (AttachmentRequest) returns (AttachmentResponse) {}
+
+  // Used to test fulllink timeout
+  rpc TestTimeout (TimeoutRequest) returns (TimeoutResponse) {}
+
+  // Used to query timeout information of the last call
+  rpc QueryLastTimeoutInfo (QueryTimeoutRequest) returns (QueryTimeoutResponse) {}
+}
+
+service RouteTest {
+  // Used to test transinfo
+  rpc TestTransInfo (RouteTransRequest) returns (RouteTransResponse) {}
+
+  // Used to test fulllink timeout
+  rpc TestTimeout (TimeoutRequest) returns (TimeoutResponse) {}
+
+  // Used to query timeout information of the last call
+  rpc QueryLastTimeoutInfo (QueryTimeoutRequest) returns (QueryTimeoutResponse) {}
+}
+
+service TrpcTransport {
+  // Common interface. Do nothing
+  rpc TestCommon (CommonRequest) returns (CommonReply) {}
+
+  // Used to test different udp response packet size
+  rpc TestUdpResponse (CommonRequest) returns (CommonReply) {}
+
+  // Used to test custom dispatcher function of server
+  rpc TestCustomDispatcher (CommonRequest) returns (CommonReply) {}
+
+  // Used to test server will disconnect the connection actively when reach idle timeout
+  rpc TestIdleTimeout (CommonRequest) returns (CommonReply) {}
+
+  // Used to test different response way by server, such as sync, async.
+  rpc TestDifferResponseWay(CommonRequest) returns (CommonReply) {}
+
+  // Used to test different call type received by server, such as oneway, unary.
+  rpc TestDifferCallType(CommonRequest) returns (CommonReply) {}
+}
+
+message CommonRequest {
+  string msg = 1;
+}
+
+message CommonReply {
+  string msg = 1;
+}
+
+message CompressorRequest {
+  enum TestCaseType {
+    DEFAULT = 0;            // server will respond with default compression behavior
+    SPECIFY_LEVEL = 1;      // server will respond with compression level modified to the expected value
+    SPECIFY_ALGORITHM = 2;  // server will respond with compression type and level modified to the expected values
+    NOT_COMPRESS = 3;       // server will respond without using a compressor
+    INVALID_TYPE = 4;       // server will respond with invalid compression type
+    INVALID_LEVEL = 5;      // server will respond with invalid compression level
+  }
+
+  TestCaseType test_case_type = 1;
+  uint32 expected_compress_type = 2;  // the desired compression type for the server response
+  uint32 expected_compress_level = 3; // the desired compression level for the server response
+  string msg = 4;
+}
+
+message CompressorResponse {
+  string msg = 1;
+}
+
+message SerializationRequest {
+  enum TestCaseType {
+    PB_PB = 0;                   // respond with correct data using kPbType data type and kPbMessage encode data type
+    PB_NONCONTIGUOUSBUFFER = 1;  // respond with correct data using kPbType data type and kNonContiguousBufferNoop encode data type
+    NOOP_STRING = 2;             // respond with incorrect data using kNoopType data type and kStringNoop encode data type
+    INVALID_DATA = 3;            // respond with incorrect data using kPbType data type and kNonContiguousBufferNoop encode data type
+    INVALID_TYPE = 4;            // respond with incorrect data using kPbType data type and invalid encode data type
+    NOT_EXIST_TYPE = 5;          // respond with not exist data type
+  }
+
+  TestCaseType test_case_type = 1;
+  string msg = 2;
+}
+
+message SerializationResponse {
+  string msg = 1;
+}
+
+message KeyValue {
+  string key = 1;
+  string value = 2;
+}
+
+message RouteTransRequest {
+  enum TestCaseType {
+    USE_SERVER_CONTEXT = 0;     // use server context to makeclientcontext
+    NOT_USE_SERVER_CONTEXT = 1; // do not use server context to makeclientcontext
+  }
+
+  TestCaseType test_case_type = 1;
+  string key_prefix = 2; // the key prefix of request transinfo
+}
+
+message RouteTransResponse {
+  repeated KeyValue recv_kv = 1; // the transinfo received by the server
+}
+
+message TransRequest {
+  enum TestCaseType {
+    DIFFERENT_KEY_USE_SET_INTERFACE = 0; // use SetRspTransInfo interface to add transinfo with different key values
+    DIFFERENT_KEY_USE_ADD_INTERFACE = 1; // use AddRspTransInfo interface to add transinfo with different key values
+    SAME_KEY_USE_ADD_INTERFACE = 2;      // use AddRspTransInfo interface to add transinfo with same key values
+  }
+
+  TestCaseType test_case_type = 1;
+  string key_prefix = 2; // the key prefix of request transinfo
+}
+
+message TransResponse {
+  string key_prefix = 1;         // the key prefix of response transinfo
+  repeated KeyValue recv_kv = 2; // the transinfo received by the server
+  map<string, bytes> rsp_kv = 3; // the transinfo responsed by the server
+}
+
+message AttachmentRequest {
+  enum TestCaseType {
+    NO_ATTACHMENT = 0;        // server response without attachment
+    NOT_EMPTY_ATTACHMENT = 1; // server response with not empty attachment
+    EMPTY_ATTACHMENT = 2;     // server response with empty attachment
+  }
+
+  TestCaseType test_case_type = 1;
+  string msg = 2;
+}
+
+message AttachmentResponse {
+  string recv_msg = 1;  // the pb data received by the server
+  string recv_atta = 2; // the attachment data received by the server
+  string rsp_msg = 3;   // response pb data
+  string rsp_atta = 4;  // response attachement data
+}
+
+message TimeoutRequest {
+  uint32 route_deal_time = 1;  // the execution time of Route excluding the downstream call
+  uint32 server_deal_time = 2; // the execution time of Server
+}
+
+message TimeoutResponse {}
+
+message QueryTimeoutRequest {}
+
+message QueryTimeoutResponse {
+  uint32 server_last_ret_code = 1; // the error code of the last call on the server side
+  uint32 client_last_ret_code = 2; // the error code of the last call on the client side
+}

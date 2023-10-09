@@ -1,0 +1,55 @@
+global:
+  local_ip: 0.0.0.0
+  threadmodel:
+      default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 2
+        handle_thread_num: 2
+
+server:
+  app: test
+  server: server
+  admin_port: 21111
+  admin_ip: 0.0.0.0
+  enable_server_stats: true
+  service:
+    - name: trpc.test.server.gtest
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 10001
+      max_conn_num: 100000
+      queue_size: 2000000
+      queue_timeout: 5000
+      idle_time: 60000
+      max_packet_size: 10000000
+      accept_thread_num: 1
+
+client:
+  timeout: 1000
+  service:
+    - name: trpc.test.proxy.gtest
+      selector_name: direct
+      target: 127.0.0.1:20010
+      protocol: http
+      network: tcp
+      conn_type: long
+      timeout: 5000
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%H:%M:%S %z] %v"
+        mode: 1 # 1-sync, 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true 
+            filename: test.log
+            roll_type: by_hour
+            roll_size: 10000000
+            rotation_hour: 19
+            rotation_minute: 51
+            reserve_count: 5

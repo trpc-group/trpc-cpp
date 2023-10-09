@@ -1,0 +1,48 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 8
+        reactor_num_per_scheduling_group: 1
+
+server:
+  app: test
+  server: test_server
+  service:
+    - name: trpc.test.helloworld.StreamGreeter
+      protocol: trpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13451
+    - name: http.test.helloworld
+      protocol: http
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13452
+      ssl:
+        enable: true
+        cert_path: ./trpc/transport/common/ssl/cert/server_cert.pem
+        private_key_path: ./trpc/transport/common/ssl/cert/server_key.pem
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        dh_param_path: ./trpc/transport/common/ssl/cert/server_dhparam.pem
+        protocols:
+          - SSLv2
+          - SSLv3
+          - TLSv1
+          - TLSv1.1
+          - TLSv1.2
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13453
+    - name: trpc.test.helloworld.GreeterOverHTTP
+      protocol: http
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13454

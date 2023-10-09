@@ -1,0 +1,18 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+
+server:
+  app: testing
+  server: stream_test
+  service:
+    - name: trpc.testing.stream_test.AsyncStreamService
+      protocol: trpc
+      port: 13217
+    - name: trpc.testing.stream_test.AsyncStreamServiceConnIdle
+      protocol: trpc
+      port: 13219
+      idle_time: 2000

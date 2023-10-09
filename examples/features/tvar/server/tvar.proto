@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package trpc.examples.tvar;
+
+service Tvar {
+  // Counter
+  rpc Counter (TestRequest) returns (TestReply) {}
+  // Gauge
+  rpc Gauge (TestRequest) returns (TestReply) {}
+  // Miner
+  rpc Miner (TestRequest) returns (TestReply) {}
+  // Maxer
+  rpc Maxer (TestRequest) returns (TestReply) {}
+  // Status
+  rpc Status (TestRequest) returns (TestReply) {}
+  // Averager
+  rpc Averager (TestRequest) returns (TestReply) {}
+  // IntRecorder
+  rpc IntRecorder (TestRequest) returns (TestReply) {}
+  // LatencyRecorder
+  rpc LatencyRecorder (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+  string msg = 1;
+}
+
+message TestReply {
+  string msg = 1;
+}

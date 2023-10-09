@@ -1,0 +1,51 @@
+global:
+  local_ip: 0.0.0.0
+  enable_version_report: false
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+  rpcz:
+    lower_water_level: 100  # Low water level in a window to sample all spans.
+    high_water_level: 200  # High water level in a window to stop sampling.
+    sample_rate: 2  # How many spans to sample once between lower water and high water.
+    cache_expire_interval: 600  # How long to clean cached spans in seconds.
+    collect_interval_ms: 500  # How long to merge thread local spans.
+    remove_interval_ms: 1000  # How long to check remove spans.
+    print_spans_num: 200  # Max number to return general spans.
+
+server:
+  app: example
+  server: example1
+  admin_ip: 0.0.0.0
+  admin_port: 32111
+  service:
+    - name: rpcz_service
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 15001
+      filter:
+        - rpcz
+
+client:
+  service:
+    - name: real_service
+      selector_name: direct
+      target: 127.0.0.1:12345
+      protocol: trpc
+      network: tcp
+      conn_type: long
+      is_conn_complex: true
+      timeout: 1000
+      filter:
+        - rpcz
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: rpcz_proxy.log

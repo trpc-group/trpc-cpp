@@ -1,0 +1,20 @@
+global:
+  threadmodel:
+    default:                           
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 2           
+        handle_thread_num: 6
+
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 127.0.0.1:10001
+      protocol: trpc
+      timeout: 1000
+      network: tcp
+      selector_name: direct
+      filter: # service-level filter
+        - user_pb_rpc_client_filter
+  filter: # global filter
+    - client_invoke_stat 

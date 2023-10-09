@@ -1,0 +1,33 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 1
+  heartbeat:
+    enable_heartbeat: true
+    thread_heartbeat_time_out: 60000
+    heartbeat_report_interval: 50
+  enable_runtime_report: true
+
+server:
+  app: test
+  server: test_server
+  bin_path: ./
+  conf_path: ./
+  data_path: ./
+  registry_name: test_trpc_registry
+  service:
+    - name: test_service
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 13451
+
+plugins:
+  metrics:
+    test_heartbeat_metrics:
+      param1: 10000
+  registry:
+    test_trpc_registry:
+      heartbeat_interval: 1

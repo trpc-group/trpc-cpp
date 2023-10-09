@@ -1,0 +1,15 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 4
+        scheduling_group_size: 4
+        reactor_num_per_scheduling_group: 1
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: client.log

@@ -1,0 +1,71 @@
+global:
+  local_ip: 127.0.0.1
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+
+client:
+  service:
+    - name: test_common_service
+      selector_name: direct
+      target: 127.0.0.1:16799
+      protocol: http
+      network: tcp
+      conn_type: long
+    - name: http_client_no_ca
+      selector_name: direct
+      target: 127.0.0.1:19801
+      protocol: http
+      network: tcp
+      conn_type: long
+    - name: http_client_ca1
+      selector_name: direct
+      target: 127.0.0.1:19802
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        ca_cert_path: test/end2end/unary/http/conf/https_test/ca1/server.pem
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem
+    - name: http_client_ca2
+      selector_name: direct
+      target: 127.0.0.1:19803
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        ca_cert_path: test/end2end/unary/http/conf/https_test/ca2/server.pem
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem
+    - name: rpc_client_no_ca
+      selector_name: direct
+      target: 127.0.0.1:19804
+      protocol: http
+      network: tcp
+      conn_type: long
+    - name: rpc_client_ca1
+      selector_name: direct
+      target: 127.0.0.1:19805
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        ca_cert_path: test/end2end/unary/http/conf/https_test/ca1/server.pem
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem
+    - name: rpc_client_ca2
+      selector_name: direct
+      target: 127.0.0.1:19806
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        ca_cert_path: test/end2end/unary/http/conf/https_test/ca2/server.pem
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem

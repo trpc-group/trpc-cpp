@@ -1,0 +1,20 @@
+﻿global:
+  local_ip: 127.0.0.1
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 1
+
+server:
+  app: test
+  server: test_server
+  bin_path: ./
+  conf_path: ./
+  data_path: ./
+  server_stats_interval: 1000
+  service:
+plugins:
+  metrics:
+    test_server_stats:
+      param1: 10000

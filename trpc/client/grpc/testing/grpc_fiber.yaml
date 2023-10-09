@@ -1,0 +1,41 @@
+global:
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 8
+        reactor_num_per_scheduling_group: 1
+server:
+  app: test
+  server: test_server
+  service:
+    - name: http.test.helloworld.Greeter
+      protocol: grpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13701
+    - name: http.test.helloworld.StreamGreeter
+      protocol: grpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13702
+
+client:
+  timeout: 1000
+  service:
+    - name: http.test.helloworld.Greeter
+      selector_name: direct
+      target: 127.0.0.1:13701
+      protocol: grpc
+      network: tcp
+      conn_type: long
+#    - name: http.test.helloworld.StreamGreeter
+#      selector_name: direct
+#      target: 127.0.0.1:13702
+#      protocol: http
+#      network: tcp
+#      conn_type: long

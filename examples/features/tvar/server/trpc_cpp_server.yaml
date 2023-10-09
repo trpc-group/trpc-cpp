@@ -1,0 +1,25 @@
+global:
+  local_ip: 0.0.0.0
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+  tvar:
+    window_size: 10  # Size of window in second, for Window, PerSecond and LatencyRecorder.
+    save_series: true  # Whether to save history data.
+    latency_p1: 80  # First one of user-defined latency percentage, range in [1, 99].
+    latency_p2: 90  # Second one of user-defined latency percentage, range in [1, 99].
+    latency_p3: 95  # third one of user-defined latency percentage, range in [1, 99].
+
+server:
+  app: example
+  server: example1
+  admin_ip: 0.0.0.0
+  admin_port: 31111
+  service:
+    - name: tvar_service
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 13001

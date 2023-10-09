@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package trpc.test.serialization;
+
+message HelloRequest {
+   string msg = 1;
+}
+
+message HelloReply {
+   string msg = 1;
+}

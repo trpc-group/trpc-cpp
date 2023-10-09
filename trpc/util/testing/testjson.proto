@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package trpc.test;
+
+message TestMessage {
+   string msg = 1;
+}

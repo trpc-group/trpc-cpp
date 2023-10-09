@@ -1,0 +1,26 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 2
+        handle_thread_num: 6
+
+server:
+  app: test
+  server: unittest
+  service:
+    - name: trpc.test.unittest.Greeter
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 12345
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 1 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        sinks:
+          local_file:
+            filename: server.log

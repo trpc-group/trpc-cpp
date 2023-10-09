@@ -1,0 +1,96 @@
+From 3feb057a002094d2fb77e671ab7a2b890ab3e72c Mon Sep 17 00:00:00 2001
+From: peggiezhu <peggiezhu@tencent.com>
+Date: Fri, 27 May 2022 15:47:32 +0800
+Subject: [PATCH]
+feat: The spdlog report in seconds is changed to the report in milliseconds
+---
+ include/spdlog/details/periodic_worker-inl.h |  4 ++--
+ include/spdlog/details/periodic_worker.h     |  2 +-
+ include/spdlog/details/registry-inl.h        |  2 +-
+ include/spdlog/details/registry.h            |  2 +-
+ include/spdlog/spdlog-inl.h                  |  2 +-
+ include/spdlog/spdlog.h                      |  2 +-
+ 10 files changed, 29 insertions(+), 8 deletions(-)
+diff --git a/include/spdlog/details/periodic_worker-inl.h b/include/spdlog/details/periodic_worker-inl.h
+index d4abbda3..19add8b7 100644
+--- a/include/spdlog/details/periodic_worker-inl.h
++++ b/include/spdlog/details/periodic_worker-inl.h
+@@ -10,9 +10,9 @@
+ namespace spdlog {
+ namespace details {
+
+-SPDLOG_INLINE periodic_worker::periodic_worker(const std::function<void()> &callback_fun, std::chrono::seconds interval)
++SPDLOG_INLINE periodic_worker::periodic_worker(const std::function<void()> &callback_fun, std::chrono::milliseconds interval)
+ {
+-    active_ = (interval > std::chrono::seconds::zero());
++    active_ = (interval > std::chrono::milliseconds::zero());
+     if (!active_)
+     {
+         return;
+diff --git a/include/spdlog/details/periodic_worker.h b/include/spdlog/details/periodic_worker.h
+index a300218d..10624f08 100644
+--- a/include/spdlog/details/periodic_worker.h
++++ b/include/spdlog/details/periodic_worker.h
+@@ -20,7 +20,7 @@ namespace details {
+ class SPDLOG_API periodic_worker
+ {
+ public:
+-    periodic_worker(const std::function<void()> &callback_fun, std::chrono::seconds interval);
++    periodic_worker(const std::function<void()> &callback_fun, std::chrono::milliseconds interval);
+     periodic_worker(const periodic_worker &) = delete;
+     periodic_worker &operator=(const periodic_worker &) = delete;
+     // stop the worker thread and join it
+diff --git a/include/spdlog/details/registry-inl.h b/include/spdlog/details/registry-inl.h
+index c55b5eea..965289c3 100644
+--- a/include/spdlog/details/registry-inl.h
++++ b/include/spdlog/details/registry-inl.h
+@@ -188,7 +188,7 @@ SPDLOG_INLINE void registry::flush_on(level::level_enum log_level)
+     flush_level_ = log_level;
+ }
+
+-SPDLOG_INLINE void registry::flush_every(std::chrono::seconds interval)
++SPDLOG_INLINE void registry::flush_every(std::chrono::milliseconds interval)
+ {
+     std::lock_guard<std::mutex> lock(flusher_mutex_);
+     auto clbk = [this]() { this->flush_all(); };
+diff --git a/include/spdlog/details/registry.h b/include/spdlog/details/registry.h
+index 97473ea3..0161e1f4 100644
+--- a/include/spdlog/details/registry.h
++++ b/include/spdlog/details/registry.h
+@@ -61,7 +61,7 @@ public:
+
+     void flush_on(level::level_enum log_level);
+
+-    void flush_every(std::chrono::seconds interval);
++    void flush_every(std::chrono::milliseconds interval);
+
+     void set_error_handler(err_handler handler);
+
+diff --git a/include/spdlog/spdlog-inl.h b/include/spdlog/spdlog-inl.h
+index 2b875fae..12108cce 100644
+--- a/include/spdlog/spdlog-inl.h
++++ b/include/spdlog/spdlog-inl.h
+@@ -67,7 +67,7 @@ SPDLOG_INLINE void flush_on(level::level_enum log_level)
+     details::registry::instance().flush_on(log_level);
+ }
+
+-SPDLOG_INLINE void flush_every(std::chrono::seconds interval)
++SPDLOG_INLINE void flush_every(std::chrono::milliseconds interval)
+ {
+     details::registry::instance().flush_every(interval);
+ }
+diff --git a/include/spdlog/spdlog.h b/include/spdlog/spdlog.h
+index 65d3e9d5..8cca643f 100644
+--- a/include/spdlog/spdlog.h
++++ b/include/spdlog/spdlog.h
+@@ -81,7 +81,7 @@ SPDLOG_API void flush_on(level::level_enum log_level);
+
+ // Start/Restart a periodic flusher thread
+ // Warning: Use only if all your loggers are thread safe!
+-SPDLOG_API void flush_every(std::chrono::seconds interval);
++SPDLOG_API void flush_every(std::chrono::milliseconds interval);
+
+ // Set global error handler
+ SPDLOG_API void set_error_handler(void (*handler)(const std::string &msg));
+--
+2.32.0 (Apple Git-132)

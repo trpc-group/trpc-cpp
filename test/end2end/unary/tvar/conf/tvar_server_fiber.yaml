@@ -1,0 +1,26 @@
+global:
+  local_ip: 0.0.0.0
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+  tvar:
+    window_size: 10
+    save_series: true
+    latency_p1: 80
+    latency_p2: 90
+    latency_p3: 95
+
+server:
+  app: test
+  server: test1
+  admin_ip: 0.0.0.0
+  admin_port: 31115
+  service:
+    - name: tvar_service
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 13005

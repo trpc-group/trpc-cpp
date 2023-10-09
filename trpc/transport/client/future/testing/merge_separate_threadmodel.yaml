@@ -1,0 +1,10 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_separate
+        io_handle_type: separate
+        io_thread_num: 1
+        handle_thread_num: 1
+      - instance_name: default_merge
+        io_handle_type: merge
+        io_thread_num: 1

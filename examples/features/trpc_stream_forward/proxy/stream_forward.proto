@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package trpc.test.helloworld;
+
+import "examples/features/trpc_stream/server/stream.proto";
+
+service StreamForward {
+  // Client streaming
+  rpc ClientStreamSayHello (stream HelloRequest) returns (HelloReply) {}
+
+  // Server streaming
+  rpc ServerStreamSayHello (HelloRequest) returns (stream HelloReply) {}
+
+  // Bidi streaming
+  rpc BidiStreamSayHello (stream HelloRequest) returns (stream HelloReply) {}
+}

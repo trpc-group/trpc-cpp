@@ -1,0 +1,31 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 1
+  heartbeat:
+    enable_heartbeat: true
+    thread_heartbeat_time_out: 60000
+
+server:
+  app: test
+  server: test_server
+  bin_path: ./
+  conf_path: ./
+  data_path: ./
+  admin_ip: 0.0.0.0
+  admin_port: 10000
+  registry_name: test_trpc_registry
+  enable_self_register: true
+  service:
+    - name: test_greeter_service
+      protocol: trpc
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13451
+      max_conn_num: 100000
+      queue_timeout: 5000
+      idle_time: 60000
+      max_packet_size: 10000000

@@ -1,0 +1,58 @@
+#Global configuration (required)
+global:
+  local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
+  coroutine: #Coroutine configuration.
+    enable: false #false: means not using coroutine; true: means using coroutine.
+  threadmodel:
+    default:
+      # Merge model
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 1 #Number of network I/O threads.
+
+#Client configuration
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 9.146.137.171:32345
+      protocol: trpc #Service application layer protocol, for example: trpc, http.
+      network: tcp #Network listening type: for example: TCP, UDP.
+      conn_type: long #conn type, long/short
+      selector_name: direct #Name service used for route selection, "direct" when connecting directly.
+      is_conn_complex: true #is conn complex
+      filter:
+        - throttler
+#Plugin configuration.
+plugins:
+  overload_control:
+    throttler:
+      # Incremental receive rate, usually a value slightly greater than 1, indicating that "slight" overload is allowed and downstream probing is still actively attempted when protection occurs.
+      ratio_for_accepts: 1.3
+      # A constant padding used to reduce false limiting at low QPS when calculating the rate limit based on success rate.
+      requests_padding: 8
+      # Maximum rate limit.
+      max_throttle_probability: 0.7
+      # Factor of change.
+      ema_factor: 0.8
+      # Window period.
+      ema_interval_ms: 100
+      # Full expiration time of the window.
+      ema_reset_interval_ms: 30000
+      # Request priority upper limit. If a request carries a higher priority, it will be truncated.
+      max_priority: 50
+      # Perform metric statistics and overload algorithms without intercepting requests, for experimental observation.
+      dry_run: false
+      # Whether to report overload protection monitoring metrics.
+      is_report: true
+      # lThe speed of automatic threshold adjustment for lower.
+      lower_step: 0.02
+      # The speed of automatic threshold adjustment for upper.
+      upper_step: 0.01
+      # Priority fuzzy range, which refers to the desired value of N_OK / N_MUST to be maintained.
+      fuzzy_ratio: 0.1
+      # Maximum window duration (in milliseconds).
+      max_update_interval: 100
+      # Maximum window sampling count.
+      max_update_size: 512
+      # Number of priority distribution statistical histograms, and the reasonable configuration range should be [2, 8].
+      histograms: 3

@@ -1,0 +1,26 @@
+global:
+  local_ip: 0.0.0.0
+  threadmodel:
+    # Just cooperate with proxy_fiber, client no need to run in fiber.
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+
+client:
+  service:
+    - name: rpcz_client
+      selector_name: direct
+      target: 127.0.0.1:15005
+      protocol: trpc
+      network: tcp
+      conn_type: long
+      is_conn_complex: true
+      timeout: 1000
+    - name: http_client
+      selector_name: direct
+      target: 127.0.0.1:32113
+      protocol: http
+      network: tcp
+      conn_type: long
+      timeout: 1000

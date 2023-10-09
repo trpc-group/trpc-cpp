@@ -1,0 +1,48 @@
+global:
+  local_ip: 0.0.0.0
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+  rpcz:
+    lower_water_level: 10
+    high_water_level: 15
+    sample_rate: 2
+    cache_expire_interval: 5  # Less than 10, will be set to 10 by framework.
+    collect_interval_ms: 500
+    remove_interval_ms: 5000
+
+server:
+  app: test
+  server: helloworld
+  admin_ip: 0.0.0.0
+  admin_port: 7897
+  filter:
+    - rpcz
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 10001
+      max_conn_num: 100000
+      queue_size: 2000000
+      queue_timeout: 5000
+      idle_time: 60000
+      max_packet_size: 10000000
+      accept_thread_num: 1
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 1
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 2
+        sinks:
+          local_file:
+            eol: true
+            filename: trpc.log
+            roll_size: 100000000
+            reserve_count: 9

@@ -1,0 +1,32 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+client:
+  timeout: 1000
+  service:
+    - name: http_client
+      selector_name: direct
+      target: 127.0.0.1:24756
+      protocol: http
+      network: tcp
+      conn_type: long
+    - name: http_client2
+      selector_name: direct
+      target: 127.0.0.1:24756
+      protocol: http
+      network: tcp
+      conn_type: long
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2  # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: http_client.log

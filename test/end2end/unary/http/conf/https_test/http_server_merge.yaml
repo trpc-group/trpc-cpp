@@ -1,0 +1,78 @@
+global:
+  local_ip: 127.0.0.1
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 8
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: test_common_service
+      network: tcp
+      ip: 0.0.0.0
+      port: 16795
+      protocol: http
+      share_transport: false
+    - name: http_service_no_ca
+      network: tcp
+      ip: 0.0.0.0
+      port: 18796
+      protocol: http
+      share_transport: false
+    - name: http_service_ca1
+      network: tcp
+      ip: 0.0.0.0
+      port: 18797
+      protocol: http
+      share_transport: false
+      ssl:
+        enable: true
+        cert_path: test/end2end/unary/http/conf/https_test/ca1/server.pem
+        private_key_path: test/end2end/unary/http/conf/https_test/ca1/server.key
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem
+    - name: http_service_ca2
+      network: tcp
+      ip: 0.0.0.0
+      port: 18798
+      protocol: http
+      share_transport: false
+      ssl:
+        enable: true
+        cert_path: test/end2end/unary/http/conf/https_test/ca2/server.pem
+        private_key_path: test/end2end/unary/http/conf/https_test/ca2/server.key
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem
+    - name: rpc_service_no_ca
+      network: tcp
+      ip: 0.0.0.0
+      port: 18799
+      protocol: http
+      share_transport: false
+    - name: rpc_service_ca1
+      network: tcp
+      ip: 0.0.0.0
+      port: 18800
+      protocol: http
+      share_transport: false
+      ssl:
+        enable: true
+        cert_path: test/end2end/unary/http/conf/https_test/ca1/server.pem
+        private_key_path: test/end2end/unary/http/conf/https_test/ca1/server.key
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem
+    - name: rpc_service_ca2
+      network: tcp
+      ip: 0.0.0.0
+      port: 18801
+      protocol: http
+      share_transport: false
+      ssl:
+        enable: true
+        cert_path: test/end2end/unary/http/conf/https_test/ca2/server.pem
+        private_key_path: test/end2end/unary/http/conf/https_test/ca2/server.key
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        dh_param_path: test/end2end/unary/http/conf/https_test/dhparam.pem

@@ -1,0 +1,66 @@
+global:
+  local_ip: 127.0.0.1
+  enable_version_report: false
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 2
+        handle_thread_num: 4
+
+client:
+  service:
+    - name: trpc_test_client
+      selector_name: direct
+      target: 127.0.0.1:19200
+      protocol: trpc
+      network: tcp
+      conn_type: long
+      timeout: 1000
+    - name: fbs_test_client
+      selector_name: direct
+      target: 127.0.0.1:19201
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: route_test_client
+      selector_name: direct
+      target: 127.0.0.1:19210
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: route_transparent_client
+      selector_name: direct
+      target: 127.0.0.1:19211
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: no_fulllink_route_test_client
+      selector_name: direct
+      target: 127.0.0.1:19212
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: json_test_client
+      selector_name: direct
+      target: 127.0.0.1:19202
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: noop_test_client
+      selector_name: direct
+      target: 127.0.0.1:19203
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: tcp_transport_client
+      selector_name: direct
+      target: 127.0.0.1:19204
+      protocol: trpc
+      network: tcp
+      conn_type: long
+    - name: udp_transport_client
+      selector_name: direct
+      target: 127.0.0.1:19204
+      protocol: trpc
+      network: udp

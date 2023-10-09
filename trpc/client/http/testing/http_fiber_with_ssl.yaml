@@ -1,0 +1,65 @@
+global:
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 8
+        reactor_num_per_scheduling_group: 1
+server:
+  app: test
+  server: test_server
+  service:
+    - name: http.test.helloworld
+      protocol: http
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13801
+      ssl:
+        enable: true
+        cert_path: ./trpc/transport/common/ssl/cert/server_cert.pem
+        private_key_path: ./trpc/transport/common/ssl/cert/server_key.pem
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        dh_param_path: ./trpc/transport/common/ssl/cert/server_dhparam.pem
+        protocols:
+          - SSLv2
+          - SSLv3
+          - TLSv1
+          - TLSv1.1
+          - TLSv1.2
+    - name: trpc.test.helloworld.GreeterOverHTTP
+      protocol: http
+      socket_type: net
+      network: tcp
+      ip: 0.0.0.0
+      port: 13802
+
+client:
+  timeout: 1000
+  service:
+    - name: test_http_client
+      selector_name: direct
+      target: 127.0.0.1:13801
+      protocol: http
+      network: tcp
+      conn_type: long
+      ssl:
+        enable: true
+        sni_name: www.xxops.com
+        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS
+        ca_cert_path: ./trpc/transport/common/ssl/cert/xxops-com-chain.pem
+        insecure: true  # For testing purpose only.
+        protocols:
+          - SSLv2
+          - SSLv3
+          - TLSv1
+          - TLSv1.1
+          - TLSv1.2
+    - name: test_greeter_client
+      selector_name: direct
+      target: 127.0.0.1:13802
+      protocol: http
+      network: tcp
+      conn_type: long

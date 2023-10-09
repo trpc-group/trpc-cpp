@@ -1,0 +1,27 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+server:
+  app: test
+  server: helloworld
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 10001
+      filter: # service-level filter 
+        - user_pb_rpc_server_filter
+  filter: # global filter
+    - server_invoke_stat
+
+plugins:
+    log:
+        default:
+          - name: default
+            min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+            sinks:
+              local_file:
+                filename: server_filter_demo.log

@@ -1,0 +1,13 @@
+global: 
+    local_ip: 0.0.0.0
+    threadmodel:
+        default:
+        - instance_name: default_instance
+          io_handle_type: separate
+          io_thread_num: 4
+          handle_thread_num: 4
+    enable_runtime_report: true
+    report_runtime_info_interval: 30000
+plugins:
+    metrics:
+        test_runtime_report:

@@ -1,0 +1,29 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 1
+        handle_thread_num: 1
+
+server:
+  app: test
+  server: helloworld
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 12345
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 2
+        sinks:
+          local_file:
+            eol: true
+            filename: trpc.log

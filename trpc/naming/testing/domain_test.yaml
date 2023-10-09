@@ -1,0 +1,4 @@
+plugins:
+  selector:
+    domain:
+      exclude_ipv6: true

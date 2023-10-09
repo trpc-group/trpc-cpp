@@ -1,0 +1,10 @@
+plugins:
+  config:
+    local_file:
+      providers:
+        - name: file1
+          filename: trpc/config/testing/test_load.yaml
+        - name: file2
+          filename: trpc/config/testing/test_load.json
+        - name: file3
+          filename: trpc/config/testing/test_load.toml

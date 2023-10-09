@@ -1,0 +1,34 @@
+server:
+  app: Test
+  server: HelloWorldServer
+  enable_server_stats: true
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%H:%M:%S %z] %v"
+        mode: 1  # 1-sync, 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true 
+            filename: test.log
+            roll_type: by_hour
+            roll_size: 10000000
+            rotation_hour: 19
+            rotation_minute: 51
+            reserve_count: 5
+      - name: test
+        min_level: 3 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%H:%M:%S %z] %v"
+        mode: 1  # 1-sync, 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: test1.log
+            roll_type: by_hour
+            roll_size: 10000000
+            rotation_hour: 19
+            rotation_minute: 51
+            reserve_count: 5

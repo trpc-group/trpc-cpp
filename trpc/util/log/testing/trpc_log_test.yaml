@@ -1,0 +1,35 @@
+plugins:
+  log:
+    default:
+      - name: mock_instance
+        min_level: 0 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%H:%M:%S %z] [thread %t] %v"
+        mode: 1 # 1- synchronous, 2- asynchronous, 3- extreme speed
+        sinks:
+          local_file:
+            filename: testing.log
+            reserve_count: 5
+            roll_type: by_size # by_size- By size, by_day- By day, by_hour- By hour
+            roll_size: 1000000
+            rotation_hour: 0 # Indicates the time cut by day. rotation_hour:rotation_minute specifies the time
+            rotation_minute: 0
+            hour_interval: 1 # Indicates the interval between hours. The unit is hours. The default interval is one hour
+          stdout: # sink of the local console
+            eol: true                    # Whether each output is automatically wrapped. Default line feed
+            stderr_level: 4             # Output to the lowest level of stderr, default 4 (ERROR)
+      - name: default
+        min_level: 1 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%H:%M:%S %z] [thread %t] %v"
+        mode: 1 # 1- synchronous, 2- asynchronous, 3- extreme speed
+        sinks:
+          local_file:
+            filename: local_file.testing.log
+            reserve_count: 5
+            roll_type: by_size  # by_size- By size, by_day- By day, by_hour- By hour
+            roll_size: 1000000
+            rotation_hour: 0 # Indicates the time cut by day. rotation_hour:rotation_minute specifies the time
+            rotation_minute: 0
+            hour_interval: 1 # Indicates the interval between hours. The unit is hours. The default interval is one hour
+          stdout: # sink of the local console
+            eol: true                    # Whether each output is automatically wrapped. Default line feed
+            stderr_level: 4              # Output to the lowest level of stderr, default 4 (ERROR)

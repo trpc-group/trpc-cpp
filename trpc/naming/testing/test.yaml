@@ -1,0 +1,61 @@
+global: # Global configuration
+  namespace: Development # Environment type, divided into formal Production and informal Development types
+  env_name: 790338d7 # Environment name, the name of the multi-environment in the informal environment
+  container_name: 790338d7.barton.future_route.sz1704 # Container name, the placeholder is replaced by the actual container name by the operation platform
+  local_ip: 127.0.0.1 # Local IP, container IP inside the container, and host IP for physical or virtual machines
+  coroutine: # Coroutine configuration
+    enable: false # false for not using coroutines, true for using coroutines
+    max_coroutine_num: 50000 # Maximum number of coroutines
+    min_coroutine_num: 200 # Minimum number of coroutines
+    stack_size: 131072 # Coroutine stack size, in bytes
+    hook_stat: false
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 4
+        handle_thread_num: 4
+server: # Server-side configuration
+  app: barton # Application name of the business
+  server: future_route # Service name of the business
+  bin_path: /usr/local/trpc/bin/ # Path where binary executable files and framework configuration files are located
+  conf_path: /usr/local/trpc/conf/ # Path where business configuration files are located
+  data_path: /usr/local/trpc/data/ # Path where data files are located
+  admin_port: 8888 # Management command service port
+  admin_ip: 127.0.0.1 # Management command service listening IP address
+  registry_name: polaris # Name service used for service name registration
+  service: # Services provided by the business service, can have multiple
+    - name: trpc.barton.future_route.Route # Service route name
+      network: tcp # Network listening type tcp udp
+      ip: 127.0.0.1 # Binding IP
+      port: 10104
+      protocol: trpc # Application layer protocol trpc http
+      max_conn_num: 100000 # Maximum number of connections
+      queue_size: 2000000 # Receiving queue size
+      queue_timeout: 5000 # Timeout of the request in the receiving queue, ms
+      idle_time: 60000 # Connection idle timeout, ms
+      max_packet_size: 10000000 # Request packet size limit
+  filter: # Interceptor list during call execution
+    - m007 # 007 monitoring
+client: # Client configuration
+  timeout: 1000 # Maximum processing time for all backend requests, ms
+  io_thread_num: 2 # Number of client network threads
+  req_queue_size: 10000 # Request queue size
+  filter: # Interceptor list during call execution
+    - m007 # 007 monitoring
+  service: # Configuration of the backend service being called
+    - name: trpc.barton.helloworld.Greeter # Called service name, must be unique within the same configuration file
+      target: trpc.barton.helloworld.Greeter # Called service route name, directly connected as a comma-separated group of ip:port 23.9.0.1:90,34.5.6.7:90
+      namespace: Development # Namespace to which the service route name belongs
+      protocol: trpc # Protocol
+      timeout: 1000 # Call timeout, ms
+      network: tcp # Network type
+      conn_type: long # Connection type, long connection/short connection
+      selector_name: polaris # Name service used for route selection, direct when connected
+plugins: # Plugin configuration
+  registry: # Service registration configuration
+    test_trpc_registry:
+  selector: # Route selection configuration
+    test_trpc_selector:
+  limiter:  # Access flow control configuration
+    test_trpc_limiter:

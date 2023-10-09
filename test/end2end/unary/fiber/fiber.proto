@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package trpc.testing.fibersvr;
+
+service FiberService {
+  rpc TestFiber (TestRequest) returns (TestReply) {}
+  rpc TestFiberMutex (TestRequest) returns (TestReply) {}
+  rpc TestFiberConditionVariable (TestRequest) returns (TestReply) {}
+  rpc TestFiberLatch (TestRequest) returns (TestReply) {}
+  rpc TestFiberSeqLock (TestRequest) returns (TestReply) {}
+  rpc TestFiberSharedMutex (TestRequest) returns (TestReply) {}
+  rpc TestFiberTimer (TestRequest) returns (TestReply) {}
+  rpc TestFiberBlockingBoundedQueue (TestRequest) returns (TestReply) {}
+  rpc TestFiberBlockingNoncontiguousBuffer (TestRequest) returns (TestReply) {}
+  rpc TestFiberEvent (TestRequest) returns (TestReply) {}
+  rpc TestFiberLocal (TestRequest) returns (TestReply) {}
+  rpc TestFiberFuture (TestRequest) returns (TestReply) {}
+  rpc TestFiberAsync (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+   string msg = 1;
+}
+
+message TestReply {
+   string msg = 1;
+}

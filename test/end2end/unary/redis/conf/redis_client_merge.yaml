@@ -1,0 +1,16 @@
+global:
+  local_ip: 127.0.0.1
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 8
+
+client:
+  service:
+    - name: redis_client
+      selector_name: direct
+      target: 0.0.0.0:6379
+      protocol: redis
+      network: tcp
+      conn_type: long

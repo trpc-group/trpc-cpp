@@ -1,0 +1,7 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 1
+        handle_thread_num: 1

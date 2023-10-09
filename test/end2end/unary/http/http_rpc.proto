@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package trpc.testing.httpsvr;
+
+import "trpc/proto/trpc_options.proto";
+
+service HttpRpcService {
+  rpc TestPb (TestRequest) returns (TestReply) {
+    option (trpc.alias) = "/test-pb";
+  }
+
+  rpc TestPbEmptyReq (TestRequest) returns (TestReply) {}
+
+  rpc TestPbEmptyRsp (TestRequest) returns (TestReply) {}
+
+  rpc TestPbRetErr (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+   string msg = 1;
+}
+
+message TestReply {
+   string msg = 1;
+}

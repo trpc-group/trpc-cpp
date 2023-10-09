@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package trpc.test.helloworld;
+
+service StreamGreeter {
+  // Client streaming
+  rpc ClientStreamSayHello (stream HelloRequest) returns (HelloReply) {}
+
+  // Server streaming
+  rpc ServerStreamSayHello (HelloRequest) returns (stream HelloReply) {}
+
+  // Bidi streaming
+  rpc BidiStreamSayHello (stream HelloRequest) returns (stream HelloReply) {}
+}
+
+message HelloRequest {
+  string msg = 1;
+}
+
+message HelloReply {
+  string msg = 1;
+}

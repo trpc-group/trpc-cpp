@@ -1,0 +1,18 @@
+global:
+  local_ip: 127.0.0.1
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 8
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: http_rpc_service
+      network: tcp
+      ip: 0.0.0.0
+      port: 16792
+      protocol: http
+

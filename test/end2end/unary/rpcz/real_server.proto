@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package trpc.testing.rpcz;
+
+service RealServer {
+  rpc ProxyClientGetRpczOk (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyClientGetSpanIdOk (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyClientProbableSample (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyClientSpanExpired (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyFireClientSampleFunction (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyRouteGetRpczOk (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyRouteGetSpanIdOk (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyRouteProbableSample (RealServerRequest) returns (RealServerReply) {}
+  rpc ProxyRouteSpanExpired (RealServerRequest) returns (RealServerReply) {}
+}
+
+message RealServerRequest {
+  string msg = 1;
+}
+
+message RealServerReply {
+  string msg = 1;
+}

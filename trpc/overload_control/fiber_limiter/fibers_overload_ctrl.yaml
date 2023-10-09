@@ -1,0 +1,54 @@
+#Global configuration (required)
+global:
+  local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
+  coroutine: #Coroutine configuration.
+    enable: true #false: means not using coroutine; true: means using coroutine.
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 1
+        scheduling_group_size: 1
+        reactor_num_per_scheduling_group: 1
+
+#Server configuration
+server:
+  app: test #Business name
+  server: route #Module name of the business
+  admin_port: 18888 # Admin port
+  admin_ip: 0.0.0.0 #Admin ip
+  service: #Business service, can have multiple.
+    - name: trpc.test.route.Forward #Service name, needs to be filled in according to the format, the first field is default to trpc, the second and third fields are the app and server configurations above, and the fourth field is the user-defined service_name.
+      network: tcp  #Network listening type: for example: TCP, UDP.
+      ip: 0.0.0.0 #Listen ip
+      port: 11112 #Listen port
+      protocol: trpc #Service application layer protocol, for example: trpc, http.
+      accept_thread_num: 1 #Number of threads for binding ports.
+      filter:
+        - fiber_limiter # Name of filter for this service
+
+#Client configuration.
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 9.146.137.171:32345
+      protocol: trpc #Service application layer protocol, for example: trpc, http.
+      network: tcp #Network listening type: for example: TCP, UDP.
+      selector_name: direct #Name service used for route selection, "direct" for direct connection.
+      filter:
+        - fiber_limiter # Name of filter for this client
+
+#Plugin configuration.
+plugins: 
+  log: #Log configuration
+    default:
+      - name: default
+        min_level: 4 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
+        mode: 2 # 1-sync, 2-async, 3-fast
+        sinks:
+          local_file: # Local log file
+            filename: trpc.log # The name of log file
+  overload_control:
+    fiber_limiter:
+      max_fiber_count: 20 # Maximum number of fibers. Here, for unit testing purposes, it is set relatively small. In normal business scenarios, this value should be much larger than 20.
+      is_report: true # Whether to report overload information.

@@ -1,0 +1,17 @@
+global:
+  local_ip: 127.0.0.1
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 2
+        handle_thread_num: 4
+
+client:
+  service:
+    - name: http_client
+      selector_name: direct
+      target: 127.0.0.1:16790
+      protocol: http
+      network: tcp
+      conn_type: long

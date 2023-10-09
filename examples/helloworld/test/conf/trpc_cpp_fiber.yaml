@@ -1,0 +1,25 @@
+global:
+  threadmodel:
+    fiber:                            # Use Fiber(m:n coroutine) threadmodel
+      - instance_name: fiber_instance # Need to be unique if you config mutiple fiber threadmodel instances
+        # Fiber worker thread num
+        # If not specified, will use number of cores on the machine.
+        # In a Numa architecture, the workers will be automatically grouped (8-15 cores per group),
+        # while in Uma architecture, they will not be grouped.
+        concurrency_hint: 8
+
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 127.0.0.1:12345       # Fullfill ip:port list here when use `direct` selector.(such as 23.9.0.1:90,34.5.6.7:90)
+      protocol: trpc                # Application layer protocol, eg: trpc/http/...
+      network: tcp                  # Network type, Support two types: tcp/udp
+      selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: trpc_fiber_client.log

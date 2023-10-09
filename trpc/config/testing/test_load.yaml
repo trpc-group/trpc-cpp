@@ -1,0 +1,40 @@
+# Simple values
+integer: -42
+unsigned_integer: 123
+float: 3.14
+double: 1.23456789
+boolean: true
+string: "Hello, World!"
+
+# Complex structures
+
+# Map
+map:
+  key1: "value1"
+  key2: 123
+  nested_map:
+    nested_key1: "nested_value1"
+    nested_key2: false
+
+# List
+list:
+  - "item1"
+  - 456
+  - 7.89
+  - true
+
+# Nested list
+nested_list:
+  - - "nested_item1"
+    - 111
+  - - "nested_item2"
+    - 222
+
+# Mixed map and list
+mixed:
+  key1:
+    - "item1"
+    - 333
+  key2:
+    - "item2"
+    - 444

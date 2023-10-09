@@ -1,0 +1,23 @@
+global:
+  local_ip: 0.0.0.0
+  threadmodel:
+    # Just cooperate with client_separate, server no need to run in separate.
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: tcp_service
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 14005
+    - name: udp_service
+      protocol: trpc
+      network: udp
+      ip: 0.0.0.0
+      port: 14007

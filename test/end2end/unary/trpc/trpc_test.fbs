@@ -1,0 +1,20 @@
+namespace trpc.testing.unarytrpc;
+
+table FbsResponse {
+  message:string;
+}
+
+enum FbsTestCaseType: byte {
+  FORMAL = 0,       // response normally
+  INVALID_DATA = 1, // response with invalid data
+  INVALID_TYPE = 2  // response with invalid data type
+}
+
+table FbsRequest {
+  test_case_type:FbsTestCaseType;
+  message:string;
+}
+
+rpc_service FbsTest {
+  TestFbs(FbsRequest):FbsResponse;
+}

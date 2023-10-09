@@ -1,0 +1,35 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+server:
+  app: test
+  server: helloworld
+  service:
+    - name: trpc.test.helloworld.StreamForward
+      network: tcp
+      ip: 0.0.0.0
+      port: 24759
+      protocol: trpc
+
+client:
+  service:
+    - name: trpc.test.helloworld.StreamGreeter
+      selector_name: direct
+      target: 0.0.0.0:24757
+      protocol: trpc
+      timeout: 1000
+      network: tcp
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2  # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: trpc_stream_forward_server.log

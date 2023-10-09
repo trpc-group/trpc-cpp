@@ -1,0 +1,42 @@
+global:
+  threadmodel:
+    default:                            # Use Fiber(m:n coroutine) threadmodel
+      - instance_name: default_instance # Need to be unique if you config mutiple default threadmodel instances
+        io_handle_type: separate        # merge(io and handle thread are the same) or separate(io and handle thread are different)
+        io_thread_num: 2                # Num of network io thread, Must be greater than or equal to 1
+        handle_thread_num: 6            # Business logic hanlde thread num
+server:
+  app: test
+  server: forword
+  admin_port: 8889
+  admin_ip: 0.0.0.0
+  enable_server_stats: true
+  service:
+    - name: trpc.test.forword.Forward
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 12346
+
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 0.0.0.0:12345      
+      protocol: trpc
+      timeout: 1000
+      network: tcp
+      conn_type: long
+      is_conn_complex: true
+      selector_name: direct
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        sinks:
+          local_file:
+            filename: forward_server.log
+
+custom:
+  value: 10

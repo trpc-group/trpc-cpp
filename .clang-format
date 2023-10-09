@@ -1,0 +1,12 @@
+Language: Cpp
+BasedOnStyle: Google
+ColumnLimit: 120
+
+# Force pointers to the type for C++.
+# If `true`, analyze the formatted file for the most common alignment of '&' and '*'.
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# Only sort headers in each include block
+SortIncludes: true
+IncludeBlocks: Preserve

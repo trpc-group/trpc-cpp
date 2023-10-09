@@ -1,0 +1,35 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4
+
+client:
+  service:
+    - name: trpc.testing.stream_test.SyncStreamService
+      selector_name: direct
+      target: 127.0.0.1:13216
+      protocol: trpc
+    - name: trpc.testing.stream_test.AsyncStreamService
+      selector_name: direct
+      target: 127.0.0.1:13217
+      protocol: trpc
+    - name: trpc.testing.stream_test.SyncStreamServiceConnIdle
+      selector_name: direct
+      target: 127.0.0.1:13218
+      protocol: trpc
+    - name: trpc.testing.stream_test.AsyncStreamServiceConnIdle
+      selector_name: direct
+      target: 127.0.0.1:13219
+      protocol: trpc
+    - name: trpc.testing.stream_test.SyncStreamServiceConnIdleAtClient
+      selector_name: direct
+      target: 127.0.0.1:13216
+      protocol: trpc
+      idle_time: 500
+    - name: trpc.testing.stream_test.AsyncStreamServiceConnIdleAtClient
+      selector_name: direct
+      target: 127.0.0.1:13217
+      protocol: trpc
+      idle_time: 500

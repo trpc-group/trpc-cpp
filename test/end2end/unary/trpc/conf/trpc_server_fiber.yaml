@@ -1,0 +1,47 @@
+global:
+  local_ip: 127.0.0.1
+  enable_version_report: false
+  coroutine:
+    enable: true
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 4
+        reactor_num_per_scheduling_group: 2
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: trpc_test_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19000
+      protocol: trpc
+      timeout: 200
+    - name: fbs_test_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19001
+      protocol: trpc
+    - name: json_test_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19002
+      protocol: trpc
+    - name: noop_test_service
+      network: tcp
+      ip: 127.0.0.1
+      port: 19003
+      protocol: trpc
+    - name: trpc_transport_test_service
+      network: tcp,udp
+      ip: 127.0.0.1
+      port: 19004
+      protocol: trpc
+      max_conn_num: 8
+      idle_time: 2000
+      max_packet_size: 128
+      accept_thread_num: 2
+    

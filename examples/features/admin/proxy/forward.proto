@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package trpc.test.route;
+
+import "examples/helloworld/helloworld.proto";
+
+service Forward {
+  rpc Route (trpc.test.helloworld.HelloRequest) returns (trpc.test.helloworld.HelloReply) {}
+}

@@ -1,0 +1,40 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 4
+        scheduling_group_size: 4
+        reactor_num_per_scheduling_group: 1
+
+server:
+  app: test
+  server: forward
+  service:
+    - name: trpc.test.forward.Forward
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 12346
+
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 0.0.0.0:12345      
+      protocol: trpc
+      timeout: 1000
+      network: tcp
+      conn_type: long
+      selector_name: direct
+      is_conn_complex: false
+
+plugins:
+    log:
+        default:
+          - name: default
+            min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+            format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+            mode: 2
+            sinks:
+              local_file:
+                eol: true
+                filename: trpc_fiber_forward.log

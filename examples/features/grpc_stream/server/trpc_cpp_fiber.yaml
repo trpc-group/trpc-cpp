@@ -1,0 +1,26 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+server:
+  app: test
+  server: helloworld
+  service:
+    - name: trpc.test.helloworld.RouteGuide
+      network: tcp
+      ip: 0.0.0.0
+      port: 50051
+      protocol: grpc
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2  # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: grpc_stream_server.log

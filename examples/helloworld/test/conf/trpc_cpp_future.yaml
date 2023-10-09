@@ -1,0 +1,27 @@
+global:
+  threadmodel:
+    default:                            # Use Io/handle merge/separate threadmodel
+      - instance_name: default_instance # Need to be unique if you config mutiple default threadmodel instances
+        io_handle_type: separate        # merge(io and handle thread are the same) or separate(io and handle thread are different)
+        io_thread_num: 2                # Num of network io thread, Must be greater than or equal to 1
+        handle_thread_num: 6            # Business logic hanlde thread num
+      # If need merge type, uncomment below config
+      # - instance_name: default_instance
+      #   io_handle_type: merge
+      #   io_thread_num: 8
+
+client:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      target: 127.0.0.1:12345       # Fullfill comma-separated ip:port list here when use `direct` selector.(such as 23.9.0.1:90,34.5.6.7:90)
+      protocol: trpc                # Application layer protocol, eg: trpc/http/...
+      network: tcp                  # Network type, Support two types: tcp/udp
+      selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: trpc_client.log

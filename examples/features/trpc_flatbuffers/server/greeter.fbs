@@ -1,0 +1,13 @@
+namespace trpc.test.helloworld;
+
+table FbReply {
+  message:string;
+}
+
+table FbRequest {
+  message:string;
+}
+
+rpc_service FbGreeter {
+  SayHello(FbRequest):FbReply;
+}
