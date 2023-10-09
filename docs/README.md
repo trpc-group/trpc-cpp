@@ -65,7 +65,7 @@ English | [中文](README.zh_CN.md)
     * [compression](./en/compression.md)
     * [attachment](./en/attachment.md)
     * [pb area](./en/pb_arena.md)
-    * [backup-request]()
+    * [backup-request](./en/backup_request.md)
   * Tools
     * [rpcz](./en/rpcz.md)
     * [tvar](./en/tvar.md)
