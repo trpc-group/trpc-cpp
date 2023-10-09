@@ -2,19 +2,31 @@
 
 # tRPC-Cpp
 
-tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则，目标是做一个高性能、可插拔的rpc开发框架。
+tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则。
 
-## 架构设计
+## 整体架构
 
 ![architecture design](docs/images/arch_design.png)
+
+总体架构由"**框架核心**"和"**插件**"两部分组成. 如上图所示, 虚线框内为tRPC, 其中中间的红色实线框为框架核心, 蓝色框为插件部分.
+
+其中框架核心又可以分三层:
+
+- **运行层**: 由线程模型和IO模型组成, 负责框架任务的调度和IO的处理, 其中线程模型目前支持: 普通线程模型（分为io和handle分离或者合并的线程模型）、M:N协程模型（fiber线程模型）, IO模型目前支持: 用于网络IO的Reactor模型和用于磁盘IO得AsyncIO模型（基于io-uring, 目前只支持在合并线程模型使用）;
+
+- **通信层**: 负责数据的传输和协议的编解码. 框架内置支持tcp/udp/unix-socket等通信协议, 传输协议采用基于proto的tRPC协议来承载RPC调用, 支持通过codec插件来使用其它传输协议;
+
+- **调用层**: 封装服务和服务代理实体, 提供RPC调用接口, 支持业务用同步、异步、单向以及流式调用等方式进行服务间调用;
+
+此外框架还提供了admin管理接口, 方便用户或者运营平台可以通过调用admin接口对服务进行管理。 管理接口包括更新配置、查看版本、修改日志级别、查看框架运行时信息等功能，同时框架也支持用户自定义管理接口，以满足业务定制化需求.
 
 详细介绍见：[架构设计](docs/zh/architecture_design.md)
 
 ## 特点
 
 * Runtime
-  * 线程模型: `fiber(m:n coroutine)` and `thread(io/handle merge or separate)`
-  * io模型: `reactor(for network)` and `async-io(for disk)`
+  * 线程模型: 支持 `fiber(m:n coroutine)` and `thread(io/handle merge or separate)`
+  * io模型: 支持 `reactor(for network)` and `async-io(for disk)`
 * 服务端
   * 网络传输: 支持 `tcp/udp/ssl/unix domain socket`
   * 开发方式: 支持 `rpc/stream-rpc/non-rpc`
@@ -55,4 +67,4 @@ tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则�
 
 ## 如何贡献
 
-如果您有兴趣进行贡献，请查阅[贡献指南](CONTRIBUTING.md)并检查 [issues][] 中未分配的问题。认领一个任务，让我们一起为 tRPC-Cpp 做出贡献。
+如果您有兴趣进行贡献，请查阅[贡献指南](CONTRIBUTING.md)并检查 [issues](https://github.com/trpc-group/trpc-cpp/issues) 中未分配的问题。认领一个任务，让我们一起为 tRPC-Cpp 做出贡献。
