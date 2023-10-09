@@ -77,7 +77,7 @@ const int kMaxTokenNum = 10;
 
 ## Commit规范
 
-请参考[编写良好的提交消息](CONTRIBUTING_zh.md#编写良好的提交消息)。
+请参考[编写良好的提交消息](CONTRIBUTING.zh_CN.md#编写良好的提交消息)。
 
 ## 版本规范
 
