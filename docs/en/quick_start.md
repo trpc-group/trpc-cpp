@@ -2,7 +2,7 @@
 
 ## Overview
 
-This article guide gets you started with tRPC-Cpp with a simple working example.
+This guide gets you started with tRPC-Cpp with a simple working example.
 
 ## Install development environment
 

@@ -4,9 +4,9 @@ Welcome to use tRPC-Cpp. The tRPC-Cpp framework is the cpp version of tRPC. It f
 ## What tRPC-Cpp can do
 
 You can use it:
-- You can build support multiple protocols (one port can only correspond to one protocol) services ([trpc](todo)/[http(s)](todo)/[grpc](todo) etc.), and can handle client requests by synchronized/asynchronously .
-- You can access various protocol backend services ([trpc](todo)/[http(s)](todo)/[grpc](todo) etc.) synchronously, asynchronously and one-way, and call various storage systems (redis, etc.), and automatically integrate monitoring/tracing capabilities, making service development and operation more convenient and simple.
-- Support streaming rpc programming([trpc streaming](todo), [grpc streaming](todo), [http streaming](todo) etc.), to implement streaming applications like push, file upload, video/voice, etc.
+- You can build support multiple protocols (one port can only correspond to one protocol) services ([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_service.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_service.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_service.md) etc.), and can handle client requests by synchronized/asynchronously .
+- You can access various protocol backend services ([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_client.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_client.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_client.md) etc.) synchronously, asynchronously and one-way, and call various storage systems (redis, etc.), and automatically integrate monitoring/tracing capabilities, making service development and operation more convenient and simple.
+- Support streaming rpc programming([trpc streaming](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_streaming_service.md), [grpc streaming](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_streaming_service.md), [http streaming upload/download](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_upload_download_service.md) etc.), to implement streaming applications like push, file upload, video/voice, etc.
 - Support various protocols and connect with service management systems by plug-in, such as: developing custom protocols, connect with naming/metrics/tracing/config/logging systems, etc., to facilitate service interoperability and service operation.
 - Different application scenarios can choose different runtime models to meet the performance requirements of different business scenarios such as io-bound, cpu-bound, stateful business logic, and disk storage. For example: io-bound scenarios (such as : business access gateway/nosql storage) can choose merge mode, cpu-bound scenarios (such as: recommendation/search, etc.) can choose fiber (m:n coroutine), and business stateful scenarios (such as: the single-threaded mode commonly used in game business) can choose separation mode.
 - You can manage and debug services through admin interface.
@@ -35,14 +35,14 @@ In terms of specific implementation, we also optimize the performance of the fra
 
 - Ecologically rich
 
-At present, most of Tencent's internal communication protocols and service management systems have supported by plug-in, and also support mainstream ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
+At present, most of Tencent's internal communication protocols and service management systems have supported by plug-in, and also support ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
 
 ## How to use tRPC-Cpp
 
 Before you get started, you should have basic theoretical knowledge, including but not limited to:
 - [RPC Concepts](https://cloud.tencent.com/developer/article/1343888), calling remote service interfaces is like calling local functions and can make it easier for you to create distributed applications.
 
-- [tRPC Terminology](todo) Introduction, as it is important to understand the core concepts in tRPC design in advance, especially the meaning of Service Name and Proto Name, and their interrelationship.
+- [tRPC Terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md) Introduction, as it is important to understand the core concepts in tRPC design in advance, especially the meaning of Service Name and Proto Name, and their interrelationship.
 
 - [proto3 knowledge](https://developers.google.com/protocol-buffers/docs/proto3), a cross-language protocol describing the service interface, is simple, convenient, and universal.
 
@@ -50,10 +50,8 @@ With the above basic theoretical knowledge in mind, we recommend learning tRPC-C
 
 - [Quick start](quick_start.md): through a simple Hello World example, establish a preliminary understanding of tRPC-Cpp, and understand the basic process of developing a background service.
 
-- [Development specifications](): be sure to follow the tRPC-Cpp development specification, especially the code specification inside.
+- [Development specifications](../../DEVELOP_SPECIFICATIONS.md): be sure to follow the tRPC-Cpp development specification, especially the code specification inside.
 
 - [User Guide](../README.md): the above steps have enabled you to develop simple services, but not enough, advanced knowledge needs to continue to read in detail to deal with a variety of complex scenarios.
 
 - [FAQ](): If you encounter a problem, you should check the FAQ first, and raise an issue if you can't solve it.
-
-You can find the source code repository of tRPC-Cpp from [here](https://github.com/trpc-group/trpc-cpp), and you can read the source code directly.

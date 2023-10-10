@@ -56,7 +56,7 @@ bazel --version
 ## 进入根目录trpc-cpp
 cd trpc-cpp
 
-## 用bazel编译并运行框架提供的example实例
+## 用bazel编译并运行框架提供的example示例
 ./run_examples.sh
 ```
 
@@ -73,14 +73,14 @@ ln -s /usr/bin/cmake3 /usr/bin/cmake
 cmake -version
 ```
 
-**2. example编译并运行**
+**2. 编译并运行examples**
 
 仓库clone到本地之后，直接编译运行即可，具体如下：
 ``` 
 ## 进入根目录trpc-cpp
 cd trpc-cpp
 
-## 用cmake编译并运行框架提供的example实例
+## 用cmake编译并运行框架提供的examples
 ./run_examples_cmake.sh
 ```
 
@@ -92,7 +92,7 @@ cd trpc-cpp
 
 目前支持两种编译方式:bazel或者cmake。
 
-#### 使用bazel编译运行
+#### 使用bazel
 
 bazel 推荐使用3.5.1及以后版本。
 
@@ -114,18 +114,19 @@ rm -rf /root/env
 bazel --version 
 ```
 
-**2. example编译并运行**
+**2. 编译并运行examples**
 
 仓库clone到本地之后，直接编译运行即可，具体如下：
 ``` 
 ## 进入根目录trpc-cpp
 cd trpc-cpp
 
-## 用bazel编译并运行框架提供的example实例
+## 用bazel编译并运行框架提供的example示例
 ./run_examples.sh
 ```
 
-#### 使用cmake编译运行
+#### 使用cmake
+
 因为需要使用cmake的FetchContent特性来源码拉取第三方依赖，所以**cmake推荐使用3.14及以后版本**。
 
 **1. cmake安装(仅供参考，还有其他方式)**
@@ -137,14 +138,14 @@ apt install cmake
 cmake -version
 ```
 
-**2. example编译并运行**
+**2. 编译并运行examples**
 
 仓库clone到本地之后，直接编译运行即可，具体如下：
 ``` 
 ## 进入根目录trpc-cpp
 cd trpc-cpp
 
-## 用cmake编译并运行框架提供的example实例
+## 用cmake编译并运行框架提供的example示例
 ./run_examples_cmake.sh
 ```
 ## FAQ

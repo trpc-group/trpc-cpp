@@ -2,7 +2,7 @@ English | [中文](README.zh_CN.md)
 
 # tRPC-Cpp
 
-**tRPC-Cpp is the cpp version of tRPC, it follows the overall design principles of tRPC. **
+tRPC-Cpp is the cpp version of tRPC, it follows the overall design principles of tRPC.
 
 ## Overall Architecture
 
@@ -29,26 +29,26 @@ more details：[architecture design](docs/en/architecture_design.md)
   * io-model: support `reactor(for network)` and `async-io(for disk)`
 * Server
   * network: support `tcp/udp/ssl/unix domain socket`
-  * rpc-impl: support `rpc/stream-rpc/non-rpc`
+  * rpc-impl: support `rpc/streaming-rpc/non-rpc`
 * Client
   * network: support `tcp/udp/ssl`
   * connection-way: support `conn-complex/conn-pool/conn-pipeline`
-  * rpc-call: support `rpc/stream-rpc/non-rpc/one-way`
+  * rpc-call: support `rpc/streaming-rpc/non-rpc/one-way`
 * Plugin
   * protocol(codec): support `trpc/http(s/2.0)/grpc/...`
-  * serialization/deserialization: support `pb/flatbuffers/json/noop(text or binary)`
-  * compressor/decompressor: support `gzip/zlib/snappy/lz4`
-  * naming: support `polarismesh`
-  * config: support `etcd`
-  * logging: support `cls`
-  * metrics: support `prometheus`
-  * tracing: support `jaeger`
-  * telemetry: support `opentelemetry`
+  * serialization/deserialization: support `[pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/serialization.md)`
+  * compressor/decompressor: support `[gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/compression.md)`
+  * naming: support `[polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)`
+  * config: support `[etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)`
+  * logging: support `[cls](https://github.com/trpc-ecosystem/cpp-logging-cls)`
+  * metrics: support `[prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/prometheus_metrics.md)`
+  * tracing: support `[jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)`
+  * telemetry: support `[opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)`
 * Tools
-  * support: `admin/tvar/rpcz`
-  * proto IDL dependency management
+  * support: `[admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/rpcz.md)`
+  * [proto IDL dependency management](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/proto_management.md)
 * Components
-  * redis
+  * [redis](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/redis_client_guide.md)
 
 ## To start using tRPC
 
