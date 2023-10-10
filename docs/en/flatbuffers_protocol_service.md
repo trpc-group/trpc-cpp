@@ -214,13 +214,13 @@ The three files, which are `greeter_generated.h`, `greeter.trpc.fb.cc`, and `gre
   
   ::trpc::Status FbGreeterServiceProxy::SayHello(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>& request, flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>* response) {
     context->SetFuncName(FbGreeter_method_names[0]);
-    context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+    context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
     return UnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>>(context, request, response);
   }
   
   ::trpc::Future<flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>> FbGreeterServiceProxy::AsyncSayHello(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>& request) {
     context->SetFuncName(FbGreeter_method_names[0]);
-    context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+    context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
     return AsyncUnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>>(context, request);
   }
   
@@ -230,7 +230,7 @@ The three files, which are `greeter_generated.h`, `greeter.trpc.fb.cc`, and `gre
   ```
 
   The server-side method `FbGreeter::SayHello` has a default empty implementation. Users must inherit and override this method; otherwise, an error message will be returned.
-  The client-side methods provide two options: `FbGreeterServiceProxy::SayHello` for synchronous calls and `FbGreeterServiceProxy::AsyncSayHello` for asynchronous calls. For the client, these methods can be used directly without the need for inheritance and overriding. The line `context->SetEncodeType(trpc::EncodeType::FLATBUFFER)` indicates setting the data encoding type to `flatbuffer`.
+  The client-side methods provide two options: `FbGreeterServiceProxy::SayHello` for synchronous calls and `FbGreeterServiceProxy::AsyncSayHello` for asynchronous calls. For the client, these methods can be used directly without the need for inheritance and overriding. The line `context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER)` indicates setting the data encoding type to `flatbuffer`.
 
 ### The BUILD file for forward.fbs with dependencies is as follows
 

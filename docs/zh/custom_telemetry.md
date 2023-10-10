@@ -56,7 +56,7 @@ class Telemetry : public Plugin {
 * 实现客户端拦截器/服务端拦截器：管理内部的调用链拦截器、监控拦截器实例。
 * 注册遥测插件和对应的拦截器。
 
-具体实现例子可以参考[OpenTelemetry插件](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/)的实现。
+具体实现例子可以参考[OpenTelemetry插件](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/)的实现。
 
 ## 实现遥测插件
 
@@ -82,7 +82,7 @@ class Telemetry : public Plugin {
 
 * 内部监控插件实例由遥测插件管理，不能调用`RegisterMetrics`注册到监控插件工厂中。
 
-    由于没有注册到监控插件工厂，所以无法使用框架[统一的属性上报接口](../../trpc/metrics/trpc_metrics_report.h)进行属性监控上报。**插件开发者应该另外提供一组适配自身监控数据的、方便用户使用的属性上报API接口**，例如[OpenTelemetry插件的监控API](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/blob/master/trpc/telemetry/opentelemetry/metrics/opentelemetry_metrics_api.h)。
+    由于没有注册到监控插件工厂，所以无法使用框架[统一的属性上报接口](../../trpc/metrics/trpc_metrics_report.h)进行属性监控上报。**插件开发者应该另外提供一组适配自身监控数据的、方便用户使用的属性上报API接口**，例如[OpenTelemetry插件的监控API](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/blob/master/trpc/telemetry/opentelemetry/metrics/opentelemetry_metrics_api.h)。
 
 ## 实现拦截器
 

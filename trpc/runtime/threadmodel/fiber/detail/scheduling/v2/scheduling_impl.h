@@ -48,9 +48,9 @@ namespace trpc::fiber::detail::v2 {
 ///        3. Taskflow's native notifier is used for inter-thread communication, reducing notification overhead.
 ///        4. In Taskflow's task scheduling, tasks cannot block the thread during execution. Once this happens, one of
 ///        the threads will consume 100% of the CPU. However, when the fiber reactor executes epoll_wait and there are
-///        no network events, it may block the thread. To solve this problem, we treat the reactor fiber as an special type
-///        fiber and put it into the separate queue to avoid frequent detection of reactor tasks in the running queue,
-///        which would cause the worker thread to be unable to sleep and result in 100% CPU usage.
+///        no network events, it may block the thread. To solve this problem, we treat the reactor fiber as an special
+///        type fiber and put it into the separate queue to avoid frequent detection of reactor tasks in the running
+///        queue, which would cause the worker thread to be unable to sleep and result in 100% CPU usage.
 class alignas(hardware_destructive_interference_size) SchedulingImpl final : public trpc::fiber::detail::Scheduling {
  public:
   bool Init(SchedulingGroup* scheduling_group, std::size_t scheduling_group_size) noexcept override;
@@ -104,8 +104,8 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
   // GlobalQueue global_queue_;
   v1::RunQueue global_queue_;
   // yield queue used to store yield fiber tasks with the lowest priority
-  // the existence of this queue is to prevent other fiber tasks in different queues from being blocked when a fiber yields
-  // GlobalQueue yield_fiber_queue_;
+  // the existence of this queue is to prevent other fiber tasks in different queues from being blocked when a fiber
+  // yields GlobalQueue yield_fiber_queue_;
   v1::RunQueue yield_fiber_queue_;
   // local queue of each fiber worker thread
   std::unique_ptr<LocalQueue[]> local_queues_;
@@ -115,6 +115,6 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
   std::vector<std::size_t> vtm_;
 
   std::atomic<bool> stopped_{false};
-    };
+};
 
 }  // namespace trpc::fiber::detail::v2

@@ -56,7 +56,7 @@ According to the specifications of the Telemetry plugin, it is evident that its 
 * Implement client filter and server filter: manage internal instances of tracing filters and metrics filters.
 * Registering the Telemetry plugin and its corresponding filters.
 
-You can refer to the implementation of the [OpenTelemetry plugin](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/) for specific examples.
+You can refer to the implementation of the [OpenTelemetry plugin](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/) for specific examples.
 
 ## Implement Telemetry plugin
 
@@ -82,7 +82,7 @@ Notes:
 
 * The internal instance of Metrics plugin are managed by the Telemetry plugin and should not be registered with the metrics plugin factory using `RegisterMetrics`.
 
-    Since it is not registered with the metrics plugin factory, it is not possible to use the framework's [unified attribute reporting interfaces](../../trpc/metrics/trpc_metrics_report.h) for attribute reporting. **The developers should provide a set of attribute reporting API interfaces that are adapted to their own metrics data and convenient for users to use**, such as the [metrics APIs of the OpenTelemetry plugin](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/blob/master/trpc/telemetry/opentelemetry/metrics/opentelemetry_metrics_api.h).
+    Since it is not registered with the metrics plugin factory, it is not possible to use the framework's [unified attribute reporting interfaces](../../trpc/metrics/trpc_metrics_report.h) for attribute reporting. **The developers should provide a set of attribute reporting API interfaces that are adapted to their own metrics data and convenient for users to use**, such as the [metrics APIs of the OpenTelemetry plugin](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/blob/master/trpc/telemetry/opentelemetry/metrics/opentelemetry_metrics_api.h).
 
 ## Implement filters
 

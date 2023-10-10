@@ -1,7 +1,7 @@
 tRPC-Cpp  Service Management Console 
 
 1. Setting up the compilation environment
-   Reference: [https://git.oa.com/trpc-cpp/trpc-cpp/wikis/%E5%BC%80%E5%8F%91%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83/%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%BC%95/](https://git.oa.com/trpc-cpp/trpc-cpp/wikis/%E5%BC%80%E5%8F%91%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83/%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%BC%95/)
+   Reference: [Compile & Install](../../docs/en/setup_env.md)
 
 2. Compiling 
    Execute the following command in the "trpc-cpp" root directory:

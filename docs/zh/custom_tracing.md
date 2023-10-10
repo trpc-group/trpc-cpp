@@ -86,7 +86,7 @@ struct ClientTracingSpan {
 * 实现两个拦截器：在RPC调用过程中进行链路串联和信息上报。
 * 注册调用链插件和对应的拦截器。
 
-具体实现例子可以参考[OpenTelemetry插件的Tracing功能实现](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/tree/master/trpc/telemetry/opentelemetry/tracing)。
+具体实现例子可以参考[OpenTelemetry插件的Tracing功能实现](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/tree/master/trpc/telemetry/opentelemetry/tracing)。
 
 ## 实现调用链插件
 

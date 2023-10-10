@@ -24,7 +24,8 @@ namespace trpc::testing {
 
 class TestHandler : public trpc::http::HttpHandler {
  public:
-  trpc::Status Handle(const trpc::ServerContextPtr&, const trpc::http::RequestPtr& req, trpc::http::Response* rsp) override {
+  trpc::Status Handle(const trpc::ServerContextPtr&, const trpc::http::RequestPtr& req,
+                      trpc::http::Response* rsp) override {
     rsp->Done("json");
     return trpc::kSuccStatus;
   }

@@ -214,13 +214,13 @@ trpc_fbs_library(
   
   ::trpc::Status FbGreeterServiceProxy::SayHello(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>& request, flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>* response) {
     context->SetFuncName(FbGreeter_method_names[0]);
-    context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+    context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
     return UnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>>(context, request, response);
   }
   
   ::trpc::Future<flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>> FbGreeterServiceProxy::AsyncSayHello(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>& request) {
     context->SetFuncName(FbGreeter_method_names[0]);
-    context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+    context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
     return AsyncUnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::FbRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::FbReply>>(context, request);
   }
   
@@ -230,7 +230,7 @@ trpc_fbs_library(
   ```
 
   服务端方法`FbGreeter::SayHello`默认空实现，用户必须继承重写，否则返回错误信息。
-  客户端方法提供两种：`FbGreeterServiceProxy::SayHello`同步调用；`FbGreeterServiceProxy::AsyncSayHello`异步调用。对于客户端而言，可以直接使用，不必继承重写，其中`context->SetEncodeType(trpc::EncodeType::FLATBUFFER)`表示设置数据编码为`flatbuffer`类型
+  客户端方法提供两种：`FbGreeterServiceProxy::SayHello`同步调用；`FbGreeterServiceProxy::AsyncSayHello`异步调用。对于客户端而言，可以直接使用，不必继承重写，其中`context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER)`表示设置数据编码为`flatbuffer`类型
 
 ### 有依赖forward.fbs对应的BUILD文件
 

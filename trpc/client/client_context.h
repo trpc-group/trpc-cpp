@@ -615,7 +615,8 @@ class ClientContext : public RefCounted<ClientContext> {
   /// The time accuracy is 100us level.
   uint64_t GetRecvTimestampUs() const { return metrics_info_.recv_timestamp_us; }
 
-  /// @brief Framework use, or for testing. Set the time point (us) when the processing of request and response is complete.
+  /// @brief Framework use, or for testing. Set the time point (us) when the processing
+  /// of request and response is complete.
   void SetEndTimestampUs(uint64_t value) { metrics_info_.end_timestamp_us = value; }
 
   /// @brief Get the time point (us) when the processing of request and response is complete.

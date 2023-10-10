@@ -359,7 +359,7 @@ void PrintSourceClientMethod(Printer* printer, const Method* method, std::map<st
                    "const $ns$$Request$& request, $ns$$Response$* response) {\n");
 
     printer->Print(*vars, "  context->SetFuncName($Service$_method_names[$Idx$]);\n");
-    printer->Print(*vars, "  context->SetEncodeType(trpc::EncodeType::FLATBUFFER);\n");
+    printer->Print(*vars, "  context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);\n");
     printer->Print(*vars,
                    "  return UnaryInvoke<$ns$$Request$, $ns$$Response$>("
                    "context, request, response);\n}\n\n");
@@ -369,7 +369,7 @@ void PrintSourceClientMethod(Printer* printer, const Method* method, std::map<st
                    "const ::trpc::ClientContextPtr& context, "
                    "const $ns$$Request$& request) {\n");
     printer->Print(*vars, "  context->SetFuncName($Service$_method_names[$Idx$]);\n");
-    printer->Print(*vars, "  context->SetEncodeType(trpc::EncodeType::FLATBUFFER);\n");
+    printer->Print(*vars, "  context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);\n");
     printer->Print(*vars,
                    "  return AsyncUnaryInvoke<$ns$$Request$, $ns$$Response$>("
                    "context, request);\n}\n");
