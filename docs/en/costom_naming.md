@@ -3,7 +3,7 @@
 [TOC]
 ## 1. Overview
 
-The tRPC-Cpp framework's naming module provides service discovery, service registration/heartbeat reporting, and traffic limiting related functions, including selector, registry, and limiter plugins. Users can use the naming module's functions based on the tRPC client service proxy (combined with specific framework configuration items or service proxy configuration items) or through the external API interface of the naming module (located in trpc/naming/trpc_naming.h). On this basis, users can develop custom naming service plugins.
+The naming module of the tRPC-Cpp framework provides service discovery, service registration/heartbeat reporting, and rate limiting related functions, including selector, registry, and limiter plugins. Users can use the naming module's functions based on the tRPC client service proxy (combined with specific framework configuration items or service proxy configuration items) or through the external API interface of the naming module (located in trpc/naming/trpc_naming.h). Based on this, users can develop custom naming service plugins.
 
 In this document, we will guide developers on how to develop custom naming service plugins.
 
@@ -13,9 +13,9 @@ To implement a custom naming service plugin, you need to complete the following 
 
 ### 2.1 Implement the naming service base class interface
 
-First, the plugin developer needs to create a class, inherit from the corresponding naming service base class (such as trpc::Limiter, trpc::Registry, or trpc::Selector), and implement the methods in the base class. Next, we provide examples for custom limiter plugins (CustomLimiter), custom service registration plugins (CustomRegistry), and custom service selector plugins (CustomSelector).
+First, the plugin developer needs to create a class that inherits from the corresponding naming service base class (such as trpc::Limiter, trpc::Registry, or trpc::Selector) and implement the methods in the base class. Next, we provide examples for custom rate limiter plugins (CustomLimiter), custom service registry plugins (CustomRegistry), and custom service selector plugins (CustomSelector).
 
-Custom limiter plugin example:
+Custom rate limiter plugin example:
 
 **custom_limiter.h**
 
@@ -63,10 +63,10 @@ int CustomLimiter::FinishLimit(const LimitResult* result) {
 
 }  // namespace trpc::custom_limiter
 ```
-In this example, the CustomLimiter class inherits from the trpc::Limiter base class and implements the ShouldLimit() and FinishLimit() methods. Developers can modify this example according to actual needs to support custom limiter plugins.
+In this example, the CustomLimiter class inherits from the trpc::Limiter base class and implements the ShouldLimit() and FinishLimit() methods. Developers can modify this example according to actual needs to implement support for custom rate limiter plugins.
 
+Custom service registry plugin example:
 
-Custom service registration plugin example:
 **custom_registry.h**
 
 ```cpp
@@ -113,10 +113,10 @@ int CustomRegistry::Unregister(const TrpcRegistryInfo& info) {
 
 }  // namespace trpc::custom_registry
 ```
-In this example, the CustomRegistry class inherits from the `trpc::Registry base class and implements the Register() and Unregister() methods. Developers can modify this example according to actual needs to support custom service registration plugins.
-
+In this example, the CustomRegistry class inherits from the trpc::Registry base class and implements the Register() and Unregister() methods. Developers can modify this example according to actual needs to implement support for custom service registry plugins.
 
 Custom service selector plugin example:
+
 **custom_selector.h**
 
 ```cpp
@@ -152,39 +152,57 @@ CustomSelector::CustomSelector() {
 }
 
 int CustomSelector::Select(const TrpcSelectorInfo& info, TrpcEndpointInfo& endpoint) {
- 
 ```
-In this example, the CustomSelector class inherits from the trpc::Selector base class and implements the Select() method. Developers can modify this example according to actual needs to support custom service selector plugins.
+In this example, the CustomSelector class inherits from the trpc::Selector base class and implements the Select() method.
+
+Developers can modify this example according to actual needs to implement support for custom service selector plugins.
+Additionally, if users need to rely on the framework to automatically trigger rate limiting and route selection functions, they need to implement the corresponding Limiter and Selector plugins according to the [Custom Interceptor](./filter.md) document, so as to connect the rate limiting and route selection functions to the entire framework process.
 
 ### 2.2 Register custom naming service plugins
 
-After creating the custom naming service plugins, you need to register them with the corresponding naming service factory (such as trpc::LimiterFactory, trpc::RegistryFactory, or trpc::SelectorFactory). The following is an example of registering a custom limiter plugin with trpc::LimiterFactory:
-**custom_limiter_api.cc**
+After creating the custom naming service plugins, you need to register them with the corresponding naming service factory.
 
+1. For the server-side scenario, users need to register in the TrpcApp::RegisterPlugins function during service startup:
 ```cpp
-#include "trpc/naming/limiter_factory.h"
-#include "custom_limiter_api.h"
-#include "custom_limiter.h"
+class HelloworldServer : public ::trpc::TrpcApp {
+ public:
+  ...
+  int RegisterPlugins() override {
+    // Register Limiter plugin and its corresponding server/client filter
+    TrpcPlugin::GetInstance()->RegisterLimiter(MakeRefCounted<CustomLimiter>());
+    TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomLimiterClientFilter>());
+    TrpcPlugin::GetInstance()->RegisterServerFilter(std::make_shared<CustomLimiterServerFilter>());
 
-namespace trpc::custom_limiter {
+    // Register Registry plugin
+    TrpcPlugin::GetInstance()->RegisterRegistry(MakeRefCounted<CustomSelector>());
 
-int Init() {
-  auto custom_limiter = MakeRefCounted<CustomLimiter>();
-  // Initialization operations, such as passing configuration parameters, etc.
-  custom_limiter->Init();
+    // Register Selector plugin and its corresponding filter
+    TrpcPlugin::GetInstance()->RegisterSelector(MakeRefCounted<CustomSelector>());
+    TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomSelectorFilter>());
 
-  // Get the limiter factory instance
-  auto limiter_factory = trpc::LimiterFactory::GetInstance();
-
-  // Register the custom limiter plugin
-  limiter_factory->Register(custom_limiter);
-
-  return 0;
-}
-
-}  // namespace trpc::custom_limiter
+    return 0;
+  }
+};
 ```
-Similarly, you can register custom service registration plugins and service selector plugins with the corresponding naming service factories.
+
+2. For the pure client-side scenario, you need to register after the framework configuration initialization and before the start of other framework modules:
+```
+int main(int argc, char* argv[]) {
+  ParseClientConfig(argc, argv);
+
+  // Register Limiter plugin and its corresponding client filter
+  TrpcPlugin::GetInstance()->RegisterLimiter(MakeRefCounted<CustomLimiter>());
+  TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomLimiterClientFilter>());
+
+  // Register Selector plugin and its corresponding filter
+  TrpcPlugin::GetInstance()->RegisterSelector(MakeRefCounted<CustomSelector>());
+  TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomSelectorFilter>());
+
+  return ::trpc::RunInTrpcRuntime([]() { return Run(); });
+}
+```
+
+**Note that the plugins and interceptors only need to be constructed, and the framework will automatically call their `Init` functions during startup.**
 
 ## 3. Use the trpc_naming.h interface
 
@@ -202,13 +220,13 @@ plugins: # Plugin configuration
   limiter:  # Access traffic control configuration
     custom_limiter: # Use custom limiter plugin
 ```
-In this example, we added the names of custom plugins (custom_registry, custom_selector, custom_limiter) to the corresponding configuration items. The framework will parse the configuration file and use the corresponding plugins.
+In this example, we added the names of the custom plugins (custom_registry, custom_selector, custom_limiter) to the corresponding configuration items. The framework will parse the configuration file and use the corresponding plugins accordingly.
 
-Please note that the specific configuration parsing process is completed by the framework, and you only need to ensure that the plugin names in the configuration file match the names of the custom plugins you developed.
+It should be noted that the specific configuration parsing process is completed by the framework, and you only need to ensure that the plugin names in the configuration file match the names of your custom plugins.
 
 ## 4. Use custom naming service plugins
 
-After completing the development, registration, and configuration of custom naming service plugins, you can use these plugins in the program to complete service registration, service discovery, and traffic limiting operations. The following are examples of using the trpc_naming.h interface for operations:
+After completing the development, registration, and configuration of custom naming service plugins, you can use these plugins in your program to complete service registration, service discovery, and rate limiting operations. Here are examples of using the interfaces provided by trpc_naming.h to perform operations:
 
 ### 4.1 Service registration
 
@@ -221,10 +239,9 @@ void RegisterService() {
   registry_info.endpoint.ip = "127.0.0.1";
   registry_info.endpoint.port = 8080;
     
-  trpc::TrpcNaming trpc_naming;
-  int ret = trpc_naming.Register(registry_info);
+  int ret = trpc::naming::Register(registry_info);
   if (ret != 0) {
-    // Handle registration failure situations
+    // Handle registration failure
   }
 }
 ```
@@ -239,17 +256,16 @@ void DiscoverService() {
   selector_info.service_name = "my_service";
 
   trpc::TrpcEndpointInfo endpoint;
-  trpc::TrpcNaming trpc_naming;
-  int ret = trpc_naming.Select(selector_info, endpoint);
+  int ret = trpc::naming::Select(selector_info, endpoint);
   if (ret != 0) {
-    // Handle service discovery failure situations
+    // Handle service discovery failure
   } else {
     // Use the found service endpoint for communication
   }
 }
 ```
 
-### 4.3 Traffic limiting operations
+### 4.3 Rate limiting operation
 
 ```cpp
 #include "trpc/naming/trpc_naming.h"
@@ -260,25 +276,24 @@ void PerformLimiter() {
   limit_info.caller_ip = "127.0.0.1";
   limit_info.caller_port = 12345;
 
-  trpc::TrpcNaming trpc_naming;
-  trpc::LimitRetCode ret_code = trpc_naming.ShouldLimit(&limit_info);
+  trpc::LimitRetCode ret_code = trpc::naming::ShouldLimit(&limit_info);
   if (ret_code != trpc::kLimitRetCodeAllow) {
-    // Handle traffic limiting situations
+    // Handle rate limiting
   } else {
-    // No traffic limiting triggered, continue with subsequent operations
+    // Continue with subsequent operations without triggering rate limiting
   }
 }
 ```
-These examples demonstrate how to use the trpc_naming.h interface to complete service registration, service discovery, and traffic limiting operations. Please note that these examples assume that you have completed the development, registration, and configuration of custom naming service plugins. In actual use, you need to adjust these examples according to the actual needs and functionality of custom plugins.
+These examples demonstrate how to use the interfaces provided by trpc_naming.h to complete service registration, service discovery, and rate limiting operations. Please note that these examples assume that you have completed the development, registration, and configuration of custom naming service plugins. In actual use, you need to adjust these examples according to your actual needs and the functionality of your custom plugins.
 
 ## 5. Conclusion
 
-This document introduces how to develop custom naming service plugins (including limiter plugins, service registration plugins, and service selector plugins) and demonstrates how to use the trpc_naming.h interface to complete service registration, service discovery, and traffic limiting operations.
+This document introduces how to develop custom naming service plugins (including rate limiter plugins, service registry plugins, and service selector plugins) and demonstrates how to use the interfaces provided by trpc_naming.h to complete service registration, service discovery, and rate limiting operations.
 
-The key steps to develop custom naming service plugins are:
+The key steps to develop custom naming service plugins are as follows:
 
-1. Create a class, inherit from the corresponding naming service base class (such as trpc::Limiter, trpc::Registry, or trpc::Selector), and implement the methods in the base class.
-2. Register the custom plugin with the corresponding naming service factory (such as trpc::LimiterFactory, trpc::RegistryFactory, or trpc::SelectorFactory).
-3. Add custom plugin configurations to the configuration file.
+1. Create a class that inherits from the corresponding naming service base class (such as trpc::Limiter, trpc::Registry, or trpc::Selector) and implement the methods in the base class. And implement the corresponding filter.
+2. Register the custom plugin and filter with the framework.
+3. Add the custom plugin configuration in the configuration file.
 
-After completing these steps, you can use the trpc_naming.h interface in the program to complete service registration, service discovery, and traffic limiting operations. We hope these examples and guidance will be helpful for you in developing custom naming service plugins in actual projects.
+After completing these steps, you can use the interfaces provided by trpc_naming.h in your program to complete service registration, service discovery, and rate limiting operations.

@@ -64,7 +64,6 @@ int CustomLimiter::FinishLimit(const LimitResult* result) {
 ```
 在这个示例中，CustomLimiter 类继承自 trpc::Limiter 基类，并实现了 ShouldLimit() 和 FinishLimit() 方法。开发者可以根据实际需求修改这个示例，以实现对自定义限流器插件的支持。
 
-
 自定义服务注册插件示例：
 **custom_registry.h**
 
@@ -155,35 +154,53 @@ int CustomSelector::Select(const TrpcSelectorInfo& info, TrpcEndpointInfo& endpo
 ```
 在这个示例中，CustomSelector 类继承自 trpc::Selector 基类，并实现了 Select() 方法。开发者可以根据实际需求修改这个示例，以实现对自定义服务选择器插件的支持。
 
+另外，如果用户需要依赖框架自动触发限流及路由选择功能的话，还需要依据[自定义拦截器](./filter.md)文档，实现对应的Limiter和Selector插件，从而将限流和路由选择功能串联到整个框架流程中。
+
 ### 2.2 注册自定义名字服务插件
 
-在创建完自定义的名字服务插件后，您需要将其注册到相应的名字服务工厂（如trpc::LimiterFactory、trpc::RegistryFactory或trpc::SelectorFactory）中。以下是将自定义限流器插件注册到trpc::LimiterFactory的示例：
-**custom_limiter_api.cc**
+在创建完自定义的名字服务插件后，您需要将其注册到相应的名字服务工厂。
 
+1. 对于服务端场景，用户需要在服务启动的`TrpcApp::RegisterPlugins`函数中注册：
 ```cpp
-#include "trpc/naming/limiter_factory.h"
-#include "custom_limiter_api.h"
-#include "custom_limiter.h"
+class HelloworldServer : public ::trpc::TrpcApp {
+ public:
+  ...
+  int RegisterPlugins() override {
+    // 注册Limiter插件及其对应的server/client filter
+    TrpcPlugin::GetInstance()->RegisterLimiter(MakeRefCounted<CustomLimiter>());
+    TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomLimiterClientFilter>());
+    TrpcPlugin::GetInstance()->RegisterServerFilter(std::make_shared<CustomLimiterServerFilter>());
 
-namespace trpc::custom_limiter {
+    // 注册Registry插件
+    TrpcPlugin::GetInstance()->RegisterRegistry(MakeRefCounted<CustomSelector>());
 
-int Init() {
-  auto custom_limiter = MakeRefCounted<CustomLimiter>();
-  // 初始化操作，如传递配置参数等
-  custom_limiter->Init();
+    // 注册Selector插件及其对应的filter
+    TrpcPlugin::GetInstance()->RegisterSelector(MakeRefCounted<CustomSelector>());
+    TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomSelectorFilter>());
 
-  // 获取限流器工厂实例
-  auto limiter_factory = trpc::LimiterFactory::GetInstance();
-
-  // 注册自定义限流器插件
-  limiter_factory->Register(custom_limiter);
-
-  return 0;
-}
-
-}  // namespace trpc::custom_limiter
+    return 0;
+  }
+};
 ```
-类似地，您可以将自定义服务注册插件和服务选择器插件注册到相应的名字服务工厂中。
+
+2. 对于纯客户端场景，需要在启动框架配置初始化后，框架其他模块启动前注册：
+```cpp
+int main(int argc, char* argv[]) {
+  ParseClientConfig(argc, argv);
+
+  // 注册Limiter插件及其对应的client filter
+  TrpcPlugin::GetInstance()->RegisterLimiter(MakeRefCounted<CustomLimiter>());
+  TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomLimiterClientFilter>());
+
+  // 注册Selector插件及其对应的filter
+  TrpcPlugin::GetInstance()->RegisterSelector(MakeRefCounted<CustomSelector>());
+  TrpcPlugin::GetInstance()->RegisterClientFilter(std::make_shared<CustomSelectorFilter>());
+
+  return ::trpc::RunInTrpcRuntime([]() { return Run(); });
+}
+```
+
+**注意注册的插件和拦截器只需要构造即可，框架启动时会自动调用它们的`Init`函数进行初始化。**
 
 ## 3. 使用trpc_naming.h接口
 
@@ -220,8 +237,7 @@ void RegisterService() {
   registry_info.endpoint.ip = "127.0.0.1";
   registry_info.endpoint.port = 8080;
     
-  trpc::TrpcNaming trpc_naming;
-  int ret = trpc_naming.Register(registry_info);
+  int ret = trpc::naming::Register(registry_info);
   if (ret != 0) {
     // 处理注册失败的情况
   }
@@ -238,8 +254,7 @@ void DiscoverService() {
   selector_info.service_name = "my_service";
 
   trpc::TrpcEndpointInfo endpoint;
-  trpc::TrpcNaming trpc_naming;
-  int ret = trpc_naming.Select(selector_info, endpoint);
+  int ret = trpc::naming::Select(selector_info, endpoint);
   if (ret != 0) {
     // 处理服务发现失败的情况
   } else {
@@ -259,8 +274,7 @@ void PerformLimiter() {
   limit_info.caller_ip = "127.0.0.1";
   limit_info.caller_port = 12345;
 
-  trpc::TrpcNaming trpc_naming;
-  trpc::LimitRetCode ret_code = trpc_naming.ShouldLimit(&limit_info);
+  trpc::LimitRetCode ret_code = trpc::naming::ShouldLimit(&limit_info);
   if (ret_code != trpc::kLimitRetCodeAllow) {
     // 处理限流情况
   } else {
@@ -276,8 +290,8 @@ void PerformLimiter() {
 
 开发自定义名字服务插件的关键步骤如下：
 
-1. 创建一个类，继承自相应的名字服务基类（如trpc::Limiter、trpc::Registry或trpc::Selector），并实现基类中的方法。
-2. 将自定义插件注册到相应的名字服务工厂（如trpc::LimiterFactory、trpc::RegistryFactory或trpc::SelectorFactory）中。
+1. 创建一个类，继承自相应的名字服务基类（如trpc::Limiter、trpc::Registry或trpc::Selector），并实现基类中的方法。并实现相应的filter。
+2. 将自定义插件及filter注册到框架中。
 3. 在配置文件中添加自定义插件的配置。
 
 在完成这些步骤后，您可以在程序中使用trpc_naming.h提供的接口来完成服务注册、服务发现和限流操作。

@@ -43,7 +43,7 @@
       * []()
     * Naming插件
       * [开发自定义naming插件](./zh/custom_naming.md)
-      * [mesh-polaris]()
+      * [mesh-polaris](https://github.com/trpc-ecosystem/cpp-naming-polarismesh/blob/main/README.zh_CN.md)
     * Config插件
       * [开发自定义配置中心插件](./zh/custom_config.md)
       * [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd/blob/main/README.zh_CN.md)
