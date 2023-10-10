@@ -56,7 +56,6 @@ TEST_F(TestLoader, LoadSuccessful) {
 TEST_F(TestLoader, LoadUnsuccessful) {
   std::string invalid_configuration_path = "path/to/your/invalid/configuration/file";
 
-  // Unregistered codec and provider plug-ins are provided
   EXPECT_DEATH(config::DefaultConfigPtr cfg = config::detail::Load(
                    invalid_configuration_path,
                    {config::WithCodec("UnknownCodecPlugin"), config::WithProvider("UnknownProviderPlugin")}),

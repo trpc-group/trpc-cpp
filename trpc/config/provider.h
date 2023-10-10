@@ -25,8 +25,8 @@ using ProviderCallback = void (*)(const std::string& key, const std::string& val
 /// @brief The provider class is an abstract interface definition class for data providers.
 class Provider : public Plugin {
  public:
-  /// @brief  Plug-in Types
-  /// @return Return plug-in type
+  /// @brief  Plugin Types
+  /// @return Return plugin type
   PluginType Type() const override { return PluginType::kConfigProvider; }
 
   /// @brief Returns the data provider's name.

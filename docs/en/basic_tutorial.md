@@ -171,7 +171,7 @@ The specific implementation of the forward service can be divided into the follo
 1. Choose the runtime environment used by the forward service (we also call it the thread model), and set it in the global configuration item of the framework configuration;
 2. Define a process-level implementation class (here ForwardServer), inherit the `TrpcApp` class of the framework, and override its `RegisterPlugins`, `Initialize` and `Destroy` methods;
 3. Define a service-level implementation class (here ForwardServiceServiceImpl), inherit the service class defined by the proto file, and override the RPC method, where the first parameter of each RPC method is the context of the current RPC execution `ServerContext `;
-4. If necessary, complete the registration of the custom plug-in in the `RegisterPlugins` method in 1, for example: register the custom protocol `Codec`;
+4. If necessary, complete the registration of the custom plugin in the `RegisterPlugins` method in 1, for example: register the custom protocol `Codec`;
 5. Complete the process-level business initialization operation in the `Initialize` method in 1;
     1. First initialize the business-related logical operations that depend on the framework, such as: pull remote configuration, create and start a thread pool;
     2. After the business-related operations are completed, the Service registration operation is usually performed last. Here, the ForwardServiceServiceImpl object is created, and then call `RegisterService` to register it in the ForwardServer. Note that there will only be one ForwardServiceServiceImpl object in the process.

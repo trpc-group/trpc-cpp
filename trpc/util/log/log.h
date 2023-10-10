@@ -90,7 +90,7 @@ class Log : public RefCounted<Log> {
   /// @param  line_in       which line in the source file this log comes from
   /// @param  funcname_in   which function in the source file this log comes from
   /// @param  msg           Log message
-  /// @param  filter_data   Log extend message, Can be used for remote plug-ins
+  /// @param  filter_data   Log extend message, Can be used for remote plugins
   virtual void LogIt(const char* instance_name, Level level, const char* filename_in, int line_in,
                      const char* funcname_in, std::string_view msg,
                      const std::unordered_map<uint32_t, std::any>& filter_data = {}) const = 0;

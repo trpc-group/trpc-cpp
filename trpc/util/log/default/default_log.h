@@ -53,7 +53,7 @@ class DefaultLog : public Log {
   void Start() override;
   void Stop() override;
 
-  /// @brief Initialize the "default" log plug-in
+  /// @brief Initialize the "default" log plugin
   /// @return 0 on success, otherwise on fail.
   int Init();
 
@@ -118,7 +118,7 @@ class DefaultLog : public Log {
   bool InitRawSink(const char* logger_name);
 
   /// @brief Users need to call this interface to complete the registration of
-  /// the remote plug-in before the initialization of the trpc-cpp plug-in
+  /// the remote plugin before the initialization of the trpc-cpp plugin
   /// @param raw_sink The LoggingPtr object associated with the raw sink
   /// @return bool
   bool RegisterRawSink(const LoggingPtr& raw_sink);
