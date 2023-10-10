@@ -65,7 +65,7 @@
     * [压缩/解压缩](./zh/compression.md)
     * [附件](./zh/attachment.md)
     * [pb area](./zh/pb_arena.md)
-    * [backup-request]()
+    * [backup-request](./zh/backup_request.md)
   * Tools
     * [rpcz](./zh/rpcz.md)
     * [tvar](./zh/tvar.md)
