@@ -46,19 +46,19 @@
       * [mesh-polaris]()
     * Config插件
       * [开发自定义配置中心插件](./zh/custom_config.md)
-      * [etcd](https://git.woa.com/trpc-cpp/open-source/cpp-config-etcd/blob/master/README_zh.md)
+      * [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd/blob/main/README.zh_CN.md)
     * Metrics插件
       * [开发自定义metrics插件](./zh/custom_metrics.md)
       * [prometheus](./zh/prometheus_metrics.md)
     * Logging插件
       * [开发自定义logging插件](./zh/custom_logging.md)
-      * [cls](https://git.woa.com/trpc-cpp/open-source/cpp-logging-cls/blob/master/README_zh.md)
+      * [cls](https://github.com/trpc-ecosystem/cpp-logging-cls/blob/main/README.zh_CN.md)
     * Tracing插件
       * [开发自定义tracing插件](./zh/custom_tracing.md)
-      * [jaeger](https://git.woa.com/trpc-cpp/open-source/cpp-tracing-jaeger/blob/master/README_zh.md)
+      * [jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger/blob/main/README.zh_CN.md)
     * Telemetry插件
       * [开发自定义telemetry插件](./zh/custom_telemetry.md)
-      * [opentelemetry](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/blob/master/README_zh.md)
+      * [opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/blob/main/README.zh_CN.md)
   * 特性
     * [超时控制](./zh/timeout_control.md)
     * [序列化/反序列化](./zh/serialization.md)

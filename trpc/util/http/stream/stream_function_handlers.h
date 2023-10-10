@@ -23,7 +23,8 @@ namespace trpc::http {
 /// @brief StreamHandleFunction is a lambda expression executed as HTTP streaming handler.
 using StreamHandleFunction = std::function<trpc::Status(trpc::ServerContextPtr context, RequestPtr req, Response*)>;
 
-/// @brief StreamFuncHandler gets a lambda expression in the constructor, it will call that expression to get the result.
+/// @brief StreamFuncHandler gets a lambda expression in the constructor, 
+/// it will call that expression to get the result. 
 /// This is more suitable for simple HTTP streaming handlers.
 class StreamFuncHandler : public StreamHandlerBase {
  public:

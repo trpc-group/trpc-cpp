@@ -46,19 +46,19 @@ English | [中文](README.zh_CN.md)
       * [mesh-polaris]()
     * Config
       * [custom config plugin](./en/custom_config.md)
-      * [etcd](https://git.woa.com/trpc-cpp/open-source/cpp-config-etcd/blob/master/README.md)
+      * [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd/blob/main/README.md)
     * Metrics
       * [custom metrics plugin](./en/custom_metrics.md)
       * [prometheus](./en/prometheus_metrics.md)
     * Logging
       * [custom logging plugin](./en/custom_logging.md)
-      * [cls](https://git.woa.com/trpc-cpp/open-source/cpp-logging-cls/blob/master/README.md)
+      * [cls](https://github.com/trpc-ecosystem/cpp-logging-cls/blob/main/README.md)
     * Tracing
       * [custom tracing plugin](./en/custom_tracing.md)
-      * [jaeger](https://git.woa.com/trpc-cpp/open-source/cpp-tracing-jaeger/blob/master/README.md)
+      * [jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger/blob/main/README.md)
     * Telemetry
       * [custom telemetry plugin](en/custom_telemetry.md)
-      * [opentelemetry](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/blob/master/README.md)
+      * [opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/blob/master/README.md)
   * Features
     * [timeout control](./en/timeout_control.md)
     * [serialization](./en/serialization.md)

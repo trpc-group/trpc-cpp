@@ -21,16 +21,22 @@ namespace test {
 namespace helloworld {
 
 static const std::vector<std::vector<std::string_view>> Greeter_method_names = {
-  {"/trpc.test.helloworld.Greeter/SayHello"},
+    {"/trpc.test.helloworld.Greeter/SayHello"},
 };
 
 GreeterServiceTest::GreeterServiceTest() {
   for (const std::string_view& method : Greeter_method_names[0]) {
-    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(method.data(), ::trpc::MethodType::UNARY, new ::trpc::RpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(std::bind(&GreeterServiceTest::SayHello, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))));  // NOLINT
+    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(
+        method.data(), ::trpc::MethodType::UNARY,
+        new ::trpc::RpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(
+            std::bind(&GreeterServiceTest::SayHello, this, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3))));  // NOLINT
   }
 }
 
-::trpc::Status GreeterServiceTest::SayHello(::trpc::ServerContextPtr context, const ::trpc::test::helloworld::HelloRequest* req, ::trpc::test::helloworld::HelloReply* rsp) {  // NOLINT
+::trpc::Status GreeterServiceTest::SayHello(::trpc::ServerContextPtr context,
+                                            const ::trpc::test::helloworld::HelloRequest* req,
+                                            ::trpc::test::helloworld::HelloReply* rsp) {  // NOLINT
   std::cout << "recv req msg: " << req->msg() << std::endl;
 
   rsp->set_msg(req->msg());
@@ -42,11 +48,16 @@ GreeterServiceTest::GreeterServiceTest() {
 
 AsyncGreeterServiceTest::AsyncGreeterServiceTest() {
   for (const std::string_view& method : Greeter_method_names[0]) {
-    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(method.data(), ::trpc::MethodType::UNARY, new ::trpc::AsyncRpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(std::bind(&AsyncGreeterServiceTest::SayHello, this, std::placeholders::_1, std::placeholders::_2))));  // NOLINT
+    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(
+        method.data(), ::trpc::MethodType::UNARY,
+        new ::trpc::AsyncRpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(
+            std::bind(&AsyncGreeterServiceTest::SayHello, this, std::placeholders::_1,
+                      std::placeholders::_2))));  // NOLINT
   }
 }
 
-::trpc::Future<::trpc::test::helloworld::HelloReply> AsyncGreeterServiceTest::SayHello(const ::trpc::ServerContextPtr& context, const ::trpc::test::helloworld::HelloRequest* req) {  // NOLINT
+::trpc::Future<::trpc::test::helloworld::HelloReply> AsyncGreeterServiceTest::SayHello(
+    const ::trpc::ServerContextPtr& context, const ::trpc::test::helloworld::HelloRequest* req) {  // NOLINT
   ::trpc::test::helloworld::HelloReply rsp;
   rsp.set_msg(req->msg());
   return MakeReadyFuture<HelloReply>(std::move(rsp));
@@ -59,22 +70,37 @@ static const std::vector<std::vector<std::string_view>> StreamGreeter_method_nam
 };
 
 TestStreamGreeter::TestStreamGreeter() {
-  // clang-format off
   for (const std::string_view& method : StreamGreeter_method_names[0]) {
-    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(method.data(), ::trpc::MethodType::CLIENT_STREAMING, new ::trpc::StreamRpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(std::bind(&TestStreamGreeter::ClientStreamSayHello, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))));
+    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(
+        method.data(), ::trpc::MethodType::CLIENT_STREAMING,
+        new ::trpc::StreamRpcMethodHandler<::trpc::test::helloworld::HelloRequest,
+                                           ::trpc::test::helloworld::HelloReply>(
+            std::bind(&TestStreamGreeter::ClientStreamSayHello, this, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3))));
   }
   for (const std::string_view& method : StreamGreeter_method_names[1]) {
-    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(method.data(), ::trpc::MethodType::SERVER_STREAMING, new ::trpc::StreamRpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(std::bind(&TestStreamGreeter::ServerStreamSayHello, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))));
+    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(
+        method.data(), ::trpc::MethodType::SERVER_STREAMING,
+        new ::trpc::StreamRpcMethodHandler<::trpc::test::helloworld::HelloRequest,
+                                           ::trpc::test::helloworld::HelloReply>(
+            std::bind(&TestStreamGreeter::ServerStreamSayHello, this, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3))));
   }
   for (const std::string_view& method : StreamGreeter_method_names[2]) {
-    AddRpcServiceMethod(new ::trpc::RpcServiceMethod(method.data(), ::trpc::MethodType::BIDI_STREAMING, new ::trpc::StreamRpcMethodHandler<::trpc::test::helloworld::HelloRequest, ::trpc::test::helloworld::HelloReply>(std::bind(&TestStreamGreeter::BidiStreamSayHello, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))));
+    AddRpcServiceMethod(
+        new ::trpc::RpcServiceMethod(method.data(), ::trpc::MethodType::BIDI_STREAMING,
+                                     new ::trpc::StreamRpcMethodHandler<::trpc::test::helloworld::HelloRequest,
+                                                                        ::trpc::test::helloworld::HelloReply>(
+                                         std::bind(&TestStreamGreeter::BidiStreamSayHello, this, std::placeholders::_1,
+                                                   std::placeholders::_2, std::placeholders::_3))));
   }
-  // clang-format on
 }
 
-// clang-format off
-::trpc::Status TestStreamGreeter::ClientStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader, ::trpc::test::helloworld::HelloReply* reply) {  // NOLINT
-  // clang-format on
+::trpc::Status TestStreamGreeter::ClientStreamSayHello(
+    const ::trpc::ServerContextPtr& context,
+    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+    ::trpc::test::helloworld::HelloReply* reply) {  // NOLINT
+
   ::trpc::Status status{};
   int count{0};
   for (;;) {
@@ -88,24 +114,25 @@ TestStreamGreeter::TestStreamGreeter() {
   }
   reply->set_msg(std::to_string(count));
   return ::trpc::Status(0, "OK, ClientStreamSayHello");
-  // clang-format off
 }
 
-// clang-format off
-::trpc::Status TestStreamGreeter::ServerStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::test::helloworld::HelloRequest& request, ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {  // NOLINT
-  // clang-format on
+::trpc::Status TestStreamGreeter::ServerStreamSayHello(
+    const ::trpc::ServerContextPtr& context, const ::trpc::test::helloworld::HelloRequest& request,
+    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {  // NOLINT
+
   for (int i = 10; i > 0; i--) {
     ::trpc::test::helloworld::HelloReply reply;
     reply.set_msg(request.msg());
     writer->Write(reply);
   }
   return ::trpc::Status(0, "OK, ServerStreamSayHello");
-  // clang-format off
 }
 
-// clang-format off
-::trpc::Status TestStreamGreeter::BidiStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader, ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) { // NOLINT
-  // clang-format on
+::trpc::Status TestStreamGreeter::BidiStreamSayHello(
+    const ::trpc::ServerContextPtr& context,
+    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {  // NOLINT
+
   ::trpc::Status status{};
   for (;;) {
     ::trpc::test::helloworld::HelloRequest request{};
@@ -119,9 +146,8 @@ TestStreamGreeter::TestStreamGreeter() {
     break;
   }
   return ::trpc::Status(0, "OK, BidiStreamSayHello");
-  // clang-format off
 }
 
-} // end namespace helloworld
-} // end namespace test
-} // end namespace trpc
+}  // end namespace helloworld
+}  // end namespace test
+}  // end namespace trpc

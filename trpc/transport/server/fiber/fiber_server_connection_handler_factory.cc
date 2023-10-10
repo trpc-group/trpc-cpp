@@ -15,7 +15,8 @@
 
 namespace trpc {
 
-bool FiberServerConnectionHandlerFactory::Register(const std::string& protocol, FiberServerConnectionHandlerCreator&& func) {
+bool FiberServerConnectionHandlerFactory::Register(const std::string& protocol,
+                                                   FiberServerConnectionHandlerCreator&& func) {
   auto it = connection_handlers_.find(protocol);
   if (it != connection_handlers_.end()) {
     return false;

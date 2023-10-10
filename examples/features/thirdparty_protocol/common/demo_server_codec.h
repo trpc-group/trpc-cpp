@@ -28,11 +28,13 @@ class DemoServerCodec : public ::trpc::ServerCodec {
 
   std::string Name() const override { return "thirdpary_protocol"; }
 
-  int ZeroCopyCheck(const ::trpc::ConnectionPtr& conn, ::trpc::NoncontiguousBuffer& in, std::deque<std::any>& out) override;
+  int ZeroCopyCheck(const ::trpc::ConnectionPtr& conn, ::trpc::NoncontiguousBuffer& in,
+                    std::deque<std::any>& out) override;
 
   bool ZeroCopyDecode(const ::trpc::ServerContextPtr& ctx, std::any&& in, ::trpc::ProtocolPtr& out) override;
 
-  bool ZeroCopyEncode(const ::trpc::ServerContextPtr& ctx, ::trpc::ProtocolPtr& in, ::trpc::NoncontiguousBuffer& out) override;
+  bool ZeroCopyEncode(const ::trpc::ServerContextPtr& ctx, ::trpc::ProtocolPtr& in,
+                      ::trpc::NoncontiguousBuffer& out) override;
 
   ::trpc::ProtocolPtr CreateRequestObject() override;
 

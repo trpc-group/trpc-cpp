@@ -59,25 +59,25 @@ Greeter::Greeter() {
 
 ::trpc::Status GreeterServiceProxy::SayHello(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::HelloRequest>& request, flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>* response) {
   context->SetFuncName(Greeter_method_names[0]);
-  context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+  context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
   return UnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::HelloRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>>(context, request, response);
 }
 
 ::trpc::Future<flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>> GreeterServiceProxy::AsyncSayHello(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::HelloRequest>& request) {
   context->SetFuncName(Greeter_method_names[0]);
-  context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+  context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
   return AsyncUnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::HelloRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>>(context, request);
 }
 
 ::trpc::Status GreeterServiceProxy::SayManyHellos(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::ManyHellosRequest>& request, flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>* response) {
   context->SetFuncName(Greeter_method_names[1]);
-  context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+  context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
   return UnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::ManyHellosRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>>(context, request, response);
 }
 
 ::trpc::Future<flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>> GreeterServiceProxy::AsyncSayManyHellos(const ::trpc::ClientContextPtr& context, const flatbuffers::trpc::Message<trpc::test::helloworld::ManyHellosRequest>& request) {
   context->SetFuncName(Greeter_method_names[1]);
-  context->SetEncodeType(trpc::EncodeType::FLATBUFFER);
+  context->SetReqEncodeType(trpc::EncodeType::FLATBUFFER);
   return AsyncUnaryInvoke<flatbuffers::trpc::Message<trpc::test::helloworld::ManyHellosRequest>, flatbuffers::trpc::Message<trpc::test::helloworld::HelloReply>>(context, request);
 }
 

@@ -912,7 +912,7 @@ TEST_F(TrpcUnaryTest, ClientRapidJson) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::json_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.JsonTest/TestRapidJson");
-    ctx->SetEncodeType(trpc::serialization::kJsonType);
+    ctx->SetReqEncodeType(trpc::serialization::kJsonType);
     ::trpc::Status status = TrpcUnaryTest::json_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_TRUE(status.OK());
@@ -933,7 +933,7 @@ TEST_F(TrpcUnaryTest, ClientPbJson) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::json_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.JsonTest/TestRapidJson");
-    ctx->SetEncodeType(trpc::serialization::kJsonType);
+    ctx->SetReqEncodeType(trpc::serialization::kJsonType);
     ::trpc::Status status = TrpcUnaryTest::json_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_TRUE(status.OK());
@@ -971,7 +971,7 @@ TEST_F(TrpcUnaryTest, JsonInvalidEncodeDataType) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::json_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.JsonTest/TestRapidJson");
-    ctx->SetEncodeType(trpc::serialization::kJsonType);
+    ctx->SetReqEncodeType(trpc::serialization::kJsonType);
     ::trpc::Status status = TrpcUnaryTest::json_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_FALSE(status.OK());
@@ -991,7 +991,7 @@ TEST_F(TrpcUnaryTest, ClientStringNoop) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::noop_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.NoopTest/TestStringNoop");
-    ctx->SetEncodeType(trpc::serialization::kNoopType);
+    ctx->SetReqEncodeType(trpc::serialization::kNoopType);
     ::trpc::Status status = TrpcUnaryTest::noop_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_TRUE(status.OK());
@@ -1012,7 +1012,7 @@ TEST_F(TrpcUnaryTest, ClientNoncontiguousBufferNoop) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::noop_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.NoopTest/TestStringNoop");
-    ctx->SetEncodeType(trpc::serialization::kNoopType);
+    ctx->SetReqEncodeType(trpc::serialization::kNoopType);
     ::trpc::Status status = TrpcUnaryTest::noop_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_TRUE(status.OK());
@@ -1032,7 +1032,7 @@ TEST_F(TrpcUnaryTest, ServerNoncontiguousBufferNoop) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::noop_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.NoopTest/TestNonContiguousBufferNoop");
-    ctx->SetEncodeType(trpc::serialization::kNoopType);
+    ctx->SetReqEncodeType(trpc::serialization::kNoopType);
     ::trpc::Status status = TrpcUnaryTest::noop_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_TRUE(status.OK());
@@ -1051,7 +1051,7 @@ TEST_F(TrpcUnaryTest, NoopInvalidEncodeDataType) {
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::noop_proxy_);
     ctx->SetFuncName("/trpc.testing.unarytrpc.NoopTest/TestStringNoop");
-    ctx->SetEncodeType(trpc::serialization::kNoopType);
+    ctx->SetReqEncodeType(trpc::serialization::kNoopType);
     ::trpc::Status status = TrpcUnaryTest::noop_proxy_->UnaryInvoke(ctx, request, &response);
 
     ASSERT_FALSE(status.OK());
@@ -1069,7 +1069,7 @@ TEST_F(TrpcUnaryTest, ClientInvalidEncodeType) {
     SerializationResponse reply;
 
     ::trpc::ClientContextPtr ctx = ::trpc::MakeClientContext(TrpcUnaryTest::trpc_proxy_);
-    ctx->SetEncodeType(std::numeric_limits<uint8_t>::max());
+    ctx->SetReqEncodeType(std::numeric_limits<uint8_t>::max());
     ::trpc::Status status = TrpcUnaryTest::trpc_proxy_->TestPbSerialization(ctx, request, &reply);
 
     ASSERT_FALSE(status.OK());

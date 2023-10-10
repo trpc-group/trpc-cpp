@@ -59,7 +59,8 @@ bool DemoServerCodec::ZeroCopyDecode(const ::trpc::ServerContextPtr& ctx, std::a
   return req->ZeroCopyDecode(buff);
 }
 
-bool DemoServerCodec::ZeroCopyEncode(const ::trpc::ServerContextPtr& ctx, ::trpc::ProtocolPtr& in, ::trpc::NoncontiguousBuffer& out) {
+bool DemoServerCodec::ZeroCopyEncode(const ::trpc::ServerContextPtr& ctx, ::trpc::ProtocolPtr& in,
+                                     ::trpc::NoncontiguousBuffer& out) {
   auto* rsp = static_cast<DemoResponseProtocol*>(in.get());
 
   return rsp->ZeroCopyEncode(out);

@@ -1,6 +1,6 @@
 ### Helloworld demo
 ## Building the compilation environment
-   please reference to: [https://iwiki.woa.com/pages/viewpage.action?pageId=102466266](https://iwiki.woa.com/pages/viewpage.action?pageId=102466266)
+   please reference to: [Compile & Install](../../docs/en/setup_env.md)
 
 ## Usage
 

@@ -86,7 +86,7 @@ According to the analysis of the principle, developers need to:
 * Implementing two filters: perform linkage and information reporting during the RPC invocation process.
 * Registering the Tracing plugin and its corresponding filters.
 
-You can refer to the implementation of the [Tracing capabilities in the OpenTelemetry plugin](https://git.woa.com/trpc-cpp/open-source/cpp-telemetry-opentelemetry/tree/master/trpc/telemetry/opentelemetry/tracing) for specific examples.
+You can refer to the implementation of the [Tracing capabilities in the OpenTelemetry plugin](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry/tree/master/trpc/telemetry/opentelemetry/tracing) for specific examples.
 
 ## Implementing Tracing plugin
 

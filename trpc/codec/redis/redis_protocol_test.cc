@@ -87,10 +87,8 @@ TEST_F(RedisProtocolTest, RequestTest) {
 }
 
 TEST_F(RedisProtocolTest, ResponseTest) {
-  redis::Reply rsp = rsp_;
-
   RedisResponseProtocol redis_rsp_protocol = RedisResponseProtocol();
-  redis_rsp_protocol.redis_rsp = rsp;
+  redis_rsp_protocol.redis_rsp = rsp_;
   NoncontiguousBuffer buff;
 
   ASSERT_FALSE(redis_rsp_protocol.ZeroCopyDecode(buff));
