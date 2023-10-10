@@ -1,7 +1,5 @@
 [English](../en/grpc_protocol_service.md)
 
-[TOC]
-
 # gRPC 服务开发指南
 
 **主题：如何基于 tRPC-Cpp 开发 gRPC 服务**

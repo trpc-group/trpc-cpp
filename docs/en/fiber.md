@@ -1,9 +1,11 @@
-[TOC]
+[中文](../zh/fiber.md)
 
-# 1 Overview
+# Overview
+
 This article delves into the principles and implementation of Fiber from various perspectives, aiming to provide a better understanding of Fiber. For information on how to use Fiber, please refer to the following resource[Fiber User Guide](./fiber_user_guide.md)。
 
-# 2 Principle
+# Principle
+
 Fiber is essentially an M:N coroutine, which means it schedules and runs multiple user-level threads on multiple native threads of the system, similar to goroutines in the Go programming language. The diagram below illustrates the principle of M:N coroutines:
 ![img](/docs/images/m_n_coroutine_en.png)
 
@@ -16,6 +18,7 @@ Compared to native threads, M:N coroutines have the following advantages:
 3. High parallelism, making full use of resources: Can run concurrently on multiple threads;
 
 After researching and analyzing various M:N coroutines, tRPC Cpp has designed and implemented its own M:N coroutine called Fiber. Fiber has the following characteristics：
+
 1. Multiple threads compete for a shared Fiber queue, which, with careful design, can achieve low scheduling latency. Currently, the size of the scheduling group (number of threads within a group) is limited to between 8 and 15;
 
 2. To reduce contention and improve multi-core scalability, a mechanism for multiple scheduling groups has been designed, allowing configuration of the number and size of the groups;
@@ -28,20 +31,20 @@ After researching and analyzing various M:N coroutines, tRPC Cpp has designed an
 
 6. Supports Future-style API;
 
+# Design
 
-# 3 Design
+## Running mechanism
 
-## 1 Running mechanism
 ![img](/docs/images/fiber_threadmodel_arch.png)
 
 In order to adapt to NUMA architecture, Fiber supports multiple scheduling groups (SchedulingGroup). The leftmost group in the diagram shows the complete running and calling relationships. The other groups are simplified to demonstrate Fiber stealing (Work-Stealing) between groups.
 
 The diagram shows components with fixed quantities: Main Thread (globally unique), master fiber (unique within FiberWorker), Queue (unique within SchedulingGroup), TimerWorker (unique within SchedulingGroup). The quantities of other components are only illustrative (configurable or dynamically changeable).
 
-
-### 1 SchedulingGroup
+### SchedulingGroup
 
 The M:N thread model, compared to the N:1 model and common coroutine designs, introduces more cache misses, resulting in performance degradation. This is an unavoidable cost to ensure the stability of performance metrics such as response time. However, this does not mean that the performance is inferior to other N:1 frameworks or coroutine frameworks. The overall performance of a system can be optimized in various ways, and the scheduling model alone does not determine the overall performance of a framework. Here, we focus on the scheduling model, while other performance optimization aspects of the framework are not discussed in detail for now
+
 #### Why?
 
 In order to improve scalability in a multi-core, multi-threaded environment, the concept of group management is introduced, where fibers allocated to the same group are referred to as a scheduling group. By dividing resources based on scheduling groups, internal shared data can be partitioned, reducing competition and improving scalability：
@@ -87,9 +90,10 @@ Each FiberWorker maintains a thread-local array of timers. Each timer correspond
 
 Typically, the expiration callback of a timer will start a fiber to execute the actual task (although it is not mandatory). The reason for using a separate system thread to implement the timer is twofold: it maintains the purity of FiberWorkers and avoids blocking operations occupying a FiberWorker thread for an extended period
 
-### 2 FiberEntity
+### FiberEntity
 
 A fiber is represented by FiberEntity, and here are some of its important members displayed：
+
 ```cpp
   DoublyLinkedListEntry chain;
   std::uint64_t debugging_fiber_id;
@@ -108,7 +112,8 @@ A fiber is represented by FiberEntity, and here are some of its important member
 ```
 
 The physical memory layout of Fiber
-```
+
+```txt
 +--------------------------+  <- Stack bottom
 | fiber control block      |
 +--------------------------+  <- 512 byte
@@ -123,12 +128,12 @@ The physical memory layout of Fiber
 | guard page (opt)         |  <- (User fiber only)
 +--------------------------+  <- Stack limit + PAGE_SIZE
 ```
+
 Note: Each stack may also have an inaccessible guard page to detect stack overflow. By default, the guard page is enabled, which means that each stack has two memory segments (VMA). If not enabled, usually only one VMA is needed (but there is a risk of stack overflow detection failure). The configuration option 'fiber_stack_enable_guard_page' is used to indicate whether the guard page is enabled。
 
+## Task scheduling
 
-## 2 Task scheduling
-
-### 1 Scheduling
+### Scheduling
 
 The process of a fiber being created and executed by a FiberWorker is a typical producer-consumer scenario. Typically, we have the following methods for scheduling:
 
@@ -142,7 +147,7 @@ The process of a fiber being created and executed by a FiberWorker is a typical 
 
 Due to the significant drawbacks of the aforementioned algorithms, we have designed our own wake-up algorithm:
 
-**a. Scheduling Strategy v1 (default strategy): Fiber adopts a balanced strategy by employing up to 2 threads for parallel polling**
+#### Scheduling Strategy v1 (default strategy): Fiber adopts a balanced strategy by employing up to 2 threads for parallel polling
 
 1. When fetching a Fiber, if one is available, it is executed directly. If no Fiber is available and there are fewer than 2 polling threads, it enters the polling state;
 
@@ -152,7 +157,8 @@ Due to the significant drawbacks of the aforementioned algorithms, we have desig
 
 In the selection of polling threads/sleeping threads, they are ordered based on a fixed numbering scheme, and the first (LSB) option is chosen. This is because multiple fibers are likely cooperative tasks, and running them on specific threads (FiberWorkers can be configured to bind to specific cores, and the operating system tends to run the same thread on a fixed CPU) improves CPU cache efficiency.
 
-**b. Scheduling Strategy v2: Prioritizing local queues while also supporting task stealing between global and local queues (inspired by the implementation ideas of the taskflow runtime)**
+#### Scheduling Strategy v2: Prioritizing local queues while also supporting task stealing between global and local queues (inspired by the implementation ideas of the taskflow runtime)
+
 1. The task queue consists of a global (MPMC) and local (SPMC) queue, and supporting task stealing between global and local queues;
 
 2. When executing parallel tasks, the worker thread can add tasks to its local queue without notification, avoiding system call overhead;
@@ -162,7 +168,9 @@ In the selection of polling threads/sleeping threads, they are ordered based on 
 4. In Taskflow's task scheduling, tasks cannot block the thread during execution. Once this happens, one of the threads will consume 100% of the CPU. However, when the fiber reactor executes epoll_wait and there are no network events, it may block the thread. To solve this problem, we treat the reactor fiber as an special type fiber and put it into the separate queue to avoid frequent detection of reactor tasks in the running queue, which would cause the worker thread to be unable to sleep and result in 100% CPU usage.
 
 Relevant information can be found at [taskflow executor](https://github.com/taskflow/taskflow/blob/master/taskflow/core/executor.hpp)
-### 2 Steal
+
+### Steal
+
 If the Fiber creation attribute specifies that stealing is not allowed, the Fiber will only execute within its initial scheduling group, otherwise it may be stolen by other groups. Depending on performance considerations, stealing can be categorized into two types:
 
 1. Within the NUMA Node: Performance is the same as normal scheduling. This is primarily used to balance the load between groups and is enabled by default;
@@ -171,8 +179,8 @@ If the Fiber creation attribute specifies that stealing is not allowed, the Fibe
 
 Whether within or across groups, the principle remains the same, with the only difference being the target Queue that the working thread acquires. The algorithm is also the same, with the only variation being the stealing frequency coefficient (steal_every_n, where 0 disables stealing, and a larger value indicates a lower stealing frequency), which can be specified as a parameter.
 
+## User Interface
 
-## 3 User Interface
 Fiber's user-level threading has similarities to Pthreads in terms of thread positioning, so there are some similarities in the capabilities provided：
 
 | Description | Pthread  |   Fiber   |    Note   |  
@@ -185,6 +193,7 @@ Fiber's user-level threading has similarities to Pthreads in terms of thread pos
 |Condition Variable|std::condition_variable|FiberConditionVariable|Notify if the condition is met|
 
 After that, there are also:
+
 1. The FiberLatch class for interacting with external threads;
 
 2. Tools like BlockingGet for asynchronous programming with Futures;

@@ -1,8 +1,4 @@
-[中文版](../zh/flatbuffers_protocol_client.md)
-
-[TOC]
-
-# Client development based on the flatbuffers serialization protocol
+[中文](../zh/flatbuffers_protocol_client.md)
 
 # Overview
 

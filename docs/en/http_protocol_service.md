@@ -1,10 +1,6 @@
 [中文](../zh/http_protocol_service.md)
 
-[TOC]
-
-# HTTP Service Development Guide
-
-**Topic: How to develop an HTTP service based on tRPC-Cpp**
+# Overview
 
 Currently, tRPC-Cpp supports two types of HTTP services: HTTP Standard Service and HTTP RPC Service (these names are
 used to
@@ -16,19 +12,18 @@ differentiate between the two services).
 > HTTP RPC service: It is an RPC service where clients can access it using the HTTP protocol. The service invocation
 > interface is defined by proto files, and stub code can be generated using tools.
 
-
 This article introduces how to develop an HTTP service based on tRPC-Cpp (referred to as tRPC below). Developers can
 learn the
 following:
 
 * How to develop an HTTP standard service:
-    * Quick start: Set up an HTTP service quickly.
-    * Feature overview: RESTful, HTTPS.
-    * Basic usage: Common interfaces for handling requests and responses, configuring request routing rules.
-    * Advanced usage: Grouping routing rules, HTTPS, message compression and decompression, file upload and download,
+  * Quick start: Set up an HTTP service quickly.
+  * Feature overview: RESTful, HTTPS.
+  * Basic usage: Common interfaces for handling requests and responses, configuring request routing rules.
+  * Advanced usage: Grouping routing rules, HTTPS, message compression and decompression, file upload and download,
       etc.
 * How to develop an HTTP RPC service:
-    * Quick start: Support HTTP client access to tRPC services.
+  * Quick start: Support HTTP client access to tRPC services.
 * FAQ.
 
 # Developing an HTTP standard service
@@ -90,85 +85,85 @@ Basic steps:
 
 1. `FooHandler` implements the `HttpHandler` interface to handle HTTP requests and set the HTTP response content.
 
-```cpp
-class FooHandler : public ::trpc::http::HttpHandler {
- public:
-  ::trpc::Status Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
-                     ::trpc::http::Response* rsp) override {
-    rsp->SetContent(greetings_);
-    return ::trpc::kSuccStatus;
-  }
-  ::trpc::Status Head(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
-                      ::trpc::http::Response* rsp) override {
-    rsp->SetHeader("Content-Length", std::to_string(greetings_.size()));
-    return ::trpc::kSuccStatus;
-  }
-  ::trpc::Status Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
-                      ::trpc::http::Response* rsp) override {
-    rsp->SetContent(req->GetContent());
-    return ::trpc::kSuccStatus;
-  }
+   ```cpp
+   class FooHandler : public ::trpc::http::HttpHandler {
+    public:
+     ::trpc::Status Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
+                        ::trpc::http::Response* rsp) override {
+       rsp->SetContent(greetings_);
+       return ::trpc::kSuccStatus;
+     }
+     ::trpc::Status Head(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
+                         ::trpc::http::Response* rsp) override {
+       rsp->SetHeader("Content-Length", std::to_string(greetings_.size()));
+       return ::trpc::kSuccStatus;
+     }
+     ::trpc::Status Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
+                         ::trpc::http::Response* rsp) override {
+       rsp->SetContent(req->GetContent());
+       return ::trpc::kSuccStatus;
+     }
+   
+    private:
+     std::string greetings_{"hello world!"};
+   };
+   ```
 
- private:
-  std::string greetings_{"hello world!"};
-};
-```
+   `HttpHandler` is an interface that provides a simple abstraction for HTTP endpoints. It defines methods corresponding to
+   common HTTP methods such as GET, POST, PUT, DELETE, etc. Each method in the interface represents a specific HTTP method
+   that can be handled by the implementing class.
 
-`HttpHandler` is an interface that provides a simple abstraction for HTTP endpoints. It defines methods corresponding to
-common HTTP methods such as GET, POST, PUT, DELETE, etc. Each method in the interface represents a specific HTTP method
-that can be handled by the implementing class.
-
-```cpp
-class HttpHandler {
- public:
-  virtual ::trpc::Status Head(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
-  virtual ::trpc::Status Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
-  virtual ::trpc::Status Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
-  virtual ::trpc::Status Put(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
-  virtual ::trpc::Status Delete(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
-  virtual ::trpc::Status Options(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
-  virtual ::trpc::Status Patch(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
-  // ...
-};
-```
+   ```cpp
+   class HttpHandler {
+    public:
+     virtual ::trpc::Status Head(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
+     virtual ::trpc::Status Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
+     virtual ::trpc::Status Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
+     virtual ::trpc::Status Put(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
+     virtual ::trpc::Status Delete(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
+     virtual ::trpc::Status Options(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
+     virtual ::trpc::Status Patch(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
+     // ...
+   };
+   ```
 
 2. Setting up request routing: Route requests with the URI `/foo` to the `FooHandler` class, supporting the HEAD, GET,
    and POST methods.
 
-```cpp
-void SetHttpRoutes(::trpc::http::HttpRoutes& r) {
-  // ...
-  auto foo_handler = std::make_shared<FooHandler>();
-  r.Add(::trpc::http::MethodType::GET, ::trpc::http::Path("/foo"), foo_handler);
-  r.Add(::trpc::http::MethodType::HEAD, ::trpc::http::Path("/foo"), foo_handler);
-  r.Add(::trpc::http::MethodType::POST, ::trpc::http::Path("/foo"), foo_handler);
-  // ...
-}
-```
+   ```cpp
+   void SetHttpRoutes(::trpc::http::HttpRoutes& r) {
+     // ...
+     auto foo_handler = std::make_shared<FooHandler>();
+     r.Add(::trpc::http::MethodType::GET, ::trpc::http::Path("/foo"), foo_handler);
+     r.Add(::trpc::http::MethodType::HEAD, ::trpc::http::Path("/foo"), foo_handler);
+     r.Add(::trpc::http::MethodType::POST, ::trpc::http::Path("/foo"), foo_handler);
+     // ...
+   }
+   ```
 
 3. Register an instance of `HttpService` during the application initialization phase and set up request routing.
 
-```cpp
-class HttpdServer : public ::trpc::TrpcApp {
- public:
-  int Initialize() override {
-    auto http_service = std::make_shared<::trpc::HttpService>();
-    http_service->SetRoutes(SetHttpRoutes);
-    RegisterService("default_http_service", http_service);
-    return 0;
-  }
+   ```cpp
+   class HttpdServer : public ::trpc::TrpcApp {
+    public:
+     int Initialize() override {
+       auto http_service = std::make_shared<::trpc::HttpService>();
+       http_service->SetRoutes(SetHttpRoutes);
+       RegisterService("default_http_service", http_service);
+       return 0;
+     }
+   
+     void Destroy() override {}
+   };
+   ```
 
-  void Destroy() override {}
-};
-```
+   After the application is started, we can access it through the following URLs.
 
-After the application is started, we can access it through the following URLs.
-
-```bash
-# GET /foo HTTP1.1
-# e.g: curl http://$ip:$port/foo 
-$ hello world!
-```
+   ```bash
+   # GET /foo HTTP1.1
+   # e.g: curl http://$ip:$port/foo 
+   $ hello world!
+   ```
 
 ## Feature overview
 
@@ -305,9 +300,9 @@ the `path_value` set in the routing.
  r.Add(trpc::http::MethodType::GET, trpc::http::Path("/hello/img_x"), handler);
 ```
 
-```bash 
-$ curl http://$ip:$port/hello/img_x -X GET  # response status 200
-$ curl http://$ip:$port/hello/img -X GET    # response status 404
+```bash
+curl http://$ip:$port/hello/img_x -X GET  # response status 200
+curl http://$ip:$port/hello/img -X GET    # response status 404
 ```
 
 ### Prefix match
@@ -375,7 +370,7 @@ curl http://$ip:$port/channels/xyz/clients/123 -X GET  # response status 200
 curl http://$ip:$port/channels/clients -X GET          # response status 404
 ```
 
-**Note**
+**Note:**
 > The symbols in the placeholders only support letters, numbers, and underscores.
 
 ## Advanced usage
@@ -526,118 +521,118 @@ trpc::http::HttpHandlerGroups(routes).Path("/api", TRPC_HTTP_ROUTE_HANDLER({
 In order to reduce page loading time and speed up page rendering, HTTP services may compress response message bodies.
 However, tRPC does not automatically compress or decompress message bodies, mainly for the following reasons:
 
-- Flexibility: allowing users to handle this operation themselves will be more flexible.
-- Compression and decompression code is not very complex. tRPC provides compression and decompression tools, currently
+* Flexibility: allowing users to handle this operation themselves will be more flexible.
+* Compression and decompression code is not very complex. tRPC provides compression and decompression tools, currently
   supporting gzip, lz4, snappy, zlib, and more. [compressor](../../trpc/compressor)
 
 ### Handling HTTPS requests
 
 HTTPS is short for HTTP over SSL and can be enabled through the following steps:
 
-- Enable SSL compilation options when compiling the code.
+* Enable SSL compilation options when compiling the code.
 
-> When using `bazel build`, add the `--define trpc_include_ssl=true` compilation parameter.
-> Note: We can also add it to the `.bazelrc` file.
+  > When using `bazel build`, add the `--define trpc_include_ssl=true` compilation parameter.
+  > Note: We can also add it to the `.bazelrc` file.
 
-**Note: tRPC supports HTTPS based on OpenSSL. Please make sure that OpenSSL is correctly installed in the compilation
+  **Note: tRPC supports HTTPS based on OpenSSL. Please make sure that OpenSSL is correctly installed in the compilation
 and runtime environment.**
 
-```cpp
-// e.g. 
-bazel build --define trpc_include_ssl=true //https/http_server/...
-```
+  ```cpp
+  // e.g. 
+  bazel build --define trpc_include_ssl=true //https/http_server/...
+  ```
 
-- Set SSL-related configurations in the configuration file. The specific configuration items are as follows:
+* Set SSL-related configurations in the configuration file. The specific configuration items are as follows:
 
-| Name             | Function                                | Range of values                         | Default value     | Optional/Required | Description                                                                               |
-|------------------|-----------------------------------------|-----------------------------------------|-------------------|-------------------|-------------------------------------------------------------------------------------------|
-| cert_path        | Certificate path                        | Unlimited, xx/path/to/server.pem        | null              | `required`        | If the correct path is not set when SSL is enabled, the service will fail to start.       |
-| private_key_path | Private key path                        | Unlimited, xx/path/to/server.key        | null              | `required`        | If the correct path is not set when SSL is enabled, the service will fail to start.       |
-| ciphers          | Encryption suite                        | Unlimited                               | null              | `required`        | If not set correctly when SSL is enabled, the service will fail to start.                 |
-| enable           | Whether to enable SSL                   | {true, false}                           | false             | optional          | It is recommended to explicitly specify the configuration item to indicate the intention. |
-| mutual_auth      | Whether to enable mutual authentication | {true, false}                           | false             | optional          | -                                                                                         |
-| ca_cert_path     | CA certificate path                     | Unlimited, xx/path/to/ca.pem            | null              | optional          | Valid when mutual authentication is enabled.                                              |
-| protocols        | SSL protocol version                    | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional          | -                                                                                         |
-
-For example:
-
-```yaml
-# @file: trpc_cpp.yaml
-# ...
-server:
-  service:
-    - name: default_http_service
-      network: tcp
-      ip: 0.0.0.0
-      port: 24756
-      protocol: http
-      # ...
-      ## <-- New SSL configuration items.
-      ssl:
-        enable: true  # Optional configuration (defaults to false, indicating that SSL is disabled).
-        cert_path: ./https/cert/server_cert.pem # Required.
-        private_key_path: ./https/cert/server_key.pem # Required.
-        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # Required.
-        # mutual_auth: true # Optional configuration (defaults to false, indicating that mutual authentication is not enabled).
-        # ca_cert_path: ./https/cert/xxops-com-chain.pem # Optional configuration, the CA path for mutual authentication.
-        # protocols: # Optional.
-        #   - SSLv2
-        #   - SSLv3
-        #   - TLSv1
-        #   - TLSv1.1
-        #  - TLSv1.2
-        ## --> New SSL configuration items.
-# ...
-```
+  | Name             | Function                                | Range of values                         | Default value     | Optional/Required | Description                                                                               |
+  |------------------|-----------------------------------------|-----------------------------------------|-------------------|-------------------|-------------------------------------------------------------------------------------------|
+  | cert_path        | Certificate path                        | Unlimited, xx/path/to/server.pem        | null              | `required`        | If the correct path is not set when SSL is enabled, the service will fail to start.       |
+  | private_key_path | Private key path                        | Unlimited, xx/path/to/server.key        | null              | `required`        | If the correct path is not set when SSL is enabled, the service will fail to start.       |
+  | ciphers          | Encryption suite                        | Unlimited                               | null              | `required`        | If not set correctly when SSL is enabled, the service will fail to start.                 |
+  | enable           | Whether to enable SSL                   | {true, false}                           | false             | optional          | It is recommended to explicitly specify the configuration item to indicate the intention. |
+  | mutual_auth      | Whether to enable mutual authentication | {true, false}                           | false             | optional          | -                                                                                         |
+  | ca_cert_path     | CA certificate path                     | Unlimited, xx/path/to/ca.pem            | null              | optional          | Valid when mutual authentication is enabled.                                              |
+  | protocols        | SSL protocol version                    | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional          | -                                                                                         |
+  
+  For example:
+  
+  ```yaml
+  # @file: trpc_cpp.yaml
+  # ...
+  server:
+    service:
+      - name: default_http_service
+        network: tcp
+        ip: 0.0.0.0
+        port: 24756
+        protocol: http
+        # ...
+        ## <-- New SSL configuration items.
+        ssl:
+          enable: true  # Optional configuration (defaults to false, indicating that SSL is disabled).
+          cert_path: ./https/cert/server_cert.pem # Required.
+          private_key_path: ./https/cert/server_key.pem # Required.
+          ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # Required.
+          # mutual_auth: true # Optional configuration (defaults to false, indicating that mutual authentication is not enabled).
+          # ca_cert_path: ./https/cert/xxops-com-chain.pem # Optional configuration, the CA path for mutual authentication.
+          # protocols: # Optional.
+          #   - SSLv2
+          #   - SSLv3
+          #   - TLSv1
+          #   - TLSv1.1
+          #  - TLSv1.2
+          ## --> New SSL configuration items.
+  # ...
+  ```
 
 ### Service asynchronously responds to clients
 
 If the server processes the logic of the HTTP request asynchronously and the user expects to reply to the client
 actively, instead of letting tRPC automatically reply to the client, the following approach can be adopted:
 
-- Turn off tRPC's response: context->SetResponse(false).
-- When replying, serialize the HTTP response into a non-continuous buffer, and then call context->SendResponse(buffer)
+* Turn off tRPC's response: context->SetResponse(false).
+* When replying, serialize the HTTP response into a non-continuous buffer, and then call context->SendResponse(buffer)
   to send the response packet.
 
-```cpp
-// ServerContext interface.
-void SetResponse(bool is_response);
-Status SendResponse(NoncontiguousBuffer&& buffer);
-
-// HTTP Response interface. 
-bool SerializeToString(NoncontiguousBuffer& buff) const;
-```
-
-The code snippet is as follows:
-
-```cpp
-trpc::Status Get(const trpc::ServerContextPtr& context, const trpc::http::RequestPtr req, trpc::http::Response* rep) {
-  // ...
-  // Turn off tRPC's response.
-  context->SetResponse(false);
-  // Async job.
-  DoAsyncWork(context,req);
-  // ...
-  return trpc::kSucctStatus;
-}
-
-void DoAsyncWork(const trpc::ServerContextPtr& context,const trpc::http::RequestPtr& req){
-  // ...
+  ```cpp
+  // ServerContext interface.
+  void SetResponse(bool is_response);
+  Status SendResponse(NoncontiguousBuffer&& buffer);
   
-  trpc::http::Response http_response;
-  http_response.GenerateCommonReply(req.get());
+  // HTTP Response interface. 
+  bool SerializeToString(NoncontiguousBuffer& buff) const;
+  ```
 
-  // Sets the content of response.
-  http_response.SetContent("DoAsyncWork");
+* The code snippet is as follows:
+
+  ```cpp
+  trpc::Status Get(const trpc::ServerContextPtr& context, const trpc::http::RequestPtr req, trpc::http::Response* rep) {
+    // ...
+    // Turn off tRPC's response.
+    context->SetResponse(false);
+    // Async job.
+    DoAsyncWork(context,req);
+    // ...
+    return trpc::kSucctStatus;
+  }
+  
+  void DoAsyncWork(const trpc::ServerContextPtr& context,const trpc::http::RequestPtr& req){
+    // ...
     
-  // Serializes the HTTP response into a non-continuous buffer.
-  trpc::NoncontiguousBuffer out;
-  http_response.SerializeToString(out);
-    
-  // Sends response packet. 
-  context->SendResponse(std::move(out));
-}
-```
+    trpc::http::Response http_response;
+    http_response.GenerateCommonReply(req.get());
+  
+    // Sets the content of response.
+    http_response.SetContent("DoAsyncWork");
+      
+    // Serializes the HTTP response into a non-continuous buffer.
+    trpc::NoncontiguousBuffer out;
+    http_response.SerializeToString(out);
+      
+    // Sends response packet. 
+    context->SendResponse(std::move(out));
+  }
+  ```
 
 ### Large File Upload + Download
 
@@ -645,9 +640,9 @@ In HTTP services, there are scenarios where large files need to be read or sent.
 inefficient and can cause high memory pressure, making it impractical for uploading large files. tRPC provides a set of
 HTTP stream reading/writing data chunk interfaces that can be used to receive/send large files in chunks.
 
-- For large files with known length, set `Content-Length: $length` and send them in chunks (or use chunked transfer
+* For large files with known length, set `Content-Length: $length` and send them in chunks (or use chunked transfer
   encoding if the recipient supports it).
-- For large files with unknown length, set `Transfer-Encoding: chunked` and send them in chunks.
+* For large files with unknown length, set `Transfer-Encoding: chunked` and send them in chunks.
 
 For more details, please refer to the documentation [http upload download](./http_protocol_upload_download_service.md).
 

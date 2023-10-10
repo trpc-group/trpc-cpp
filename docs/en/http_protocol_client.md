@@ -1,10 +1,6 @@
 [中文](../zh/http_protocol_client.md)
 
-[TOC]
-
-# Accessing HTTP Service Guide
-
-**Topic: How to access HTTP services based on tRPC-Cpp**
+# Overview
 
 tRPC-Cpp supports tRPC protocol by default, and also supports HTTP protocol. Users can send Plain Text or JSON data in
 HTTP requests to access standard HTTP services, or send Protocol Buffers data in requests to access RPC services. This
@@ -15,9 +11,9 @@ This article introduces how to access HTTP services based on tRPC-Cpp (referred 
 learn the following:
 
 * Accessing standard HTTP services
-    * Quick start: Use an HTTP client to access HTTP services.
-    * Basic usage: Common interfaces for handling requests and responses.
-    * Advanced usage: Send HTTPS requests; request message compression, response message decompression; large file
+  * Quick start: Use an HTTP client to access HTTP services.
+  * Basic usage: Common interfaces for handling requests and responses.
+  * Advanced usage: Send HTTPS requests; request message compression, response message decompression; large file
       upload and download.
 * Accessing HTTP RPC services
 * FAQ
@@ -77,59 +73,49 @@ Example: [http_client.cc](../../examples/features/http/client/client.cc)
 
 ### Access process
 
-1. Get the `HttpServiceProxyPtr` object `proxy`: use `GetTrpcClient()->GetProxy<HttpServiceProxy>(...)`.
+1. Get the `HttpServiceProxyPtr` object `proxy`: use `GetTrpcClient()->GetProxy<HttpServiceProxy>(...)`
 
-```cpp
-std::string service_name{"http_client_xx"};
-::trpc::ServiceProxyOption option;
-
-// ... The initialization process of option is omitted here.
-// The proxy obtained here can be used elsewhere without having to obtain it every time.
-auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
-```
-
-> There are two ways to create an `HttpServiceProxyPtr`:
->
-> -1- Set the `ServiceProxyOption` object.
->
-> -2- Use a YAML configuration file to specify the service configuration item. (Recommended)
-> 
-> -3- `ServiceProxyOption` initialized by callback defined by user + YAML configuration.
->
-> Reference to [client_guide](./client_guide.md)
+    ```cpp
+    std::string service_name{"http_client_xx"};
+    ::trpc::ServiceProxyOption option;
+    
+    // ... The initialization process of option is omitted here.
+    // The proxy obtained here can be used elsewhere without having to obtain it every time.
+    auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
+    ```
+  
+    > There are two ways to create an `HttpServiceProxyPtr`:
+    >
+    > -1- Set the `ServiceProxyOption` object.
+    >
+    > -2- Use a YAML configuration file to specify the service configuration item. (Recommended)
+    >
+    > -3- `ServiceProxyOption` initialized by callback defined by user + YAML configuration.
+    >
+    > Reference to [client_guide](./client_guide.md)
 
 2. Create the `ClientContextPtr` object `context`: use `MakeClientContext(proxy)`.
 
-```cpp
-auto ctx = ::trpc::MakeClientContext(proxy);
-```
+    ```cpp
+      auto ctx = ::trpc::MakeClientContext(proxy);
+    ```
 
 3. Invoke `GetString`
 
-```cpp
-// rsp_str stores the body of response.
-std::string rsp_str;
-auto status = proxy->GetString(ctx, "http://example.com/foo", &rsp_str);
-if (!status.OK()) {
-  // Error ...
-} else {
-  // Ok ...
-}
-```
-
-```cpp
-// ...
-auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
-auto ctx = ::trpc::MakeClientContext(proxy);
-std::string rsp_str;
-auto status = proxy->GetString(ctx, "http://example.com/foo", &rsp_str);
-if (!status.OK()) {
-  // Error ...
-} else {
-  // Ok ...
-}
-// ...
-```
+    ```cpp
+    // ...
+    auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
+    auto ctx = ::trpc::MakeClientContext(proxy);
+    // rsp_str stores the body of response.
+    std::string rsp_str;
+    auto status = proxy->GetString(ctx, "http://example.com/foo", &rsp_str);
+    if (!status.OK()) {
+      // Error ...
+    } else {
+      // Ok ...
+    }
+    // ...
+    ```
 
 ## Basic usage
 
@@ -156,12 +142,12 @@ Note: The Get2 below is just an interface name and does not use the HTTP2 protoc
 
 | Class/Object     | Interface Name                                                                                           | Functionality                                              | Parameters                                                                               | Return Value                   | Remarks                |
 |------------------|----------------------------------------------------------------------------------------------------------|------------------------------------------------------------|------------------------------------------------------------------------------------------|--------------------------------|------------------------|
-| HttpServiceProxy | Status Get(const ClientContextPtr&amp; context, const std::string&amp; url, rapidjson::Document* json)   | Obtains a JSON response message using GET                  | context client context<br> url resource location <br> json stores the response message   | Status                         | Synchronous interface  |
-| HttpServiceProxy | Status GetString(const ClientContextPtr&amp; context, const std::string&amp; url, std::string* rspStr)   | Obtains a string response message using GET                | context client context<br> url resource location <br> rspStr stores the response message | Status                         | Synchronous interface  |
-| HttpServiceProxy | Status Get2(const ClientContextPtr&amp; context, const std::string&amp; url, HttpResponse* rsp)          | Obtains an HTTP response using GET                         | context client context<br> url resource location <br> rsp stores the HTTP response       | Status                         | Synchronous interface  |
-| HttpServiceProxy | Future&lt;rapidjson::Document> AsyncGet(const ClientContextPtr&amp; context, const std::string&amp; url) | Obtains a JSON response message using GET asynchronously   | context client context<br> url resource location                                         | Future&lt;rapidjson::Document> | Asynchronous interface |
-| HttpServiceProxy | Future&lt;std::string> AsyncGetString(const ClientContextPtr&amp; context, const std::string&amp; url)   | Obtains a string response message using GET asynchronously | context client context<br> url resource location                                         | Future&lt;std::string>         | Asynchronous interface |
-| HttpServiceProxy | Future<HttpResponse> AsyncGet2(const ClientContextPtr&amp; context, const std::string&amp; url)          | Obtains an HTTP response using GET asynchronously          | context client context<br> url resource location                                         | Future&lt;HttpResponse>        | Asynchronous interface |
+| HttpServiceProxy | Status Get(const ClientContextPtr&amp; context, const std::string&amp; url, rapidjson::Document* json)   | Obtains a JSON response message using GET                  | client context<br> url resource location <br> json stores the response message   | Status                         | Synchronous interface  |
+| HttpServiceProxy | Status GetString(const ClientContextPtr&amp; context, const std::string&amp; url, std::string* rspStr)   | Obtains a string response message using GET                | client context<br> url resource location <br> rspStr stores the response message | Status                         | Synchronous interface  |
+| HttpServiceProxy | Status Get2(const ClientContextPtr&amp; context, const std::string&amp; url, HttpResponse* rsp)          | Obtains an HTTP response using GET                         | client context<br> url resource location <br> rsp stores the HTTP response       | Status                         | Synchronous interface  |
+| HttpServiceProxy | Future&lt;rapidjson::Document> AsyncGet(const ClientContextPtr&amp; context, const std::string&amp; url) | Obtains a JSON response message using GET asynchronously   | client context<br> url resource location                                         | Future&lt;rapidjson::Document> | Asynchronous interface |
+| HttpServiceProxy | Future&lt;std::string> AsyncGetString(const ClientContextPtr&amp; context, const std::string&amp; url)   | Obtains a string response message using GET asynchronously | client context<br> url resource location                                         | Future&lt;std::string>         | Asynchronous interface |
+| HttpServiceProxy | Future&lt;HttpResponse> AsyncGet2(const ClientContextPtr&amp; context, const std::string&amp; url)          | Obtains an HTTP response using GET asynchronously          | context client context<br> url resource location                                         | Future&lt;HttpResponse>        | Asynchronous interface |
 
 Translation:
 
@@ -184,8 +170,8 @@ Note: The Post2 below is just an interface name and does not use the HTTP2 proto
 | HttpServiceProxy | Future&lt;std::string> AsyncPost(const ClientContextPtr&amp; context, const std::string&amp; url, const std::string&amp; data)                 | Sends a string request message using POST and obtains a string response message asynchronously | context client context<br> url resource location<br> data request message                                        | Future&lt;std::string>         | Asynchronous interface                                     |
 | HttpServiceProxy | Future&lt;std::string> AsyncPost(const ClientContextPtr&amp; context, const std::string&amp; url, std::string&amp;&amp; data)                  | Sends a string request message using POST and obtains a string response message asynchronously | context client context<br> url resource location<br> data request message                                        | Future&lt;std::string>         | Asynchronous interface, performance optimization interface |
 | HttpServiceProxy | Future&lt;NoncontiguousBuffer> AsyncPost(const ClientContextPtr&amp; context, const std::string&amp; url, NoncontiguousBuffer&amp;&amp; data)  | Sends a string request message using POST and obtains a string response message asynchronously | context client context<br> url resource location<br> data request message                                        | Future&lt;NoncontiguousBuffer> | Asynchronous interface, performance optimization interface |
-| HttpServiceProxy | Future&lt;HttpResponse> AsyncPost2(const ClientContextPtr&amp; context, const std::string&amp; url, const std::string&amp; data)               | Sends a string request message using POST and obtains an HTTP response                         | context client context<br> url resource location<br> data request message                                        | Future&lt;HttpResponse>        | Asynchronous interface                                     | 
-| HttpServiceProxy | Future&lt;HttpResponse> AsyncPost2(const ClientContextPtr&amp; context, const std::string&amp; url, const std::string&amp;&amp; data)          | Sends a string request message using POST and obtains an HTTP response                         | context client context<br> url resource location<br> data request message                                        | Future&lt;HttpResponse>        | Asynchronous interface, performance optimization interface | 
+| HttpServiceProxy | Future&lt;HttpResponse> AsyncPost2(const ClientContextPtr&amp; context, const std::string&amp; url, const std::string&amp; data)               | Sends a string request message using POST and obtains an HTTP response                         | context client context<br> url resource location<br> data request message                                        | Future&lt;HttpResponse>        | Asynchronous interface                                     |
+| HttpServiceProxy | Future&lt;HttpResponse> AsyncPost2(const ClientContextPtr&amp; context, const std::string&amp; url, const std::string&amp;&amp; data)          | Sends a string request message using POST and obtains an HTTP response                         | context client context<br> url resource location<br> data request message                                        | Future&lt;HttpResponse>        | Asynchronous interface, performance optimization interface |
 
 #### HEAD  PUT  OPTIONS  PATCH  DELETE
 
@@ -287,9 +273,9 @@ In general, the URL can be filled in according to the standard format. The "host
 placeholders, and "host" and "port" can be filled in with the values you want to send to the server.
 For example:
 
-- Fill in `xx.example.com`, complete URL: `http://xx.example.com/to/path`, and the HTTP request header will be filled in
+* Fill in `xx.example.com`, complete URL: `http://xx.example.com/to/path`, and the HTTP request header will be filled in
   with: `Host: xx.example.com`.
-- Fill in `xx.example.com:8080`, complete URL: `http://xx.example.com:8080/to/path`, and the HTTP request header will be
+* Fill in `xx.example.com:8080`, complete URL: `http://xx.example.com:8080/to/path`, and the HTTP request header will be
   filled in with: `Host: xx.example.com:8080`.
 
 ### Set/Get HTTP request header
@@ -299,7 +285,7 @@ you can use the interface provided by ClientContext to set it.
 
 | Class/Object  | Interface Name                                                         | Function                                                         | Parameters                                     | Return Value                                       |
 |---------------|------------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------|----------------------------------------------------|
-| ClientContext | void SetHttpHeader(const std::string&amp; h, const std::string&amp; v) | Set HTTP request header                                          | h: Request header name<br>Request header value | void                                               |
+| ClientContext | void SetHttpHeader(const std::string&amp; h, const std::string&amp; v) | Set HTTP request header                                          | h: Request header name<br> Request header value | void                                               |
 | ClientContext | const std::string&amp; GetHttpHeader(const std::string&amp; h)         | Get the corresponding value of the specified HTTP request header | h: Request header name                         | const std::string&amp;                             |
 | ClientContext | const auto &amp;GetHttpHeaders();                                      | Get the list of HTTP request headers                             | void                                           | google::protobuf::Map&lt;std::string, std::string> |
 
@@ -360,71 +346,71 @@ bool HttpPost(const HttpServiceProxyPtr& proxy) {
 
 tRPC does not automatically compress or decompress message bodies, mainly for the following reasons:
 
-- Flexibility: allowing users to handle this operation themselves will be more flexible.
-- Compression and decompression code is not very complex. tRPC provides compression and decompression tools, currently
+* Flexibility: allowing users to handle this operation themselves will be more flexible.
+* Compression and decompression code is not very complex. tRPC provides compression and decompression tools, currently
   supporting gzip, lz4, snappy, zlib, and more. [compressor](../../trpc/compressor)
 
-### Send HTTPS request 
+### Send HTTPS request
 
 HTTPS is short for HTTP over SSL and can be enabled through the following steps:
 
-- Enable SSL compilation options when compiling the code.
+* Enable SSL compilation options when compiling the code.
 
-> When using `bazel build`, add the `--define trpc_include_ssl=true` compilation parameter.
-> Note: We can also add it to the `.bazelrc` file.
+  > When using `bazel build`, add the `--define trpc_include_ssl=true` compilation parameter.
+  > Note: We can also add it to the `.bazelrc` file.
 
-**Note: tRPC supports HTTPS based on OpenSSL. Please make sure that OpenSSL is correctly installed in the compilation
+  **Note: tRPC supports HTTPS based on OpenSSL. Please make sure that OpenSSL is correctly installed in the compilation
 and runtime environment.**
 
-```cpp
-// e.g. 
-bazel build --define trpc_include_ssl=true //https/http_client/...
-```
+  ```cpp
+  // e.g. 
+  bazel build --define trpc_include_ssl=true //https/http_client/...
+  ```
 
-- Set SSL-related configurations in the configuration file. The specific configuration items are as follows:
+* Set SSL-related configurations in the configuration file. The specific configuration items are as follows:
 
-| Name             | Function                                                                       | Value Range                             | Default Value     | Optional/Required | Description                                                                                                                                                                                                                                                                     |
-|------------------|--------------------------------------------------------------------------------|-----------------------------------------|-------------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ciphers          | Encryption suite                                                               | Unlimited                               | null              | `required`        | If SSL is enabled but not set correctly, the service will fail to start.                                                                                                                                                                                                        |
-| enable           | Whether to enable SSL                                                          | {true, false}                           | false             | optional          | It is recommended to specify the configuration item explicitly with clear intent.                                                                                                                                                                                               |
-| sni_name         | Set the SNI extension field in the SSL protocol, or simply set the Host in SSL | Unlimited                               | null              | optional          | It is recommended to set it to the Host value in the URL, which is generally understood as the Host value in HTTP, that is, the domain name.                                                                                                                                    |
-| ca_cert_path     | CA certificate path                                                            | Unlimited, xx/path/to/ca.pem            | null              | optional          | Used more in self-signed certificate scenarios.                                                                                                                                                                                                                                 |
-| cert_path        | Certificate path                                                               | Unlimited, xx/path/to/server.pem        | null              | optional          | Required for mutual authentication, invalid in other cases.                                                                                                                                                                                                                     |
-| private_key_path | Private key path                                                               | Unlimited, xx/path/to/server.key        | null              | optional          | Required for mutual authentication, invalid in other cases.                                                                                                                                                                                                                     |
-| protocols        | SSL protocol version                                                           | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional          | -                                                                                                                                                                                                                                                                               |
-| insecure         | Whether to verify the legality of the other party's certificate                | {true, false}                           | false             | optional          | By default, the legality of the other party's certificate is verified. In the debugging scenario, self-signed certificates are generally used, and the certificate may not pass the verification. Setting this parameter to true can skip the certificate verification process. |
+   | Name             | Function                                                                       | Value Range                             | Default Value     | Optional/Required | Description                                                                                                                                                                                                                                                                     |
+   |------------------|--------------------------------------------------------------------------------|-----------------------------------------|-------------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+   | ciphers          | Encryption suite                                                               | Unlimited                               | null              | `required`        | If SSL is enabled but not set correctly, the service will fail to start.                                                                                                                                                                                                        |
+   | enable           | Whether to enable SSL                                                          | {true, false}                           | false             | optional          | It is recommended to specify the configuration item explicitly with clear intent.                                                                                                                                                                                               |
+   | sni_name         | Set the SNI extension field in the SSL protocol, or simply set the Host in SSL | Unlimited                               | null              | optional          | It is recommended to set it to the Host value in the URL, which is generally understood as the Host value in HTTP, that is, the domain name.                                                                                                                                    |
+   | ca_cert_path     | CA certificate path                                                            | Unlimited, xx/path/to/ca.pem            | null              | optional          | Used more in self-signed certificate scenarios.                                                                                                                                                                                                                                 |
+   | cert_path        | Certificate path                                                               | Unlimited, xx/path/to/server.pem        | null              | optional          | Required for mutual authentication, invalid in other cases.                                                                                                                                                                                                                     |
+   | private_key_path | Private key path                                                               | Unlimited, xx/path/to/server.key        | null              | optional          | Required for mutual authentication, invalid in other cases.                                                                                                                                                                                                                     |
+   | protocols        | SSL protocol version                                                           | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional          | -                                                                                                                                                                                                                                                                               |
+   | insecure         | Whether to verify the legality of the other party's certificate                | {true, false}                           | false             | optional          | By default, the legality of the other party's certificate is verified. In the debugging scenario, self-signed certificates are generally used, and the certificate may not pass the verification. Setting this parameter to true can skip the certificate verification process. |
 
-For example：
-
-```yaml
-# @file: trpc_cpp.yaml
-# ...
-client:
-  service:
-    - name: http_client
-      selector_name: direct
-      target: 127.0.0.1:24756
-      protocol: http
-      network: tcp
-      conn_type: long
-      ## <-- New SSL configuration items.
-      ssl:
-        enable: true # Optional configuration (defaults to false, indicating that SSL is disabled).
-        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # Requireda. 
-        # sni_name: www.xxops.com # Optional. 
-        # ca_cert_path: ./https/cert/xxops-com-chain.pem # Optional. 
-        # cert_path: xx_cert.pem # Optional, but it's required for mutual authentication. 
-        # private_key_path: xx_key.pem # Optional, but it's required for mutual authentication.
-        # insecure: true # Optional. (default to false, disable insecure mode）
-        # protocols: # Optional.
-        #   - SSLv2
-        #   - SSLv3
-        #   - TLSv1
-        #   - TLSv1.1
-        #   - TLSv1.2
-        ## --> New SSL configuration items.
-# ...
-```
+  For example：
+  
+  ```yaml
+  # @file: trpc_cpp.yaml
+  # ...
+  client:
+    service:
+      - name: http_client
+        selector_name: direct
+        target: 127.0.0.1:24756
+        protocol: http
+        network: tcp
+        conn_type: long
+        ## <-- New SSL configuration items.
+        ssl:
+          enable: true # Optional configuration (defaults to false, indicating that SSL is disabled).
+          ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # Requireda. 
+          # sni_name: www.xxops.com # Optional. 
+          # ca_cert_path: ./https/cert/xxops-com-chain.pem # Optional. 
+          # cert_path: xx_cert.pem # Optional, but it's required for mutual authentication. 
+          # private_key_path: xx_key.pem # Optional, but it's required for mutual authentication.
+          # insecure: true # Optional. (default to false, disable insecure mode）
+          # protocols: # Optional.
+          #   - SSLv2
+          #   - SSLv3
+          #   - TLSv1
+          #   - TLSv1.1
+          #   - TLSv1.2
+          ## --> New SSL configuration items.
+  # ...
+  ```
 
 ### Getting the Response content of Non-2xx responses
 
@@ -448,9 +434,9 @@ In HTTP services, there are scenarios where large files need to be read or sent.
 inefficient and can cause high memory pressure, making it impractical for uploading large files. tRPC provides a set of
 HTTP stream reading/writing data chunk interfaces that can be used to receive/send large files in chunks.
 
-- For large files with known length, set `Content-Length: $length` and send them in chunks (or use chunked transfer
+* For large files with known length, set `Content-Length: $length` and send them in chunks (or use chunked transfer
   encoding if the recipient supports it).
-- For large files with unknown length, set `Transfer-Encoding: chunked` and send them in chunks.
+* For large files with unknown length, set `Transfer-Encoding: chunked` and send them in chunks.
 
 For more details, please refer to the documentation [http upload download](./http_protocol_upload_download_service.md).
 
@@ -505,7 +491,7 @@ Use `ClientContext::SetHttpHeader('trpc-trans-info', 'json_string')` to set it.
 
 Similar to the following curl command line:
 
-```
+```sh
 curl -H 'trpc-trans-info: {"k1": "v1", "k2": "v2" }'  -T xx.seriealized.pb $url
 ```
 
@@ -539,7 +525,7 @@ Yes, it is supported. You need to:
 
 Refer to the following command (replace your own data + IP:Port + RPC method name):
 
-```
+```sh
 ## http_rpc_hello_request.pb is the serialized content of the PB message.
 curl -T http_rpc_hello_request.pb -H "Content-Type:application/pb" 'http://127.0.0.1:24756/trpc.test.httpserver.Greeter/SayHello'
 

@@ -1,7 +1,5 @@
 [中文](../zh/trpc_protocol_client.md)
 
-[TOC]
-
 # Overview
 
 This document primarily introduces how to use the tRPC-Cpp framework to invoke a service using the tRPC protocol.

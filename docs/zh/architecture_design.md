@@ -1,7 +1,5 @@
 [English](../en/architecture_design.md)
 
-[TOC]
-
 # 前言
 
 本篇文章主要对 tRPC-Cpp 具体架构设计进行介绍, 基于框架 v1.0.0 编写.

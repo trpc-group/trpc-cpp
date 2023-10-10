@@ -1,7 +1,5 @@
 [English](../en/flatbuffers_protocol_service.md)
 
-[TOC]
-
 # 前言
 
 [flatbuffers](https://google.github.io/flatbuffers/usergroup0.html)是一种类似与protobuf的协议，它具有高效的内存访问特性(具体性能参数请参考[flatbuffers_benchmarks](https://google.github.io/flatbuffers/flatbuffers_benchmarks.html))，满足一些对性能要求苛刻的特定场景，例如：游戏场景。

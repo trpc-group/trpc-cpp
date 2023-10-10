@@ -1,6 +1,4 @@
-[English](../en/server_guide.md)
-
-[TOC]
+[English](../en/server_guide.md
 
 # 服务端开发向导
 

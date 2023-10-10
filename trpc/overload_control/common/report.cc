@@ -22,6 +22,7 @@
 #include "trpc/overload_control/overload_control_defs.h"
 
 namespace trpc::overload_control {
+
 Report::Report() { TrpcConfig::GetInstance()->GetPluginNodes("metrics", metrics_plugin_names_); }
 
 void Report::ReportOverloadInfo(const OverloadInfo& overload_infos) {

@@ -1,9 +1,5 @@
 [中文](../zh/serialization.md)
 
-[TOC]
-
-# Serialization-Deserialization
-
 # Overview
 
 This article introduces the tRPC-Cpp (referred to as tRPC below) message serialization feature, and developers can learn
@@ -45,7 +41,7 @@ The basic steps are:
 
 ## Implementation
 
-**1. Develop a new service on the server to handle request messages of type `rapidjson::Document`.**
+### Develop a new service on the server to handle request messages of type `rapidjson::Document`
 
 The framework provides services to the outside world by registering services. Therefore, we need to develop a
 ServiceImpl to handle messages of type `rapidjson::Document` and then reply with a response.
@@ -55,26 +51,26 @@ The framework provides the `RpcServiceImpl` interface. We only need to do two th
 1. Implement a method to handle a `rapidjson::Document` message.
 2. Register the request routing, which is generally placed in the constructor.
 
-```cpp
-class DemoServiceImpl : public ::trpc::RpcServiceImpl {
- public:
-  DemoServiceImpl() {
-    auto handler = new ::trpc::RpcMethodHandler<rapidjson::Document, rapidjson::Document>(
-        std::bind(&DemoServiceImpl::JsonSayHello, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    AddRpcServiceMethod(new ::trpc::RpcServiceMethod("JsonSayHello", ::trpc::MethodType::UNARY, handler));
-  }
+   ```cpp
+   class DemoServiceImpl : public ::trpc::RpcServiceImpl {
+    public:
+     DemoServiceImpl() {
+       auto handler = new ::trpc::RpcMethodHandler<rapidjson::Document, rapidjson::Document>(
+           std::bind(&DemoServiceImpl::JsonSayHello, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+       AddRpcServiceMethod(new ::trpc::RpcServiceMethod("JsonSayHello", ::trpc::MethodType::UNARY, handler));
+     }
+   
+     ::trpc::Status JsonSayHello(const ::trpc::ServerContextPtr& context, const rapidjson::Document* request, rapidjson::Document* reply) {
+       for (rapidjson::Value::ConstMemberIterator iter = request->MemberBegin(); iter != request->MemberEnd(); ++iter) {
+         TRPC_FMT_INFO("json name: {}, value: {}", iter->name.GetString(), iter->value.GetInt());
+       }
+       reply->CopyFrom(*request, const_cast<rapidjson::Document*>(request)->GetAllocator());
+       return ::trpc::kSuccStatus;
+     }
+   };
+   ```
 
-  ::trpc::Status JsonSayHello(const ::trpc::ServerContextPtr& context, const rapidjson::Document* request, rapidjson::Document* reply) {
-    for (rapidjson::Value::ConstMemberIterator iter = request->MemberBegin(); iter != request->MemberEnd(); ++iter) {
-      TRPC_FMT_INFO("json name: {}, value: {}", iter->name.GetString(), iter->value.GetInt());
-    }
-    reply->CopyFrom(*request, const_cast<rapidjson::Document*>(request)->GetAllocator());
-    return ::trpc::kSuccStatus;
-  }
-};
-```
-
-**2. Register the service using the `trpc` protocol.**
+### Register the service using the `trpc` protocol
 
 Registering `DemoServiceImpl` is exactly the same as registering an tRPC service.
 

@@ -1,7 +1,5 @@
 [English](../en/grpc_protocol_client.md)
 
-[TOC]
-
 # 访问 gRPC 服务
 
 **主题：如何基于 tRPC-Cpp 访问 gRPC 服务**

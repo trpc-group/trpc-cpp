@@ -1,18 +1,14 @@
 [中文版](../zh/client_guide.md)
 
-[TOC]
-
-# tRPC-Cpp client development guide
-
-## Overview
+# Overview
 
 Based on tRPC-Cpp's client interface, users can access downstream services as if they were calling local functions, without having to worry about the underlying implementation details.
 
 This article first outlines the entire process of service invocation to introduce the capabilities provided by the framework for users to access downstream services. It then elaborates on key aspects of client development, such as service invocation, configuration, addressing, filters, and protocol selection.
 
-## Framework capabilities
+# Framework capabilities
 
-### Runtime
+## Runtime
 
 "runtime" refers to the abstraction of the thread model in the tRPC-Cpp framework, which supports three different runtimes.
 
@@ -27,7 +23,7 @@ There are two common invocation methods:
 - coroutine mode: the programming style is synchronous, corresponding to the fiber runtime.
 - future/promise mode: the programming style is asynchronous, corresponding to separate runtime and merge runtime.
 
-### Types of invocation
+## Types of invocation
 
 Based on the invocation protocol, there are several types of invocation:
 
@@ -39,7 +35,7 @@ Based on the invocation protocol, there are several types of invocation:
 - [grpc stream](./grpc_stream_client_guide.md)
 - [flatbuffers](./flatbuffers_client_guide.md)
 
-### Invocation routine
+## Invocation routine
 
 The following diagram illustrates the complete client invocation routine. The first row, from left to right, represents the process of the client sending a request. The second row, from right to left, represents the process of the client handling the server response.
 
@@ -55,32 +51,32 @@ The framework also supports users to develop their own plugins to customize the 
 
 Service addressing is a crucial aspect of the service invocation process, and the addressing plugin (selector) provides strategies for routing selection, load balancing, and circuit-breaking capabilities for service instances. It is an important part that requires special attention in client development.
 
-## Development modes
+# Development modes
 
 Before starting client development, users need to determine their development mode, which can be divided into two types: proxy mode and pure client mode.
 
-### Proxy mode
+## Proxy mode
 
 (Server A) --proxy invoke 1--> (Server B) --proxy invoke 2--> (Server C)
 
 In this case, the service functions as both a server and a client.
 
-### Pure client mode
+## Pure client mode
 
 (Client) --direct invoke--> (Server)
 
 In this case, the service functions solely as a client.
 
-### Difference
+## Difference
 
 | development mode | init plugins manually | init fiber runtime manually | init queue report manually |
 |------------------|-----------------------|-----------------------------|----------------------------|
 | proxy mode       | no need | no need | no need |
 | pure client mode | need    | need    | need    |
 
-## Constraints
+# Constraints
 
-### Default size of rpc request packet
+## Default size of rpc request packet
 
 For example, in the tRPC protocol, the framework imposes a limit on the package size, with a default threshold of 10MB.
 
@@ -144,35 +140,35 @@ Frequently Asked Questions (FAQs):
 - Creating a ServiceProxy instance for each call results in performance degradation when there are a large number of service proxies, as frequent map lookups are required. It is recommended to save the ServiceProxy and avoid calling GetProxy every time.
 - When making downstream calls, avoid reusing the ClientContext. The ClientContext is stateful and should not be reused. Use a new ClientContext for each call.
 
-## Client development
+# Client development
 
 Below are the steps for client development using the trpc protocol as an example.
 
-### Obtain IDL file
+## Obtain IDL file
 
 Some protocols require an IDL (Interface Definition Language) file for interoperation. For example, the trpc protocol relies on protobuf (pb) files, so obtaining the IDL file is necessary.
 
-### Determine addressing method
+## Determine addressing method
 
 Retrieve the addressing method from the callee service to resolve and obtain the server's IP and port for initiating the request.
 
 There are currently three supported addressing methods.
 
-#### Polaris
+### Polaris
 
 The callee service provides the following information: namespace, env, and service. These can be set for the ServiceProxy either through configuration files or programmatically.
 
-#### Direct
+### Direct
 
 Directly obtain the IP and port of the callee service and set them for the ServiceProxy through configuration files or programmatically.
 
-#### Domain
+### Domain
 
 The callee service provides the domain name and port, which can be set for the ServiceProxy through configuration files or programmatically.
 
-### Configure callee
+## Configure callee
 
-#### By framework configuration
+### By framework configuration
 
 ```yaml
 client: # client configuration
@@ -187,7 +183,7 @@ client: # client configuration
       selector_name: direct                        # The name service used for route selection, which is "direct" when using direct connection.
 ```
 
-#### By Code
+### By Code
 
 ```cpp
 // Create and set options.
@@ -205,7 +201,7 @@ option.target = "127.0.0.1:80";
 auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>(option.name, option);
 ```
 
-#### By function
+### By function
 
 By specifying through a callback function, it combines the advantages of both framework configuration and code specification. Fixed plaintext information can be solidified in the configuration file, while sensitive and dynamic information, such as database account passwords, can be set through callback functions.
 
@@ -219,13 +215,13 @@ auto func = [](ServiceProxyOption* option) {
 auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>("trpc.test.helloworld.Greeter", func);
 ```
 
-### Framework configuration
+## Framework configuration
 
 Refers to [framework configuration](framework_config_lite.md)
 
-### fiber invoke synchronously
+## fiber invoke synchronously
 
-#### Init
+### Init
 
 Only in pure client-side invocation mode, users need to obtain the configuration file and initialize the relevant parameters themselves. To obtain the TrpcClient, use the trpc::GetTrpcClient() interface.
 
@@ -244,9 +240,9 @@ int main(int argc, char** argv) {
 }
 ```
 
-#### Obtain ServiceProxy
+### Obtain ServiceProxy
 
-##### Proxy mode
+#### Proxy mode
 
 ```cpp
 int RouteServer::Initialize() {
@@ -268,7 +264,7 @@ int RouteServer::Initialize() {
 }
 ```
 
-##### Pure client mode
+#### Pure client mode
 
 ```cpp
 int Run() {
@@ -288,15 +284,15 @@ int Run() {
 }
 ```
 
-#### Trigger rpc invoke
+### Trigger rpc invoke
 
 ```cpp
 trpc::Status status = proxy->SayHello(client_context, route_request, &route_reply);
 ```
 
-### future invoke asynchronously
+## future invoke asynchronously
 
-#### Init
+### Init
 
 ```cpp
 int main(int argc, char** argv) {
@@ -311,9 +307,9 @@ int main(int argc, char** argv) {
 }
 ```
 
-#### Obtain ServiceProxy
+### Obtain ServiceProxy
 
-##### Proxy mode
+#### Proxy mode
 
 ```cpp
 RouteService::RouteService() {
@@ -322,7 +318,7 @@ RouteService::RouteService() {
 }
 ```
 
-##### Pure client mode
+#### Pure client mode
 
 ```cpp
 int main(int argc, char* argv[]) {
@@ -332,7 +328,7 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-#### Trigger rpc invoke
+### Trigger rpc invoke
 
 ```cpp
   auto fut =

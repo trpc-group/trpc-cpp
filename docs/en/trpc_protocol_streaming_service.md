@@ -1,10 +1,6 @@
 [中文](../zh/tRPC_streaming_service.md)
 
-[TOC]
-
-# tRPC Streaming Protocol Service Development Guide
-
-**Topic: How to develop tRPC streaming service based on tRPC-Cpp**
+# Overview
 
 When using Unary RPC, the client sends a single request to the server and waits for a single response from the server.
 This can be simply divided into three steps:
@@ -90,41 +86,41 @@ is used to indicate the type of the streaming RPC method.
   For example, we cannot use `SayHello` to define client streaming, server streaming, and unary RPC methods at the same
   time. The following definition is incorrect, as the same method name is used to define three types of RPC methods:
 
-```protobuf
-// !!! The following definition is incorrect !!!
-
-// Unary RPC
-    rpc SayHello (Request) returns (Reply) {}
-// Client Streaming RPC
-    rpc SayHello (stream Request) returns (Reply) {}
-// Server Streaming RPC
-    rpc SayHello (Request) returns (stream Reply) {}
-```
+  ```protobuf
+  // !!! The following definition is incorrect !!!
+  
+  // Unary RPC
+      rpc SayHello (Request) returns (Reply) {}
+  // Client Streaming RPC
+      rpc SayHello (stream Request) returns (Reply) {}
+  // Server Streaming RPC
+      rpc SayHello (Request) returns (stream Reply) {}
+  ```
 
 * Unary RPC and streaming RPC are placed in different services.
 
-Although the implementation does not restrict how users place unary RPC and streaming RPC, it is **`recommended`** to
+  Although the implementation does not restrict how users place unary RPC and streaming RPC, it is **`recommended`** to
 place unary RPC and streaming RPC in different services and not mix them together. This will reduce the difficulty of
 problem localization. For example, from the perspective of network packet transmission, multiple streams in streaming
 RPC share the same connection, and the protocol frames in streaming RPC are more complex than those in unary RPC. Mixing
 them together will increase the difficulty of problem diagnosis.
 
-The recommended approach is as follows:
-
-```protobuf
-// Service of unary RPC
-service Greeter {
-  rpc  SayHello (Request) returns (Reply) {}
-}
-
-// Service of streaming RPC
-service StreamGreeter {
-  // Client Streaming RPC
-  rpc  ClientStreamSayHello (stream Request) returns (Reply)  {}
-  // Server Streaming RPC
-  rpc  ServerStreamSayHello (Request) returns (stream Reply) {}
-}
-```
+  The recommended approach is as follows:
+  
+  ```protobuf
+  // Service of unary RPC
+  service Greeter {
+    rpc  SayHello (Request) returns (Reply) {}
+  }
+  
+  // Service of streaming RPC
+  service StreamGreeter {
+    // Client Streaming RPC
+    rpc  ClientStreamSayHello (stream Request) returns (Reply)  {}
+    // Server Streaming RPC
+    rpc  ServerStreamSayHello (Request) returns (stream Reply) {}
+  }
+  ```
 
 # How to develop synchronous streaming RPC services
 
@@ -229,7 +225,7 @@ Client-Server scenario. There are two modules:
 * StreamClient: The stream RPC client, which initiates the stream RPC call.
 * StreamServer: The stream RPC server, which provides the stream RPC service.
 
-#### Defining streaming RPC methods in the `proto` file
+#### Defining streaming RPC methods in the `proto` file of Client-Server scenario
 
 ```protobuf
 // @file: examples/features/trpc_stream/server/stream.proto
@@ -257,15 +253,15 @@ message HelloReply {
 }
 ```
 
-#### Generating stream RPC service code
+#### Generating stream RPC service code by stream.proto
 
 The code generation tool provided by tRPC will automatically generate the stream RPC service code. Take a look at the
 code snippet to get a preliminary impression of stream RPC. The following is a code snippet from the StreamServer
 module.
 
-```
+```cpp
 // @file: bazel-bin/examples/features/trpc_stream/server/stream.trpc.pb.h
-...
+// ...
 class StreamGreeter: public ::trpc::RpcServiceImpl {
 public:
 ...
@@ -273,130 +269,133 @@ public:
   virtual ::trpc::Status ServerStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::test::helloworld::HelloRequest& request, ::trpc::stream::StreamWriter<trpc::test::helloworld::HelloReply>* writer);
   virtual ::trpc::Status BidiStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::stream::StreamReader<trpc::test::helloworld::HelloRequest>& reader, ::trpc::stream::StreamWriter<trpc::test::helloworld::HelloReply>* writer);
 };
-...
+// ...
 ```
 
-#### Implementing the stream RPC service
+#### Implementing the stream RPC service of Client-Server scenario
 
 Example: [stream_service.cc](../../examples/features/trpc_stream/server/stream_server.cc)
 
-*Client Streaming*
-The key points of the ClientStreamSayHello method in the StreamServer module are as follows:
+* **Client Streaming**
 
-* Continuously read the request messages from the stream. If an error occurs, stop reading and return an error status to
+  The key points of the ClientStreamSayHello method in the StreamServer module are as follows:
+
+  * Continuously read the request messages from the stream. If an error occurs, stop reading and return an error status to
   the client.
-* After reading the EOF from the stream, set the response message and the RPC call result status, which will be returned
+  * After reading the EOF from the stream, set the response message and the RPC call result status, which will be returned
   to the client.
 
-```cpp
-// Client streaming RPC
-::trpc::Status StreamGreeterServiceImpl::ClientStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::test::helloworld::HelloReply* reply) {
-  ::trpc::Status status{};
-  uint32_t request_counter{0};
-  uint32_t request_bytes{0};
-  for (;;) {
-    ::trpc::test::helloworld::HelloRequest request{};
-    // Read streaming request message from the client.
-    status = reader.Read(&request, 3000);
-    if (status.OK()) {
-      ++request_counter;
-      request_bytes += request.msg().size();
-      continue;
-    }
-    // EOF of stream. 
-    if (status.StreamEof()) {
-      std::stringstream reply_msg;
-      reply_msg << "server got EOF, reply to client, server got request"
-                << ", count:" << request_counter << ", received bytes:" << request_bytes;
-      reply->set_msg(reply_msg.str());
-      status = ::trpc::Status{0, 0, "OK"};
+  ```cpp
+  // Client streaming RPC
+  ::trpc::Status StreamGreeterServiceImpl::ClientStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::test::helloworld::HelloReply* reply) {
+    ::trpc::Status status{};
+    uint32_t request_counter{0};
+    uint32_t request_bytes{0};
+    for (;;) {
+      ::trpc::test::helloworld::HelloRequest request{};
+      // Read streaming request message from the client.
+      status = reader.Read(&request, 3000);
+      if (status.OK()) {
+        ++request_counter;
+        request_bytes += request.msg().size();
+        continue;
+      }
+      // EOF of stream. 
+      if (status.StreamEof()) {
+        std::stringstream reply_msg;
+        reply_msg << "server got EOF, reply to client, server got request"
+                  << ", count:" << request_counter << ", received bytes:" << request_bytes;
+        reply->set_msg(reply_msg.str());
+        status = ::trpc::Status{0, 0, "OK"};
+        break;
+      }
       break;
     }
-    break;
+    return status;
   }
-  return status;
-}
-```
+  ```
 
-*Server Streaming*
-The key points of the ServerStreamSayHello method in the StreamServer module are as follows:
+* **Server Streaming**
 
-* Write the request message sent by the client back to the client in a stream manner.
-* Return the RPC call result to the client.
+  The key points of the ServerStreamSayHello method in the StreamServer module are as follows:
 
-```cpp
-// Server streaming RPC
-::trpc::Status StreamGreeterServiceImpl::ServerStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::test::helloworld::HelloRequest& request, 
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  ::trpc::Status status{};
-  // A simple case: try to send 10 responses.
-  int request_count = 10;
-  for (int i = 0; i < request_count; ++i) {
-    std::stringstream reply_msg;
-    ::trpc::test::helloworld::HelloReply reply{};
-    reply.set_msg(reply_msg.str());
-    // Write the streaming message.
-    status = writer->Write(reply);
-    if (status.OK()) {
-      continue;
-    }
-    break;
-  }
-  return status;
-}
-```
+  * Write the request message sent by the client back to the client in a stream manner.
+  * Return the RPC call result to the client.
 
-*Bidirectional Streaming*
-The key points of the BidiStreamSayHello method in the StreamServer module are as follows:
-
-* Continuously read the request messages from the client side and immediately send them back to the client.
-* If EOF is read, an additional request message containing statistical information is sent to the client.
-* Return the RPC call result to the client.
-
-```cpp
-// Bidirectional streaming RPC.
-::trpc::Status StreamGreeterServiceImpl::BidiStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  std::vector<std::string> msg_list{};
-  ::trpc::Status status{};
-  uint32_t request_counter{0};
-  uint32_t request_bytes{0};
-  for (;;) {
-    ::trpc::test::helloworld::HelloRequest request{};
-    // Read the streaming request message from the client.
-    status = reader.Read(&request, 3000);
-    if (status.OK()) {
-      ++request_counter;
-      request_bytes += request.msg().size();
+  ```cpp
+  // Server streaming RPC
+  ::trpc::Status StreamGreeterServiceImpl::ServerStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::test::helloworld::HelloRequest& request, 
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    ::trpc::Status status{};
+    // A simple case: try to send 10 responses.
+    int request_count = 10;
+    for (int i = 0; i < request_count; ++i) {
       std::stringstream reply_msg;
-      reply_msg << " reply:" << request_counter << ", received bytes:" << request_bytes;
-      ::trpc::test::helloworld::HelloReply reply;
+      ::trpc::test::helloworld::HelloReply reply{};
       reply.set_msg(reply_msg.str());
-      // Write the streaming message to client.
-      writer->Write(reply);
-      continue;
-    }
-    // EOF of stream.
-    if (status.StreamEof()) {
-      std::stringstream reply_msg;
-      reply_msg << "server got EOF, reply to client, server got request"
-                << ", count:" << request_counter << ", received bytes:" << request_bytes;
-      ::trpc::test::helloworld::HelloReply reply;
-      reply.set_msg(reply_msg.str());
+      // Write the streaming message.
       status = writer->Write(reply);
+      if (status.OK()) {
+        continue;
+      }
+      break;
     }
-    break;
+    return status;
   }
-  return status;
-}
-```
+  ```
+
+* **Bidirectional Streaming**
+
+  The key points of the BidiStreamSayHello method in the StreamServer module are as follows:
+
+  * Continuously read the request messages from the client side and immediately send them back to the client.
+  * If EOF is read, an additional request message containing statistical information is sent to the client.
+  * Return the RPC call result to the client.
+
+  ```cpp
+  // Bidirectional streaming RPC.
+  ::trpc::Status StreamGreeterServiceImpl::BidiStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    std::vector<std::string> msg_list{};
+    ::trpc::Status status{};
+    uint32_t request_counter{0};
+    uint32_t request_bytes{0};
+    for (;;) {
+      ::trpc::test::helloworld::HelloRequest request{};
+      // Read the streaming request message from the client.
+      status = reader.Read(&request, 3000);
+      if (status.OK()) {
+        ++request_counter;
+        request_bytes += request.msg().size();
+        std::stringstream reply_msg;
+        reply_msg << " reply:" << request_counter << ", received bytes:" << request_bytes;
+        ::trpc::test::helloworld::HelloReply reply;
+        reply.set_msg(reply_msg.str());
+        // Write the streaming message to client.
+        writer->Write(reply);
+        continue;
+      }
+      // EOF of stream.
+      if (status.StreamEof()) {
+        std::stringstream reply_msg;
+        reply_msg << "server got EOF, reply to client, server got request"
+                  << ", count:" << request_counter << ", received bytes:" << request_bytes;
+        ::trpc::test::helloworld::HelloReply reply;
+        reply.set_msg(reply_msg.str());
+        status = writer->Write(reply);
+      }
+      break;
+    }
+    return status;
+  }
+  ```
 
 ### Client-Router-Server scenario
 
@@ -409,7 +408,7 @@ Client-Router-Server scenario. There are three modules:
 * StreamForwardServer: Receives requests from StreamClient and forwards them to StreamServer, then sends the response
   from StreamServer back to StreamClient.
 
-#### Defining streaming RPC methods in the `proto` file
+#### Defining streaming RPC methods in the `proto` file of Client-Router-Server scenario
 
 ```protobuf
 // @file: examples/features/trpc_stream/forward/proxy/stream_forward.proto
@@ -431,192 +430,195 @@ service StreamForward {
 }
 ```
 
-#### Generating stream RPC service code
+#### Generating stream RPC service code by stream_forward.proto
 
 The following is a code snippet from the StreamServer module.
 
-```
+```cpp
 // @file: bazel-bin/examples/features/trpc_stream/forward/proxy/stream_forward.trpc.pb.h
-...
+// ...
 class StreamForward: public ::trpc::RpcServiceImpl {
 public:
-...
+// ...
   virtual ::trpc::Status ClientStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::stream::StreamReader<trpc::test::helloworld::HelloRequest>& reader, ::trpc::test::helloworld::HelloReply* response);
   virtual ::trpc::Status ServerStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::test::helloworld::HelloRequest& request, ::trpc::stream::StreamWriter<trpc::test::helloworld::HelloReply>* writer);
   virtual ::trpc::Status BidiStreamSayHello(const ::trpc::ServerContextPtr& context, const ::trpc::stream::StreamReader<trpc::test::helloworld::HelloRequest>& reader, ::trpc::stream::StreamWriter<trpc::test::helloworld::HelloReply>* writer);
 };
-...
+// ...
 ```
 
-#### Implementing the stream RPC service
+#### Implementing the stream RPC service of Client-Router-Server scenario
 
 Example: [stream_forward_service.cc](../../examples/features/trpc_stream_forward/proxy/stream_forward_service.cc)
 
-*Client streaming*
-The key points of the ClientStreamSayHello method in the StreamForwardServer module are as follows:
+* **Client streaming**
 
-* Call the ClientStreamSayHello method of StreamServer to obtain the client stream reader.
-* Continuously read the request messages from the client and send them to StreamServer. If an error occurs during the
+  The key points of the ClientStreamSayHello method in the StreamForwardServer module are as follows:
+
+  * Call the ClientStreamSayHello method of StreamServer to obtain the client stream reader.
+  * Continuously read the request messages from the client and send them to StreamServer. If an error occurs during the
   process, stop reading/writing.
-* If EOF is read from the client stream, wait for StreamServer to return the RPC method call result and return it to the
+  * If EOF is read from the client stream, wait for StreamServer to return the RPC method call result and return it to the
   client.
 
-```cpp
-// Client streaming RPC.
-::trpc::Status StreamForwardImpl::ClientStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::test::helloworld::HelloReply* reply) {
-  ::trpc::Status status{};
-  const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
-  auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
-  do {
-    // Open a stream of StreamGreeter. 
-    auto stream = stream_greeter_proxy->ClientStreamSayHello(client_context, reply);
-    status = stream.GetStatus();
-    if (!status.OK()) {
-      break;
-    }
-
-    for (;;) {
-      ::trpc::test::helloworld::HelloRequest request;
-      // Read the streaming request message from the client, then try to send to StreamServer.
-      status = reader.Read(&request);
-      if (status.OK()) {
-        status = stream.Write(request);
+  ```cpp
+  // Client streaming RPC.
+  ::trpc::Status StreamForwardImpl::ClientStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::test::helloworld::HelloReply* reply) {
+    ::trpc::Status status{};
+    const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
+    auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
+    do {
+      // Open a stream of StreamGreeter. 
+      auto stream = stream_greeter_proxy->ClientStreamSayHello(client_context, reply);
+      status = stream.GetStatus();
+      if (!status.OK()) {
+        break;
+      }
+  
+      for (;;) {
+        ::trpc::test::helloworld::HelloRequest request;
+        // Read the streaming request message from the client, then try to send to StreamServer.
+        status = reader.Read(&request);
         if (status.OK()) {
-          continue;
-        }
-      }
-      // EOF of stream. 
-      if (status.StreamEof()) {
-        status = stream.WriteDone();
-        if (status.OK()) {
-          status = stream.Finish();
-        }
-      }
-      break;
-    }
-  } while (0);
-  TRPC_FMT_INFO("final status: {}", status.ToString());
-  return status;
-}
-```
-
-*Server streaming*
-The key points of the ServerStreamSayHello method in the StreamRouter module are as follows:
-
-* Call the ServerStreamSayHello method of the StreamServer module to obtain the stream reader.
-* Continuously read the response messages from StreamServer and send them to the client. If an error occurs during the
-  process, stop reading/writing.
-* If EOF is read from the stream, wait for StreamServer to return the RPC method call result and return it to the
-  client.
-
-```cpp
-// Server streaming RPC.
-::trpc::Status StreamForwardImpl::ServerStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::test::helloworld::HelloRequest& request,  // NO LINT
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  ::trpc::Status status{};
-  const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
-  auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
-  do {
-    // Open a stream of StreamGreeter. 
-    auto stream = stream_greeter_proxy->ServerStreamSayHello(client_context, request);
-    status = stream.GetStatus();
-    if (!status.OK()) {
-      break;
-    }
-
-    for (;;) {
-      ::trpc::test::helloworld::HelloReply reply;
-     // Read the streaming response message from StreamServer, then try to send to the client.
-      status = stream.Read(&reply);
-      if (status.OK()) {
-        status = writer->Write(reply);
-        if (status.OK()) {
-          continue;
-        }
-      }
-      // EOF of stream. 
-      if (status.StreamEof()) {
-        status = stream.Finish();
-      }
-      break;
-    }
-  } while (0);
-  TRPC_FMT_INFO("final status: {}", status.ToString());
-  return status;
-}
-```
-
-*Bidirectional streaming*
-The key points of the BidiStreamSayHello method in the StreamForwardServer module are as follows:
-
-* Call the BidiStreamSayHello method of the StreamServer module to obtain the stream reader/writer.
-* Continuously read the request messages from the client and send them to StreamServer. If an error occurs during the
-  process, stop reading/writing.
-* If EOF is read from the stream, notify StreamServer that the request writing is finished.
-* Continuously read the response messages from StreamServer and send them to the client.
-* If EOF is read from the stream, wait for the RPC call result and return it to the client.
-
-```cpp
-// Bidirectional streaming RPC.
-::trpc::Status StreamForwardImpl::BidiStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  ::trpc::Status status{};
-  const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
-  auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
-  do {
-    // Open a stream of StreamGreeter.
-    auto stream = stream_greeter_proxy->BidiStreamSayHello(client_context);
-    status = stream.GetStatus();
-    if (!status.OK()) {
-      break;
-    }
-
-    for (;;) {
-      ::trpc::test::helloworld::HelloRequest request;
-      // Read the streaming request message from the client, then try to send to StreamServer.
-      status = reader.Read(&request);
-      if (status.OK()) {
-        status = stream.Write(request);
-        if (status.OK()) {
-          continue;
-        }
-      }
-      // EOF of stream. 
-      if (status.StreamEof()) {
-        status = stream.WriteDone();
-        if (!status.OK()) {
-          break;
-        }
-        for (;;) {
-          ::trpc::test::helloworld::HelloReply reply;
-          // Read the streaming response message from StreamServer, then try to send to the client.
-          status = stream.Read(&reply);
+          status = stream.Write(request);
           if (status.OK()) {
-            status = writer->Write(reply);
-            if (status.OK()) {
-              continue;
-            }
+            continue;
           }
-          if (status.StreamEof()) {
+        }
+        // EOF of stream. 
+        if (status.StreamEof()) {
+          status = stream.WriteDone();
+          if (status.OK()) {
             status = stream.Finish();
           }
-          break;
         }
+        break;
       }
-      break;
-    }
-  } while (0);
-  TRPC_FMT_INFO("final status: {}", status.ToString());
-  return status;
-}
-```
+    } while (0);
+    TRPC_FMT_INFO("final status: {}", status.ToString());
+    return status;
+  }
+  ```
+
+* **Server streaming**
+
+  The key points of the ServerStreamSayHello method in the StreamRouter module are as follows:
+
+  * Call the ServerStreamSayHello method of the StreamServer module to obtain the stream reader.
+  * Continuously read the response messages from StreamServer and send them to the client. If an error occurs during the
+  process, stop reading/writing.
+  * If EOF is read from the stream, wait for StreamServer to return the RPC method call result and return it to the
+  client.
+
+  ```cpp
+  // Server streaming RPC.
+  ::trpc::Status StreamForwardImpl::ServerStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::test::helloworld::HelloRequest& request,  // NO LINT
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    ::trpc::Status status{};
+    const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
+    auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
+    do {
+      // Open a stream of StreamGreeter. 
+      auto stream = stream_greeter_proxy->ServerStreamSayHello(client_context, request);
+      status = stream.GetStatus();
+      if (!status.OK()) {
+        break;
+      }
+  
+      for (;;) {
+        ::trpc::test::helloworld::HelloReply reply;
+       // Read the streaming response message from StreamServer, then try to send to the client.
+        status = stream.Read(&reply);
+        if (status.OK()) {
+          status = writer->Write(reply);
+          if (status.OK()) {
+            continue;
+          }
+        }
+        // EOF of stream. 
+        if (status.StreamEof()) {
+          status = stream.Finish();
+        }
+        break;
+      }
+    } while (0);
+    TRPC_FMT_INFO("final status: {}", status.ToString());
+    return status;
+  }
+  ```
+
+* **Bidirectional streaming**
+
+  The key points of the BidiStreamSayHello method in the StreamForwardServer module are as follows:
+
+  * Call the BidiStreamSayHello method of the StreamServer module to obtain the stream reader/writer.
+  * Continuously read the request messages from the client and send them to StreamServer. If an error occurs during the
+  process, stop reading/writing.
+  * If EOF is read from the stream, notify StreamServer that the request writing is finished.
+  * Continuously read the response messages from StreamServer and send them to the client.
+  * If EOF is read from the stream, wait for the RPC call result and return it to the client.
+
+  ```cpp
+  // Bidirectional streaming RPC.
+  ::trpc::Status StreamForwardImpl::BidiStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    ::trpc::Status status{};
+    const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
+    auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
+    do {
+      // Open a stream of StreamGreeter.
+      auto stream = stream_greeter_proxy->BidiStreamSayHello(client_context);
+      status = stream.GetStatus();
+      if (!status.OK()) {
+        break;
+      }
+  
+      for (;;) {
+        ::trpc::test::helloworld::HelloRequest request;
+        // Read the streaming request message from the client, then try to send to StreamServer.
+        status = reader.Read(&request);
+        if (status.OK()) {
+          status = stream.Write(request);
+          if (status.OK()) {
+            continue;
+          }
+        }
+        // EOF of stream. 
+        if (status.StreamEof()) {
+          status = stream.WriteDone();
+          if (!status.OK()) {
+            break;
+          }
+          for (;;) {
+            ::trpc::test::helloworld::HelloReply reply;
+            // Read the streaming response message from StreamServer, then try to send to the client.
+            status = stream.Read(&reply);
+            if (status.OK()) {
+              status = writer->Write(reply);
+              if (status.OK()) {
+                continue;
+              }
+            }
+            if (status.StreamEof()) {
+              status = stream.Finish();
+            }
+            break;
+          }
+        }
+        break;
+      }
+    } while (0);
+    TRPC_FMT_INFO("final status: {}", status.ToString());
+    return status;
+  }
+  ```
 
 # How to develop asynchronous streaming RPC services
 
@@ -701,10 +703,10 @@ According to the design requirements, the asynchronous stream uses the following
 * Stream establishment: When the user obtains an asynchronous reader or writer of a stream, it means that the stream has
   been negotiated and established (tRPC will automatically open the stream).
 * Stream closing:
-    - For the client, calling Finish will actively close the stream, and it will be ready after both parties agree to
+  * For the client, calling Finish will actively close the stream, and it will be ready after both parties agree to
       close (currently only Ready, even if the stream has an error, it will not be Failed). We can choose to call
       it (recommended for the client to call it actively).
-    - For the server, tRPC will automatically close the stream after the Future returned by the user service function (
+  * For the server, tRPC will automatically close the stream after the Future returned by the user service function (
       such as the user-implemented AsyncStreamGreeter service function) is ready; calling Finish will not initiate any
       operations, but will only be ready after both parties agree to close (currently only Ready, even if the stream has
       an error, it will not be Failed). We can choose to call it.
@@ -730,109 +732,109 @@ Future<size_t, FutureValueType> WhenAny(InputIterator first, InputIterator last)
 Future<size_t, FutureValueType> WhenAnyWithoutException(InputIterator first, InputIterator last);
 ```
 
-### Implementing the stream RPC service
+### Implementing the stream RPC service by asynchronous mode
 
 Example: [stream_service.cc](../../examples/features/trpc_async_stream/server/stream_service.cc)
 
-*Client Streaming*
+* **Client Streaming**
 
-```cpp
-// Client streaming RPC.
-::trpc::Future<::trpc::test::helloworld::HelloReply> AsyncStreamGreeterServiceImpl::ClientStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::AsyncReaderPtr<::trpc::test::helloworld::HelloRequest>& reader) {
-  struct State {
-    std::size_t request_counter{0};
-    std::size_t request_bytes{0};
-  };
-  auto state = std::make_shared<State>();
+  ```cpp
+  // Client streaming RPC.
+  ::trpc::Future<::trpc::test::helloworld::HelloReply> AsyncStreamGreeterServiceImpl::ClientStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::AsyncReaderPtr<::trpc::test::helloworld::HelloRequest>& reader) {
+    struct State {
+      std::size_t request_counter{0};
+      std::size_t request_bytes{0};
+    };
+    auto state = std::make_shared<State>();
+  
+    return ::trpc::DoUntil([state, reader]() {
+             // Loop to read stream messages in order
+             return reader->Read(3000ms).Then(
+                 [state, reader](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
+                   if (req) {
+                     ++state->request_counter;
+                     state->request_bytes += req.value().msg().size();
+                     // Loop: continue to read the next streaming message.
+                     return ::trpc::MakeReadyFuture<bool>(true);
+                   } else {
+                     // EOF of stream.
+                     // Loop: finish reading. 
+                     return ::trpc::MakeReadyFuture<bool>(false);
+                   }
+                 });
+           })
+        .Then([state]() {
+          auto msg =
+              ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
+          ::trpc::test::helloworld::HelloReply reply;
+          reply.set_msg(std::move(msg));
+          return ::trpc::MakeReadyFuture<::trpc::test::helloworld::HelloReply>(std::move(reply));
+        });
+  }
+  ```
 
-  return ::trpc::DoUntil([state, reader]() {
-           // Loop to read stream messages in order
-           return reader->Read(3000ms).Then(
-               [state, reader](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
-                 if (req) {
-                   ++state->request_counter;
-                   state->request_bytes += req.value().msg().size();
-                   // Loop: continue to read the next streaming message.
-                   return ::trpc::MakeReadyFuture<bool>(true);
-                 } else {
-                   // EOF of stream.
-                   // Loop: finish reading. 
-                   return ::trpc::MakeReadyFuture<bool>(false);
-                 }
-               });
-         })
-      .Then([state]() {
-        auto msg =
-            ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
-        ::trpc::test::helloworld::HelloReply reply;
-        reply.set_msg(std::move(msg));
-        return ::trpc::MakeReadyFuture<::trpc::test::helloworld::HelloReply>(std::move(reply));
+* **Server streaming**
+
+  ```cpp
+  // Server streaming RPC.
+  ::trpc::Future<> AsyncStreamGreeterServiceImpl::ServerStreamSayHello(
+      const ::trpc::ServerContextPtr& context, ::trpc::test::helloworld::HelloRequest&& request,
+      const ::trpc::stream::AsyncWriterPtr<::trpc::test::helloworld::HelloReply>& writer) {
+    // Try to send 10 streaming messages to the client.
+    return ::trpc::DoFor(10,
+                         [writer, request = std::move(request)](std::size_t i) {
+                           auto msg = ::trpc::util::FormatString("{}#{}", request.msg(), i + 1);
+                           ::trpc::test::helloworld::HelloReply reply;
+                           reply.set_msg(std::move(msg));
+                           return writer->Write(std::move(reply));
+                         })
+        .Then([]() {
+          // Trigger a read timeout(>3000ms) for client to show its usage
+          return ::trpc::AsyncTimer(false).After(3050 /*ms*/);
+        });
+  }
+  ```
+
+* **Bidirectional streaming**
+
+  ```cpp
+  // Bidirectional streaming RPC.
+  ::trpc::Future<> AsyncStreamGreeterServiceImpl::BidiStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::AsyncReaderWriterPtr<::trpc::test::helloworld::HelloRequest,
+                                                 ::trpc::test::helloworld::HelloReply>& rw) {
+    struct State {
+      std::size_t request_counter{0};
+      std::size_t request_bytes{0};
+    };
+    auto state = std::make_shared<State>();
+  
+    return ::trpc::DoUntil([state, rw]() {
+      // Loop to read stream messages in order, then try to reply it to the client.
+      return rw->Read(3000ms).Then([state, rw](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
+        if (req) {
+          ++state->request_counter;
+          state->request_bytes += req.value().msg().size();
+          auto msg =
+              ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
+          ::trpc::test::helloworld::HelloReply reply;
+          reply.set_msg(std::move(msg));
+          return rw->Write(std::move(reply)).Then([]() { return ::trpc::MakeReadyFuture<bool>(true); });
+        } else {
+          // EOF of stream.
+          // Loop: finish reading.
+          return ::trpc::MakeReadyFuture<bool>(false);
+        }
       });
-}
-```
-
-*Server streaming*
-
-```cpp
-// Server streaming RPC.
-::trpc::Future<> AsyncStreamGreeterServiceImpl::ServerStreamSayHello(
-    const ::trpc::ServerContextPtr& context, ::trpc::test::helloworld::HelloRequest&& request,
-    const ::trpc::stream::AsyncWriterPtr<::trpc::test::helloworld::HelloReply>& writer) {
-  // Try to send 10 streaming messages to the client.
-  return ::trpc::DoFor(10,
-                       [writer, request = std::move(request)](std::size_t i) {
-                         auto msg = ::trpc::util::FormatString("{}#{}", request.msg(), i + 1);
-                         ::trpc::test::helloworld::HelloReply reply;
-                         reply.set_msg(std::move(msg));
-                         return writer->Write(std::move(reply));
-                       })
-      .Then([]() {
-        // Trigger a read timeout(>3000ms) for client to show its usage
-        return ::trpc::AsyncTimer(false).After(3050 /*ms*/);
-      });
-}
-```
-
-*Bidirectional streaming*
-
-```cpp
-// Bidirectional streaming RPC.
-::trpc::Future<> AsyncStreamGreeterServiceImpl::BidiStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::AsyncReaderWriterPtr<::trpc::test::helloworld::HelloRequest,
-                                               ::trpc::test::helloworld::HelloReply>& rw) {
-  struct State {
-    std::size_t request_counter{0};
-    std::size_t request_bytes{0};
-  };
-  auto state = std::make_shared<State>();
-
-  return ::trpc::DoUntil([state, rw]() {
-    // Loop to read stream messages in order, then try to reply it to the client.
-    return rw->Read(3000ms).Then([state, rw](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
-      if (req) {
-        ++state->request_counter;
-        state->request_bytes += req.value().msg().size();
-        auto msg =
-            ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
-        ::trpc::test::helloworld::HelloReply reply;
-        reply.set_msg(std::move(msg));
-        return rw->Write(std::move(reply)).Then([]() { return ::trpc::MakeReadyFuture<bool>(true); });
-      } else {
-        // EOF of stream.
-        // Loop: finish reading.
-        return ::trpc::MakeReadyFuture<bool>(false);
-      }
     });
-  });
-}
-```
+  }
+  ```
 
 # FAQ
 
-## 1 What is the difference between tRPC streaming and gRPC streaming?
+## What is the difference between tRPC streaming and gRPC streaming?
 
 tRPC streaming is an RPC protocol based on the TCP protocol, while gRPC is a universal 7-layer protocol based on
 HTTP/2.0.
@@ -841,17 +843,17 @@ considerations and adherence to details.
 In terms of functionality, both can perform streaming transmission, and the server and client can interactively respond.
 tRPC is more based on RPC considerations.
 
-## 2 Why is there no Finish/WriteDone interface called in the synchronous streaming interface on the server side?
+## Why is there no Finish/WriteDone interface called in the synchronous streaming interface on the server side?
 
 The server can also call Finish/WriteDone, but it does not execute anything. How can the server stop receiving or
 sending?
 If the server wants to stop receiving/sending, it can simply return, which represents the end of the stream.
 
-## 3 Why is there no WriteDone in the asynchronous streaming interface?
+## Why is there no WriteDone in the asynchronous streaming interface?
 
 In the asynchronous streaming interface, when the client calls the Finish interface of the reader/writer, it notifies
 the other end that the data has been written (equivalent to WriteDone).
 
-## 4 Can asynchronous streaming only run in the `merge` thread model?
+## Can asynchronous streaming only run in the `merge` thread model?
 
 Yes, other thread models are not yet supported.

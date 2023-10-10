@@ -1,6 +1,5 @@
 [English](../en/flatbuffers_protocol_client.md)
 
-[TOC]
 
 # 前言
 

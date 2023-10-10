@@ -1,15 +1,15 @@
 [中文](../zh/plugin_management.md)
 
-[TOC]
-
 # Overview
 
 In the tRPC framework, following the principle of interface programming, framework functionalities are abstracted into a series of plugin components, which are managed through a plugin factory. During runtime, the framework connects these plugin components together to assemble a complete set of functionalities. We can divide the plugin model into the following parts:
+
 1. Framework design layer: The framework only defines standard interfaces and usage specifications, without specifying specific implementations, completely decoupled from the platform.
 2. Plugin implementation layer: By encapsulating plugins according to the framework's standard interfaces, framework plugins can be implemented.
 3. User usage layer: Business development only needs to register the required plugins, on-demand retrieval, and ready-to-use.
 
 In this document, we will introduce the management of framework plugins. Developers can learn the following topics:
+
 * The supported plugin types in the framework.
 * Methods for registering plugins.
 * Dependency management for plugins.
@@ -30,15 +30,15 @@ The framework takes inspiration from Java's Aspect-Oriented Programming (AOP) pa
 
 * Naming
 
-    It provides encapsulation of capabilities such as service registration (registry), service discovery (selector), load balancing (load balance), circuit breaking (circuit breaker), etc., for integration with various naming service systems. For more details, please refer to the [documentation of customizing Naming plugin]().
+    It provides encapsulation of capabilities such as service registration (registry), service discovery (selector), load balancing (load balance), circuit breaking (circuit breaker), etc., for integration with various naming service systems. For more details, please refer to the [documentation of customizing Naming plugin](./custom_naming.md).
 
 * Config
 
-    It provides interfaces for reading configuration, supporting reading local configuration files, remote configuration center configurations, etc. It allows plugin-based extension to support different formats of configuration files, different configuration centers, and supports reloading and watching configuration updates. For more details, please refer to the [documentation of customizing Config plugin]().
+    It provides interfaces for reading configuration, supporting reading local configuration files, remote configuration center configurations, etc. It allows plugin-based extension to support different formats of configuration files, different configuration centers, and supports reloading and watching configuration updates. For more details, please refer to the [documentation of customizing Config plugin](./custom_config.md).
 
 * Logging
 
-    It provides a generic logging collection interface, allowing the extension of logging implementation through plugins, and supports logging output to remote destinations. For more details, please refer to the [documentation of customizing Logging plugin]().
+    It provides a generic logging collection interface, allowing the extension of logging implementation through plugins, and supports logging output to remote destinations. For more details, please refer to the [documentation of customizing Logging plugin](./custom_logging.md).
 
 * Metrics
 
@@ -75,6 +75,7 @@ The framework takes inspiration from Java's Aspect-Oriented Programming (AOP) pa
 The users need to register the plugins into the corresponding plugin factory using the registration interface provided by the framework during startup. These interfaces are provided by [trpc::TrpcPlugin](../../trpc/common/trpc_plugin.h).
 
 For example, registering a custom metrics plugin:
+
 ```cpp
 trpc::TrpcPlugin::GetInstance()->RegisterMetrics(trpc::MakeRefCounted<CustomMetrics>());
 ```
@@ -86,6 +87,7 @@ There may be dependencies between different plugins, for example, configuration 
 tPPC-Cpp provides a set of solutions for plugin dependency management.
 
 1. First, plugin developers need to explicitly specify the other plugins that their implementation depends on, and return the names of the dependent plugins through the `GetDependencies` interface.
+
     ```cpp
     class Plugin : public RefCounted<Plugin> {
     public:

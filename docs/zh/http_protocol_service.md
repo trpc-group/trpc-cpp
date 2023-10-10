@@ -1,7 +1,5 @@
 [English](../en/http_protocol_service.md)
 
-[TOC]
-
 # HTTP 服务开发指南
 
 **主题：如何基于 tRPC-Cpp 开发 HTTP 服务**

@@ -1,7 +1,5 @@
 [English](../en/http_protocol_upload_download_client.md)
 
-[TOC]
-
 # 访问 HTTP 文件上传-下载服务
 
 **主题：如何基于 tRPC-Cpp 访问 HTTP 文件上传-下载服务**

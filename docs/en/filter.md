@@ -1,10 +1,6 @@
-[中文版](/docs/zh/filter.md)
+[中文](../zh/filter.md)
 
-[TOC]
-
-# Customize filters
-
-## Overview
+# Overview
 
 In order to enhance the framework's extensibility, tRPC introduces the concept of filters, which takes inspiration from the Aspect-Oriented Programming (AOP) paradigm in Java. The approach involves setting up filter points before and after specific actions in the framework, and then inserting a series of filters at these points to extend the functionality of the framework, and it also facilitates integration with different ecosystems.
 
@@ -14,14 +10,14 @@ In terms of business logic, users can customize filters to implement functionali
 
 Next, let's first introduce the principles of filters and then explain how to implement and use custom filters.
 
-## Principle
+# Principle
 
 tRPC-Cpp filters are implemented using an array traversal approach. It defines a set of filter points and executes the corresponding filter logic at each step of the invocation process. To understand the principle of implementing filters in the framework, it is important to understand the following key parts:
 
 - [Filter points and execution flow](#filter-points-and-execution-flow)
 - [Filter types and execution order](#filter-types-and-execution-order)
 
-### Filter points and execution flow
+## Filter points and execution flow
 
 The framework's filter points are divided into server-side and client-side points, each with 10 filter points defined in [filter_point.h](/trpc/filter/filter_point.h). Typically, users only need to focus on a few filter points below. If you need to use other filter points, you can refer to the rpcz documentation.
 
@@ -40,11 +36,12 @@ enum class FilterPoint {
   SERVER_POST_RPC_INVOKE = kServerFilterPrefix | 3,  ///< After makes server RPC call
 };
 ```
+
 The filter points and execution flow are as follows:
 
 ![img](/docs/images/filter_point.png)
 
-**Description of client-side filter points**
+### Description of client-side filter points
 
 | Filter point | Description |
 | ------ | ------- |
@@ -53,7 +50,7 @@ The filter points and execution flow are as follows:
 | CLIENT_POST_RECV_MSG | At this point, the response packet has been received and decoded, but the response content has not been deserialized yet.|
 | CLIENT_POST_RPC_INVOKE | At this point, the response content has been deserialized, indicating that the RPC invocation is completed.|
 
-**Description of server-side filter points**
+### Description of server-side filter points**
 
 | Filter point | Description |
 | ------ | ------- |
@@ -62,18 +59,18 @@ The filter points and execution flow are as follows:
 | SERVER_POST_RPC_INVOKE | At this point, the RPC processing logic has been completed. This filter point is executed immediately after the RPC processing logic finishes. At this time, the response content has not been serialized yet.|
 | SERVER_PRE_SEND_MSG | At this point, the response content has been serialized, and the next stage involves encoding and sending the response.|
 
-**Logic executed at filter points**
+### Logic executed at filter points
 
 The framework calls the interceptor function of the `FilterController` class at filter points. The client-side invokes the `RunMessageClientFilters` function, while the server-side invokes the `RunMessageServerFilters` function. At this point, all filters registered with the framework will execute their implementation of the `operator()` function. The `operator()` function is a pure virtual function in the base class of the framework filter. Each specific filter needs to override this function after inheriting from the base class. Then, use the context in the interface parameters to retrieve the necessary information and implement specific functionality.
 
-### Filter types and execution order
+## Filter types and execution order
 
 The framework supports two types of filters based on their scope:
 
 1. Global-level filters
-   
+
    These filters apply to all services under the server or client. They can be configured as follows:
-   
+
    ```yaml
    server:
      filter:
@@ -84,6 +81,7 @@ The framework supports two types of filters based on their scope:
        - cg1
        - cg2
    ```
+
 2. Service-level filters
 
    These filters only apply to the current service. They can be configured as follows:
@@ -121,11 +119,11 @@ The configuration and execution order of filters follow the following principles
 
 For more details, please refer to the [filter design principles](/trpc/filter/README.md).
 
-## How to implement and use custom filters
+# How to implement and use custom filters
 
 The overall steps are as follows: Implement the filter -> Register the filter to framework -> Use the filter.
 
-### Implement the filter
+## Implement the filter
 
 - Server-side
 
@@ -175,14 +173,14 @@ The overall steps are as follows: Implement the filter -> Register the filter to
   };
   ```
 
-### Register the filter to framework
+## Register the filter to framework
 
 According to the usage pattern of the framework, there are the following two scenarios:
 
 1. Program as a server
 
    In this case, the program is implemented as a server by inherit `trpc::TrpcApp` of framework. To register filters in this scenario, you need to override the `trpc::TrpcApp::RegisterPlugins` interface and place the filter registration logic inside it.
-   
+
    ```cpp
    #include "trpc/common/trpc_plugin.h"
    
@@ -198,7 +196,7 @@ According to the usage pattern of the framework, there are the following two sce
    ```
 
 2. Program as a pure client
-   
+
    In this case, the program only needs to use the client and no need to inherit `trpc::TrpcApp` of framework. To register filters in this scenario, you need to place the filter registration logic before `trpc::RunInTrpcRuntime` is called.
 
    ```cpp
@@ -216,7 +214,7 @@ According to the usage pattern of the framework, there are the following two sce
    }
    ```
 
-### Use the filter
+## Use the filter
 
 Filter can be used by specifying them either through configuration files or code.
 
@@ -226,13 +224,13 @@ Alternatively, filters can be specified through code in the following scenarios:
 
 1. When obtaining a `ServiceProxy` in the client proxy scenario using `GetProxy`, by specifying the desired service filters using the `service_filters` field in `ServiceProxyOption`.
 
-2. When starting a service in the server service scenario using `StartService`, by specifying the service filters using the `service_filters` field in` ServiceConfig`.
+2. When starting a service in the server service scenario using `StartService`, by specifying the service filters using the `service_filters` field in `ServiceConfig`.
 
 Note: Global-level filters can only be specified through configuration files.
 
-## Advanced Usage
+# Advanced Usage
 
-### Configure independent filter for service
+## Configure independent filter for service
 
 By default, a filter object is shared among multiple ServiceProxy instances or multiple services. This can make programming inconvenient in some scenarios and also impact performance. For example, in a scenario where rate limiting is based on the calling behavior of a service, using a shared filter would require storing the service names and their calling behavior in a map structure, along with the need for locking when accessing the map. Therefore, one solution is to allow each ServiceProxy or service to have its own independent filter object. This eliminates the need for a map structure and locking, simplifying programming and improving performance.
 

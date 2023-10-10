@@ -1,7 +1,5 @@
 [English](../en/trpc_protocol_client.md)
 
-[TOC]
-
 # 前言
 
 本文档主要介绍如何使用 tRPC-Cpp 框架调用一个`tRPC协议`的服务。

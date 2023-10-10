@@ -1,7 +1,5 @@
 [English](../en/trpc_protocol_service.md)
 
-[TOC]
-
 # 前言
 
 相比较于 [tRPC-Cpp快速上手](./quick_start.md) ，此文档更专注于tRPC协议的服务端开发，内容更全面详实。通过此篇文章开发者可以了解到

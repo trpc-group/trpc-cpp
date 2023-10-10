@@ -1,7 +1,5 @@
 [English](../en/trpc_protocol_streaming_service.md)
 
-[TOC]
-
 # tRPC 流式协议服务开发指南
 
 **主题：如何基于 tRPC-Cpp 开发 tRPC 流式服务**

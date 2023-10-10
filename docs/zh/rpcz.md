@@ -1,7 +1,5 @@
 [English](../en/rpcz.md)
 
-[TOC]
-
 # tRPC-Cpp rpcz使用指南
 
 ## 前言

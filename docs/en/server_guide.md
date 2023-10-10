@@ -1,6 +1,4 @@
-[中文版](../zh/server_guide.md)
-
-[TOC]
+[中文](../zh/server_guide.md)
 
 # Server development guide
 
@@ -73,7 +71,7 @@ Next, the user needs to implement the specific interfaces in greeter_service.cc,
 
 ### Non-IDL protocol types
 
-One of the common protocols is the HTTP protocol. For detailed information, please refer to the 
+One of the common protocols is the HTTP protocol. For detailed information, please refer to the
 [HTTP Service Development Guide](http_protocol_service.md).
 
 ## Provide the corresponding framework configuration file

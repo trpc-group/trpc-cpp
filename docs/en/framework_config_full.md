@@ -1,8 +1,11 @@
-[TOC]
-# 1 Overview
+
+[中文](../zh/framework_config_full.md)
+
+# Overview
+
 Compared to the simplified version configuration, the complete configuration includes some custom advanced configurations
 
-# 2 Instruction
+# Instruction
 
 ```yaml
 #全局配置

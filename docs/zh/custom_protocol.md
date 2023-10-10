@@ -1,7 +1,5 @@
 [English](../en/custom_protocol.md)
 
-[TOC]
-
 # 用户自定义协议开发指南
 
 # 前言

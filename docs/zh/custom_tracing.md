@@ -1,7 +1,5 @@
 [English](../en/custom_tracing.md)
 
-[TOC]
-
 # 前言
 
 tRPC-Cpp不对调用链插件遵循的协议标准进行限制。用户可以使用业界主流的[OpenTelemetry](https://opentelemetry.io/)、[OpenTracing](https://opentracing.io/)等标准，也可以使用自定义的标准。当然我们**推荐用户使用`OpenTelemetry`**。

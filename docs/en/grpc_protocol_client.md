@@ -1,10 +1,6 @@
 [中文](../zh/grpc_protocol_client.md)
 
-[TOC]
-
-# Accessing gRPC service Guide
-
-**Topic: How to access gRPC services based on tRPC-Cpp**
+# Overview
 
 tRPC-Cpp supports server-side gRPC unary services and client-side calling of gRPC unary services.
 
@@ -24,6 +20,7 @@ In tRPC, accessing a gRPC service is similar to accessing a tRPC service, except
 to `protocol: grpc`. 
 Below is a brief overview of the key steps in accessing a gRPC service, based on the process of
 accessing a tRPC service:
+
 * Obtain the ServiceProxy object.
 * Create a ClientContext object.
 * Initiate the RPC call.
@@ -31,11 +28,13 @@ accessing a tRPC service:
 ## Call process
 
 * Get the `XxServiceProxyPtr` object `proxy`: use the `GetClient()->GetProxy<XxServiceProxy>(...)`.
+
 ```cpp
 auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>("xx_service_name")
 ```
 
 Configuration items:
+
 ```yaml
 ...
 client:
@@ -49,6 +48,7 @@ client:
 ```
 
 * Create the `ClientContextPtr` object `context`: use `MakeClientContext(proxy)`.
+
 ```cpp
 auto ctx = ::trpc::MakeClientContext(proxy);
 ```
@@ -57,6 +57,7 @@ auto ctx = ::trpc::MakeClientContext(proxy);
 Use the synchronous or asynchronous interface corresponding to the selected runtime category.
 
 Example of synchronous call: [helloworld/fiber_client.cc](../../examples/helloworld/test/fiber_client.cc)
+
 ```cpp
 // Synchronous call code snippet, using the fiber runtime.
 int DoRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy) {
@@ -75,6 +76,7 @@ int DoRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProx
 ```
 
 Example of asynchronous call: [helloworld/future_client.cc](../../examples/helloworld/test/future_client.cc)
+
 ```cpp
 // Asynchronous call code snippet, using the merge or the separate runtime.
 int DoAsyncRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy) {
@@ -101,9 +103,9 @@ int DoAsyncRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServic
 }
 ```
 
-
 # FAQ
 
 ## Does gRPC support h2 (HTTP2 over SSL)?
+
 It is not currently supported. The gRPC protocol used in tRPC uses h2c at the underlying level, and SSL is not currently
 supported(but is currently being developed).

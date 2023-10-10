@@ -1,7 +1,5 @@
 [English](../en/compression.md)
 
-[TOC]
-
 # 压缩-解压缩
 
 # 前言

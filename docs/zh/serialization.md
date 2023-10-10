@@ -1,7 +1,5 @@
 [English](../en/serialization.md)
 
-[TOC]
-
 # 序列化-反序列化
 
 # 前言

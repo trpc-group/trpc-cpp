@@ -1,7 +1,5 @@
 [中文](../zh/transparent_service.md)
 
-[TOC]
-
 # Overview
 
 In certain special scenarios, such as in the access layer service, users expect to transparently forward business data to downstream services to avoid performance loss caused by data serialization. The request processing flow is as follows:

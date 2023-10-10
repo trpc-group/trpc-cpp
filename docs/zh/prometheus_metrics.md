@@ -1,7 +1,5 @@
 [English](../en/prometheus_metrics.md)
 
-[TOC]
-
 # 前言
 
 tRPC-Cpp对[Prometheus](https://prometheus.io/)的部分功能进行了封装，实现了在框架内采集Prometheus监控数据，并对外提供监控数据导出的能力。

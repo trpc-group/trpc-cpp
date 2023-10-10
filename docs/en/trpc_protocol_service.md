@@ -1,6 +1,5 @@
 [中文](../zh/trpc_protocol_service.md)
 
-[TOC]
 
 # Overview
 
@@ -249,7 +248,7 @@ public:
 
 不同于同步接口，异步 `SayHello`接口返回的是 `::trpc::Future` 模版类；`::trpc::test::helloworld::AsyncGreeter`最终父类也是`::trpc::Service`
 
-### The use of context in a service interface.
+### The use of context in a service interface
 
 Different from the synchronous interface, the asynchronous `SayHello` interface returns a `::trpc::Future` template class. The ultimate parent class of `::trpc::test::helloworld::AsyncGreeter` is also `::trpc::Service`.
 
@@ -313,7 +312,7 @@ public:
 };
 ```
 
-## Implementing the main program class Server.
+## Implementing the main program class Server
 
 The main program class inherits from `trpc::TrpcApp` and overrides the required methods such as `Initialize`, `Destroy`, `RegisterPlugins`, etc. (refer to: [trpc_app](../../trpc/common/trpc_app.h)). The basic usage involves overriding the `Initialize` method and implementing the registration of specific `Service`. Here is the code:
 

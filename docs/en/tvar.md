@@ -1,14 +1,10 @@
-[中文版](../zh/tvar.md)
+[中文](../zh/tvar.md)
 
-[TOC]
-
-# tRPC-Cpp tvar user guide
-
-## Preface
+# Overview
 
 Tvar is a multi-threaded statistics library provided by the tRPC-Cpp framework to assist users in recording and tracking various states during program execution.
 
-## Design approach
+# Design approach
 
 This article analyzes three similar frameworks in the industry that support statistics libraries. It compares them in terms of the diversity of statistical types, write efficiency, query efficiency, and implementation principle,
 
@@ -25,7 +21,7 @@ In comparison, the implementation principle of brpc and flare involve each threa
 
 Considering that tvar is designed for scenarios with frequent writes and fewer reads, it incorporates design elements from both brpc and flare. It leverages the thread_local mechanism to improve write performance and adopts the approach used by brpc for diverse statistical types.
 
-## Statistical types
+# Statistical types
 
 Currently, tvar supports a total of 11 statistical types, as shown in the table below,
 
@@ -43,24 +39,24 @@ Currently, tvar supports a total of 11 statistical types, as shown in the table 
 | PerSecond | Obtain the average statistical values per second within a certain time period. |
 | LatencyRecorder | Obtain QPS (Queries Per Second) and percentile latency. |
 
-## User guide
+# User guide
 
-### Configutation
+## Configutation
 
 ```yaml
 global:
   tvar:
-    window_size: 10           # Window size, measured in seconds, used for the Window, PerSecond, and LatencyRecorder statistical types.
-    save_series: true         # Whether to store historical data, default is true.
-    abort_on_same_path: true  # Whether to directly abort and exit the process if two registered tvar variables are found to have the same exposed path, default is true.
-    latency_p1: 80            # User-defined percentile value 1, can only be an integer within 1-99, corresponding to 1% to 99%.
-    latency_p2: 90            # User-defined percentile value 2, can only be an integer within 1-99, corresponding to 1% to 99%.
-    latency_p3: 99            # User-defined percentile value 3, can only be an integer within 1-99, corresponding to 1% to 99%.
+    window_size: 10            # Window size, measured in seconds, used for the Window, PerSecond, and LatencyRecorder statistical types.
+    save_series: true          # Whether to store historical data, default is true.
+    abort_on_same_path: true   # Whether to directly abort and exit the process if two registered tvar variables are found to have the same exposed path, default is true.
+    latency_p1: 80             # User-defined percentile value 1, can only be an integer within 1-99, corresponding to 1% to 99%.
+    latency_p2: 90             # User-defined percentile value 2, can only be an integer within 1-99, corresponding to 1% to 99%.
+    latency_p3: 99             # User-defined percentile value 3, can only be an integer within 1-99, corresponding to 1% to 99%.
 ```
 
-### Usage
+## Usage
 
-#### Counter
+### Counter
 
 ```cpp
 #include <cstdint>
@@ -88,7 +84,7 @@ int main() {
 }
 ```
 
-#### Gauge
+### Gauge
 
 ```cpp
 #include <cstdint>
@@ -120,7 +116,7 @@ int main() {
 }
 ```
 
-#### Maxer
+### Maxer
 
 ```cpp
 #include <cstdint>
@@ -151,7 +147,7 @@ int main() {
 }
 ```
 
-#### Miner
+### Miner
 
 ```cpp
 #include <cstdint>
@@ -182,7 +178,7 @@ int main() {
 }
 ```
 
-#### Averager
+### Averager
 
 ```cpp
 #include <cstdint>
@@ -213,7 +209,7 @@ int main() {
 }
 ```
 
-#### IntRecorder
+### IntRecorder
 
 ```cpp
 #include <cstdint>
@@ -244,7 +240,7 @@ int main() {
 }
 ```
 
-#### Status
+### Status
 
 ```cpp
 // Include header files.
@@ -269,7 +265,7 @@ int main() {
 }
 ```
 
-#### PassiveStatus
+### PassiveStatus
 
 ```cpp
 #include <cstdint>
@@ -312,7 +308,7 @@ int main() {
 }
 ```
 
-#### Window
+### Window
 
 ```cpp
 #include <cstdint>
@@ -360,7 +356,7 @@ When using Window, some types can support it while others cannot. Please refer t
 | PerSecond | no | Window semantics already. |
 | LatencyRecorder | no | Window semantics already. |
 
-#### PerSecond
+### PerSecond
 
 ```cpp
 #include <cstdint>
@@ -408,7 +404,7 @@ When using PerSecond, some types can support it while others cannot. Please refe
 | Window | no | Used to implement PerSecond. |
 | LatencyRecorder | no | Window semantics already. |
 
-#### LatencyRecorder
+### LatencyRecorder
 
 ```cpp
 // Include header files.
@@ -446,9 +442,9 @@ The information and their meanings recorded by LatencyRecorder are as shown in t
 | latency_p2 | The default value is 90, which corresponds to p90. Users can customize the percentile by configuring latency_p2. |
 | latency_p3 | The default value is 99, which corresponds to p99. Users can customize the percentile by configuring latency_p3. |
 
-### Query
+## Query
 
-#### Query current value
+### Query current value
 
 ```bash
 curl http://admin_ip:admin_port/cmds/var/{path}
@@ -494,7 +490,7 @@ The obtained result is as follows,
 }
 ```
 
-#### Query history value
+### Query history value
 
 ```bash
 curl http://admin_ip:admin_port/cmds/var/{path}?history=true
@@ -528,18 +524,18 @@ Some types support historical value queries, while others do not. The details ar
 |-------------------------|---------------------------------|--------------|
 | Counter with numeric type | yes | void |
 | Gauge with numeric type | yes | voud |
-| Maxer with numeric type | no | If Maxer is not reset, it is not possible to collect data within 1 second. It is recommended to use Window<Maxer with numeric type>. |
-| Miner with numeric type | no | If Miner is not reset, it is not possible to collect data within 1 second. It is recommended to use Window<Miner with numeric type>. |
-| Averager with numeric type | no | It is impossible to collect data within 1 second. It is recommended to use Window<Averager with numeric type>. |
-| IntRecorder | no | It is impossible to collect data within 1 second. It is recommended to use Window<IntRecorder>. |
+| Maxer with numeric type | no | If Maxer is not reset, it is not possible to collect data within 1 second. It is recommended to use Window&lt;Maxer with numeric type>. |
+| Miner with numeric type | no | If Miner is not reset, it is not possible to collect data within 1 second. It is recommended to use Window&lt;Miner with numeric type>. |
+| Averager with numeric type | no | It is impossible to collect data within 1 second. It is recommended to use Window&lt;Averager with numeric type>. |
+| IntRecorder | no | It is impossible to collect data within 1 second. It is recommended to use Window&lt;IntRecorder>. |
 | Status with numeric type | yes | void |
-| Window<Counter with numeric type>	 | yes | void |
-| Window<Gauge with numeric type> | yes | void |
+| Window&lt;Counter with numeric type> | yes | void |
+| Window&lt;Gauge with numeric type> | yes | void |
 | PassiveStatus with numeric type | yes | void |
-| Window<Maxer with numeric type>	| yes | void |
-| Window<Miner with numeric type> | yes | void |
-| Window<IntRecorder> | yes | void |
-| Window<PassiveStatus with numeric type> | yes | void |
-| PerSecond<Counter with numeric type> | yes | void |
-| PerSecond<Gauge with numeric type> | yes | void |
-| PerSecond<PassiveStatus> | yes | void |
+| Window&lt;Maxer with numeric type> | yes | void |
+| Window&lt;Miner with numeric type> | yes | void |
+| Window&lt;IntRecorder> | yes | void |
+| Window&lt;PassiveStatus with numeric type> | yes | void |
+| PerSecond&lt;Counter with numeric type> | yes | void |
+| PerSecond&lt;Gauge with numeric type> | yes | void |
+| PerSecond&lt;PassiveStatus> | yes | void |

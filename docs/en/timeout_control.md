@@ -1,7 +1,5 @@
 [中文](../zh/timeout_control.md)
 
-[TOC]
-
 # Overview
 
 Timeout control is a fundamental capability of an RPC framework, enabling service calls to execute within a predefined time. It helps prevent getting stuck in endless waiting, thereby improving system availability and stability, optimizing resource utilization, and reducing inconsistent behavior between clients and servers.
@@ -114,11 +112,13 @@ int RouteServer::Initialize() {
 #### Client-side timeout handling function
 
 The types of client-side timeout handling function are as follows:
+
 ```cpp
 using ClientTimeoutHandleFunction = std::function<void(const ClientContextPtr&)>;
 ```
 
 Users need to set a custom client timeout handling function when initializing the proxy.
+
 ```cpp
 // custom timeout handling function
 void UserClientTimeoutFunc(const trpc::ClientContextPtr& context) {
@@ -126,22 +126,22 @@ void UserClientTimeoutFunc(const trpc::ClientContextPtr& context) {
 }
 
 {
-	...
-    // set timeout handling function
-	trpc::ServiceProxyOption option;
-	option.proxy_callback.client_timeout_handle_function = UserClientTimeoutFunc;
-	GreeterProxyPtr proxy =
+  // ...
+  // set timeout handling function
+  trpc::ServiceProxyOption option;
+  option.proxy_callback.client_timeout_handle_function = UserClientTimeoutFunc;
+  GreeterProxyPtr proxy =
         trpc::GetTrpcClient()->GetProxy<trpc::test::helloworld::GreeterServiceProxy>(service_name, &option);
-	...
+ // ...
 }
 ```
 
 # FAQ
 
-### 1 Why does it show a timeout failure even though I set a very large timeout value and the actual execution time is very short?
+## Why does it show a timeout failure even though I set a very large timeout value and the actual execution time is very short?
 
 The framework imposes a maximum processing time limit for each received request. The timeout for each backend RPC call is dynamically calculated based on the remaining maximum processing time and the call timeout. In this case, it is highly likely that the previous serial RPC calls have already consumed a significant amount of time, leaving insufficient time for the current RPC call.
 
-### 2 Why is the timeout duration 5 seconds even though the client did not configure a timeout?
+## Why is the timeout duration 5 seconds even though the client did not configure a timeout?
 
 In the case where neither the client proxy nor the ClientContext has a timeout set, the framework will set the actual timeout duration to 5 seconds instead of an infinite value.
