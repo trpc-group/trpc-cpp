@@ -36,16 +36,16 @@ tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则�
   * 调用方式: 支持 `rpc/streaming-rpc/non-rpc/one-way`
 * 插件
   * 协议: 支持 `trpc/http(s/2.0)/grpc/...`
-  * 序列化/反序列化: 支持 `[pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/serialization.md)`
-  * 解压缩: 支持 `[gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/compression.md)`
-  * 名字服务: 支持 `[polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)`
-  * 配置中心: 支持 `[etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)`
-  * 远程日志: 支持 `[cls](https://github.com/trpc-ecosystem/cpp-logging-cls)`
-  * 监控系统: 支持 `[prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/prometheus_metrics.md)`
-  * 调用链系统: 支持 `[jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)`
-  * 可观测系统: 支持 `[opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)`
+  * 序列化/反序列化: 支持 [pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/serialization.md)
+  * 解压缩: 支持 [gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/compression.md)
+  * 名字服务: 支持 [polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)
+  * 配置中心: 支持 [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)
+  * 远程日志: 支持 [cls](https://github.com/trpc-ecosystem/cpp-logging-cls)
+  * 监控系统: 支持 [prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/prometheus_metrics.md)
+  * 调用链系统: 支持 [jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)
+  * 可观测系统: 支持 [opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)
 * 工具
-  * 支持: `[admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/rpcz.md)`
+  * 支持: [admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/rpcz.md)
   * [proto IDL依赖管理](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/proto_management.md)
 * 组件
   * [redis](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/redis_client_guide.md)

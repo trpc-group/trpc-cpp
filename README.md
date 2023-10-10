@@ -36,16 +36,16 @@ more details：[architecture design](docs/en/architecture_design.md)
   * rpc-call: support `rpc/streaming-rpc/non-rpc/one-way`
 * Plugin
   * protocol(codec): support `trpc/http(s/2.0)/grpc/...`
-  * serialization/deserialization: support `[pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/serialization.md)`
-  * compressor/decompressor: support `[gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/compression.md)`
-  * naming: support `[polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)`
-  * config: support `[etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)`
-  * logging: support `[cls](https://github.com/trpc-ecosystem/cpp-logging-cls)`
-  * metrics: support `[prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/prometheus_metrics.md)`
-  * tracing: support `[jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)`
-  * telemetry: support `[opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)`
+  * serialization/deserialization: support [pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/serialization.md)
+  * compressor/decompressor: support [gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/compression.md)
+  * naming: support [polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)
+  * config: support [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)
+  * logging: support [cls](https://github.com/trpc-ecosystem/cpp-logging-cls)
+  * metrics: support [prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/prometheus_metrics.md)
+  * tracing: support [jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)
+  * telemetry: support [opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)
 * Tools
-  * support: `[admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/rpcz.md)`
+  * support: [admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/rpcz.md)
   * [proto IDL dependency management](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/proto_management.md)
 * Components
   * [redis](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/redis_client_guide.md)
