@@ -30,6 +30,7 @@ cc_library(
     deps = [
         ":common",
         "//trpc/util:likely",
+        "//trpc/util/log:logging",
     ],
 )
 

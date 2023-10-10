@@ -10,7 +10,7 @@ The example mainly focuses on writing client-side business logic. For steps such
 
 ## Definition of flatbuffers IDL files and code generation for stubs
 
-Taking `forward.fbs` as an example, please refer to the documentation [Writing an IDL file of flatbuffers](../en/flatbuffers_protocol_service.md#writing-an-idl-file-of-flatbuffers)和 [To generate stub code using the fbs code generation tool](../en/flatbuffers_protocol_service.md#to-generate-stub-code-using-the-fbs-code-generation-tool)
+Taking `forward.fbs` as an example, please refer to the documentation [Writing an IDL file of flatbuffers](../en/flatbuffers_protocol_service.md#writing-an-idl-file-of-flatbuffers) and [To generate stub code using the fbs code generation tool](../en/flatbuffers_protocol_service.md#to-generate-stub-code-using-the-fbs-code-generation-tool)
 
 ## Writing client business code based on stub code
 

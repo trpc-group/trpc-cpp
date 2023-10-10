@@ -25,12 +25,14 @@ namespace trpc {
 /// @param noncontiguous_buffer The NoncontiguousBuffer after conversion.
 /// @return Bool type, True: success; Fale: failed
 /// @note The converted buffer no longer supports the cut operation.
+/// @private For internal use purpose only.
 bool ContiguousToNonContiguous(BufferPtr& contiguous_buffer, NoncontiguousBuffer& noncontiguous_buffer);
 
 /// @brief Converting the NoncontiguousBuffer to the original BufferPtr in the framework. it will copy
 /// @param noncontiguous_buffer The NoncontiguousBuffer that needs to be converted.
 /// @param contiguous_buffer The BufferPtr after conversion.
 /// @return Bool type, True: success; Fale: failed
+/// @private For internal use purpose only.
 bool NonContiguousToContiguous(const NoncontiguousBuffer& noncontiguous_buffer, BufferPtr& contiguous_buffer);
 
 }  // namespace trpc

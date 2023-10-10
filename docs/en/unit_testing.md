@@ -122,7 +122,7 @@ trpc_proto_library(
     ],
     use_trpc_plugin=True,
     rootpath="@trpc_cpp",
-    generate_new_mock_code = True, #此处即为启用生成Mock类的选项
+    generate_new_mock_code = True, # This option enables the generation of mock classes.
 )
 ```
 

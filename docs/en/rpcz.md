@@ -1,4 +1,4 @@
-[中文版](../zh/rpcz.md)
+[中文](../zh/rpcz.md)
 
 # Overview
 

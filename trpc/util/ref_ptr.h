@@ -100,6 +100,7 @@ class RefCounted {
 static_assert(sizeof(RefCounted<int>) == sizeof(std::atomic<std::uint32_t>));
 
 // Utilities for internal use.
+/// @private
 namespace detail {
 
 // This methods serves multiple purposes:

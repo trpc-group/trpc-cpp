@@ -18,7 +18,7 @@
     * [开发http上传/下载服务](./zh/http_protocol_upload_download_service.md)
     * [开发grpc协议服务](./zh/grpc_protocol_service.md)
     * [开发grpc流式服务](./zh/grpc_protocol_streaming_service.md)
-    * [开发flatbuffers协议服务](docs/zh/flatbuffers_protocol_service.md)
+    * [开发flatbuffers协议服务](./zh/flatbuffers_protocol_service.md)
   * 客户端开发
     * [开发向导](./zh/client_guide.md)
     * [访问trpc协议服务](./zh/client_guide.md)

@@ -18,6 +18,7 @@
 
 #include "trpc/util/buffer/memory_pool/common.h"
 #include "trpc/util/likely.h"
+#include "trpc/util/log/logging.h"
 
 namespace trpc::memory_pool::disabled {
 
@@ -31,6 +32,8 @@ detail::Block* Allocate() noexcept {
 
   detail::Block* block = new (mem) detail::Block{.ref_count = 1, .data = mem + sizeof(detail::Block)};
 
+  GetStatistics().total_allocs_num.fetch_add(1, std::memory_order_relaxed);
+
   return block;
 }
 
@@ -38,6 +41,18 @@ void Deallocate(detail::Block* block) noexcept {
   // Obtaining the registered memory deallocation function for memory deallocation.
   DeallocateMemFunc dealloc_fun = GetDeallocateMemFunc();
   dealloc_fun(static_cast<void*>(block));
+  GetStatistics().total_frees_num.fetch_add(1, std::memory_order_relaxed);
+}
+
+Statistics& GetStatistics() noexcept {
+  static Statistics statistics;
+  return statistics;
+}
+
+void PrintStatistics() noexcept {
+  Statistics& stat = GetStatistics();
+  TRPC_FMT_INFO("disabled mem pool, total_allocs_num: {} ", stat.total_allocs_num.load(std::memory_order_relaxed));
+  TRPC_FMT_INFO("disabled mem pool, total_frees_num: {} ", stat.total_frees_num.load(std::memory_order_relaxed));
 }
 
 }  // namespace trpc::memory_pool::disabled

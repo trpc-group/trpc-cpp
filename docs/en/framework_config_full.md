@@ -8,7 +8,7 @@ Compared to the simplified version configuration, the complete configuration inc
 # Instruction
 
 ```yaml
-#全局配置
+#global configuration
 global:
   namespace: xxx                                                  #Environment type, naming plugin usage
   env_name: xxx                                                   #Environment name, naming plugin usage

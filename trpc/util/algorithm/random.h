@@ -26,6 +26,7 @@
 
 namespace trpc {
 
+/// @private
 namespace detail {
 
 /// @brief Thread local random engine.

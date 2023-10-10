@@ -460,7 +460,7 @@ The framework supports both TCP and UDP transport protocols. Users can configure
       # ...
 ```
 
-## 长/短连接
+## Long/Short connection
 
 ```yaml
   service:

@@ -213,11 +213,11 @@ When using 'fork' with 'exec', if 'exec' returns, it indicates a failed executio
 
 ## Service Development for Common Protocol Types
 
-See [Service Development for tRPC Protocol Type](trpc_service_guide.md).
+See [Service Development for tRPC Protocol Type](./trpc_protocol_service.md).
 
-See [Service Development for Http Protocol Type](http_protocol_service.md).
+See [Service Development for HTTP Protocol Type](./http_protocol_service.md).
 
-See [Service Development for gRPC Protocol Type](grpc_service_guide.md).
+See [Service Development for gRPC Protocol Type](./grpc_protocol_service.md).
 
 ## Error Code
 
@@ -236,10 +236,6 @@ See [Timeout control](./timeout_control.md).
 ### Transparent proxy
 
 See [Transparent proxy](transparent_service.md).
-
-### Timer
-
-See [Timer]().
 
 ### Flow-Control & Overload-Protect
 

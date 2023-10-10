@@ -119,7 +119,8 @@ class Message : public MessageFbs {
 class MessageBuilder;
 
 /// @brief SliceAllocator is a  allocator that uses the `slice` ref-counted slices to manage memory ownership.
-/// This makes it easy and efficient to transfer buffers to tRPC.
+/// @note This makes it easy and efficient to transfer buffers to tRPC.
+/// @private For internal use purpose only.
 class SliceAllocator : public Allocator {
  public:
   SliceAllocator();

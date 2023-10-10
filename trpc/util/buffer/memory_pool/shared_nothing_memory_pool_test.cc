@@ -61,6 +61,7 @@ TEST(SharedNothingTest, SharedNothingMemPoolImpTest) {
   for (int i = 0; i < 16 * 1024 + 1; i++) {
     pool->Allocate();
   }
+  PrintTlsStatistics();
   delete pool;
 }
 

@@ -1008,7 +1008,6 @@ INPUT                  = trpc/admin/admin_handler.h \
                          trpc/naming/trpc_naming.h \
                          trpc/naming/common/common_defs.h \
                          trpc/naming/common/constants.h \
-                         trpc/overload_control \
                          trpc/rpcz \
                          trpc/runtime/fiber_runtime.h \
                          trpc/runtime/merge_runtime.h \
@@ -1056,14 +1055,53 @@ INPUT                  = trpc/admin/admin_handler.h \
                          trpc/util/flatbuffers \
                          trpc/util/hazptr \
                          trpc/util/http \
-                         trpc/util/internal \
-                         trpc/util/object_pool \
-                         trpc/util/queue \
+                         trpc/util/object_pool/object_pool_ptr.h \
+                         trpc/util/object_pool/object_pool.h \
+                         trpc/util/queue/bounded_mpmc_queue.h \
+                         trpc/util/queue/bounded_mpsc_queue.h \
+                         trpc/util/queue/bounded_spmc_queue.h \
+                         trpc/util/queue/lockfree_queue.h \
+                         trpc/util/queue/unbounded_spmc_queue.h \
                          trpc/util/string \
-                         trpc/util/thread \
+                         trpc/util/thread/compile.h \
+                         trpc/util/thread/cpu.h \
+                         trpc/util/thread/futex_notifier.h \
+                         trpc/util/thread/latch.h \
+                         trpc/util/thread/mq_thread_pool_task.h \
+                         trpc/util/thread/mq_thread_pool_worker.h \
+                         trpc/util/thread/mq_thread_pool.h \
+                         trpc/util/thread/predicate_notifier.h \
+                         trpc/util/thread/process_info.h \
+                         trpc/util/thread/spinlock.h \
+                         trpc/util/thread/sq_thread_pool.h \
+                         trpc/util/thread/thread_cond.h \
+                         trpc/util/thread/thread_helper.h \
+                         trpc/util/thread/thread_local.h \
+                         trpc/util/thread/thread_lock.h \
+                         trpc/util/thread/thread_monitor.h \
+                         trpc/util/thread/thread_mutex.h \
+                         trpc/util/thread/thread_pool_option.h \
+                         trpc/util/thread/thread_pool.h \
                          trpc/util/log/log.h \
                          trpc/util/log/logging.h \
                          trpc/util/log/default/default_log.h \
+                         trpc/util/align.h \
+                         trpc/util/bind_core_manager.h \
+                         trpc/util/check.h \
+                         trpc/util/deferred.h \
+                         trpc/util/delayed_init.h \
+                         trpc/util/domain_util.h \
+                         trpc/util/erased_ptr.h \
+                         trpc/util/function_view.h \
+                         trpc/util/function.h \
+                         trpc/util/likely.h \
+                         trpc/util/net_util.h \
+                         trpc/util/pb2json.h \
+                         trpc/util/prometheus.h \
+                         trpc/util/ref_ptr.h \
+                         trpc/util/singleton.h \
+                         trpc/util/time.h \
+                         trpc/util/unique_id.h \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -2473,6 +2511,11 @@ PREDEFINED             = TRPC_BUILD_INCLUDE_RPCZ \
                          TRPC_PROTO_USE_ARENA \
                          TRPC_BUILD_INCLUDE_ASYNC_IO \
                          TRPC_BUILD_INCLUDE_PROMETHEUS \
+                         TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL \
+                         TRPC_DISABLED_MEM_POOL \
+                         TRPC_SHARED_NOTHING_MEM_POOL \
+                         TRPC_DISABLED_OBJECTPOOL \
+                         TRPC_SHARED_NOTHING_OBJECTPOOL \
                          DOXYGEN_SHOULD_SKIP_THIS
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this

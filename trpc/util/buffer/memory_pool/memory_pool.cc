@@ -23,7 +23,7 @@ MemBlock* Allocate() {
 #if defined(TRPC_DISABLED_MEM_POOL)
   return disabled::Allocate();
 #elif defined(TRPC_SHARED_NOTHING_MEM_POOL)
-  return shared_nothing::Allocate<4096>();
+  return shared_nothing::Allocate();
 #else
   return global::Allocate();
 #endif
@@ -36,6 +36,26 @@ void Deallocate(MemBlock* block) {
   shared_nothing::Deallocate(block);
 #else
   global::Deallocate(block);
+#endif
+}
+
+const MemStatistics& GetMemStatistics() noexcept {
+#if defined(TRPC_DISABLED_MEM_POOL)
+  return disabled::GetStatistics();
+#elif defined(TRPC_SHARED_NOTHING_MEM_POOL)
+  return shared_nothing::GetTlsStatistics();
+#else
+  return global::GetTlsStatistics();
+#endif
+}
+
+void PrintMemStatistics() noexcept {
+#if defined(TRPC_DISABLED_MEM_POOL)
+  return disabled::PrintStatistics();
+#elif defined(TRPC_SHARED_NOTHING_MEM_POOL)
+  return shared_nothing::PrintTlsStatistics();
+#else
+  return global::PrintTlsStatistics();
 #endif
 }
 

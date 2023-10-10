@@ -37,7 +37,8 @@ enum class ObjectPoolType {
   kGlobal
 };
 
-// The internal encapsulated implementation of object_pool. Do not use the interfaces of this namespace directly.
+/// @brief The internal encapsulated implementation of object_pool. Do not use the interfaces of this namespace directly.
+/// @private For internal use purpose only.
 namespace detail {
 
 template <class T>
@@ -73,6 +74,21 @@ inline void Delete(T* ptr) {
 }  // namespace detail
 
 /// @brief Allocate and construct an object (thread-safe).
+/// @example
+///   struct A {
+///     int a;
+///   };
+///   template <>
+///   struct ObjectPoolTraits<A> {
+///   #if defined(TRPC_DISABLED_OBJECTPOOL)
+///     static constexpr auto kType = ObjectPoolType::kDisabled;
+///   #elif defined(TRPC_SHARED_NOTHING_OBJECTPOOL)
+///     static constexpr auto kType = ObjectPoolType::kSharedNothing;
+///   #else
+///     static constexpr auto kType = ObjectPoolType::kGlobal;
+///   #endif
+///   A* a_p = trpc::object_pool::New<A>();
+///   trpc::object_pool::Delete(a_p);
 template <class T, class... Args>
 T* New(Args&&... args) {
   // Remove CV attributes. We do not differentiate between T, const T, volatile T, and const volatile T,
