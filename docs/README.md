@@ -43,7 +43,7 @@ English | [中文](README.zh_CN.md)
       * []()
     * Naming
       * [custom naming plugin](./en/custom_naming.md)
-      * [mesh-polaris]()
+      * [mesh-polaris](https://github.com/trpc-ecosystem/cpp-naming-polarismesh/blob/main/README.md)
     * Config
       * [custom config plugin](./en/custom_config.md)
       * [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd/blob/main/README.md)
