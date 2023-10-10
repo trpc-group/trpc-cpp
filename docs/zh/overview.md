@@ -1,12 +1,12 @@
 
-欢迎大家使用tRPC-Cpp, tRPC-Cpp框架是tRPC的cpp版本, 遵循tRPC的整体设计原则, 主要是以高性能, [可插拔]()为出发点而设计的RPC框架。
+欢迎大家使用tRPC-Cpp, tRPC-Cpp框架是tRPC的cpp版本, 遵循tRPC的整体设计原则, 主要是以高性能, 可插拔为出发点而设计的RPC框架。
 
 ## tRPC-Cpp可以做什么
 
 你可以使用它：
-- 搭建多个端口支持多个协议（一个端口只能对应一个协议）的服务([trpc](todo)/[http(s)](todo)/[grpc](todo)等), 并能同步/异步处理客户端请求。
-- 可以以同步、异步、单向的方式访问各种协议后端服务([trpc](todo)/[http(s)](todo)/[grpc](todo)等), 调用各种存储系统(redis等), 并自动集成监控/调用链等能力, 服务开发和运维更方便更简单.
-- 可以流式rpc编程, 支持[trpc流式](todo), [grpc流式](todo), [http流式](todo)等, 实现类似push, 文件上传, 视频/音乐等流式应用服务.
+- 搭建多个端口支持多个协议（一个端口只能对应一个协议）的服务([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/trpc_protocol_service.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/http_protocol_service.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/grpc_protocol_service.md)等), 并能同步/异步处理客户端请求。
+- 可以以同步、异步、单向的方式访问各种协议后端服务([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/trpc_protocol_client.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/http_protocol_client.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/grpc_protocol_client.md)等), 调用各种存储系统(redis等), 并自动集成监控/调用链等能力, 服务开发和运维更方便更简单.
+- 可以流式rpc编程, 支持[trpc流式](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/trpc_protocol_streaming_service.md), [grpc流式](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/grpc_protocol_streaming_service.md), [http流式上传/下载](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_upload_download_service.md)等, 实现类似push, 文件上传, 视频/音乐等流式应用服务.
 - 可以插件化支持各种协议和对接服务治理系统, 比如: 开发自定义的协议、对接业务各种的名字服务/监控系统/调用链系统/配置系统/日志系统等, 方便服务互通和服务运营.
 - 不同应用场景可以选择不同的runtime模型, 满足重网络IO的转发、重计算、重有状态的业务逻辑、重磁盘IO的存储等不同业务场景的性能需求. 比如: io-bound的场景（比如: 业务接入网关类/nosql存储）可以选择merge合并模式的runtime, cpu-bound类的场景（比如: 推荐/搜索等）可以选择fiber（m:n协程）的runtime, 还有业务逻辑服务且有状态的场景（比如: 游戏业务常用的单线程模式）可以选择separate分离模式的runtime.
 - 可以通过admin管理服务和调试服务.
@@ -40,13 +40,11 @@
 
 在真正开始使用之前, 首先需要掌握基本理论知识, 包括但不限于：
 - [RPC 概念](https://cloud.tencent.com/developer/article/1343888)，调用远程服务接口就像调用本地函数一样，能让你更容易创建分布式应用。
-- [tRPC 术语介绍](terminology.md)，必须提前了解 tRPC 设计中的核心概念，尤其是 Service Name 和 Proto Name 的含义，以及相互关系。
+- [tRPC 术语介绍](https://github.com/trpc-group/trpc/blob/main/docs/zh/terminology.md)，必须提前了解 tRPC 设计中的核心概念，尤其是 Service Name 和 Proto Name 的含义，以及相互关系。
 - [proto3 知识](https://developers.google.com/protocol-buffers/docs/proto3)，描述服务接口的跨语言协议，简单，方便，通用。
 
 掌握好以上基本理论知识以后，建议按以下推荐顺序开始学习 tRPC-Cpp：
 - [快速上手](quick_start.md)：通过一个简单的 Hello World 例子初步建立对 tRPC-Cpp 的认识, 了解开发一个后台服务的基本流程.
-- [研发规范]()：务必一定遵守 tRPC-Cpp 研发规范, 特别是里面的代码规范.
+- [研发规范](../../DEVELOP_SPECIFICATIONS.zh_CN.md)：务必一定遵守 tRPC-Cpp 研发规范, 特别是里面的代码规范.
 - [用户指南](../README_zh.md)：通过以上步骤已经能够开发简单服务，但还不够，进阶知识需要继续详细阅读以应对各种各样的复杂场景.
 - [常见问题]()：碰到问题应该首先查看常见问题, 如果不能解决再提issue.
-
-你可以从[这里](https://github.com/trpc-group/trpc-cpp)找到tRPC-Cpp的源码库, 可以直接阅读源码。
