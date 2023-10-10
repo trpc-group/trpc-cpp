@@ -187,7 +187,7 @@ class Service {
 
   /// @brief Set a custom protocol check function
   /// @note The inspection and encoding and decoding of custom protocol are generally implemented
-  ///       through the codec plug-in, and this method is only required for special needs
+  ///       through the codec plugin, and this method is only required for special needs
   void SetProtocalCheckerFunction(const ProtocolCheckerFunction& protocol_checker_function) {
     protocol_checker_function_ = protocol_checker_function;
   }

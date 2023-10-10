@@ -44,7 +44,7 @@ bool Init() {
     exit(-1);
   }
   p->Start();
-  // The log plug-in is registered with the log factory.
+  // The log plugin is registered with the log factory.
   LogFactory::GetInstance()->Register(p);
 
   return true;

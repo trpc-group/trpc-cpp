@@ -1,5 +1,5 @@
 
-Welcome to use tRPC-Cpp. The tRPC-Cpp framework is the cpp version of tRPC. It follows the overall design principles of tRPC. It is mainly an RPC framework designed with high performance and plug-in.
+Welcome to use tRPC-Cpp. The tRPC-Cpp framework is the cpp version of tRPC. It follows the overall design principles of tRPC. It is an RPC framework designed with high performance and pluggable.
 
 ## What tRPC-Cpp can do
 
@@ -7,7 +7,7 @@ You can use it:
 - You can build support multiple protocols (one port can only correspond to one protocol) services ([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_service.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_service.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_service.md) etc.), and can handle client requests by synchronized/asynchronously .
 - You can access various protocol backend services ([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_client.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_client.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_client.md) etc.) synchronously, asynchronously and one-way, and call various storage systems (redis, etc.), and automatically integrate monitoring/tracing capabilities, making service development and operation more convenient and simple.
 - Support streaming rpc programming([trpc streaming](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_streaming_service.md), [grpc streaming](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_streaming_service.md), [http streaming upload/download](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_upload_download_service.md) etc.), to implement streaming applications like push, file upload, video/voice, etc.
-- Support various protocols and connect with service management systems by plug-in, such as: developing custom protocols, connect with naming/metrics/tracing/config/logging systems, etc., to facilitate service interoperability and service operation.
+- Support various protocols and connect with service management systems by plugin, such as: developing custom protocols, connect with naming/metrics/tracing/config/logging systems, etc., to facilitate service interoperability and service operation.
 - Different application scenarios can choose different runtime models to meet the performance requirements of different business scenarios such as io-bound, cpu-bound, stateful business logic, and disk storage. For example: io-bound scenarios (such as : business access gateway/nosql storage) can choose merge mode, cpu-bound scenarios (such as: recommendation/search, etc.) can choose fiber (m:n coroutine), and business stateful scenarios (such as: the single-threaded mode commonly used in game business) can choose separation mode.
 - You can manage and debug services through admin interface.
 
@@ -16,7 +16,7 @@ You can use it:
 
 - Easy to expand
 
-Plug-in design is the biggest feature of the framework. Through the plug-in design of filter and plug-in factory, the framework can support various protocols, solve the problem of interoperability with different services, and can connect with various service management systems to better solve the problem of service operation and maintenance, it is also convenient for users to implement customized development and solve the needs of different business personalization.
+Pluggable design is the biggest feature of the framework. Through the pluggable design of filter and plugin factory, the framework can support various protocols, solve the problem of interoperability with different services, and can connect with various service management systems to better solve the problem of service operation and maintenance, it is also convenient for users to implement customized development and solve the needs of different business personalization.
 
 - high performance
 
@@ -29,13 +29,13 @@ Conventional framework performance test data is only performance data in relativ
 
 Therefore, in terms of high performance, tRPC pays more attention to meeting the performance requirements of users in different application scenarios.
 
-In terms of framework design, we abstractly designed a layer of runtime, using plug-in ideas to expand and support multiple threading models, currently supporting io/handle merged or separated threading model, and fiber (m:n coroutine) threading model, to meet the performance requirements of different business scenarios. For example, in heavy io business scenarios of business gateways and storage types, the thread model of io/handle merge or separation is generally choosed, and in heavy cpu business scenarios of recommendation/search types, fiber( m:n coroutine) threading model is generally choosed, while game-like business logic stateful scenarios generally choose a single-threaded model.
+In terms of framework design, we abstractly designed a layer of runtime, using pluggable ideas to expand and support multiple threading models, currently supporting io/handle merged or separated threading model, and fiber (m:n coroutine) threading model, to meet the performance requirements of different business scenarios. For example, in heavy io business scenarios of business gateways and storage types, the thread model of io/handle merge or separation is generally choosed, and in heavy cpu business scenarios of recommendation/search types, fiber( m:n coroutine) threading model is generally choosed, while game-like business logic stateful scenarios generally choose a single-threaded model.
 
 In terms of specific implementation, we also optimize the performance of the framework from several factors that mainly affect the performance of the framework (cpu/memory/io, etc.), such as: reduction of lock conflicts in task scheduling under multi-threading, network io to rpc data zero copy, memory pool/object pool, concurrent writing fd, etc. In addition, we have borrowed the performance optimization technical ideas of industry frameworks(seastar/brpc, etc.).
 
 - Ecologically rich
 
-At present, most of Tencent's internal communication protocols and service management systems have supported by plug-in, and also support ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
+At present, most of Tencent's internal communication protocols and service management systems have supported by plugin, and also support ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
 
 ## How to use tRPC-Cpp
 

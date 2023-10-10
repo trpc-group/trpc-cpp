@@ -24,8 +24,8 @@ namespace trpc::config {
 /// @brief The codec class is an abstract interface definition class for config data codecs.
 class Codec : public Plugin {
  public:
-  /// @brief  Plug-in Types
-  /// @return Return plug-in type
+  /// @brief  Plugin Types
+  /// @return Return plugin type
   PluginType Type() const override { return PluginType::kConfigCodec; }
 
   /// @brief Returns the codec's name.
