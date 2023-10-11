@@ -933,8 +933,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = docs/en \
-                         trpc/admin/admin_handler.h \
+INPUT                  = trpc/admin/admin_handler.h \
                          trpc/client/client_context.h \
                          trpc/client/make_client_context.h \
                          trpc/client/non_rpc_service_proxy.h \
@@ -1007,7 +1006,8 @@ INPUT                  = docs/en \
                          trpc/naming/selector.h \
                          trpc/naming/selector_factory.h \
                          trpc/naming/trpc_naming.h \
-                         trpc/naming/common \
+                         trpc/naming/common/common_defs.h \
+                         trpc/naming/common/constants.h \
                          trpc/overload_control \
                          trpc/rpcz \
                          trpc/runtime/fiber_runtime.h \

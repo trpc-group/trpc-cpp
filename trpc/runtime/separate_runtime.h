@@ -54,9 +54,11 @@ bool SubmitIoTask(ThreadModel* thread_model, MsgTask* io_task) noexcept;
 bool SubmitHandleTask(ThreadModel* thread_model, MsgTask* handle_task) noexcept;
 
 /// @brief get all reactors under thread_model
+/// @private
 std::vector<Reactor*> GetReactors(ThreadModel* thread_model) noexcept;
 
 /// @brief Get the reactor under thread_model by id, id is -1 means random
+/// @private
 Reactor* GetReactor(ThreadModel* thread_model, int id) noexcept;
 
 }  // namespace trpc::separate
