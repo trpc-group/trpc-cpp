@@ -176,6 +176,7 @@ struct convert<trpc::ServerConfig> {
     node["server_stats_interval"] = server_config.server_stats_interval;
     node["filter"] = server_config.filters;
     node["service"] = server_config.services_config;
+    node["stop_max_wait_time"] = server_config.stop_max_wait_time;
 
     return node;
   }
@@ -234,6 +235,10 @@ struct convert<trpc::ServerConfig> {
         }
         server_config.services_config.push_back(item);
       }
+    }
+
+    if (node["stop_max_wait_time"]) {
+      server_config.stop_max_wait_time = node["stop_max_wait_time"].as<uint32_t>();
     }
 
     return true;

@@ -174,6 +174,9 @@ struct ServerConfig {
   /// @brief Filters used by all services
   std::vector<std::string> filters;
 
+  /// @brief set max wait timeout(ms) when stop incase cannot stop
+  uint32_t stop_max_wait_time{5000};
+
   void Display() const;
 };
 

@@ -61,6 +61,7 @@ void ServerConfig::Display() const {
   TRPC_LOG_DEBUG("registry_name:" << registry_name);
   TRPC_LOG_DEBUG("enable_server_stats:" << enable_server_stats);
   TRPC_LOG_DEBUG("server_stats_interval:" << server_stats_interval);
+  TRPC_LOG_DEBUG("stop_max_wait_time:" << stop_max_wait_time);
 
   for (const auto& i : services_config) {
     i.Display();

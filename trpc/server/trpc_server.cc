@@ -26,6 +26,7 @@
 #include "trpc/runtime/common/stats/frame_stats.h"
 #include "trpc/runtime/runtime.h"
 #include "trpc/runtime/threadmodel/thread_model.h"
+#include "trpc/util/chrono/time.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/string/string_util.h"
 
@@ -211,6 +212,7 @@ void TrpcServer::Stop() {
     }
   }
 
+  uint64_t begin_stop_time = trpc::time::GetMilliSeconds();
   while (FrameStats::GetInstance()->GetServerStats().GetReqConcurrency() > 0) {
     TRPC_LOG_DEBUG("current ReqConcurrency:" << FrameStats::GetInstance()->GetServerStats().GetReqConcurrency()
                                              << ",mso need wait until request be all handled over");
@@ -218,6 +220,11 @@ void TrpcServer::Stop() {
       FiberSleepFor(std::chrono::milliseconds(100));
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    // check if wait more than max_wait_time，just break and continue stop
+    if (trpc::time::GetMilliSeconds() - begin_stop_time > server_config_.stop_max_wait_time) {
+      break;
     }
   }
 
