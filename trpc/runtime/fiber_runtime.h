@@ -49,9 +49,11 @@ std::ptrdiff_t NearestSchedulingGroupIndex();
 }  // namespace detail
 
 /// @brief framework use. initialize and start fiber runtime environment
+/// @private
 void StartRuntime();
 
 /// @brief framework use. stop and destroy fiber runtime environment
+/// @private
 void TerminateRuntime();
 
 /// @brief get fiber threadmodel
