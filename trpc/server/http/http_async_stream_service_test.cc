@@ -87,6 +87,7 @@ class HttpAsyncStreamServiceTest : public ::testing::Test {
         std::make_shared<trpc::http::FuncHandler>(
             [](trpc::ServerContextPtr context, trpc::http::HttpRequestPtr req, trpc::http::HttpReply* rsp) {
               context->SetRecvTimestampUs(0);
+              context->SetTimeout(1000);
               return trpc::kDefaultStatus;
             },
             "json"));
