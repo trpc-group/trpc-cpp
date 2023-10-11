@@ -36,7 +36,7 @@ In terms of framework design, we abstractly designed a layer of runtime, using p
 
 In terms of specific implementation, we also optimize the performance of the framework from several factors that mainly affect the performance of the framework (cpu/memory/io, etc.), such as: reduction of lock conflicts in task scheduling under multi-threading, network io to rpc data zero copy, memory pool/object pool, concurrent writing fd, etc. In addition, we have borrowed the performance optimization technical ideas of industry frameworks(seastar/brpc, etc.).
 
-- Ecologically rich
+- Rich ecosystem
 
 At present, most of Tencent's internal communication protocols and service management systems have supported by plugin, and also support ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
 
@@ -44,9 +44,9 @@ At present, most of Tencent's internal communication protocols and service manag
 
 Before you get started, you should have basic theoretical knowledge, including but not limited to:
 
-- [RPC Concepts](https://cloud.tencent.com/developer/article/1343888), calling remote service interfaces is like calling local functions and can make it easier for you to create distributed applications.
+- [RPC concepts](https://cloud.tencent.com/developer/article/1343888), calling remote service interfaces is like calling local functions and can make it easier for you to create distributed applications.
 
-- [tRPC Terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md) Introduction, as it is important to understand the core concepts in tRPC design in advance, especially the meaning of Service Name and Proto Name, and their interrelationship.
+- [tRPC terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md) Introduction, as it is important to understand the core concepts in tRPC design in advance, especially the meaning of Service Name and Proto Name, and their interrelationship.
 
 - [proto3 knowledge](https://developers.google.com/protocol-buffers/docs/proto3), a cross-language protocol describing the service interface, is simple, convenient, and universal.
 
@@ -56,6 +56,6 @@ With the above basic theoretical knowledge in mind, we recommend learning tRPC-C
 
 - [Development specifications](../../DEVELOP_SPECIFICATIONS.md): be sure to follow the tRPC-Cpp development specification, especially the code specification inside.
 
-- [User Guide](../README.md): the above steps have enabled you to develop simple services, but not enough, advanced knowledge needs to continue to read in detail to deal with a variety of complex scenarios.
+- [User guide](../README.md): the above steps have enabled you to develop simple services, but not enough, advanced knowledge needs to continue to read in detail to deal with a variety of complex scenarios.
 
 - [FAQ](): If you encounter a problem, you should check the FAQ first, and raise an issue if you can't solve it.
