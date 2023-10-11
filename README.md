@@ -2,6 +2,8 @@ English | [中文](README.zh_CN.md)
 
 # tRPC-Cpp
 
+[![Coverage](https://codecov.io/gh/trpc-group/trpc-cpp/branch/main/graph/badge.svg)](https://app.codecov.io/gh/trpc-group/trpc-cpp/tree/main)
+
 tRPC-Cpp is the cpp version of tRPC, it follows the overall design principles of tRPC.
 
 ## Overall Architecture

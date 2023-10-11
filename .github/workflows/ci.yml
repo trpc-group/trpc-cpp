@@ -13,10 +13,18 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-    - name: Compile
+    - name: Test
       run: |
            ./clean.sh
-           bazel test //trpc/...
+           bazel coverage //trpc/... --coverage_report_generator="@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main" --combined_report=lcov --nocache_test_results
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        file: bazel-out/_coverage/_coverage_report.dat
+    - name: Run Examples
+      run: ./run_examples.sh
   compile-with-cmake:
     runs-on: [self-hosted, trpc-cpp-ci]
     steps:
@@ -28,3 +36,5 @@ jobs:
            cd build
            cmake ..
            make -j8
+    - name: Run Examples
+      run: ./run_examples_cmake.sh
