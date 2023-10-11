@@ -159,7 +159,7 @@ struct ServerConfig {
   /// @brief The name of naming registry
   std::string registry_name;
 
-  /// @brief Whether to enable service self-registration
+  /// @brief Whether to enable service self-registration(deprecated)
   bool enable_self_register{false};
 
   /// @brief Whether to enable server stats(qps/avg-time/...)

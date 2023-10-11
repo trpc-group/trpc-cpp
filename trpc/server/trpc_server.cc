@@ -205,7 +205,7 @@ void TrpcServer::Stop() {
   }
 
   for (const auto& iter : service_adapters_) {
-    if (server_config_.enable_self_register) {
+    if (!server_config_.registry_name.empty()) {
       TRPC_LOG_DEBUG(iter.first << " start to UnregisterName...");
       UnregisterName(iter.second);
     }
@@ -280,7 +280,7 @@ TrpcServer::RegisterRetCode TrpcServer::RegisterService(const std::string& servi
     service_adapter_it->second->SetAutoStart();
   }
 
-  if (server_config_.enable_self_register) {
+  if (!server_config_.registry_name.empty()) {
     if (RegisterName(service_adapter_it->second) != 0) {
       TRPC_FMT_ERROR("service_name:{} self register service failed", service_name);
       return RegisterRetCode::kRegisterError;
@@ -371,8 +371,6 @@ bool TrpcServer::StopService(const std::string& service_name, bool clean_conn) {
 }
 
 int TrpcServer::RegisterName(const ServiceAdapterPtr& service_adapter) {
-  TRPC_ASSERT(!server_config_.registry_name.empty());
-
   const std::string& service_name = service_adapter->GetServiceName();
   if (service_name == admin_service_name_) {
     return 0;

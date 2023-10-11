@@ -59,7 +59,6 @@ void ServerConfig::Display() const {
   TRPC_LOG_DEBUG("admin_port:" << admin_port);
   TRPC_LOG_DEBUG("admin_idle_time:" << admin_idle_time);
   TRPC_LOG_DEBUG("registry_name:" << registry_name);
-  TRPC_LOG_DEBUG("enable_self_register:" << enable_self_register);
   TRPC_LOG_DEBUG("enable_server_stats:" << enable_server_stats);
   TRPC_LOG_DEBUG("server_stats_interval:" << server_stats_interval);
 
