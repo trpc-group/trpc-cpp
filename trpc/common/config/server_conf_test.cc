@@ -30,8 +30,7 @@ TEST(ServerConfigTest, server_config_test) {
   server_config.admin_ip = "0.0.0.0";
   server_config.admin_port = "8888";
   server_config.admin_idle_time = 50000;
-  server_config.registry_name = "polaris";
-  server_config.enable_self_register = true;
+  server_config.registry_name = "meshpolaris";
   server_config.enable_server_stats = false;
   server_config.server_stats_interval = 60000;
   server_config.filters = {"tpstelemetry"};
@@ -80,7 +79,6 @@ TEST(ServerConfigTest, server_config_test) {
   ASSERT_EQ(server_config.admin_port, tmp.admin_port);
   ASSERT_EQ(server_config.admin_idle_time, tmp.admin_idle_time);
   ASSERT_EQ(server_config.registry_name, tmp.registry_name);
-  ASSERT_EQ(server_config.enable_self_register, tmp.enable_self_register);
   ASSERT_EQ(server_config.enable_server_stats, tmp.enable_server_stats);
   ASSERT_EQ(server_config.server_stats_interval, tmp.server_stats_interval);
   ASSERT_EQ(server_config.filters[0], tmp.filters[0]);

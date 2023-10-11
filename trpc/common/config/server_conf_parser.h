@@ -172,7 +172,6 @@ struct convert<trpc::ServerConfig> {
     node["admin_port"] = server_config.admin_port;
     node["admin_idle_time"] = server_config.admin_idle_time;
     node["registry_name"] = server_config.registry_name;
-    node["enable_self_register"] = server_config.enable_self_register;
     node["enable_server_stats"] = server_config.enable_server_stats;
     node["server_stats_interval"] = server_config.server_stats_interval;
     node["filter"] = server_config.filters;
@@ -211,10 +210,6 @@ struct convert<trpc::ServerConfig> {
 
     if (node["registry_name"]) {
       server_config.registry_name = node["registry_name"].as<std::string>();
-    }
-
-    if (node["enable_self_register"]) {
-      server_config.enable_self_register = node["enable_self_register"].as<bool>();
     }
 
     if (node["enable_server_stats"]) {

@@ -93,6 +93,8 @@ void UdpTransceiver::DisableReadWrite() {
     return;
   }
 
+  read_buffer_.Clear();
+
   enable_ = false;
 
   DisableAllEvent();
@@ -174,7 +176,6 @@ void UdpTransceiver::HandleClose(bool destroy) {
   TRPC_LOG_ERROR("UdpTransceiver::HandleClose fd:" << socket_.GetFd() << ", conn_id:" << this->GetConnId()
                                                    << ", is_client:" << IsClient());
 
-  read_buffer_.Clear();
   for (auto& msg : io_msgs_) {
     GetConnectionHandler()->NotifyMessageFailed(msg, ConnectionErrorCode::kNetworkException);
   }
