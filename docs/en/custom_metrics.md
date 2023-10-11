@@ -1,7 +1,5 @@
 [中文](../zh/custom_metrics.md)
 
-[TOC]
-
 # Overview
 
 Different monitoring systems have variations in data formats and reporting methods. In order to allow users to utilize different monitoring systems in a unified manner and abstract away the underlying differences, tRPC-Cpp provides a layer of abstraction for Metrics plugins. It defines the organization format for metrics data and the basic capabilities that need to be provided.
@@ -19,6 +17,7 @@ Metrics plugins must follow the interface definition of [trpc::Metrics](../../tr
 **ModuleReport refers to the reporting of metrics data for RPC invocations between modules. It includes information about the caller module, the called module, and the invocation result.** It can be further categorized into two types: caller reporting (for tracking client-side invocation information) and callee reporting (for tracking server-side invocation information).
 
 The interface definition for ModuleReport is as follows:
+
 ```cpp
 constexpr int kMetricsCallerSource = 0;
 constexpr int kMetricsCalleeSource = 1;
@@ -334,6 +333,7 @@ The Metrics plugin needs to inherit [trpc::Metrics](../../trpc/metrics/metrics.h
 ## Registering the plugin and filters
 
 The interface for registering Metrics plugin:
+
 ```cpp
 using MetricsPtr = RefPtr<Metrics>;
 
@@ -345,6 +345,7 @@ class TrpcPlugin {
 ```
 
 The interfaces for registering filters:
+
 ```cpp
 using MessageServerFilterPtr = std::shared_ptr<MessageServerFilter>;
 using MessageClientFilterPtr = std::shared_ptr<MessageClientFilter>;
@@ -362,6 +363,7 @@ class TrpcPlugin {
 Let's illustrate with an example. Assuming that we implement a TestMetrics plugin, along with TestServerFilter and TestClientFilter filters.
 
 1. For server scenarios, users need to register in the `TrpcApp::RegisterPlugins` function during service startup:
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
      public:
@@ -376,6 +378,7 @@ Let's illustrate with an example. Assuming that we implement a TestMetrics plugi
     ```
 
 2. For pure client scenarios, registration should be done after initializing the framework configuration but before starting other framework modules:
+
     ```cpp
     int main(int argc, char* argv[]) {
       ParseClientConfig(argc, argv);

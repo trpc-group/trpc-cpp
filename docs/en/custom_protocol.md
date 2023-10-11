@@ -1,8 +1,5 @@
 [中文](../zh/custom_protocol.md)
 
-[TOC]
-
-# Custom Protocol Development Guide
 
 # Overview
 
@@ -98,7 +95,7 @@ Basic steps are as follows:
 
 We will use sample code for demonstration purposes.
 
-**1. Defining the protocol objects**
+#### 1. Defining the protocol objects
 
 The network message format for the custom protocol in the example is as follows:
 
@@ -144,7 +141,7 @@ same connection.
 If the protocol does not have message identification, the `GetRequest/SetRequest` interfaces do not need to be
 implemented, and the client will send request messages using a connection pool.
 
-**2. Implementing the interfaces of codec**
+#### 2. Implementing the interfaces of codec
 
 `ClientCodec` looks like as follows :
 
@@ -201,10 +198,10 @@ service:
 |out|. The data in this queue will be used as the input parameter of the `ZeroDecode` interface. This interface has
 three types of return values:
 
-- PacketChecker::PACKET_FULL, successfully parsed one or more messages.
-- PacketChecker::PACKET_LESS, the message meets the requirements of the protocol format so far, but is not enough to
+* PacketChecker::PACKET_FULL, successfully parsed one or more messages.
+* PacketChecker::PACKET_LESS, the message meets the requirements of the protocol format so far, but is not enough to
   parse a complete message. More message data is needed later.
-- PacketChecker::PACKET_ERR, an error occurred, such as the message not meeting the requirements of the protocol format.
+* PacketChecker::PACKET_ERR, an error occurred, such as the message not meeting the requirements of the protocol format.
   Returning this error will cause the connection to close.
 
 *ZeroCopyDecode* unpacks the parsed network message and then assembles it into the
@@ -238,7 +235,7 @@ object is returned.
 *CreateResponseObject* creates and returns the `ResponseProtocol` object. In the sample code,
 a `DemoResponseProtocolPtr` object is returned.
 
-**3. Registering a plugin of codec**
+#### 3. Registering a plugin of codec
 
 For example, on the server side, the custom protocol `codec` plugin can be registered in the `RegisterPlugins`
 interface, so that the registered service can use this `codec` plugin.
@@ -253,7 +250,7 @@ class DemoServer : public ::trpc::TrpcApp {
 };
 ```
 
-**4. Developing a service to use the custom protocol**
+#### 4. Developing a service to use the custom protocol
 
 The tRPC framework provides services to the outside world through the registration of services. Therefore, to use a
 custom protocol, an instance of `ServiceImpl` needs to be developed to handle custom protocol requests and respond to

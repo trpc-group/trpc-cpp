@@ -1,7 +1,5 @@
 [English](../en/client_guide.md)
 
-[TOC]
-
 # tRPC-Cpp客户端开发向导
 
 ## 前言

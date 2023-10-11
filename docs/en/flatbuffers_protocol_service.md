@@ -1,6 +1,4 @@
-[中文版](/docs/zh/flatbuffers_protocol_service.md)
-
-[TOC]
+[中文](../zh/flatbuffers_protocol_service.md)
 
 # Overview
 

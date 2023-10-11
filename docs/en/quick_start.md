@@ -1,16 +1,16 @@
-# Quick-Start
+[中文](../zh/quick_start.md)
 
-## Overview
+# Overview
 
 This guide gets you started with tRPC-Cpp with a simple working example.
 
-## Install development environment
+# Install development environment
 
 In the C++ world, there is no universally accepted standard for managing project dependencies. Therefore, before building and running the Hello World example in this article, you need to install the development environment. For details, please refer to [Environment Setup](setup_env.md). It is recommended to use bazel when you are just starting with tRPC-Cpp. The next steps in this article mainly introduce how to use bazel to compile and run the Hello World example.
 
-## Compile and Run
+# Compile and Run
 
-### Compile tRPC-Cpp
+## Compile tRPC-Cpp
 
 Clone the tRPC-Cpp repo
 
@@ -35,7 +35,7 @@ INFO: Build completed successfully, 5459 total actions
 
 If there is a failure, it may be caused by network reasons (unable to pull remote code), environment installation (gcc, framework dependent library version is too low), etc. please refer to [Environment Setup Faq](setup_env.md)
 
-### Compile HelloWorld
+## Compile HelloWorld
 
 After the tRPC-Cpp framework code is successfully compiled, the next step is to compile and run the Hello World example.
 
@@ -45,7 +45,7 @@ Execute the following command to compile the Hello World sample code.
 bazel build //examples/helloworld/...
 ```
 
-### Run HelloWorld
+## Run HelloWorld
 
 After the code is successfully compiled, run the server program.
 
@@ -82,7 +82,7 @@ You can see the following output.
 
 Congratulations! You’ve just run a client-server application with tRPC-Cpp.
 
-## Update
+# Update
 
 Now let's see how to add a new RPC method to update the server program for the client to call.
 
@@ -128,7 +128,7 @@ message HelloReply {
 }
 ```
 
-### Update the server code
+## Update the server code
 
 Open examples/helloworld/greeter_service.h and add the SayHelloAgain method to GreeterServiceImpl.
 
@@ -165,7 +165,7 @@ Open examples/helloworld/greeter_service.cc, and add the code implementation of 
 }
 ```
 
-### Update the client code
+## Update the client code
 
 A new SayHelloAgain() method is now provided in the stub. We will follow the previous code that calls SayHello(), and implement a function that calls SayHelloAgain(), open examples/helloworld/test/fiber_client.cc and add the following code after the DoRpcCall function:
 
@@ -199,7 +199,7 @@ int Run() {
 }
 ```
 
-### Run
+## Run
 
 Compile HelloWorld code
 
@@ -228,7 +228,7 @@ get rsp msg: Hello, fiber
 get again rsp msg: Hello, fiber Again
 ```
 
-### What's next
+## What's next
 
 - Learn how tRPC-Cpp works in [Architecture Design](https://github.com/trpc-group/trpc-cpp/docs/en/architecture_design.md)
   and [Terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md).

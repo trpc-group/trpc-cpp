@@ -1,10 +1,6 @@
 [中文](../zh/basic_tutorial.md)
 
-[TOC]
-
-# Basic Tutorial
-
-## Overview
+# Overview
 
 This tutorial provides a basic C++ programmer’s introduction to working with tRPC-Cpp.
 
@@ -22,14 +18,14 @@ Client <---> Forward <---> HelloWorld
 - `Forward`: receive the client's request, and then call the HelloWorld service
 - `Client`: client test code
 
-## Install Environment
+# Install Environment
 
-Before compiling and running the Forward example in this article, you need to: 
+Before compiling and running the Forward example in this article, you need to:
 
 1. Follow [Quick Start](quick_start.md) to install the development environment and compile the framework code.
 2. Install [trpc-cmdline](https://github.com/trpc-group/trpc-cmdline#install-from-release) tools.
 
-## Defining the service
+# Defining the service
 
 Our first step is to define the tRPC-Cpp service and the method request and response types using protocol buffers.
 
@@ -73,9 +69,9 @@ message ForwardReply {
 
 Here it is recommended to refer to [terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md) for the name of the package of both proto files. Here we use the three-segment name trpc.{ app}.{server}, {app} here is demo, {server} is forward.
 
-## Generate code based on proto file
+# Generate code based on proto file
 
-### Generate service code
+## Generate service code
 
 First, create a directory by executing the following command, which is used to experience the use of tRPC-Cpp following this tutorial.
 
@@ -163,14 +159,16 @@ forward
 The code in the server directory is the code related to the implementation of this service, the code in the client directory is the client code for the local testing, and the code in the proto directory is a project that manages proto file with it's dependency.
 
 The server directory contains a framework configuration file directory, 4 code files, and a bazel BUILD file.
+
 - Configuration directory: It contains two framework configuration files, one is the framework configuration file of fiber (M:N coroutine), which means that the current service will use the fiber runtime, and users will uses synchronous api to writing business code, and the other is the framework configuration file of ordinary thread runtime, which means that the current service will use the merged or separated operating environment of the framework, and the business code will use the asynchronous future-related api. **When the business writes tRPC-Cpp services, it must first choose a runtime environment of the framework**. Refer to [runtime](to do) for the introduction of the fiber runtime environment, merge or separate runtime environment, and how to choose.
 - BUILD file: indicates that the program is built using bazel rule which depends on relative bazel rule of forward.proto in proto directory.
 - Code file: Contains two types of files, one is the service process level code file (server.h and server.cc), which defines a ForwardServer class, which inherits the `TrpcApp` class of the framework, and the business needs to override its `Initialize` and `Destroy` methods to complete the business-related initialization operations during the startup process of the service process, and the business destruction operations during the shutdown process; one type is the service-level code file (service .h and service.cc), these two files are the concrete implementation of the proto interface.
 
 The specific implementation of the forward service can be divided into the following steps:
+
 1. Choose the runtime environment used by the forward service (we also call it the thread model), and set it in the global configuration item of the framework configuration;
 2. Define a process-level implementation class (here ForwardServer), inherit the `TrpcApp` class of the framework, and override its `RegisterPlugins`, `Initialize` and `Destroy` methods;
-3. Define a service-level implementation class (here ForwardServiceServiceImpl), inherit the service class defined by the proto file, and override the RPC method, where the first parameter of each RPC method is the context of the current RPC execution `ServerContext `;
+3. Define a service-level implementation class (here ForwardServiceServiceImpl), inherit the service class defined by the proto file, and override the RPC method, where the first parameter of each RPC method is the context of the current RPC execution `ServerContext`;
 4. If necessary, complete the registration of the custom plugin in the `RegisterPlugins` method in 1, for example: register the custom protocol `Codec`;
 5. Complete the process-level business initialization operation in the `Initialize` method in 1;
     1. First initialize the business-related logical operations that depend on the framework, such as: pull remote configuration, create and start a thread pool;
@@ -180,22 +178,25 @@ The specific implementation of the forward service can be divided into the follo
 7. Define the instance of the process-level implementation class at the entry function `main` of the program, and then call its `Main` and `Wait` methods to start the program;
 
 The client directory includes a framework configuration file directory, 2 code files, and a bazel BUILD file.
+
 - Configuration directory: It contains two framework configuration files, one is the framework configuration file of fiber (M:N coroutine), which means that the current test program will use the fiber runtime, and the business will use fiber-related synchronization apis when writing code, the other is the framework configuration file of ordinary threads, indicating that the current test program will use the merged or separated runtime environment, and the business code will use future-related asynchronous apis.
 - BUILD file: indicates that the program is built using bazel rules which depends on relative bazel rule of forward.proto in proto directory.
-- Code file: Contains two files, one is a test code file that uses fiber to call the forward service synchronously (fiber_client.cc); the other is a test code file that uses a future to asynchronously call the forward service (future_client.cc). ** choose one when you tests**.
+- Code file: Contains two files, one is a test code file that uses fiber to call the forward service synchronously (fiber_client.cc); the other is a test code file that uses a future to asynchronously call the forward service (future_client.cc). **choose one when you tests**.
 
 The overall logic flow of the two test codes fiber_client and future_client is the same, which can be divided into the following steps:
+
 1. Parse and initialize framework configuration;
 2. Put the business execution function `Run` into the runtime of the framework for execution;
     1. The `Run` function will first create a specific proxy `ServiceProxy` to access the backend service;
-    2. Then use `ServiceProxy` to call the RPC interface of the backend service. The difference between fiber and future here is that one is a synchronous call and the other is an asynchronous call. In addition, when calling RPC, you need to create the context `ClientContext for the current RPC call `.
+    2. Then use `ServiceProxy` to call the RPC interface of the backend service. The difference between fiber and future here is that one is a synchronous call and the other is an asynchronous call. In addition, when calling RPC, you need to create the context `ClientContext for the current RPC call`.
 
 The proto direcotry includes a bazel WORKSPACE file, a bazel BUILD file, and 2 proto files.
+
 - WORKSPACE file: indicate the proto directory is viewed as a independent bazel project. If check WORKSPACE file in root directory(name as forward project), you will find the proto project is imported by `local_repository`.
 - BUILD file: use bazel rules to manage proto files which may contain complex dependency，it can be imported by `@proto//:xxx_proto` at BUILD files of server/client in forward project to use the generated C++ stub files.
 - proto files: includes 2 proto files with dependency: `forward.proto` depends on `deps/message.proto`. It's file structure will be keeped at proto directory.
 
-### Test
+## Test
 
 Enter the forward directory，compile and run the forward service (first compile will be slightly longer, and subsequent code changes and recompilation will be very fast).
 
@@ -227,13 +228,13 @@ FLAGS_client_config: client/conf/trpc_cpp_future.yaml
 get rsp success
 ```
 
-## Access the backend service in the tRPC-Cpp service
+# Access the backend service in the tRPC-Cpp service
 
 Now that we have generated the service code based on the proto file and run it successfully, how to access the back-end service `HelloWorld` in the `tRPC-Cpp service`? The `tRPC-Cpp service` here is the program that serves as both the server and the client, as for the `future_client` and `future_client` programs in the previous section, they are only clients.
 
-### Use fiber synchronously call the backend service
+## Use fiber synchronously call the backend service
 
-#### configure fiber runtime
+### configure fiber runtime
 
 When using fiber, you need to set the fiber-related runtime options in the framework configuration file. For example: Forward fiber-related global configuration of ./server/conf/trpc_cpp_fiber.yaml is as follows:
 
@@ -247,7 +248,7 @@ global:
 
 For the detailed fiber runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
 
-#### Get the proto file of the backend service
+### Get the proto file of the backend service by fiber synchronously
 
 Here our backend service is the HelloWorld service, so the proto IDL file we want to obtain is helloworld.proto. Because of the bazel build tool we use, there is no need to copy helloworld.proto to the local, we only need to add the relevant dependencies in the bazel target rule when using helloworld.proto.
 
@@ -268,7 +269,7 @@ cc_library(
 )
 ```
 
-#### Create the ServiceProxy of the backend service
+### Create the ServiceProxy of the backend service by fiber synchronously
 
 Before creating the ServiceProxy of the backend service, you need to define the options for creating the ServiceProxy. Here we set it through configuration. In addition to the configuration method, the framework also supports setting through code, code + configuration, for details, see [Client Development Guide](client_guide.md).
 
@@ -326,7 +327,7 @@ ForwardServiceServiceImpl::ForwardServiceServiceImpl() {
 
 Create a GreeterServiceProxy smart pointer using the `GetProxy` interface of `::trpc::GetTrpcClient()`.
 
-#### Use ServiceProxy to call the backend service
+#### Use ServiceProxy to call the backend service by fiber synchronously
 
 Aftercreating GreeterServiceProxy, then use GreeterServiceProxy in the Route method of ForwardServiceServiceImpl to call the HelloWorld service.
 
@@ -356,7 +357,7 @@ Aftercreating GreeterServiceProxy, then use GreeterServiceProxy in the Route met
 ...
 ```
 
-#### Run the test
+#### Run the test of fiber synchronously
 
 Before testing, first you need to confirm whether the ip/port used by the Forward service and Admin is the same as the ip/port used by the HelloWorld service, to avoid failure to run the service due to the same port.
 
@@ -387,9 +388,9 @@ get rsp success
 
 If you only use fiber for programming, you can skip the following chapters.
 
-### Use future asynchronously call the backend service
+## Use future asynchronously call the backend service by fiber synchronously
 
-#### configure future runtime
+### configure future runtime
 
 When using future, you need to set the future-related runtime options in the framework configuration file. You can choose to merge or separate threadmodel runtime. Here we take the separated threadmodel runtime as an example.
 
@@ -405,15 +406,15 @@ global:
 
 For the detailed separate or merge runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
 
-#### Get the proto file of the backend service
+#### Get the proto file of the backend service by future asynchronously
 
 You can refer to the steps corresponding to fiber.
 
-#### Create the ServiceProxy of the backend service
+#### Create the ServiceProxy of the backend service by future asynchronously
 
 You can refer to the steps corresponding to fiber.
 
-#### Use ServiceProxy to call the backend service
+#### Use ServiceProxy to call the backend service by future asynchronously
 
 The future asynchronous calling code is as follows:
 
@@ -458,7 +459,7 @@ The future asynchronous calling code is as follows:
 }
 ```
 
-#### Run the test
+#### Run the test of future asynchronously
 
 Just follow the operations in the fiber-related chapters above. The only difference is that you need to modify the `run_server.sh` content in the forward directory.
 
@@ -478,7 +479,7 @@ bazel-bin/demo/forward/forward --config=demo/forward/conf/trpc_cpp.yaml
 
 At this point, you have successfully used the framework fiber and future to access backend service.
 
-## Next step
+# Next step
 
 - Learn how tRPC-Cpp works through [tRPC-Cpp Architecture Design](architecture_design.md) and [Terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md).
 - Read [User Guide](../README.md) to use tRPC-Cpp more comprehensively.

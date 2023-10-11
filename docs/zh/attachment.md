@@ -1,6 +1,5 @@
 [English](../en/attachment.md)
 
-[TOC]
 
 # 前言
 

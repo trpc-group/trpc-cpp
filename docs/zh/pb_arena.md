@@ -1,7 +1,5 @@
 [English](../en/pb_arena.md)
 
-[TOC]
-
 # RPC 服务使用 PB-Arena 优化
 
 # 前言

@@ -1,7 +1,5 @@
 [English](../en/future_promise_guide.md)
 
-[TOC]
-
 # tRPC-Cpp future/promise使用指南
 
 ## 前言

@@ -1,7 +1,5 @@
 [English](/docs/en/filter.md)
 
-[TOC]
-
 # 自定义拦截器(filter)
 
 ## 前言

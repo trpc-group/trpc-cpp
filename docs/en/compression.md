@@ -1,14 +1,12 @@
 [中文](../zh/compression.md)
 
-# Compression or Decompression
-
 # Overview
 
 This article introduces how to use compression and decompression features based on tRPC-Cpp (referred to as tRPC below).
 Developers can learn the following:
 
-* How to enable compression and decompression features for RPC calls.
-* How to implement custom compression and decompression algorithms.
+- How to enable compression and decompression features for RPC calls.
+- How to implement custom compression and decompression algorithms.
 
 To save data transmission bandwidth, compressing data is a common practice. tRPC supports compressing message content
 during RPC calls and provides some commonly used compression algorithms. We can choose the appropriate algorithm as
@@ -23,16 +21,16 @@ Other protocols may not necessarily support data compression, it depends on thei
 
 Currently, the following compression algorithms are supported:
 
-* zlib
-* gzip
-* snappy
-* lz4
+- zlib
+- gzip
+- snappy
+- lz4
 
 The following compression levels are currently supported:
 
-* kFastest
-* kDefault
-* kBest
+- kFastest
+- kDefault
+- kBest
 
 The compression effect gradually improves from `kFastest` to `kBest`, but it also consumes more CPU. If the compression
 level is not specified, the framework generally uses kDefault.
@@ -73,11 +71,12 @@ side, the framework will automatically compress the request message content and 
 on the server side, the framework will automatically uncompress the request message content and compress the response
 message content.
 
-**Setting compression parameters for requests**
+### Setting compression parameters for requests**
 
 When requesting downstream services, set the compression algorithm and compression level.
 
 ```cpp
+{
   // ...
   auto context = ::trpc::MakeClientContext(prx);
   context->SetReqCompressType(type);
@@ -89,7 +88,7 @@ When requesting downstream services, set the compression algorithm and compressi
 
 The above code sets gzip compression and kFastest compression level to compress the request message content.
 
-**Updating compression parameters for responses**
+### Updating compression parameters for responses**
 
 If compression parameters are set in the request, the server will use the compression algorithm specified in the request
 by default, but the compression level will use kDefault. If you want to update the compression parameters, you can set
@@ -104,7 +103,7 @@ ServerContext.
   // ...
 ```
 
-**Using compression and decompression interfaces directly**
+### Using compression and decompression interfaces directly**
 
 In some scenarios, you may want to use the framework's compression/decompression capabilities directly.
 
@@ -136,7 +135,7 @@ a `compressor` plugin to meet our own needs.
 
 We need to focus on the following aspects of the compressor plugin:
 
-* Compression and decompression of messages.
+### Compression and decompression of messages.
 
 The basic steps are:
 
@@ -147,7 +146,7 @@ The basic steps are:
 
 Reference: [trpc_gzip](../../trpc/compressor/gzip)
 
-**1. Implement the compressor plugin interface.**
+### Implement the compressor plugin interface.**
 
 ```cpp
 class MyCompressor : public Compressor {
@@ -169,7 +168,7 @@ compression level.
 
 *DoDecompress* decompresses the data in |in| and stores the decompressed data in |out|.
 
-**2. Register the compressor plugin**
+### Register the compressor plugin**
 
 Register the custom implemented compressor plugin during program initialization.
 

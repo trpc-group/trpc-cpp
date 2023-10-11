@@ -1,7 +1,5 @@
 [中文](../zh/custom_telemetry.md)
 
-[TOC]
-
 # Overview
 
 In tRPC-Cpp, Telemetry plugins are used to collect and report telemetry data, including traces, metrics, and logs. It is a plugin that integrates three major functionalities: distributed tracing, metrics reporting, and logs collection.
@@ -38,7 +36,7 @@ class Telemetry : public Plugin {
 
 ## Logs collection
 
-Telemetry plugins are required to implement the `GetLog` interface, which is used to obtain an instance of a remote Logging plugin. This means that the implementation and usage of the log collection functionality must follow the specifications of the framework's remote [Logging plugin]().
+Telemetry plugins are required to implement the `GetLog` interface, which is used to obtain an instance of a remote Logging plugin. This means that the implementation and usage of the log collection functionality must follow the specifications of the framework's remote [Logging plugin](./custom_logging.md).
 
 ```cpp
 class Telemetry : public Plugin {
@@ -94,6 +92,7 @@ First, you need to implement the internal tracing filters and metrics filters. P
 # Register the plugin and filters
 
 The interface for registering Telemetry plugin:
+
 ```cpp
 using TelemetryPtr = RefPtr<Telemetry>;
 
@@ -105,6 +104,7 @@ class TrpcPlugin {
 ```
 
 The interfaces for registering filters:
+
 ```cpp
 using MessageServerFilterPtr = std::shared_ptr<MessageServerFilter>;
 using MessageClientFilterPtr = std::shared_ptr<MessageClientFilter>;
@@ -122,6 +122,7 @@ class TrpcPlugin {
 Let's illustrate with an example. Assuming that we implement a TestTelemetry plugin, along with TestServerFilter and TestClientFilter filters.
 
 1. For server scenarios, users need to register in the `TrpcApp::RegisterPlugins` function during service startup:
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
      public:
@@ -136,6 +137,7 @@ Let's illustrate with an example. Assuming that we implement a TestTelemetry plu
     ```
 
 2. For pure client scenarios, registration should be done after initializing the framework configuration but before starting other framework modules:
+
     ```cpp
     int main(int argc, char* argv[]) {
       ParseClientConfig(argc, argv);

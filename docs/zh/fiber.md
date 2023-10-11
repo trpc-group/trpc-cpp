@@ -1,4 +1,3 @@
-[TOC]
 
 # 1 前言
 本文从原理及设计实现等角度深入介绍Fiber，以便于更好了解Fiber。关于Fiber使用可以阅读[Fiber用户指南](./fiber_user_guide.md)。

@@ -1,7 +1,5 @@
 [English](../en/basic_tutorial.md)
 
-[TOC]
-
 # 基础教程
 
 ## 前言

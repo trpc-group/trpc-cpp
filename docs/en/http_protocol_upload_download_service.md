@@ -1,8 +1,6 @@
-[中文](../en/http_protocol_upload_download_service.md)
+[中文](../zh/http_protocol_upload_download_service.md)
 
-[TOC]
-
-# Developing an HTTP File Upload-Download Service
+# Overview
 
 Topic: How to develop an HTTP file upload-download service based on tRPC-Cpp.
 
@@ -10,9 +8,9 @@ In HTTP services, there are scenarios where large files need to be read or sent.
 inefficient and puts a lot of pressure on the memory, making it difficult to upload large files. tRPC-Cpp provides a set
 of HTTP streaming read and write data chunking interfaces, which can receive and send large files in chunks.
 
-- For large files with a known length, send them in chunks after setting `Content-Length: $length` (of course, we can
+* For large files with a known length, send them in chunks after setting `Content-Length: $length` (of course, we can
   also use chunked if the other end supports it).
-- For large files with an unknown length, send them in chunks after setting `Transfer-Encoding: chunked`.
+* For large files with an unknown length, send them in chunks after setting `Transfer-Encoding: chunked`.
 
 At the same time, it supports both HTTP synchronous streaming programming interface and asynchronous programming
 interface. Different types of programming interfaces depend on different `tRPC runtimes`, and there are significant
@@ -23,13 +21,13 @@ This article introduces how to develop an HTTP file upload-download service base
 below), and developers can learn the following:
 
 * How to use the synchronous streaming interface to implement file upload-download.
-    * Running process.
-    * Programming interface.
-    * Implementing upload-download service.
+  * Running process.
+  * Programming interface.
+  * Implementing upload-download service.
 * How to use the asynchronous streaming interface to implement file upload-download.
-    * Running process.
-    * Programming interface.
-    * Code examples.
+  * Running process.
+  * Programming interface.
+  * Code examples.
 * FAQ.
 
 # How to use the synchronous streaming interface to implement file upload-download
@@ -70,7 +68,7 @@ name: upload a file to server, ok: 1
 final result of http calling: 1
 ```
 
-## Execution flow
+## Execution flow by synchronous
 
 First, let's take a look at the process of server-side HTTP streaming data upload and download, and then design our own
 data upload and download services based on these processes.
@@ -147,9 +145,9 @@ end  # <-- loop
 S ->> S: WriteDone
 ```
 
-## Streaming programming interface
+## Streaming programming interface by synchronous
 
-### Server-side stream reader and stream writer
+### Server-side stream reader and stream writer by synchronous
 
 * Use the `GetStream()` method of `HttpRequest` to obtain `stream_reader`, whose object type is `HttpReadStream`.
 * Use the `GetStream()` method of `HttpResponse` to obtain `stream_writer`, whose object type is `HttpWriteStream`.
@@ -167,7 +165,7 @@ S ->> S: WriteDone
 | HttpWriteStream | Status Write(NoncontiguousBuffer&amp;&amp; item)                                                                    | Send content.                                                                                                                                                               | -                                                                                                                                                                                                                | Status       |
 | HttpWriteStream | Status WriteDone()                                                                                                  | Send end.                                                                                                                                                                   | -                                                                                                                                                                                                                | Status       |
 
-### Common return codes for server-side stream interfaces
+### Common return codes for server-side stream interfaces by synchronous
 
 For timeout errors, the business logic can try to retry, but for network errors, it is not recommended to retry as it
 indicates an abnormality in the connection where the stream reader or writer is located.
@@ -181,29 +179,29 @@ indicates an abnormality in the connection where the stream reader or writer is 
 | kStreamStatusServerNetworkError            | 201   | Server-side network error (such as connection disconnected or idle timeout) |
 | kStreamStatusServerWriteContentLengthError | 232   | The length of the written data does not match the Content-Length setting    |
 
-### Timeout explanation for read-related interfaces
+### Timeout explanation for read-related interfaces by synchronous
 
 Read-related interfaces: Read, ReadAll.
 Taking the Read interface as an example, tRPC provides two types of specific interface forms:
 
-- Read(item, max_bytes) without a custom timeout.
+* Read(item, max_bytes) without a custom timeout.
   The timeout for this type of interface is a fixed value that is determined when the reader/writer is created (
   calculated by the service configuration or specified by the SetDefaultDeadline method).
 
-> For example, if the timeout is configured as 60000ms and the user obtains the reader/writer at time "now", then no
-> matter how many times the user calls Read(item, max_bytes), the timeout point will always be "now + 1min", which can
-> be
-> understood as the timeout for the entire read stream process.
+  > For example, if the timeout is configured as 60000ms and the user obtains the reader/writer at time "now", then no
+  > matter how many times the user calls Read(item, max_bytes), the timeout point will always be "now + 1min", which can
+  > be
+  > understood as the timeout for the entire read stream process.
 
-- Read(item, max_bytes, timeout) with a custom timeout.
+* Read(item, max_bytes, timeout) with a custom timeout.
   If the user's data is very large, such as a 10GB file, and the network conditions are uncertain, it is recommended to
   use the Read(item, max_bytes, timeout) interface in this scenario.
 
-> The "timeout" parameter here only applies to the Read operation. The "timeout" type can be a time interval, such as
-> 10s, which means that the Read operation will be blocked for 10s from the trigger start. It can also be a specific
-> time
-> point, which means that the Read operation will be blocked until the specified time point.
-
+  > The "timeout" parameter here only applies to the Read operation. The "timeout" type can be a time interval, such as
+  > 10s, which means that the Read operation will be blocked for 10s from the trigger start. It can also be a specific
+  > time
+  > point, which means that the Read operation will be blocked until the specified time point.
+  
 # Implementing upload-download service
 
 Example: [file_storage_handler.cc](../../examples/features/http_upload_download/server/file_storage_handler.cc)
@@ -214,102 +212,101 @@ According to the file upload process, the data upload process needs to go throug
 request, reading the request headers, reading the request message body data, completing the read, and sending the
 response.
 
-- **Receiving the request**
+* **Receiving the request**
   After receiving an HTTP request, the framework will start the user's preset handler process based on the URL.
-- **Reading the request headers**
+
+* **Reading the request headers**
   The HttpRequest object provides interfaces to obtain request header information: HasHeader/GetHeader, which allows the
   user to obtain request header content information. For example, look for `Content-Length` or `Transfer-Encoding` to
   determine whether the other end is sending data in length form or chunked form. Of course, the framework will
   automatically help the user decode chunked-form data into data fragments.
-- **Reading data**
+* **Reading data**
   Using the Read(item, max_bytes) interface, if the server's response data has not ended, this Read operation will block
   until it reads data of length max_bytes. If the server's response data has already ended, this Read operation will
   immediately return after reading data of length max_bytes or reading the end of the data.
-- **Completing the read**
+* **Completing the read**
   When the end of the data is read, the Read interface will return the kStreamStatusReadEof return code to inform the
   user that the server data has been completely read.
-- **Sending the response**
+* **Sending the response**
   In a normal interaction process, the user should call HttpResponse's SetStatus to set the status code (default 200)
   based on the other end's request and call HttpWriteStream's WriteHeader to send the response headers. If the user does
   not actively call WriteHeader, the framework will automatically call WriteHeader to complete the response process (
   default 200) after the user's processing logic ends.
 
-Example code:
+* Example code:
 
-```cpp
-// Store a file received from the client.
-::trpc::Status FileStorageHandler::Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp) {
-  // Open a file and prepare to save the uploaded file content
-  auto fout = std::ofstream("/to/path/upload_dst_xx", std::ios::binary);
-  if (!fout.is_open()) {
-    rsp->SetStatus(::trpc::http::ResponseStatus::kInternalServerError);
+  ```cpp
+  // Store a file received from the client.
+  ::trpc::Status FileStorageHandler::Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp) {
+    // Open a file and prepare to save the uploaded file content
+    auto fout = std::ofstream("/to/path/upload_dst_xx", std::ios::binary);
+    if (!fout.is_open()) {
+      rsp->SetStatus(::trpc::http::ResponseStatus::kInternalServerError);
+      return ::trpc::kSuccStatus;
+    }
+  
+    // Get stream reader. 
+    auto& reader = req->GetStream();
+    ::trpc::Status status;
+    // Read at most 1MB each time. 
+    constexpr std::size_t kBufferSize{1024 * 1024};
+    std::size_t nread{0};
+    
+    // Start receiving the file content.
+    for (;;) {
+      ::trpc::NoncontiguousBuffer buffer;
+      // Read the data.
+      status = reader.Read(buffer, kBufferSize);
+      if (status.OK()) {
+        nread += buffer.ByteSize();
+        // Write the data to the file.
+        for (const auto& block : buffer) {
+          fout.write(block.data(), block.size());
+        }
+        continue;
+      } else if (status.StreamEof()) {
+        // File reading is complete.
+        break;
+      }
+      // If an error occurs, return an error code. the framework will recognize the RST return code and close the stream.
+      return ::trpc::kStreamRstStatus;
+    }
+  
+    // After receiving is complete, send a response to the client.
+    rsp->SetStatus(::trpc::http::ResponseStatus::kOk);
+    auto& writer = rsp->GetStream();
+    status = writer.WriteHeader();
+    if (!status.OK()) {
+      return ::trpc::kStreamRstStatus;
+    }
     return ::trpc::kSuccStatus;
   }
-
-  // Get stream reader. 
-  auto& reader = req->GetStream();
-  ::trpc::Status status;
-  // Read at most 1MB each time. 
-  constexpr std::size_t kBufferSize{1024 * 1024};
-  std::size_t nread{0};
-  
-  // Start receiving the file content.
-  for (;;) {
-    ::trpc::NoncontiguousBuffer buffer;
-    // Read the data.
-    status = reader.Read(buffer, kBufferSize);
-    if (status.OK()) {
-      nread += buffer.ByteSize();
-      // Write the data to the file.
-      for (const auto& block : buffer) {
-        fout.write(block.data(), block.size());
-      }
-      continue;
-    } else if (status.StreamEof()) {
-      // File reading is complete.
-      break;
-    }
-    // If an error occurs, return an error code. the framework will recognize the RST return code and close the stream.
-    return ::trpc::kStreamRstStatus;
-  }
-
-  // After receiving is complete, send a response to the client.
-  rsp->SetStatus(::trpc::http::ResponseStatus::kOk);
-  auto& writer = rsp->GetStream();
-  status = writer.WriteHeader();
-  if (!status.OK()) {
-    return ::trpc::kStreamRstStatus;
-  }
-  return ::trpc::kSuccStatus;
-}
-```
+  ```
 
 ## Implementing a file download service
 
 Following the file download process, the data download process needs to go through the following steps: read request
 headers, set length format or chunked format, send response headers, write data, and complete writing.
 
-- **Receive request**
+* **Receive request**
   After receiving an HTTP request, the user's preset handler process will be started based on the URL.
-- **Read request headers**
+* **Read request headers**
   HttpRequest provides interfaces to obtain request headers: HasHeader/GetHeader.
-- **Set length format or chunked format**
+* **Set length format or chunked format**
   Call HttpResponse's SetHeader method to set the length format or chunked format. If the complete data length is
   already known, the length format "Content-Length: 104857600" can be used. If the complete data length is unknown, the
   chunked format "Transfer-Encoding: chunked" can be used.
-- **Send response headers**
+* **Send response headers**
   In the normal interaction process, the user should proactively call HttpResponse's SetStatus to set the status code (
   default 200) based on the request from the other end, and call HttpWriteStream's WriteHeader to send the response
   headers. If the user does not actively call WriteHeader, the framework will automatically call WriteHeader to complete
-  the
-  response process after the user processing logic is finished (default 200).
-- **Write data**
+  the response process after the user processing logic is finished (default 200).
+* **Write data**
   Through the Write interface, the user can continuously send data fragments to the server. If the user is using the
   chunked format, the user does not need to do chunked encoding for the transmitted data, as the framework will handle
-  it
-  automatically. If the user is using the length format, if the data sent by the user exceeds the set length, the Write
+  it automatically. If the user is using the length format, if the data sent by the user exceeds the set length, the Write
   interface will report kStreamStatusServerWriteContentLengthError error.
-- **Complete writing**
+* **Complete writing**
   Through the WriteDone interface, the user informs the reader-writer that all data has been sent. If the user is using
   the chunked format, the framework will send the chunked end tag to the other end. If the user is using the length
   format, the framework
@@ -368,7 +365,7 @@ Example code:
 }
 ```
 
-# How to use the asynchronous streaming interface to implement file upload-download.
+# How to use the asynchronous streaming interface to implement file upload-download
 
 The HTTP asynchronous streaming service is developed based on `HttpAsyncStreamFuncHandler` and registered with the route
 through `HttpAsyncStreamService` and `RegisterAsyncStreamMethod`.
@@ -383,17 +380,17 @@ transfer `Transfer-Encoding: chunked`.
 
 Requirements:
 
-- The asynchronous streaming interface needs to run in the `merge` thread model environment. The `merge` thread model is
+* The asynchronous streaming interface needs to run in the `merge` thread model environment. The `merge` thread model is
   a runtime of tRPC , and the thread role does both `IO` and business logic `Handle`.
-- Currently, only the asynchronous streaming interface called within tRPC 's internal thread is supported, and it is not
+* Currently, only the asynchronous streaming interface called within tRPC 's internal thread is supported, and it is not
   supported to use it in user-defined external threads (the program will crash).
-- Use `future/promise` programming model.
-- HTTP message reading and writing comply with the HTTP protocol specification, that is, the writing order for requests
+* Use `future/promise` programming model.
+* HTTP message reading and writing comply with the HTTP protocol specification, that is, the writing order for requests
   and responses is as follows:
-    - Write start_line/status_line + headers first.
-    - Then write the body.
+  * Write start_line/status_line + headers first.
+  * Then write the body.
 
-## Experience an HTTP file upload-download service
+## Experience an HTTP file upload-download service by asynchronous
 
 Example: [http_async_upload_download](../../examples/features/http_async_upload_download)
 
@@ -418,14 +415,14 @@ name: upload a file to server, ok: 1
 final result of http calling: 1
 ```
 
-## Execution flow
+## Execution flow by asynchronous
 
 The basic process for file upload and download scenarios is similar to synchronous streaming. After the framework
 receives a user request, it uses an asynchronous callback to run the user's set and implemented `HttpAsyncStreamFuncHandler` logic.
 
-## Streaming programming interface
+## Streaming programming interface by asynchronous
 
-### Server-side stream reader and stream writer
+### Server-side stream reader and stream writer by asynchronous
 
 | Object Type                          | Interface Signature                                                                                   | Function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Parameters                                         |
 |--------------------------------------|-------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
@@ -470,4 +467,3 @@ if (req->GetHeader("Expect") == "100-continue") {
 
 Users can use SetContent() to simply respond without using WriteHeader (non-1xx status codes) or Write. The framework will
 automatically reply to the response in a non-streaming scenario after the user function ends.
-

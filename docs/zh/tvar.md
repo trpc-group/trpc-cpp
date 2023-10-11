@@ -1,7 +1,5 @@
 [English](../en/tvar.md)
 
-[TOC]
-
 # tRPC-Cpp tvar使用指南
 
 ## 前言

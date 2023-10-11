@@ -1,10 +1,6 @@
-[中文](../zh/grpc_service.md)
+[中文](../zh/grpc_protocol_service.md)
 
-[TOC]
-
-# gRPC Service Development Guide
-
-**Topic: How to develop gRPC services based on tRPC-Cpp**
+# Overview
 
 tRPC-Cpp supports server-side gRPC unary services and client-side calling of gRPC unary services.
 
@@ -15,7 +11,6 @@ learn the following:
 
 * How to develop gRPC unary services.
 * FAQ.
-
 
 # How to develop gRPC unary services
 
@@ -45,10 +40,10 @@ For convenience, gRPC in tRPC reuses the capabilities of the tRPC protocol durin
 If there is an existing tRPC service, it can be directly accessed using the gRPC protocol by modifying the configuration
 item `protocol: trpc` to `protocol: grpc`. The example `grpc` code above is implemented in this way.
 
-If a new gRPC service needs to be created, it can first be created as tRPC service according to the tRPC protocol. Then 
+If a new gRPC service needs to be created, it can first be created as tRPC service according to the tRPC protocol. Then
 set the protocol field to `protocol: grpc` to provide gRPC service.
 
-In tRPC, developing a gRPC service is similar to developing a tRPC service. The key steps in developing a gRPC service 
+In tRPC, developing a gRPC service is similar to developing a tRPC service. The key steps in developing a gRPC service
 are briefly outlined below based on the tRPC service development process:
 
 * Define the interface using proto.
@@ -84,8 +79,9 @@ message HelloReply {
 }
 ```
 
-The content of bazel-BUILD is as follows: 
-```
+The content of bazel-BUILD is as follows:
+
+```bzl
 # @file: BUILD
 ...
 load("@trpc_cpp//trpc:trpc.bzl", "trpc_proto_library")
@@ -161,5 +157,6 @@ int HelloworldServer::Initialize() {
 # FAQ
 
 ## Does gRPC support h2 (HTTP2 over SSL)?
+
 It is not currently supported. The gRPC protocol used in tRPC uses h2c at the underlying level, and SSL is not currently
 supported(but is currently being developed).

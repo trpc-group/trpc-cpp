@@ -1,7 +1,5 @@
 [English](../en/custom_telemetry.md)
 
-[TOC]
-
 # 前言
 
 在tRPC-Cpp中，遥测插件用于采集和上报遥测数据，包括调用链数据（traces）、监控指标数据（metrics）和日志（logs）。是一个集成了链路追踪、监控上报、日志采集三大功能的插件。

@@ -1,10 +1,6 @@
 [中文](../zh/trpc_protocol_streaming_client.md)
 
-[TOC]
-
-# Accessing tRPC Streaming Protocol Services
-
-**Topic: How to access tRPC streaming services based on tRPC-Cpp**
+# Overview
 
 The streaming RPC of the tRPC protocol can be divided into three types:
 
@@ -66,7 +62,7 @@ class StreamReaderWriter {
 
 Here we take [stream.proto](../../examples/features/trpc_stream/server/stream.proto) as an example to illustrate.
 
-The tRPC stub code generation tool will generate the following code.
+The tRPC stub code generation tool will generate the following code:
 
 ```cpp
 class StreamGreeterServiceProxy : public ::trpc::RpcServiceProxy {
@@ -213,17 +209,17 @@ TODO: example code.
 
 # FAQ
 
-## 1 How to choose between synchronous and asynchronous streaming interfaces?
+## How to choose between synchronous and asynchronous streaming interfaces?
 
 It depends on the thread model used. `fiber` can only use synchronous streaming interfaces, while `merge` can only use
 asynchronous streaming interfaces.
 
-## 2 Why is there no WriteDone in the asynchronous streaming interface?
+## Why is there no WriteDone in the asynchronous streaming interface?
 
 In the asynchronous streaming interface, when the client calls the Finish interface of the reader/writer, it notifies
 the other end that the data has been written (equivalent to WriteDone).
 
-## 3 Can asynchronous streaming only run in the `merge` thread model?
+## Can asynchronous streaming only run in the `merge` thread model?
 
 Yes, other thread models are not yet supported.
 In addition, the `merge` thread model currently only supports tRPC streaming protocol and HTTP protocol, and gRPC is not

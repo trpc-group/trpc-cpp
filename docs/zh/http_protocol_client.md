@@ -1,7 +1,5 @@
 [English](../en/http_protocol_client.md)
 
-[TOC]
-
 # 访问 HTTP 服务指南
 
 **主题：如何基于 tRPC-Cpp 访问 HTTP 服务**
@@ -103,18 +101,6 @@ auto ctx = ::trpc::MakeClientContext(proxy);
 
 3. 调用 `GetString` 。
 
-```cpp
-// 这里的 rsp_str 用来接收 HTTP Response Body
-std::string rsp_str;
-auto status = proxy->GetString(ctx, "http://example.com/foo", &rsp_str);
-if (!status.OK()) {
-  // Error ...
-} else {
-  // Ok ...
-}
-```
-
-When the code is connected together, it looks like the following:
 
 ```cpp
 // ...

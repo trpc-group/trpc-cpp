@@ -1,22 +1,18 @@
 [中文版](../zh/rpcz.md)
 
-[TOC]
-
-# tRPC-Cpp rpcz user guide
-
-## Preface
+# Overview
 
 When users are troubleshooting performance or latency issues, they often need to add a significant amount of logging in the framework or user code logic, which can be inefficient. As a debugging tool, rpcz can provide detailed information about a request at different sampling points on the server or client, enabling users to quickly pinpoint issues.
 
-## Design approach
+# Design approach
 
-### Basic concept
+## Basic concept
 
-#### Span
+### Span
 
 A span is an information carrier that records basic details of an RPC (Remote Procedure Call) request process, such as the request source, packet size, time information at different sampling points, user-defined attributes, etc. The information presented to the user ultimately comes from the span.
 
-#### Framework rpcz
+### Framework rpcz
 
 The rpcz framework is primarily used for analyzing the critical path of the framework itself during the processing of RPC requests. It can be further divided into three scenarios.
 
@@ -24,21 +20,21 @@ The rpcz framework is primarily used for analyzing the critical path of the fram
 - Pure client processing of sent requests and received responses.
 - Processing of requests and sending of responses as an proxy service.
 
-#### User-defined rpcz
+### User-defined rpcz
 
 User-defined rpcz is primarily used for analyzing the critical path of business code during the processing of rpcz requests. It only records information from various custom sampling points in the business logic layer, decoupled from the framework.
 
-### Design
+## Design
 
 ![rpcz design](../images/rpcz_design_en.png)
 
 As shown in the diagram above, framework rpcz is implemented based on filter mechanism. At the first framework filter point, it checks whether the current request needs to be sampled. At subsequent framework filter points, span information is set, and at the last framework filter point, the span information is stored in a thread-local variable. For user-defined rpcz, the filter mechanism is bypassed. In the business code, users define their own instrumentation points. At these points, a root span object and child span objects are created, and corresponding attributes are set. At the last business instrumentation point, the root span object is written into the thread-local variable. Subsequently, a dedicated auxiliary thread aggregates the thread-local span information and writes it into a global hash table, facilitating business queries through admin commands.
 
-### Instrumentation design
+## Instrumentation design
 
 The instrumentation design for user-defined rpcz differs from that of the framework rpcz. Additionally, the filter piont design for pure server, pure client, and proxy scenarios in the framework rpcz also differ. These will be discussed separately in the following sections.
 
-#### Pure server
+### Pure server
 
 Pure server is a specific scenario within the framework rpcz, and its instrumentation design aka filter piont is illustrated in the diagram below.
 
@@ -57,7 +53,7 @@ The meanings of the filter points P1 to P8 in the above diagram are as follows:
 | P7 | SERVER_POST_SCHED_SEND_MSG | set timestamp | after retrieving the response from the send scheduling queue |
 | P8 | SERVER_POST_IO_SEND_MSG | set timestamp, write span into thread-local variable | after invoking writev to write the response into the kernel |
 
-#### Pure client
+### Pure client
 
 Pure client is also a specific scenario within the framework rpcz, and its instrumentation design aka filter point is shown in the following diagram.
 
@@ -77,15 +73,15 @@ The meanings of the filter points P1 to P9 in the above diagram are as follows:
 | P8 | CLIENT_POST_RECV_MSG | set timestamp | finish RPC invocation in transport layer |
 | P9 | CLIENT_POST_RPC_INVOKE | set timestamp, write span into thread-local variable | finish RPC invocation in rpc layer |
 
-#### Proxy
+### Proxy
 
 Proxy is also a specific scenario within the framework rpcz, and its instrumentation design aka filter point incorporates the pure client instrumentation design within the pure server instrumentation design.
 
-#### User-defined
+### User-defined
 
 It is completely decoupled from the framework's filter mechanism, and the specific instrumentation points are controlled by the users themselves at the business logic layer. Unlike the framework rpcz, the concept of instrumentation here is virtual, without fixed macro names, and the business can add instrumentation points wherever needed at any time.
 
-### Sample design
+## Sample design
 
 To control the memory footprint of spans, sampling rates are controlled through high and low water level sampling. It is important to note that the high and low water level sampling does not apply to user-defined rpcz.
 
@@ -99,7 +95,7 @@ As shown in the above diagram, high and low water level sampling has three core 
 
 Within a 1-second time window, if the number of samples is less than the lower_water_level, it will be sampled 100% of the time. If the number of samples is greater than or equal to the lower_water_level, sampling will be performed probabilistically, with a sampling rate of one sample per sample_rate requests. If the number of samples exceeds the high_water_level, sampling will be stopped.
 
-### Memory reclaimed
+## Memory reclaimed
 
 To control the memory footprint of spans, the framework also uses expiration duration to determine how long spans are stored in memory. There is only one key parameter for this.
 
@@ -107,9 +103,9 @@ To control the memory footprint of spans, the framework also uses expiration dur
 
 When a span exceeds the cache_expire_interval in terms of storage duration in memory, it will be deleted, and the corresponding memory space will be reclaimed.
 
-### External Interfaces
+## External Interfaces
 
-#### Framework rpcz
+### Framework rpcz interfaces
 
 In the framework rpcz scenario, the majority of functionalities are built-in within the framework's filter mechanism, transparent to the users. However, users can still set custom sampling logic to bypass the framework's default high and low water level sampling. They can also use TRPC_RPCZ_PRINT to print logs.
 
@@ -133,7 +129,7 @@ void SetClientSampleFunction(const CustomerClientRpczSampleFunction& sample_func
   } while (0)
 ```
 
-#### User-defined rpcz
+### User-defined rpcz
 
 Compared to the framework rpcz, user-defined rpcz provides a richer set of external interfaces, allowing users to have control over when to create spans, when to mark points, and when to submit spans.
 
@@ -188,39 +184,39 @@ class Span : public LinkNode<Span> {
 };
 ```
 
-## User guide
+# User guide
 
-### Compilation
+## Compilation
 
-#### Compilation options for bazel
+### Compilation options for bazel
 
 ```bash
 bazel build --define trpc_include_rpcz=true
 ```
 
-#### Compilation options for cmake
+### Compilation options for cmake
 
 ```bash
 cmake .. -DTRPC_BUILD_WITH_RPCZ=ON
 ```
 
-### Configuration
+## Configuration
 
-#### Global configuration
+### Global configuration
 
 ```yaml
 global:
   rpcz:
-    lower_water_level: 500     # Low water level, effective for the framework rpcz but not for user-defined rpcz.
-    high_water_level: 1000     # High water level, effective for the framework rpcz but not for user-defined rpcz.
-    sample_rate: 50            # Sample rate, effective for the framework rpcz but not for user-defined rpcz.
-    cache_expire_interval: 10  # Duration of span information storage, with a resolution of 10 seconds.
-    collect_interval_ms: 500   # Interval for collecting thread-local spans periodically.
-    remove_interval_ms: 5000   # Interval for deleting thread-local spans periodically.
-    print_spans_num: 10        # Number of spans to print summary information.
+    lower_water_level: 500      # Low water level, effective for the framework rpcz but not for user-defined rpcz.
+    high_water_level: 1000      # High water level, effective for the framework rpcz but not for user-defined rpcz.
+    sample_rate: 50             # Sample rate, effective for the framework rpcz but not for user-defined rpcz.
+    cache_expire_interval: 10   # Duration of span information storage, with a resolution of 10 seconds.
+    collect_interval_ms: 500    # Interval for collecting thread-local spans periodically.
+    remove_interval_ms: 5000    # Interval for deleting thread-local spans periodically.
+    print_spans_num: 10         # Number of spans to print summary information.
 ```
 
-#### Filter configuration
+### Filter configuration
 
 ```yaml
 # Server configuration, required to be enabled for both pure server and proxy scenarios.
@@ -230,7 +226,7 @@ server:
     - rpcz
   service:
     - name: server_service
-      # Service-level filter.
+       Service-level filter.
       filter:
         - rpcz
 
@@ -241,27 +237,27 @@ client:
     - rpcz
   service:
     - name: client_service
-      # Service-level filter.
+       Service-level filter.
       filter:
         - rpcz
 ```
 
 It is worth noting that in the user-defined rpcz scenario, there is no need to configure filters.
 
-#### Admin configuration
+### Admin configuration
 
 ```yaml
 # Server configuration.
 server:
-  admin_port: 21111  # The port number can be modified by the user, this is just an example.
-  admin_ip: 0.0.0.0  # The ip address can be modified by the user, this is just an example.
+  admin_port: 21111   # The port number can be modified by the user, this is just an example.
+  admin_ip: 0.0.0.0   # The ip address can be modified by the user, this is just an example.
 ```
 
-### Set custom sampling function
+## Set custom sampling function
 
 The custom sampling function only takes effect for the framework rpcz, not for user-defined rpcz.
 
-#### Set custom sampling function for server
+### Set custom sampling function for server
 
 In pure server and proxy scenarios, it is possible to set a custom sampling function for the server.
 
@@ -286,7 +282,7 @@ int xxxServer::Initialize() {
 }
 ```
 
-#### Set custom sampling function for client
+### Set custom sampling function for client
 
 In pure client scenarios, it is possible to set a custom sampling function for the client. No need to set it for other scenarios.
 
@@ -303,7 +299,7 @@ int xxx() {
 }
 ```
 
-### Use TRPC_RPCZ_PRINT to print logs
+## Use TRPC_RPCZ_PRINT to print logs
 
 ```cpp
 // Header file.
@@ -318,7 +314,7 @@ int Test(const trpc::ServerContextPtr& context) {
 }
 ```
 
-### Handle user-defined rpcz
+## Handle user-defined rpcz
 
 ```cpp
 #include "trpc/rpcz/trpc_rpcz.h"
@@ -377,9 +373,9 @@ int Test(const trpc::ServerContextPtr& context) {
 }
 ```
 
-### Admin query
+## Admin query
 
-#### Query general info
+### Query general info
 
 ```bash
 curl http://127.0.0.1:21111/cmds/rpcz
@@ -407,17 +403,17 @@ The meanings of each part are shown in the following table,
 | response size | response=33 | The size of the response packet in bytes. In user-defined rpcz scenarios, it is 0. |
 | returned code | [ok] | The success of the request is determined based on the framework's return code. "ok" indicates a successful request, while "failed" indicates a failure. In user-defined rpcz scenarios, it is always "ok". |
 
-#### Query specific span
+### Query specific span
 
 ```bash
 curl http://127.0.0.1:21111/cmds/rpcz?span_id=11
 ```
 
-##### Framework rpcz
+#### Framework rpcz results
 
 For the framework rpcz, taking the proxy scenario as an example, the output of the query is as follows,
 
-```bash
+```txt
 2023-09-05 17:04:10:695773   Received request(119) from trpc..(9.218.34.103:43376) protocal=trpc span_id=0
 2023-09-05 17:04:10:695957   184(us) enter recv queue
 2023-09-05 17:04:10:695992   35(us) leave recv queue
@@ -463,7 +459,7 @@ Among which,
 - leave send queue, this line represents the time taken for the client response to leave the send queue, primarily indicating the time spent by the client response in the send queue.
 - io send done, this line represents the time taken for the client response to be sent to the kernel, primarily indicating the time spent on user-space queuing and the writev operation.
 
-##### User-defined rpcz
+#### User-defined rpcz query
 
 For the user-defined rpcz query, the output obtained is as follows, in the form of a formatted json string.
 
@@ -562,6 +558,6 @@ For the user-defined rpcz query, the output obtained is as follows, in the form 
 ]
 ```
 
-Users do not need to understand the meaning of json fields. By writing the obtained json string into a file and uploading it to the website https://ui.perfetto.dev/, they can obtain visualized span information, as shown in the following image.
+Users do not need to understand the meaning of json fields. By writing the obtained json string into a file and uploading it to the website <https://ui.perfetto.dev/>, they can obtain visualized span information, as shown in the following image.
 
 ![rpcz perfetto visualized](../images/rpcz_perfetto.png)

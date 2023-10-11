@@ -1,12 +1,11 @@
 [中文](../zh/prometheus_metrics.md)
 
-[TOC]
-
 # Overview
 
 The tRPC-Cpp encapsulates some functionalities of [Prometheus](https://prometheus.io/), enabling the collection of prometheus metrics data within the framework and providing the ability to export metrics data externally.
 
 This document introduces how to use Prometheus in tRPC-Cpp. Developers can learn the following topics:
+
 * The way to enable prometheus.
 * The functionalities provided by the Prometheus Metrics plugin:
   * ModuleReport
@@ -23,7 +22,8 @@ By default, tRPC-Cpp does not compile related code with prometheus. To enable it
 Add the `"trpc_include_prometheus"` compilation option during Bazel compilation.
 
 For example, add it in .bazelrc file.
-```
+
+```sh
 build --define trpc_include_prometheus=true
 ```
 
@@ -32,6 +32,7 @@ build --define trpc_include_prometheus=true
 Add the `"TRPC_BUILD_WITH_METRICS_PROMETHEUS"` compilation option during CMake compilation.
 
 For example:
+
 ```cmake
 cmake -DTRPC_BUILD_WITH_METRICS_PROMETHEUS=ON -DCMAKE_BUILD_TYPE=Release ..
 ```
@@ -43,6 +44,7 @@ The tRPC-Cpp provides a Metrics plugin based on Prometheus, which follows the fr
 ## Plugin configuration
 
 As long as the related compilation option of prometheus are enabled during compilation, the framework will automatically register the Prometheus Metrics plugin upon startup. The parameters of the plugin can be configured in the framework's configuration file. If you not configured, the default parameters will be used.
+
 ```yaml
 plugins:
   metrics:
@@ -71,6 +73,7 @@ The description of the configuration item are as follow.
 ### Caller reporting
 
 Simply add the prometheus filter to the `"client"` section of the framework's configuration file to enable client-side monitoring.
+
 ```yaml
 client:
   ...
@@ -109,6 +112,7 @@ Statistical labels:
 ### Callee reporting
 
 Simply add the prometheus filter to the `"server"` section of the framework's configuration file to enable client-side monitoring.
+
 ```yaml
 server:
   ...
@@ -149,7 +153,7 @@ Statistical labels:
 
 ### Attribute metrics items
 
-In addition to automatically collecting RPC call data, the plugin also defines a set of attribute metrics items internally, allowing users to collect and analyze other required data.
+In addition to automatically collecting RPC call data, the plugin also defines a set of attribute metrics items internally,allowing users to collect and analyze other required data.
 
 | Metrics Name | Type |
 | ------ | ------ |
@@ -160,7 +164,7 @@ In addition to automatically collecting RPC call data, the plugin also defines a
 
 ### Statistical Strategies
 
-The statistical strategies provided by the plugin are as follow. 
+The statistical strategies provided by the plugin are as follow.
 
 | Statistical Strategy | Corresponding Metrics Item | Description |
 | ------ | ------ | ------ |
@@ -243,6 +247,7 @@ The Prometheus Metrics plugin provides a set of convenient reporting interfaces 
     ```
 
 5. Report the data with type `QUANTILES`
+
     ```cpp
     namespace trpc::prometheus {
 
@@ -258,6 +263,7 @@ The Prometheus Metrics plugin provides a set of convenient reporting interfaces 
     ```
 
 6. Report the data with type `HISTOGRAM`
+
     ```cpp
     namespace trpc::prometheus {
 
@@ -291,6 +297,7 @@ When setting the value of `::trpc::TrpcSingleAttrMetricsInfo`, please note that:
 5. `single_attr_info.quantiles` and `single_attr_info.bucket` need to be set when reporting data of type `QUANTILES` and `HISTOGRAM`, respectively.
 
 Taking the reporting of data with type `SUM` as an example.
+
 ```cpp
 #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
 
@@ -318,6 +325,7 @@ When setting the value of `::trpc::TrpcMultiAttrMetricsInfo`, please note that:
 4. `multi_attr_info.quantiles` and `multi_attr_info.bucket` need to be set when reporting data of type `QUANTILES` and `HISTOGRAM`, respectively.
 
 Taking the reporting of data with type `SUM` as an example.
+
 ```cpp
 #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
 
@@ -333,6 +341,7 @@ multi_metrics_info.multi_attr_info.tags = {{"multi_test_key1", "multi_test_value
 Users can refer to the native [Prometheus](https://github.com/jupp0r/prometheus-cpp) API to customize their own metrics items and metrics data, without being limited to the metrics items and strategies provided by the framework.
 
 The framework provides interfaces for obtaining prometheus metrics items, allowing users to report their own metrics data once they have obtained the metrics family. The retrieval interface is as follows:
+
 ```cpp
 namespace trpc::prometheus {
 
@@ -355,6 +364,7 @@ namespace trpc::prometheus {
 ```
 
 Taking the example of retrieving a metrics item of type `Counter` and reporting it.
+
 ```cpp
 #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
 
@@ -371,6 +381,7 @@ In tRPC-Cpp, Prometheus is only responsible for collecting metrics data and does
 ## Retrieve by interface
 
 The framework provides a `Collect` interface to directly access the raw prometheus data, allowing users to decide how to utilize the metrics data.
+
 ```cpp
 namespace trpc::prometheus {
 

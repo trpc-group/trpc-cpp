@@ -1,10 +1,6 @@
 [中文](../zh/grpc_protocol_streaming_service.md)
 
-[TOC]
-
-# gRPC Streaming Protocol Service Development Guide
-
-**Topic: How to develop gRPC streaming service based on tRPC-Cpp**
+# Overview
 
 Some services developed using the gRPC framework need to communicate with the tRPC-Cpp framework using the gRPC
 streaming protocol.
@@ -73,7 +69,7 @@ Limitations:
   thread models are not yet supported.
 * Currently available on the server side, but not yet available on the client side.
 
-### Basic steps for developing gRPC streaming service.
+### Basic steps for developing gRPC streaming service
 
 Example: [grpc_stream](../../examples/features/grpc_stream)
 
@@ -101,246 +97,255 @@ server:
 
 ### Example of streaming service on server side
 
-- In order to facilitate the use of the stream reader/writer interface provided by tRPC, the sample code rewrites the
-  server streaming example provided by the gRPC framework for easy comparison and reference.
-    - [Example of streaming service in gRPC framework](https://github.com/grpc/grpc/blob/master/examples/cpp/route_guide/route_guide_server.cc)
-    - [Example of streaming service in tRPC framework](../../examples/features/grpc_stream/server/stream_service.cc)
+In order to facilitate the use of the stream reader/writer interface provided by tRPC, the sample code rewrites the server streaming example provided by the gRPC framework for easy comparison and reference.
 
-*Server streaming*
+* [Example of streaming service in gRPC framework](https://github.com/grpc/grpc/blob/master/examples/cpp/route_guide/route_guide_server.cc)
+* [Example of streaming service in tRPC framework](../../examples/features/grpc_stream/server/stream_service.cc)
+
+#### Server streaming
+
+* Example code of gRPC framework
+
+  ```cpp
+  // Example code of gRPC framework. 
+  // @file:route_guide_server.cc 
+  
+  Status ListFeatures(ServerContext* context,
+                      const routeguide::Rectangle* rectangle,
+                      ServerWriter<Feature>* writer) override {
+    auto lo = rectangle->lo();
+    auto hi = rectangle->hi();
+    long left = (std::min)(lo.longitude(), hi.longitude());
+    long right = (std::max)(lo.longitude(), hi.longitude());
+    long top = (std::max)(lo.latitude(), hi.latitude());
+    long bottom = (std::min)(lo.latitude(), hi.latitude());
+    for (const Feature& f : feature_list_) {
+      if (f.location().longitude() >= left &&
+          f.location().longitude() <= right &&
+          f.location().latitude() >= bottom && f.location().latitude() <= top) {
+        writer->Write(f);
+      }
+    }
+    return Status::OK;
+  }
+  ```
+
+* Example code of tRPC framework
+
+  ```cpp
+  // Example code of tRPC framework. 
+  // @file:stream_service.cc 
+  
+  ::trpc::Status RouteGuideImpl::ListFeatures(const ::trpc::ServerContextPtr& context,
+                                              const ::routeguide::Rectangle& rectangle,
+                                              ::trpc::stream::StreamWriter<::routeguide::Feature>* writer) {
+    ::trpc::Status status{};
+    auto lo = rectangle.lo();
+    auto hi = rectangle.hi();
+    int32_t left = (std::min)(lo.longitude(), hi.longitude());
+    int32_t right = (std::max)(lo.longitude(), hi.longitude());
+    int32_t top = (std::max)(lo.latitude(), hi.latitude());
+    int32_t bottom = (std::min)(lo.latitude(), hi.latitude());
+    for (const ::routeguide::Feature& f : feature_list_) {
+      if (f.location().longitude() >= left && f.location().longitude() <= right && f.location().latitude() >= bottom &&
+          f.location().latitude() <= top) {
+        status = writer->Write(f);
+        if (status.OK()) {
+          TRPC_FMT_INFO("ListFeatures write feature, name= {}, location.latitude: {}, location.longitude: {}", f.name(),
+                        f.location().latitude(), f.location().longitude());
+          continue;
+        }
+        TRPC_FMT_ERROR("ListFeatures stream got error: {}", status.ToString());
+        break;
+      }
+    }
+    return status;
+  }
+  ```
 
 Differences:
 
-- The return values of the `Write` interface to the stream are different: the `Write` interface of the gRPC framework
-  returns a bool indicating success or failure, while the `Write` interface of tRPC returns a `Status`. In addition to
-  representing whether the writing was successful or not, it also includes the reason for the write
-  failure (`status.ToString()` or `status.ErrorString()`).
+* The return values of the `Write` interface to the stream are different: the `Write` interface of the gRPC framework returns a bool indicating success or failure, while the `Write` interface of tRPC returns a `Status`. In addition to representing whether the writing was successful or not, it also includes the reason for the write failure (`status.ToString()` or `status.ErrorString()`).
 
-```cpp
-// Example code of gRPC framework. 
-// @file:route_guide_server.cc 
+#### Client streaming
 
-Status ListFeatures(ServerContext* context,
-                    const routeguide::Rectangle* rectangle,
-                    ServerWriter<Feature>* writer) override {
-  auto lo = rectangle->lo();
-  auto hi = rectangle->hi();
-  long left = (std::min)(lo.longitude(), hi.longitude());
-  long right = (std::max)(lo.longitude(), hi.longitude());
-  long top = (std::max)(lo.latitude(), hi.latitude());
-  long bottom = (std::min)(lo.latitude(), hi.latitude());
-  for (const Feature& f : feature_list_) {
-    if (f.location().longitude() >= left &&
-        f.location().longitude() <= right &&
-        f.location().latitude() >= bottom && f.location().latitude() <= top) {
-      writer->Write(f);
+* Example code of gRPC framework
+
+  ```cpp
+  // Example code of gRPC framework. 
+  // @file:route_guide_server.cc 
+  
+  Status RecordRoute(ServerContext* context, ServerReader<Point>* reader,
+                     RouteSummary* summary) override {
+    Point point;
+    int point_count = 0;
+    int feature_count = 0;
+    float distance = 0.0;
+    Point previous;
+  
+    system_clock::time_point start_time = system_clock::now();
+    while (reader->Read(&point)) {
+      point_count++;
+      if (!GetFeatureName(point, feature_list_).empty()) {
+        feature_count++;
+      }
+      if (point_count != 1) {
+        distance += GetDistance(previous, point);
+      }
+      previous = point;
     }
+    system_clock::time_point end_time = system_clock::now();
+    summary->set_point_count(point_count);
+    summary->set_feature_count(feature_count);
+    summary->set_distance(static_cast<long>(distance));
+    auto secs =
+        std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+    summary->set_elapsed_time(secs.count());
+  
+    return Status::OK;
   }
-  return Status::OK;
-}
-```
+  ```
 
-```cpp
-// Example code of tRPC framework. 
-// @file:stream_service.cc 
+* Example code of tRPC framework
 
-::trpc::Status RouteGuideImpl::ListFeatures(const ::trpc::ServerContextPtr& context,
-                                            const ::routeguide::Rectangle& rectangle,
-                                            ::trpc::stream::StreamWriter<::routeguide::Feature>* writer) {
-  ::trpc::Status status{};
-  auto lo = rectangle.lo();
-  auto hi = rectangle.hi();
-  int32_t left = (std::min)(lo.longitude(), hi.longitude());
-  int32_t right = (std::max)(lo.longitude(), hi.longitude());
-  int32_t top = (std::max)(lo.latitude(), hi.latitude());
-  int32_t bottom = (std::min)(lo.latitude(), hi.latitude());
-  for (const ::routeguide::Feature& f : feature_list_) {
-    if (f.location().longitude() >= left && f.location().longitude() <= right && f.location().latitude() >= bottom &&
-        f.location().latitude() <= top) {
-      status = writer->Write(f);
+  ```cpp
+  // Example code of tRPC framework. 
+  // @file:stream_service.cc 
+  
+  ::trpc::Status RouteGuideImpl::RecordRoute(const ::trpc::ServerContextPtr& context,
+                                             const ::trpc::stream::StreamReader<::routeguide::Point>& reader,
+                                             ::routeguide::RouteSummary* summary) {
+    ::trpc::Status status{};
+    // ...
+    for (;;) {
+      // Read timeout: 3s.
+      status = reader.Read(&point, 3000);
+      // Reads a Point successfully.
       if (status.OK()) {
-        TRPC_FMT_INFO("ListFeatures write feature, name= {}, location.latitude: {}, location.longitude: {}", f.name(),
-                      f.location().latitude(), f.location().longitude());
+        // ...
         continue;
       }
-      TRPC_FMT_ERROR("ListFeatures stream got error: {}", status.ToString());
+  
+      // The server receives an EOF, indicating that the client has sent all Points.
+      if (status.StreamEof()) {
+        // Receiving an EOF is ok.
+        status = ::trpc::Status{0, 0, "OK"};
+        break;
+      }
+  
+      // Error.
+      TRPC_FMT_ERROR("RecordRoute stream got error: {}", status.ToString());
       break;
     }
+  
+    // After reading all the Points send by the client, the server sets the response result.
+    if (status.OK()) {
+      uint64_t end_time_ms = ::trpc::time::GetMilliSeconds();
+      summary->set_point_count(point_count);
+      // ...
+    }
+    return status;
   }
-  return status;
-}
-```
-
-*Client streaming*
+  ```
 
 Differences:
 
-- The return value of the `Read` interface from the stream is different: the `Read` interface of the gRPC framework
+* The return value of the `Read` interface from the stream is different: the `Read` interface of the gRPC framework
   returns a bool type, and the end of the stream (the client has sent all request data) cannot be distinguished from the
   stream exception. The `Read` interface of the tRPC framework returns a Status type, and the end of the stream can be
   checked using `status.StreamEof()`. If the Status is not the end of the stream, then it is a stream exception. Note
   that the end of the stream does not represent an error, and it is recommended to reset the status to a successful
   state.
-- The parameter differences of the `Read` interface from the stream: the gRPC framework does not provide a timeout
+* The parameter differences of the `Read` interface from the stream: the gRPC framework does not provide a timeout
   mechanism for `Read`, while the tRPC framework provides a timeout control mechanism for `Read`. Users can pass a time
-  in
-  milliseconds to control whether the read times out. When the read times out, the user can choose to end the stream
+  in milliseconds to control whether the read times out. When the read times out, the user can choose to end the stream
   request directly or continue reading. The following is an example of ending the stream request directly after a read
   timeout. If you want to continue reading after the timeout,
   use `status.GetFrameworkRetCode()==trpc::GrpcStatus::kGrpcDeadlineExceeded` as the judgment basis.
 
-```cpp
-// Example code of gRPC framework. 
-// @file:route_guide_server.cc 
+#### Bidirectional streaming
 
-Status RecordRoute(ServerContext* context, ServerReader<Point>* reader,
-                   RouteSummary* summary) override {
-  Point point;
-  int point_count = 0;
-  int feature_count = 0;
-  float distance = 0.0;
-  Point previous;
+* Example code of gRPC framework
 
-  system_clock::time_point start_time = system_clock::now();
-  while (reader->Read(&point)) {
-    point_count++;
-    if (!GetFeatureName(point, feature_list_).empty()) {
-      feature_count++;
+  ```cpp
+  // Example code of gRPC framework. 
+  // @file:route_guide_server.cc 
+  
+  Status RouteChat(ServerContext* context,
+                   ServerReaderWriter<RouteNote, RouteNote>* stream) override {
+    RouteNote note;
+    while (stream->Read(&note)) {
+      std::unique_lock<std::mutex> lock(mu_);
+      for (const RouteNote& n : received_notes_) {
+        if (n.location().latitude() == note.location().latitude() &&
+            n.location().longitude() == note.location().longitude()) {
+          stream->Write(n);
+        }
+      }
+      received_notes_.push_back(note);
     }
-    if (point_count != 1) {
-      distance += GetDistance(previous, point);
-    }
-    previous = point;
+  
+    return Status::OK;
   }
-  system_clock::time_point end_time = system_clock::now();
-  summary->set_point_count(point_count);
-  summary->set_feature_count(feature_count);
-  summary->set_distance(static_cast<long>(distance));
-  auto secs =
-      std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
-  summary->set_elapsed_time(secs.count());
+  ```
 
-  return Status::OK;
-}
-```
+* Example code of tRPC framework
 
-```cpp
-// Example code of tRPC framework. 
-// @file:stream_service.cc 
-
-::trpc::Status RouteGuideImpl::RecordRoute(const ::trpc::ServerContextPtr& context,
-                                           const ::trpc::stream::StreamReader<::routeguide::Point>& reader,
-                                           ::routeguide::RouteSummary* summary) {
-  ::trpc::Status status{};
-  // ...
-  for (;;) {
-    // Read timeout: 3s.
-    status = reader.Read(&point, 3000);
-    // Reads a Point successfully.
-    if (status.OK()) {
-      // ...
-      continue;
-    }
-
-    // The server receives an EOF, indicating that the client has sent all Points.
-    if (status.StreamEof()) {
-      // Receiving an EOF is ok.
-      status = ::trpc::Status{0, 0, "OK"};
+  ```cpp
+  // Example code of tRPC framework. 
+  // @file:stream_service.cc 
+  
+  ::trpc::Status RouteGuideImpl::RouteChat(const ::trpc::ServerContextPtr& context,
+                                           const ::trpc::stream::StreamReader<::routeguide::RouteNote>& reader,
+                                           ::trpc::stream::StreamWriter<::routeguide::RouteNote>* writer) {
+    ::trpc::Status status{};
+    // ...
+    for (;;) {
+      // Read timeout: 3s.
+      status = reader.Read(&note, 3000);
+      if (status.OK()) {
+        std::unique_lock<std::mutex> lock(mu_);
+        for (const ::routeguide::RouteNote& n : received_notes_) {
+          if (n.location().latitude() == note.location().latitude() &&
+              n.location().longitude() == note.location().longitude()) {
+            // if the RouteNode that was read has already been received before, return the same RouteNode to the client.
+            status = writer->Write(n);
+            if (!status.OK()) {
+              TRPC_FMT_ERROR("RouteChat write got error: {}", status.ToString());
+              return status;
+            }
+          }
+        }
+        received_notes_.push_back(note);
+        continue;
+      }
+  
+      if (status.StreamEof()) {
+        // EOF is ok status.
+        status = ::trpc::Status{0, 0, "OK"};
+        break;
+      }
+  
+      TRPC_FMT_ERROR("RouteChat read got error: {}", status.ToString());
       break;
     }
-
-    // Error.
-    TRPC_FMT_ERROR("RecordRoute stream got error: {}", status.ToString());
-    break;
+  
+    return status;
   }
-
-  // After reading all the Points send by the client, the server sets the response result.
-  if (status.OK()) {
-    uint64_t end_time_ms = ::trpc::time::GetMilliSeconds();
-    summary->set_point_count(point_count);
-    // ...
-  }
-  return status;
-}
-```
-
-*Bidirectional streaming*
+  ```
 
 Differences:
 
-- The gRPC framework passes in a reader/writer that can both read and write, while the tRPC framework separates the
+* The gRPC framework passes in a reader/writer that can both read and write, while the tRPC framework separates the
   reading and writing classes. In addition, the interface differences when reading and writing are consistent with the
   previous server streaming/client streaming descriptions.
 
 Note that a `mutex` mutex is used in the example mainly for comparison with the example provided by the gRPC framework.
 It is not necessary to set it when actually using it.
 
-```cpp
-// Example code of gRPC framework. 
-// @file:route_guide_server.cc 
-
-Status RouteChat(ServerContext* context,
-                 ServerReaderWriter<RouteNote, RouteNote>* stream) override {
-  RouteNote note;
-  while (stream->Read(&note)) {
-    std::unique_lock<std::mutex> lock(mu_);
-    for (const RouteNote& n : received_notes_) {
-      if (n.location().latitude() == note.location().latitude() &&
-          n.location().longitude() == note.location().longitude()) {
-        stream->Write(n);
-      }
-    }
-    received_notes_.push_back(note);
-  }
-
-  return Status::OK;
-}
-```
-
-```cpp
-// Example code of tRPC framework. 
-// @file:stream_service.cc 
-
-::trpc::Status RouteGuideImpl::RouteChat(const ::trpc::ServerContextPtr& context,
-                                         const ::trpc::stream::StreamReader<::routeguide::RouteNote>& reader,
-                                         ::trpc::stream::StreamWriter<::routeguide::RouteNote>* writer) {
-  ::trpc::Status status{};
-  // ...
-  for (;;) {
-    // Read timeout: 3s.
-    status = reader.Read(&note, 3000);
-    if (status.OK()) {
-      std::unique_lock<std::mutex> lock(mu_);
-      for (const ::routeguide::RouteNote& n : received_notes_) {
-        if (n.location().latitude() == note.location().latitude() &&
-            n.location().longitude() == note.location().longitude()) {
-          // if the RouteNode that was read has already been received before, return the same RouteNode to the client.
-          status = writer->Write(n);
-          if (!status.OK()) {
-            TRPC_FMT_ERROR("RouteChat write got error: {}", status.ToString());
-            return status;
-          }
-        }
-      }
-      received_notes_.push_back(note);
-      continue;
-    }
-
-    if (status.StreamEof()) {
-      // EOF is ok status.
-      status = ::trpc::Status{0, 0, "OK"};
-      break;
-    }
-
-    TRPC_FMT_ERROR("RouteChat read got error: {}", status.ToString());
-    break;
-  }
-
-  return status;
-}
-```
-
 # FAQ
 
 ## Does gRPC support h2 (HTTP2 over SSL)?
+
 It is not currently supported. The gRPC protocol used in tRPC uses h2c at the underlying level, and SSL is not currently
 supported(but is currently being developed).

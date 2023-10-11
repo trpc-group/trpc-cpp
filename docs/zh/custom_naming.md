@@ -1,6 +1,4 @@
 [English](../en/custom_naming.md)
-
-[TOC]
 ## 1. 前言
 
 tRPC-Cpp框架的名字服务（naming）模块提供了服务发现、服务注册/心跳上报以及限流相关功能，包括selector、registry和limiter插件。用户可以基于tRPC客户端服务代理（结合具体的框架配置项或服务代理配置项）或通过名字服务模块对外API接口（位于trpc/naming/trpc_naming.h）来使用naming模块的功能。在此基础上，用户可以开发自定义的名字服务插件。

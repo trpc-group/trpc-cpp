@@ -1,4 +1,3 @@
-[TOC]
 
 # tRPC-Cpp Runtime
 

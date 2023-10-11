@@ -1,7 +1,5 @@
 [English](../en/trpc_protocol_streaming_client.md)
 
-[TOC]
-
 # 访问 tRPC 流式协议服务
 
 **主题：如何基于 tRPC-Cpp 访问 tRPC 流式服务**

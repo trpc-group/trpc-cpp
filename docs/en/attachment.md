@@ -1,7 +1,5 @@
 [中文](../zh/attachment.md)
 
-[TOC]
-
 # Overview
 
 For certain use cases, the data transmitted in the business includes large file data, such as models or multimedia transcoding data. If this type of data is defined as a regular field in the structure defined by the IDL (e.g., using pb's string or bytes), packing it in the unary body of the protocol  for transmission will incur significant overhead in terms of serialization, deserialization, and memory copying, thereby affecting the request latency.
@@ -15,6 +13,7 @@ For detailed usage examples, please refer to the [Attachment example](../../exam
 ## Client
 
 On the client side, users can set request attachments and retrieve response attachments from the server using the `ClientContext`.
+
 ```cpp
 class ClientContext {
 ...
@@ -31,6 +30,7 @@ class ClientContext {
 ## Server
 
 On the server side, users can retrieve request attachments and set response attachments using the `ServerContext`.
+
 ```cpp
 class ServerContext {
 ...

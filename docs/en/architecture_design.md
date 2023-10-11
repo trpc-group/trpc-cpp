@@ -1,12 +1,11 @@
-[中文版](../zh/architecture_design.md)
-
-[TOC]
+[中文](../zh/architecture_design.md)
 
 # Overview
 
 This article mainly introduces the specific architecture design of tRPC-Cpp, which is written based on the framework v1.0.0.
 
 The main content is divided into two parts:
+
 - Introduce the overall architecture design and code directory structure of tRPC-Cpp, so that everyone can have a general understanding;
 - Introduce the server and client workflow of tRPC-Cpp, so that everyone can understand the working principle of server and client;
 - Introduce the pluggable design of tRPC-Cpp, so that everyone can understand the specific implementation mechanism of plugin;
@@ -36,6 +35,7 @@ The main directory structure of the tRPC-Cpp framework is designed as follows:
 It is mainly composed of three parts: "**Framework Core Implementation**", "**Service Governance Plugin Implementation**", "**Auxiliary Tool Implementation**".
 
 The implementation of framework core mainly includes the following modules:
+
 - server: provides a service implementation that supports multi-service, registration, unregistration, smooth exit, etc.;
 - client: provides a concurrent and safe general-purpose client implementation, which is mainly responsible for operations related to rpc calls, service discovery, load balancing, circuit breaker, encoding and decoding, and custom filter. All parts support plugin extensions;
 - codec: provides codec-related interfaces, allowing the framework to expand multi protocols, serialization methods, data compression methods, etc.;
@@ -44,6 +44,7 @@ The implementation of framework core mainly includes the following modules:
 - filter: provides the definition of a custom filter, implements the extension capability, such as tracing, metrics, logreplay, etc.;
 
 The service governance plugin implementation mainly includes the following modules:
+
 - naming: provides service registration (registry), service discovery (selector), load balancing (loadbalance), circuit breaker (circuitbreaker) and other capability packaging, used to connect to various name service systems;
 - config: provides an interface related to configuration reading, supports reading local configuration files, remote configuration center configuration, etc., allows plugin extensions to support configuration files in different formats, different configuration centers, and supports reload and watch configuration updates;
 - metrics: Provides the ability to collect and report monitoring data, supports common single-dimensional reporting, such as counter, gauge, etc., and also supports multi-dimensional reporting, allowing different monitoring systems to be connected by extending the Sink interface;
@@ -75,6 +76,7 @@ The server startup process roughly includes the following processes:
 ### Process request
 
 The request processing generally includes the following processes:
+
 1. The server transport calls the Acceptor to wait for the client to establish a connection;
 2. The client initiates a connection establishment request, and the server transport Accept returns a tcp connection;
 3. The server transport determines to dispatch the connection according to the current runtime environment (whether it is fiber runtime);
@@ -90,6 +92,7 @@ The request processing generally includes the following processes:
 ### Exit
 
 The service exit process generally includes the following processes:
+
 1. Stop the monitoring and reading events of the server network connection;
 2. Wait for all requests received by the server to be processed;
 3. Close the server network connection;
@@ -120,6 +123,7 @@ The pluggable architecture design of tRPC is based on "**plugin factory based on
 ### Plugin factory
 
 The tRPC core framework adopts the idea of interface-based programming, by abstracting the framework functions into a series of plugins, registering them in the plugin factory. The tRPC framework is responsible for connecting these plugins to assemble complete functions. The plugin model can be divided into the following three parts:
+
 1. Framework: the framework only defines the standard interface, without any plugin implementation, decoupled from the specific implementation;
 2. Plugin implementation: the plugin can be realized by encapsulating the plugin according to the framework standard interface;
 3. User: business developer only needs to use the plugins you need;
@@ -127,7 +131,6 @@ The tRPC core framework adopts the idea of interface-based programming, by abstr
 The plugin implementation of a typical framework connecting name service system is as follows:
 
 ![plugin_factory](../images/plugin_factory.png)
-
 
 ### Filter
 

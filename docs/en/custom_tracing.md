@@ -1,7 +1,5 @@
 [中文](../zh/custom_tracing.md)
 
-[TOC]
-
 # Overview
 
 We do not impose any restrictions on the protocol standards followed by the Tracing plugins in tRPC-Cpp. Users can utilize industry-standard protocols such as [OpenTelemetry](https://opentelemetry.io/), [OpenTracing](https://opentracing.io/), or even custom standards. However, we recommend users to use `OpenTelemetry`.
@@ -45,6 +43,7 @@ The communication protocol just needs to choose a protocol that supports the tra
 In tRPC-Cpp, we utilize the [Tracing plugin](../../trpc/tracing/tracing.h) for common initialization of tracing data collection and reporting, including configuring sampling policies, backend addresses for data reporting, and reporting methods. The linking and reporting of upstream and downstream tracing data are automatically performed through [filters](filter.md) during the RPC call process. Users only need to configure the corresponding plugin filters in the framework configuration file.
 
 Internally, the tracing data is conventionally stored in the `FilterData` of the `Context`, with the index being the `PluginID` of the plugin. Additionally, a [standardized tracing data format](../../trpc/tracing/tracing_filter_index.h) has been defined for the FilterData of both the server and client.
+
 ```cpp
 /// @brief The tracing-related data that server saves in the context for transmission
 struct ServerTracingSpan {
@@ -115,6 +114,7 @@ At the pre-filter point of the filter, the following logic needs to be completed
 1. Creating Span
 
     First, it is necessary to retrieve the `ClientTracingSpan` from the `FilterData` of `ClientContext`:
+
     ```cpp
     ClientTracingSpan* client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
     ```
@@ -122,10 +122,12 @@ At the pre-filter point of the filter, the following logic needs to be completed
     There may be several possible scenarios:
 
     * client_span is a null pointer: If ClientContext is not constructed using the `MakeClientContext` interface based on ServerContext, the framework will not automatically set the ClientTracingSpan. In this case, the ClientFilter needs to **create the ClientTracingSpan manually and set it in the FilterData**.
+
         ```cpp
         context->SetFilterData(PluginID, ClientTracingSpan());
         client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
         ```
+
     * client_span is not null, but client_span->parent_span is null: `MakeClientContext` automatically sets the ClientTracingSpan, but since the server does not have any tracing data (no ServerFilter configured), the parent_span is null.
     * both client_span and client_span->parent_span are not null: it indicates that there is upstream tracing data that needs to be inherited.
 
@@ -187,6 +189,7 @@ At the post-filter point of the filter, the logic to be completed is relatively 
 ## Registering the plugin and filters
 
 The interface for registering Tracing plugin:
+
 ```cpp
 using TracingPtr = RefPtr<Tracing>;
 
@@ -198,6 +201,7 @@ class TrpcPlugin {
 ```
 
 The interfaces for registering filters:
+
 ```cpp
 using MessageServerFilterPtr = std::shared_ptr<MessageServerFilter>;
 using MessageClientFilterPtr = std::shared_ptr<MessageClientFilter>;
@@ -215,6 +219,7 @@ class TrpcPlugin {
 Let's illustrate with an example. Assuming that we implement a TestTracing plugin, along with TestServerFilter and TestClientFilter filters.
 
 1. For server scenarios, users need to register in the `TrpcApp::RegisterPlugins` function during service startup:
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
      public:
@@ -229,6 +234,7 @@ Let's illustrate with an example. Assuming that we implement a TestTracing plugi
     ```
 
 2. For pure client scenarios, registration should be done after initializing the framework configuration but before starting other framework modules:
+
     ```cpp
     int main(int argc, char* argv[]) {
       ParseClientConfig(argc, argv);

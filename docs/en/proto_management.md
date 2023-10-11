@@ -1,8 +1,7 @@
-[中文版](/docs/zh/proto_management.md)
+[中文](../zh/proto_management.md)
 
-# Proto File Dependency Management
 
-## Overview
+# Overview
 
 tRPC uses protocol buffers as the default interface definition language (IDL). When calling between services, the proto interface file is used as the external user interface of the service, and there should be a relatively unified management method.
 
@@ -10,14 +9,13 @@ Conventional practice: the proto file of each service is managed by itself. When
 
 Therefore, the proto file dependency management method recommended by tRPC-Cpp here is: for the service provider, put the proto files that need to be externally placed in a unified remote repositories (for example: use github repositories or internal private repositories); for service consumer, The consumer only needs to automatically pull the dependent proto files based on the bazel build tool and generate stub code.
 
-## How to automatically pull remote proto files based on bazel
+# How to automatically pull remote proto files based on bazel
 
 Step 1: Pull the proto file of the dependent service
 
 Before pulling, you need to ensure that the proto file of the dependent service is already in a remote repositories. It is recommended to put the external proto file of the service in the same remote repositories, although you can also obtain the dependency by directly pulling the code repositories of the service proto file, but many unnecessary code files other than proto will be pulled here.
 
 Then, in the WORKSPACE file of this project, add the target rules for pulling the remote repositories, as follows:
-
 
 Step 2: Add the proto target to the user's target dependencies
 

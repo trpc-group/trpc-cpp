@@ -1,5 +1,6 @@
-[TOC]
-# 1 Overview
+[中文](../zh/framework_config_lite.md)
+
+# Overview
 
 During the runtime of tRPC-Cpp services, it is necessary to provide a correct configuration file. This configuration file includes essential configuration options for the framework to operate. By using a configuration file, the service runtime rules can be set, making it more flexible to make changes to the service and avoiding issues such as cumbersome hardcoding during deployment.
 
@@ -9,8 +10,8 @@ Internal basic configurations of the framework, such as global, server, and clie
 Third-party plugins, such as Prometheus, telemetry, etc.
 Currently, there are many configuration options available for the framework. To reduce the learning curve and facilitate quick start, this document introduces a simplified configuration version, which covers the aforementioned "1. Internal basic configurations" - the minimal set of configuration options required to run tRPC-Cpp services correctly. For a complete understanding of all configurations, please refer to the[tRPC-Cpp framework_config_full](/docs/en/framework_config_full.md)。
 
+# Instruction
 
-# 2 Instruction
 To be specific, the simplified configuration items can be classified as follows:
 
 Mandatory configuration in the global section.
@@ -22,9 +23,11 @@ Server scenario (the main program inherits the TrpcApp class and starts, the ser
 Relay scenario (building upon the server scenario, additionally using client tools like Service Proxy to call downstream services). Configure the global, server, and client sections.
 Client-only scenario: The main program does not inherit the TrpcApp class and needs to initialize the framework runtime environment, including various plugins. Configure the global and client sections (refer to the relay scenario and remove the server section configuration). This scenario involves more code-level initialization, so it is not discussed further.
 
-## 1. Server scenario
+## Server scenario
+
 According to different threadmodel, it can be further divided into the separate(or merge) threadmodel and the m:n coroutine (fiber) threadmodel.
-###  Separate(or merge) threadmodel
+
+### Separate(or merge) threadmodel
 
 The simplified server configuration is as follows:
 
@@ -52,8 +55,11 @@ server:
 #plugin
 xxx
 ```
-###  Fiber theadmodel
+
+### Fiber theadmodel
+
 Configuration differences caused solely by different thread models:
+
 ```yaml
 global:
   threadmodel:
@@ -77,12 +83,14 @@ server:
 xxx
 ```
 
-## 2. Route scenario
+## Route scenario
+
 On top of serving as a server, using the framework serviceproxy to access downstream, just like the server-side scenario, based on different thread models, it is further divided into simplified configurations for both the separate(or merge) threadmodel and the m:n coroutine (fiber) thread model in the intermediate transfer scenario.
 
-###  Separate(or merge) threadmodel
+### Separate(or merge) threadmodel
 
 The simplified route scenario configuration is as follows:
+
 ```yaml
 global:
   threadmodel:
@@ -116,8 +124,10 @@ client:
 xxx
 ```
 
-###  Fiber theadmodel
+### Fiber theadmodel
+
 Configuration differences caused solely by different thread models:
+
 ```yaml
 global:
   threadmodel:

@@ -1,7 +1,5 @@
 [中文](../zh/admin_service.md)
 
-[TOC]
-
 # Overview
 
 The tRPC-Cpp comes with a built-in management service based on the HTTP protocol, providing a set of operational management interfaces for users to view and modify the status of the service. Users can invoke these management commands through a web browser or by constructing HTTP requests manually.
@@ -20,7 +18,9 @@ This document introduces the usage of the management service, where developers c
 * The way to customize management commands.
 
 # Enable the management service
+
 By default, tRPC-Cpp does not start the management service. To enable it, users need to explicitly configure the `"admin_ip"` and `"admin_port"` of the `"server"` in the framework configuration file, ensuring that admin_port is not set to 0. For example:
+
 ```yaml
 global:
   ...
@@ -31,9 +31,11 @@ server:
 ```
 
 # Built-in management commands
+
 The framework provides a set of built-in management commands that allow users to conveniently view and modify the service status.
 
 ## The way to access
+
 The framework's built-in management commands can be invoked in two ways.
 
 ### Access via a web browser
@@ -77,7 +79,9 @@ Users can construct HTTP requests manually to invoke the management commands pro
 This section introduces the main functionalities of built-in management commands and how to use them. Since almost all operations that can be performed on the management page can also be accessed by constructing HTTP requests, we will only provide detailed instructions on accessing them by constructing HTTP requests (using the curl tool as an example). The corresponding browser usage method is to find the corresponding module on the page and click on the operation.
 
 ### View/Modify log level
+
 #### View log level
+
 Corresponding interface: `GET /cmds/loglevel`
 
 Parameters:
@@ -87,6 +91,7 @@ Parameters:
 | logger | string | The name of the logger to be queried. | No, default value is "default" |
 
 Example:
+
 ```shell
 # Query the log level of the default logger, the "level" in the returned result is the log level.
 $ curl http://admin_ip:admin_port/cmds/loglevel?logger=default
@@ -97,6 +102,7 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist
 ```
 
 #### Modify log level
+
 Corresponding interface: `PUT /cmds/loglevel`
 
 Parameters:
@@ -107,19 +113,21 @@ Parameters:
 | value | string | The new log level to be set. The valid values for the log level are: TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL. | Yes |
 
 Example:
+
 ```shell
 # Modify the log level of the default logger, the "level" in the returned result is the log level after modified.
-$ curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERROR'
+curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERROR'
 {"errorcode":0,"message":"","level":"ERROR"}
 # Use invalid value for 'value', it will return an error message.
-$ curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERR'
+curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERR'
 {"errorcode":-3,"message":"wrong level, please use TRACE,DEBUG,INFO,WARNING,ERROR,CRITICAL"}
 # Modify a non-existent logger, it will return an error message
-$ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'value=ERROR'
+curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'value=ERROR'
 {"errorcode":-4,"message":"set level failed, does logger exist?"}
 ```
 
 ### Reload Framework Configuration
+
 Corresponding interface: `POST /cmds/reload-config`
 
 Parameters: None
@@ -129,6 +137,7 @@ Interface description: **This interface is only used in scenarios where the user
 Usage:
 
 1. Add custom configuration to the framework configuration file, such as adding the "custom" configuration:
+
     ```yaml
     global:
       ...
@@ -143,11 +152,13 @@ Usage:
 2. Register the configuration update callback function
 
     The type of callback function：
+
     ```cpp
     void(const YAML::Node&)
     ```
 
     The interface for registering:
+
     ```cpp
     class TrpcApp {
     public:
@@ -160,6 +171,7 @@ Usage:
     ```
 
     The way to register:
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
     public:
@@ -175,17 +187,20 @@ Usage:
     The parameter "root" of the callback function is the root node of the entire YAML file after parsing. You can use the "ConfigHelper" tool class provided by the framework to find the node corresponding to the business configuration and obtain the new configuration data. For specific usage examples, please refer to the [admin example](../../examples/features/admin/proxy/).
 
 3. Invoke the command
+
     ```shell
     $ curl http://admin_ip:admin_port/cmds/reload-config -X POST
     {"errorcode":0,"message":"reload config ok"}
     ```
 
 ### View the server statistics information
+
 Corresponding interface: `GET /cmds/stats`
 
 Parameters: None
 
 Interface description: **To enable server statistics, you must set the `"enable_server_stats"` configuration of `"server"` to `true` in the framework configuration file. Additionally, you can configure the statistics interval using `"server_stats_interval"`.**
+
 ```yaml
 server:
   ...
@@ -196,6 +211,7 @@ server:
 ```
 
 Example:
+
 ```shell
 $ curl http://dmin_ip:admin_port/cmds/stats
 {"errorcode":0,"message":"","stats":{"conn_count":1,"total_req_count":11,"req_concurrency":1,"now_req_count":3,"last_req_count":4,"total_failed_req_count":0,"now_failed_req_count":0,"last_failed_req_count":0,"total_avg_delay":0.18181818181818183,"now_avg_delay":0.3333333333333333,"last_avg_delay":0.25,"max_delay":1,"last_max_delay":1}}
@@ -220,6 +236,7 @@ Returned results:
 | last_max_delay | Maximum delay in the last cycle |
 
 ### View the framework and user-defined tvar variables
+
 Corresponding interface: `GET /cmds/var`
 
 Parameters: None
@@ -227,6 +244,7 @@ Parameters: None
 Interface description: You can directly access "/cmds/var" to view all tvar variables, including those defined by the framework and user-defined ones. By appending a more specific variable path after the URL, you can access a particular variable. For example, "/cmds/var/trpc" accesses framework internal variables, while "/cmds/var/user" accesses user-defined variables. For more detailed usage of tvar variables, please refer to the [tvar usage documentation](./tvar.md).
 
 Example:
+
 ```shell
 $ curl http://127.0.0.1:8889/cmds/var
 {
@@ -258,6 +276,7 @@ The statistical variables currently provided by the framework are as follows.
 ### Collect the CPU and memory usage information
 
 #### The way to enable
+
 **By default, tRPC-Cpp does not allow CPU and memory usage information to be collected through management commands. If you need to collect related information, you need to add the "TRPC_ENABLE_PROFILER" macro definition and link "tcmalloc_and_profiler" when compiling the program.**
 
 Below, we will introduce the ways to enable this feature in Bazel and CMake, respectively.
@@ -269,7 +288,8 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
     Using this compilation option will automatically define the "TRPC_ENABLE_PROFILER" macro and link "/usr/lib64/libtcmalloc_and_profiler.so". You should make sure that tcmalloc is installed correctly and that "/usr/lib64/libtcmalloc_and_profiler.so" exists.
 
     For example, add the compilation option in the .bazelrc file to enable it:
-    ```
+
+    ```sh
     # In the .bazelrc file
     build --define trpc_enable_profiler=true
     ```
@@ -279,12 +299,15 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
     Using this compilation option will automatically define the "TRPC_ENABLE_PROFILER" macro, but users need to manually link "libtcmalloc_and_profiler".
 
     For example, if the user's "libtcmalloc_and_profiler.so" is located in the "/user-path/lib" directory, you can add the compilation option in the .bazelrc file like this:
-    ```
+
+    ```sh
     # In the .bazelrc file
     build --define trpc_enable_profiler_v2=true
     ```
+
     And Then link the "libtcmalloc_and_profiler" in the BUILD file of the server:
-    ```
+
+    ```bzl
     cc_binary(
         name = "helloworld_server",
         srcs = ["helloworld_server.cc"],
@@ -298,12 +321,15 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
 3. Define the "TRPC_ENABLE_PROFILER" macro and link "tcmalloc_and_profiler" manually.
 
     For example, you can add the compilation macro in the .bazelrc file like this:
-    ```
+
+    ```sh
     # In the .bazelrc file
     build --copt='-DTRPC_ENABLE_PROFILER'
     ```
+
     And Then link the "libtcmalloc_and_profiler" in the BUILD file of the server:
-    ```
+
+    ```bzl
     cc_binary(
         name = "helloworld_server",
         srcs = ["helloworld_server.cc"],
@@ -317,6 +343,7 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
 ##### CMake
 
 You need to define "TRPC_ENABLE_PROFILER" and link "tcmalloc_and_profiler" in the CMakeLists.txt file.
+
 ```cmake
 # define "TRPC_ENABLE_PROFILER"
 add_definitions(-DTRPC_ENABLE_PROFILER)
@@ -329,6 +356,7 @@ target_link_libraries(${TARGET_SERVER} ${TCMALLOC_LIBRARY})
 ```
 
 #### Collect the CPU usage information
+
 Corresponding interface: `POST /cmds/profile/cpu`
 
 Parameters:
@@ -340,26 +368,31 @@ Parameters:
 Usage:
 
 1. Start sampling
+
     ```shell
     $ curl http://admin_ip:admin_port/cmds/profile/cpu?enable=y -X POST
     {"errorcode":0,"message":"OK"}
     ```
 
 2. Stop sampling
+
     ```shell
     $ curl http://admin_ip:admin_port/cmds/profile/cpu?enable=n -X POST
     {"errorcode":0,"message":"OK"}
     ```
+
     After successful termination, a file named "cpu.prof" will be generated in the command execution path.
 
 3. Parse the output file
 
     The built-in tool pprof of gperftools can be used for parsing:
+
     ```shell
-    $ pprof binary_executable_program ./cpu.prof --pdf > cpu.pdf
+    pprof binary_executable_program ./cpu.prof --pdf > cpu.pdf
     ```
 
 #### Collect the memory usage information
+
 Corresponding interface: `POST /cmds/profile/heap`
 
 Parameters:
@@ -371,36 +404,43 @@ Parameters:
 Usage:
 
 1. Start sampling
+
     ```shell
     $ curl http://admin_ip:admin_port/cmds/profile/heap?enable=y -X POST
     {"errorcode":0,"message":"OK"}
     ```
 
 2. Stop sampling
+
     ```shell
     $ curl http://admin_ip:admin_port/cmds/profile/heap?enable=n -X POST
     {"errorcode":0,"message":"OK"}
     ```
+
     After successful termination, a file named "heap.prof" will be generated in the command execution path.
 
 3. Parse the output file
 
     The built-in tool pprof of gperftools can be used for parsing:
+
     ```shell
-    $ pprof binary_executable_program ./heap.prof --pdf > heap.pdf
+    pprof binary_executable_program ./heap.prof --pdf > heap.pdf
     ```
 
 ### View the rpcz information
+
 Corresponding interface: `GET /cmds/rpcz`
 
 For instructions on how to use rpcz, please refer to the [rpcz documentation](./rpcz.md).
 
 ### Get the prometheus metrics data
+
 Corresponding interface: `GET /metrics`
 
 For instructions on how to use prometheus, please refer to the [Prometheus documentation](./prometheus_metrics.md)。
 
 ### Disconnect from a client address
+
 Corresponding interface: `POST /client_detach`
 
 Parameters:
@@ -413,6 +453,7 @@ Parameters:
 Interface description: **This interface is currently only effective under the default thread model.**
 
 Example:
+
 ```shell
 # Disconnect all connections to "ip:port" of the "trpc.app.server.service" service
 $ curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.app.server.service' -d 'remote_ip=ip:port'
@@ -430,6 +471,7 @@ Usage:
 1. Customize commands
 
     The users need to inherit `trpc::AdminHandlerBase` to implement the logic for custom management commands. Its definition is as follows:
+
     ```cpp
     class AdminHandlerBase : public http::HandlerBase {
     public:
@@ -455,6 +497,7 @@ Usage:
     * Handle: It allows flexible control over the format of the returned results, for example, returning data in HTML format.
 
     Example:
+
     ```cpp
     #include "trpc/admin/admin_handler.h"
 
@@ -477,6 +520,7 @@ Usage:
 2. Register commands
 
     The interface for registering:
+
     ```cpp
     class TrpcApp {
     public:
@@ -489,6 +533,7 @@ Usage:
     ```
 
     The way to register:
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
     public:
@@ -504,6 +549,7 @@ Usage:
 3. Invoke the commands
 
     After the service is started, you can trigger the custom management command by accessing `http://admin_ip:admin_port/myhandler`.
+
     ```shell
     $ curl http://admin_ip:admin_port/myhandler
     {"errorcode":0,"message":"success"}

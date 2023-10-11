@@ -1,7 +1,5 @@
 [中文](../zh/pb_arena.md)
 
-# Optimizing RPC Services with PB-Arena
-
 # Overview
 
 This article mainly introduces how to optimize RPC services with arena. Developers can learn the following contents:
@@ -39,23 +37,24 @@ Applicable scenarios: PB structures are complex, and repeated type fields contai
 The lifecycle of PB objects is managed by the framework and can be optimized by enabling arena through compilation
 options.
 
-## Enabling arena
+## Enabling arena on server-side
 
-**Enable arena using proto option**
-We need to enable arena allocation in each `.proto` file, so we need to add the following `option` to each `.proto`
+* **Enable arena using proto option**
+
+  We need to enable arena allocation in each `.proto` file, so we need to add the following `option` to each `.proto`
 file:
 
-```protobuf
-option cc_enable_arenas = true;
-```
+  ```protobuf
+  option cc_enable_arenas = true;
+  ```
 
-**Enable arena option during compilation**
+* **Enable arena option during compilation**
 
-Add the following compilation option to `.bazelrc`:
+  Add the following compilation option to `.bazelrc`:
 
-```
-build --define trpc_proto_use_arena=true
-```
+  ```sh
+  build --define trpc_proto_use_arena=true
+  ```
 
 Performing the above two steps will enable arena optimization.
 
@@ -94,17 +93,18 @@ int XxxxServer::Initialize() {
 In this case, PB objects are created by the user, and the lifecycle of PB objects is managed by user code. The framework
 cannot intervene in the lifecycle of PB objects. Therefore, users need to use arena to optimize memory by themselves.
 
-## Enabling arena
+## Enabling arena on client-side
 
-**Enable arena using proto option**
-We need to enable arena allocation in each `.proto` file, so we need to add the following `option` to each `.proto`
+* **Enable arena using proto option**
+
+  We need to enable arena allocation in each `.proto` file, so we need to add the following `option` to each `.proto`
 file:
 
-```protobuf
-option cc_enable_arenas = true;
-```
+  ```protobuf
+  option cc_enable_arenas = true;
+  ```
 
-**Creating a PB object**
+## Creating a PB object
 
 ```c++
 // include arena.h
@@ -129,12 +129,12 @@ All objects maintained by arena are released uniformly when arena is destroyed. 
 memory block of arena will only be continuously appended and will not be deleted. Therefore, the objects maintained by
 arena can only be either local objects or immutable. Otherwise, its memory will continue to grow indefinitely.
 
-- It is recommended not to reuse arena objects, and one arena manages the lifecycle of one PB object.
-    - Reusing may cause arena expansion and affect performance.
-    - One arena generates multiple PB objects, and the lifecycle is difficult to manage.
-- The lifecycle of arena objects should be either local or immutable.
-- The lifecycle of arena is longer than that of the objects it manages.
-- PB objects created using CreateMessage cannot be deleted.
+* It is recommended not to reuse arena objects, and one arena manages the lifecycle of one PB object.
+  * Reusing may cause arena expansion and affect performance.
+  * One arena generates multiple PB objects, and the lifecycle is difficult to manage.
+* The lifecycle of arena objects should be either local or immutable.
+* The lifecycle of arena is longer than that of the objects it manages.
+* PB objects created using CreateMessage cannot be deleted.
 
 Improper use may cause OOM or core dump in the service, so you need to understand the principle before using it.
 
@@ -142,9 +142,9 @@ Improper use may cause OOM or core dump in the service, so you need to understan
 
 After testing, when the PB structure is large and complex, using arena can improve performance by about `14%`.
 
-**Test device configuration**
+## Test device configuration
 
-```
+```txt
 // Cloud server.
 Architecture:          x86_64
 CPU(s):                8
@@ -160,7 +160,7 @@ L2 cache:              4096K
 L3 cache:              16384K
 ```
 
-**Test logic**
+## Test logic
 
 To simulate a real scenario, we use the proto file definition of a business.
 Test logic:
@@ -169,11 +169,11 @@ Test logic:
 * In each task, create two complex PB structures, Request and Response, and fill in the repeated fields so that the
   ByteSizeLong() of the structures is about 200K.
 
-**Compilation options**
+## Compilation options
 
-Enable O2 compilation and distinguish whether to use the tc_malloc library.
+Enable `O2` compilation and distinguish whether to use the tc_malloc library.
 
-**Test results**
+## Test results
 
 |                            | Not linked with tc_malloc | Linked with tc_malloc |
 |----------------------------|---------------------------|-----------------------|
@@ -183,7 +183,7 @@ Enable O2 compilation and distinguish whether to use the tc_malloc library.
 
 # FAQ
 
-## 1 The program crashes with the message: `CHECK failed: GetArenaNotVirtual() == nullptr`
+## The program crashes with the message: `CHECK failed: GetArenaNotVirtual() == nullptr`
 
 PB objects created using CreateMessage are `not allowed to be deleted`. Check whether the PB object has been destroyed.
 Only destroying the object created by CreateMessage will trigger this error.

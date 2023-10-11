@@ -1,16 +1,12 @@
-[中文版](../zh/future_promise_guide.md)
+[中文](../zh/future_promise_guide.md)
 
-[TOC]
-
-# tRPC-Cpp future/promise user guide
-
-## Preface
+# Overview
 
 Future/promise is an asynchronous programming model that allows users to break free from traditional callback traps and enables them to perform asynchronous programming in a more elegant and clear manner. Although C++11 has started supporting std::future/std::promise, the latter is considered too simplistic. Therefore, the tRPC-Cpp framework provides its own implementation of future/promise. In addition to supporting chained callbacks, it offers a rich set of tools to support concurrent and sequential invocations.
 
-## Design
+# Design
 
-### Principle
+## Principle
 
 In order to write correct, efficient, and reliable code, users need to understand the following principles,
 
@@ -21,19 +17,19 @@ In order to write correct, efficient, and reliable code, users need to understan
 - Support is provided for registering callbacks to capture both Future and Value. However, it is recommended to use callbacks that capture Future because capturing Value callbacks cannot detect errors.
 - The underlying scheduler of Future is implemented based on the [Continuation](https://en.wikipedia.org/wiki/Continuation) principle.
 
-### Structure diagram
+## Structure diagram
 
 ![future/promise structure diagram](../images/future_promise_structure_en.png)
 
-### State transition diagram
+## State transition diagram
 
 ![future/promise state transition diagram](../images/future_promise_state_en.png)
 
-## User guide
+# User guide
 
-### Basic usage
+## Basic usage
 
-#### Set result (SetValue/SetException)
+### Set result (SetValue/SetException)
 
 Set value using `SetValue`, as shown below,
 
@@ -61,7 +57,7 @@ auto fut = pr.GetFuture();
 pr.SetException(CommonException("system error"));
 ```
 
-#### Get result (GetValue0/GetValue/GetException)
+### Get result (GetValue0/GetValue/GetException)
 
 When a future object is in ready state, its value is set. When a future object is in exceptional state, its exception is set. Users need to determine whether to retrieve the corresponding value or exception based on the state of the future when using it.
 
@@ -83,7 +79,7 @@ if (fut.IsReady()) {
 }
 ```
 
-For Future/Promise with multiple parameters, the values can be obtained using the `GetValue` interface, and then the value of the Nth parameter can be retrieved using std::get<N>, as shown below.
+For Future/Promise with multiple parameters, the values can be obtained using the `GetValue` interface, and then the value of the Nth parameter can be retrieved using `std::get<N>`, as shown below.
 
 ```cpp
 // Promise with multiple parameter.
@@ -122,7 +118,7 @@ if (fut.IsFailed()) {
 }
 ```
 
-#### Set future callback (Then)
+### Set future callback (Then)
 
 The Future class provides the Then interface to set callbacks for a Future. The framework supports capturing callbacks of the Future and capturing value callbacks.
 
@@ -154,7 +150,7 @@ fut.Then([](T&& val) {
 });
 ```
 
-#### Create ready or exceptional Future（MakeReadyFuture/MakeExceptionFuture）
+### Create ready or exceptional Future（MakeReadyFuture/MakeExceptionFuture）
 
 Create a ready Future, as shown below,
 
@@ -168,7 +164,7 @@ Create a exceptional Future, as shown below,
 auto fut = MakeExceptionFuture<std::string>(CommonException("system error"));
 ```
 
-#### Blocking get Future (BlockingGet)
+### Blocking get Future (BlockingGet)
 
 The BlockingGet interface will wait indefinitely until the future is ready or an exception occurs.
 
@@ -184,29 +180,29 @@ if (res_fut.IsReady()) {
 }
 ```
 
-### Advanced usage
+## Advanced usage
 
-#### Serial tasks, waiting for the last callback to complete (Then)
+### Serial tasks, waiting for the last callback to complete (Then)
 
 The example code is as follows,
 
 ```cpp
   fut.Then([](Future<T>&& fut) {
-	  auto value = fut.GetValue0();
+   auto value = fut.GetValue0();
     // Handle result of first future.
 
     // Return future by first callback.
     // return ...
   })
   .Then([](Future<T>&& fut) {
-	  auto value = fut.GetValue0();
+   auto value = fut.GetValue0();
     // Handle result of second future.
 
     // Return future by second callback.
     // return ...
   })
   .Then([](Future<T>&& fut) {
-	  auto value = fut.GetValue0();
+   auto value = fut.GetValue0();
     // Handle result of third future.
 
     // Return future by third callback.
@@ -214,7 +210,7 @@ The example code is as follows,
   });
 ```
 
-#### Serial tasks, continuing until the conditional function returns true or the Future function returns an exception (DoUntil)
+### Serial tasks, continuing until the conditional function returns true or the Future function returns an exception (DoUntil)
 
 This is the first usage of DoUntil, where users can specify a conditional function and a Future function. There are two conditions that can terminate the execution of the Future function.
 
@@ -264,9 +260,9 @@ DoUntil([flag]() { return *flag; },
         });
 ```
 
-#### Serial tasks, continuing until the Future function returns a ready value of false (DoUntil)
+### Serial tasks, continuing until the Future function returns a ready value of false (DoUntil)
 
-This is the second usage pattern of DoUntil, where the user only needs to specify a Future function that returns a Future<bool>. When a Future function returns a ready value of false, the execution of subsequent Future functions is terminated. Otherwise, it continues executing. Here is an example,
+This is the second usage pattern of DoUntil, where the user only needs to specify a Future function that returns a `Future<bool>`. When a Future function returns a ready value of false, the execution of subsequent Future functions is terminated. Otherwise, it continues executing. Here is an example,
 
 ```cpp
 int counter = 0;
@@ -280,7 +276,7 @@ DoUntil([&counter, &sum](){
 });
 ```
 
-#### Serial tasks, continuing until the conditional function returns false or the Future function returns an exception (DoWhile)
+### Serial tasks, continuing until the conditional function returns false or the Future function returns an exception (DoWhile)
 
 DoWhile is a variation of DoUntil, with the only difference being that when the conditional function returns false, DoWhile terminates the execution of subsequent Future functions. Here is an example,
 
@@ -295,7 +291,7 @@ DoWhile([&counter]() { return counter++ < 10; },
         });
 ```
 
-#### Serial tasks, continuing until the Future function returns an exception (Repeat)
+### Serial tasks, continuing until the Future function returns an exception (Repeat)
 
 In comparison to DoWhile, Repeat relies on the Future function itself returning an exception to terminate the execution of subsequent Future functions. Here is an example,
 
@@ -308,7 +304,7 @@ Repeat([&counter]() {
       });
 ```
 
-#### Serial tasks, continuing until the iterator has finished traversing (DoForEach)
+### Serial tasks, continuing until the iterator has finished traversing (DoForEach)
 
 Using DoForEach, the number of times the Future function is executed sequentially depends on the size of the iterator. In practice, there are four different syntaxes to distinguish,
 
@@ -365,7 +361,7 @@ DoForEach(c, [&counter](auto e) {
           });
 ```
 
-#### Serial tasks, specifying the total number of times the Future function is executed (DoFor)
+### Serial tasks, specifying the total number of times the Future function is executed (DoFor)
 
 Using DoFor, distinguishing between two syntaxes.
 
@@ -391,7 +387,7 @@ DoFor(counter, [&counter](std::size_t i) {
      });
 ```
 
-#### Parallel tasks, waiting for all responses (WhenAll)
+### Parallel tasks, waiting for all responses (WhenAll)
 
 If user wants to make 3 concurrent requests and then initiate another request only after all 3 requests are completed, `WhenAll` with two syntaxes can be used.
 
@@ -431,7 +427,7 @@ auto fut = WhenAll(fut1, fut2, fut3).Then([](std::tuple<Future<uint32_t>, Future
 });
 ```
 
-#### Parallel tasks, waiting for any one response (WhenAny)
+### Parallel tasks, waiting for any one response (WhenAny)
 
 If you want to send 3 requests concurrently and perform a specific operation when any one of the requests is completed (either successfully or unsuccessfully), you can use WhenAny. Here is an example code,
 
@@ -454,7 +450,7 @@ auto fut = WhenAny(vecs.begin(), vecs.end()).Then([](Future<size_t, std::tuple<b
 
 If you need to wait for either one request to succeed or all requests to fail before returning, you can use WhenAnyWithoutException. Its usage is the same as WhenAny.
 
-#### Asynchronous read-write lock
+### Asynchronous read-write lock
 
 Asynchronous read-write lock based on Future, only supported for use in tRPC framework's Worker thread, and does not support cross-thread locking and unlocking, i.e., it is not thread-safe.
 
@@ -503,9 +499,9 @@ WithLock(lock->ForRead(), [lock] {
 });
 ```
 
-### Customize the Executor
+## Customize the Executor
 
-#### Network IO type Executor (default framework-provided)
+### Network IO type Executor (default framework-provided)
 
 First, inherit the trpc::Executor class (located in trpc/common/future/executor.h) and implement the concrete ReactorExecutor.
 
@@ -540,7 +536,7 @@ for (int i = 0; i < reactor_num; ++i) {
 }
 ```
 
-#### Cpu intense type Executor
+### Cpu intense type Executor
 
 First, user needs to inherit the trpc::Executor class (located in trpc/common/future/executor.h) and implement a concrete ThreadPoolExecutor.
 
