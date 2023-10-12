@@ -34,6 +34,7 @@ TEST(ServerConfigTest, server_config_test) {
   server_config.enable_server_stats = false;
   server_config.server_stats_interval = 60000;
   server_config.filters = {"tpstelemetry"};
+  server_config.stop_max_wait_time = 1000;
 
   ServiceConfig service_config;
   service_config.service_name = "trpc.test.helloworld.Greeter";
@@ -82,6 +83,7 @@ TEST(ServerConfigTest, server_config_test) {
   ASSERT_EQ(server_config.enable_server_stats, tmp.enable_server_stats);
   ASSERT_EQ(server_config.server_stats_interval, tmp.server_stats_interval);
   ASSERT_EQ(server_config.filters[0], tmp.filters[0]);
+  ASSERT_EQ(server_config.stop_max_wait_time, tmp.stop_max_wait_time);
 
   ASSERT_EQ(server_config.services_config.front().service_name, tmp.services_config.front().service_name);
   ASSERT_EQ(server_config.services_config.front().network, tmp.services_config.front().network);

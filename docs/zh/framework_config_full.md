@@ -85,7 +85,7 @@ server:
   admin_port: 7897                                                #admin监听端口
   admin_ip: ${trpc_admin_ip}                                      #admin监听ip
   admin_idle_time: 60000                                          #admin空闲连接清理时间，框架默认60s，如果业务注册了处理时间超过60s的逻辑，适当调大此值以得到响应
-  enable_self_register: false                                     #开启框架的自注册（默认为false，不开启）
+  stop_max_wait_time: 3000                                        #设置max wait timeout(ms) 避免无法正常退出
   service:                                                        #业务服务提供的service，可以有多个
     - name: trpc.test.helloworld.Greeter                          #service名称，需要按照这里的格式填写，第一个字段默认为trpc，第二、三个字段为上边的app和server配置，第四个字段为用户定义的service_name
       protocol: trpc                                              #应用层协议：trpc http等
@@ -109,10 +109,6 @@ server:
       send_queue_timeout: 3000                                    #Fiber场景下使用，表示发送网络数据时io发送队列的超时时间 
       threadmodel_instance_name: default_instance                 #使用的线程模型实例名，为global->threadmodel->instance_name内容
       accept_thread_num: 1                                        #绑定端口的线程个数，如果大于1，需要指定编译选项.
-      service_limiter: default(100000)                            #service级别流量控制，格式为: name(每分钟限制个数)
-      func_limiter:                                               #接口级别流量控制
-        - name: SayHello #接口名称
-          limiter: default(100000) #接口级别流量控制
       stream_max_window_size: 65535                               #默认窗口值为65535，0代表关闭流控，除此之外，如果设置小于65535将不会生效
       stream_read_timeout: 32000                                  #从流上读取消息超时，单位：毫秒，默认为32000ms
       filter:                                                     #service级别的filter列表，只针对当前service生效
