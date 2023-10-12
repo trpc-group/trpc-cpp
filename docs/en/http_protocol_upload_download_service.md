@@ -185,8 +185,8 @@ Read-related interfaces: Read, ReadAll.
 Taking the Read interface as an example, tRPC provides two types of specific interface forms:
 
 * Read(item, max_bytes) without a custom timeout.
-  The timeout for this type of interface is a fixed value that is determined when the reader/writer is created (
-  calculated by the service configuration or specified by the SetDefaultDeadline method).
+  
+  The timeout for this type of interface is a fixed value that is determined when the reader/writer is created (calculated by the service configuration or specified by the SetDefaultDeadline method).
 
   > For example, if the timeout is configured as 60000ms and the user obtains the reader/writer at time "now", then no
   > matter how many times the user calls Read(item, max_bytes), the timeout point will always be "now + 1min", which can
@@ -194,8 +194,8 @@ Taking the Read interface as an example, tRPC provides two types of specific int
   > understood as the timeout for the entire read stream process.
 
 * Read(item, max_bytes, timeout) with a custom timeout.
-  If the user's data is very large, such as a 10GB file, and the network conditions are uncertain, it is recommended to
-  use the Read(item, max_bytes, timeout) interface in this scenario.
+
+  If the user's data is very large, such as a 10GB file, and the network conditions are uncertain, it is recommended to use the Read(item, max_bytes, timeout) interface in this scenario.
 
   > The "timeout" parameter here only applies to the Read operation. The "timeout" type can be a time interval, such as
   > 10s, which means that the Read operation will be blocked for 10s from the trigger start. It can also be a specific
@@ -213,25 +213,24 @@ request, reading the request headers, reading the request message body data, com
 response.
 
 * **Receiving the request**
+
   After receiving an HTTP request, the framework will start the user's preset handler process based on the URL.
 
 * **Reading the request headers**
-  The HttpRequest object provides interfaces to obtain request header information: HasHeader/GetHeader, which allows the
-  user to obtain request header content information. For example, look for `Content-Length` or `Transfer-Encoding` to
-  determine whether the other end is sending data in length form or chunked form. Of course, the framework will
-  automatically help the user decode chunked-form data into data fragments.
+
+  The HttpRequest object provides interfaces to obtain request header information: HasHeader/GetHeader, which allows the user to obtain request header content information. For example, look for `Content-Length` or `Transfer-Encoding` to determine whether the other end is sending data in length form or chunked form. Of course, the framework will automatically help the user decode chunked-form data into data fragments.
+
 * **Reading data**
-  Using the Read(item, max_bytes) interface, if the server's response data has not ended, this Read operation will block
-  until it reads data of length max_bytes. If the server's response data has already ended, this Read operation will
-  immediately return after reading data of length max_bytes or reading the end of the data.
+
+  Using the Read(item, max_bytes) interface, if the server's response data has not ended, this Read operation will block until it reads data of length max_bytes. If the server's response data has already ended, this Read operation will immediately return after reading data of length max_bytes or reading the end of the data.
+
 * **Completing the read**
-  When the end of the data is read, the Read interface will return the kStreamStatusReadEof return code to inform the
-  user that the server data has been completely read.
+
+  When the end of the data is read, the Read interface will return the kStreamStatusReadEof return code to inform the user that the server data has been completely read.
+
 * **Sending the response**
-  In a normal interaction process, the user should call HttpResponse's SetStatus to set the status code (default 200)
-  based on the other end's request and call HttpWriteStream's WriteHeader to send the response headers. If the user does
-  not actively call WriteHeader, the framework will automatically call WriteHeader to complete the response process (
-  default 200) after the user's processing logic ends.
+
+  In a normal interaction process, the user should call HttpResponse's SetStatus to set the status code (default 200) based on the other end's request and call HttpWriteStream's WriteHeader to send the response headers. If the user does not actively call WriteHeader, the framework will automatically call WriteHeader to complete the response process (default 200) after the user's processing logic ends.
 
 * Example code:
 
@@ -289,81 +288,79 @@ Following the file download process, the data download process needs to go throu
 headers, set length format or chunked format, send response headers, write data, and complete writing.
 
 * **Receive request**
+
   After receiving an HTTP request, the user's preset handler process will be started based on the URL.
+
 * **Read request headers**
+
   HttpRequest provides interfaces to obtain request headers: HasHeader/GetHeader.
+
 * **Set length format or chunked format**
-  Call HttpResponse's SetHeader method to set the length format or chunked format. If the complete data length is
-  already known, the length format "Content-Length: 104857600" can be used. If the complete data length is unknown, the
-  chunked format "Transfer-Encoding: chunked" can be used.
+
+  Call HttpResponse's SetHeader method to set the length format or chunked format. If the complete data length is already known, the length format "Content-Length: 104857600" can be used. If the complete data length is unknown, the chunked format "Transfer-Encoding: chunked" can be used.
+
 * **Send response headers**
-  In the normal interaction process, the user should proactively call HttpResponse's SetStatus to set the status code (
-  default 200) based on the request from the other end, and call HttpWriteStream's WriteHeader to send the response
-  headers. If the user does not actively call WriteHeader, the framework will automatically call WriteHeader to complete
-  the response process after the user processing logic is finished (default 200).
+
+  In the normal interaction process, the user should proactively call HttpResponse's SetStatus to set the status code (default 200) based on the request from the other end, and call HttpWriteStream's WriteHeader to send the response headers. If the user does not actively call WriteHeader, the framework will automatically call WriteHeader to complete the response process after the user processing logic is finished (default 200).
+
 * **Write data**
-  Through the Write interface, the user can continuously send data fragments to the server. If the user is using the
-  chunked format, the user does not need to do chunked encoding for the transmitted data, as the framework will handle
-  it automatically. If the user is using the length format, if the data sent by the user exceeds the set length, the Write
-  interface will report kStreamStatusServerWriteContentLengthError error.
+
+  Through the Write interface, the user can continuously send data fragments to the server. If the user is using the chunked format, the user does not need to do chunked encoding for the transmitted data, as the framework will handle it automatically. If the user is using the length format, if the data sent by the user exceeds the set length, the Write interface will report kStreamStatusServerWriteContentLengthError error.
+
 * **Complete writing**
-  Through the WriteDone interface, the user informs the reader-writer that all data has been sent. If the user is using
-  the chunked format, the framework will send the chunked end tag to the other end. If the user is using the length
-  format, the framework
-  will check whether the length of the data sent by the user and the set length are consistent. If they are
-  inconsistent, it will report kStreamStatusServerWriteContentLengthError error. Once the WriteDone interface is called,
-  the user should not try to use the Write interface again.
 
-Example code:
+  Through the WriteDone interface, the user informs the reader-writer that all data has been sent. If the user is using the chunked format, the framework will send the chunked end tag to the other end. If the user is using the length format, the framework will check whether the length of the data sent by the user and the set length are consistent. If they are inconsistent, it will report kStreamStatusServerWriteContentLengthError error. Once the WriteDone interface is called, the user should not try to use the Write interface again.
 
-```cpp
-// Send a file to the client. 
-::trpc::Status FileStorageHandler::Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
-                                       ::trpc::http::Response* rsp) {
-  // Open the file to be downloaded.
-  auto fin = std::ifstream("/to/path/download_src_xx", std::ios::binary);
-  if (!fin.is_open()) {
-    rsp->SetStatus(::trpc::http::ResponseStatus::kInternalServerError);
-    return ::trpc::kSuccStatus;
-  }
+* Example code:
 
-  // Send data in chunked.
-  rsp->SetHeader(::trpc::http::kHeaderTransferEncoding, ::trpc::http::kTransferEncodingChunked);
-  // Get the stream reader, then send response header.
-  auto& writer = rsp->GetStream();
-  ::trpc::Status status = writer.WriteHeader();
-  if (!status.OK()) {
-    // If an error occurs, return an error code. the framework will recognize the RST return code and close the stream.
-    return ::trpc::kStreamRstStatus;
-  }
-
-  std::size_t nwrite{0};
-  ::trpc::BufferBuilder buffer_builder;
-  // Send the response body.
-  for (;;) {
-    fin.read(buffer_builder.data(), buffer_builder.SizeAvailable());
-    std::size_t n = fin.gcount();
-    if (n > 0) {
-      ::trpc::NoncontiguousBuffer buffer;
-      buffer.Append(buffer_builder.Seal(n));
-      // Write data chunk.
-      status = writer.Write(std::move(buffer));
-      if (status.OK()) {
-        nwrite += n;
-        continue;
-      }
-      return ::trpc::kStreamRstStatus;
-    } else if (fin.eof()) {
-      // File writing is complete.
-      status = writer.WriteDone();
-      if (status.OK()) break;
+  ```cpp
+  // Send a file to the client. 
+  ::trpc::Status FileStorageHandler::Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
+                                         ::trpc::http::Response* rsp) {
+    // Open the file to be downloaded.
+    auto fin = std::ifstream("/to/path/download_src_xx", std::ios::binary);
+    if (!fin.is_open()) {
+      rsp->SetStatus(::trpc::http::ResponseStatus::kInternalServerError);
+      return ::trpc::kSuccStatus;
+    }
+  
+    // Send data in chunked.
+    rsp->SetHeader(::trpc::http::kHeaderTransferEncoding, ::trpc::http::kTransferEncodingChunked);
+    // Get the stream reader, then send response header.
+    auto& writer = rsp->GetStream();
+    ::trpc::Status status = writer.WriteHeader();
+    if (!status.OK()) {
+      // If an error occurs, return an error code. the framework will recognize the RST return code and close the stream.
       return ::trpc::kStreamRstStatus;
     }
-    return ::trpc::kStreamRstStatus;
+  
+    std::size_t nwrite{0};
+    ::trpc::BufferBuilder buffer_builder;
+    // Send the response body.
+    for (;;) {
+      fin.read(buffer_builder.data(), buffer_builder.SizeAvailable());
+      std::size_t n = fin.gcount();
+      if (n > 0) {
+        ::trpc::NoncontiguousBuffer buffer;
+        buffer.Append(buffer_builder.Seal(n));
+        // Write data chunk.
+        status = writer.Write(std::move(buffer));
+        if (status.OK()) {
+          nwrite += n;
+          continue;
+        }
+        return ::trpc::kStreamRstStatus;
+      } else if (fin.eof()) {
+        // File writing is complete.
+        status = writer.WriteDone();
+        if (status.OK()) break;
+        return ::trpc::kStreamRstStatus;
+      }
+      return ::trpc::kStreamRstStatus;
+    }
+    return ::trpc::kSuccStatus;
   }
-  return ::trpc::kSuccStatus;
-}
-```
+  ```
 
 # How to use the asynchronous streaming interface to implement file upload-download
 
@@ -380,10 +377,8 @@ transfer `Transfer-Encoding: chunked`.
 
 Requirements:
 
-* The asynchronous streaming interface needs to run in the `merge` thread model environment. The `merge` thread model is
-  a runtime of tRPC , and the thread role does both `IO` and business logic `Handle`.
-* Currently, only the asynchronous streaming interface called within tRPC 's internal thread is supported, and it is not
-  supported to use it in user-defined external threads (the program will crash).
+* The asynchronous streaming interface needs to run in the `merge` thread model environment. The `merge` thread model is a runtime of tRPC , and the thread role does both `IO` and business logic `Handle`.
+* Currently, only the asynchronous streaming interface called within tRPC 's internal thread is supported, and it is not supported to use it in user-defined external threads (the program will crash).
 * Use `future/promise` programming model.
 * HTTP message reading and writing comply with the HTTP protocol specification, that is, the writing order for requests
   and responses is as follows:
@@ -446,7 +441,7 @@ example [http_server.cc](../../examples/features/http_async_upload_download/serv
 
 # FAQ
 
-## 1. How does synchronous streaming respond to `100 Continue`?
+## How does synchronous streaming respond to `100 Continue`?
 
 Some clients will carry `Expect: 100-continue` in the header when sending large file POST/PUT requests and wait for the
 server to return `100 continue` or `4xx/5xx rejection` error code.
@@ -463,7 +458,7 @@ if (req->GetHeader("Expect") == "100-continue") {
 }
 ```
 
-## 2. Is the synchronous streaming HttpResponse::SetContent() not working?
+## Is the synchronous streaming HttpResponse::SetContent() not working?
 
 Users can use SetContent() to simply respond without using WriteHeader (non-1xx status codes) or Write. The framework will
 automatically reply to the response in a non-streaming scenario after the user function ends.

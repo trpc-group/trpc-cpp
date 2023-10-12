@@ -83,8 +83,8 @@ is used to indicate the type of the streaming RPC method.
 ## Naming of RPC methods
 
 * Only one type of RPC method can be defined with one unique name.
-  For example, we cannot use `SayHello` to define client streaming, server streaming, and unary RPC methods at the same
-  time. The following definition is incorrect, as the same method name is used to define three types of RPC methods:
+
+  For example, we cannot use `SayHello` to define client streaming, server streaming, and unary RPC methods at the same time. The following definition is incorrect, as the same method name is used to define three types of RPC methods:
 
   ```protobuf
   // !!! The following definition is incorrect !!!
@@ -99,13 +99,7 @@ is used to indicate the type of the streaming RPC method.
 
 * Unary RPC and streaming RPC are placed in different services.
 
-  Although the implementation does not restrict how users place unary RPC and streaming RPC, it is **`recommended`** to
-place unary RPC and streaming RPC in different services and not mix them together. This will reduce the difficulty of
-problem localization. For example, from the perspective of network packet transmission, multiple streams in streaming
-RPC share the same connection, and the protocol frames in streaming RPC are more complex than those in unary RPC. Mixing
-them together will increase the difficulty of problem diagnosis.
-
-  The recommended approach is as follows:
+  Although the implementation does not restrict how users place unary RPC and streaming RPC, it is **`recommended`** to place unary RPC and streaming RPC in different services and not mix them together. This will reduce the difficulty of problem localization. For example, from the perspective of network packet transmission, multiple streams in streaming RPC share the same connection, and the protocol frames in streaming RPC are more complex than those in unary RPC. Mixing them together will increase the difficulty of problem diagnosis. The recommended approach is as follows:
   
   ```protobuf
   // Service of unary RPC
@@ -213,9 +207,10 @@ Before setting up a stream service, let's review the steps for setting up a sing
 * Implement the business logic of the RPC service.
 * Call the RPC service on the client.
 
-The steps for setting up a tRPC stream RPC service are similar to those for setting up a single RPC service. Below, we
-will explain how to set up a stream RPC service using examples of the Client-Server scenario and the
-Client-Router-Server scenario.
+The steps for setting up a tRPC stream RPC service are similar to those for setting up a single RPC service. Below, we will explain how to set up a stream RPC service using examples as follows:
+
+* Client-Server scenario scenario
+* Client-Router-Server scenario (abbreviation for forward service).
 
 ### Client-Server scenario
 
@@ -225,7 +220,7 @@ Client-Server scenario. There are two modules:
 * StreamClient: The stream RPC client, which initiates the stream RPC call.
 * StreamServer: The stream RPC server, which provides the stream RPC service.
 
-#### Defining streaming RPC methods in the `proto` file of Client-Server scenario
+#### Defining streaming RPC methods
 
 ```protobuf
 // @file: examples/features/trpc_stream/server/stream.proto
@@ -253,7 +248,7 @@ message HelloReply {
 }
 ```
 
-#### Generating stream RPC service code by stream.proto
+#### Generating stream RPC service code
 
 The code generation tool provided by tRPC will automatically generate the stream RPC service code. Take a look at the
 code snippet to get a preliminary impression of stream RPC. The following is a code snippet from the StreamServer
@@ -272,7 +267,7 @@ public:
 // ...
 ```
 
-#### Implementing the stream RPC service of Client-Server scenario
+#### Implementing the stream RPC service
 
 Example: [stream_service.cc](../../examples/features/trpc_stream/server/stream_server.cc)
 
@@ -408,7 +403,7 @@ Client-Router-Server scenario. There are three modules:
 * StreamForwardServer: Receives requests from StreamClient and forwards them to StreamServer, then sends the response
   from StreamServer back to StreamClient.
 
-#### Defining streaming RPC methods in the `proto` file of Client-Router-Server scenario
+#### Defining streaming RPC methods for forward service
 
 ```protobuf
 // @file: examples/features/trpc_stream/forward/proxy/stream_forward.proto
@@ -430,7 +425,7 @@ service StreamForward {
 }
 ```
 
-#### Generating stream RPC service code by stream_forward.proto
+#### Generating stream RPC service code for forward service
 
 The following is a code snippet from the StreamServer module.
 
@@ -447,7 +442,7 @@ public:
 // ...
 ```
 
-#### Implementing the stream RPC service of Client-Router-Server scenario
+#### Implementing the stream RPC service for forward service
 
 Example: [stream_forward_service.cc](../../examples/features/trpc_stream_forward/proxy/stream_forward_service.cc)
 

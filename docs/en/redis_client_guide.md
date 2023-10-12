@@ -9,7 +9,7 @@ This article primarily focuses on how to use the tRPC-Cpp framework to call a Re
 
 ## Redis protocol
 
-The Redis client communicates with the Redis server using the RESP (Redis Serialization Protocol) protocol. Although this protocol is designed specifically for Redis, it can also be used in other client-server software projects. The Redis protocol is a text-based protocol, where commands or data sent by the client and server are terminated with "\r\n" (CRLF). Some developers mistakenly believe that the Redis protocol is space-separated and prefer to manually construct Redis access commands when using the tRPC-Cpp client. It is recommended to use the trpc::redis::cmdgen{}.xxxx series of interfaces to generate corresponding [command](https://redis.io/commands) when not familiar with the Redis protocol itself. Then, simply pass the generated command to the corresponding proxy interface to access the Redis server."
+The Redis client communicates with the Redis server using the RESP (Redis Serialization Protocol) protocol. Although this protocol is designed specifically for Redis, it can also be used in other client-server software projects. The Redis protocol is a text-based protocol, where commands or data sent by the client and server are terminated with `\r\n`(CRLF). Some developers mistakenly believe that the Redis protocol is space-separated and prefer to manually construct Redis access commands when using the tRPC-Cpp client. It is recommended to use the `trpc::redis::cmdgen{}.xxxx` series of interfaces to generate corresponding [command](https://redis.io/commands) when not familiar with the Redis protocol itself. Then, simply pass the generated command to the corresponding proxy interface to access the Redis server."
 
 ## Interface
 
@@ -66,7 +66,7 @@ Error messages can be obtained through trpc::redis::Reply::GetString (Reply type
 
 ## Generate Redis command
 
-First, it is necessary to generate the Redis request command (command) as an input parameter for the corresponding proxy interface. It is recommended to use the trpc::redis::cmdgen{}.xxxx series of interfaces to generate the corresponding command.
+First, it is necessary to generate the Redis request command (command) as an input parameter for the corresponding proxy interface. It is recommended to use the `trpc::redis::cmdgen{}.xxxx`series of interfaces to generate the corresponding command.
 
 ## Get RedisServiceProxy
 
@@ -104,7 +104,7 @@ auto proxy = ::trpc::GetTrpcClient()->GetProxy<trpc::redis::RedisServiceProxy>("
 ...
 ```
 
-## 3 Synchronous call code
+## Synchronous call code
 
 ```cpp
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
@@ -127,7 +127,7 @@ auto proxy = ::trpc::GetTrpcClient()->GetProxy<trpc::redis::RedisServiceProxy>("
   }
 ```
 
-## 4 Asynchronous call code
+## Asynchronous call code
 
 ```cpp
   trpc::ClientContextPtr get_ctx = trpc::MakeClientContext(proxy);
@@ -226,7 +226,7 @@ Currently, using connection-level pipeline does not require code adjustments. Yo
     service:
       - name: redis_server
         protocol: redis
-        xxx
+        # xxx
         # For high performance,if the backend Redis Server support the Pipeline mode (responding in the order of requests within the connection)
         # you can use connection-pipeline which config like this:
         support_pipeline: true
@@ -263,29 +263,29 @@ client:
 
 ## Some performance optimization tips to consider
 
-For scenarios with high latency requirements, it is recommended to use Fiber.
+- For scenarios with high latency requirements, it is recommended to use Fiber.
 
-Use the high-performance (rvalue) interfaces recommended by trpc::redis::RedisServiceProxy to reduce internal data copying.
+- Use the high-performance (rvalue) interfaces recommended by trpc::redis::RedisServiceProxy to reduce internal data copying.
 
-Set a reasonable number of connections (more is not always better, it should be based on business scenario load testing).
+- Set a reasonable number of connections (more is not always better, it should be based on business scenario load testing).
 
-It is recommended to use trpc::redis::Reply::GetArray or trpc::redis::Reply::GetString with parameters to retrieve the returned data, reducing internal data copying.
+- It is recommended to use trpc::redis::Reply::GetArray or trpc::redis::Reply::GetString with parameters to retrieve the returned data, reducing internal data copying.
 
-Whenever possible, use connection-level pipeline mode (provided the backend Redis service supports pipeline capability) to fully utilize network throughput.
+- Whenever possible, use connection-level pipeline mode (provided the backend Redis service supports pipeline capability) to fully utilize network throughput.
 
-Whenever possible, consider using batch interfaces instead of accessing individual data items.
+- Whenever possible, consider using batch interfaces instead of accessing individual data items.
 
-Implement local caching for hot data, with randomized expiration time to prevent a large number of data expirations occurring simultaneously.
+- Implement local caching for hot data, with randomized expiration time to prevent a large number of data expirations occurring simultaneously.
 
-Consider storing different data in different Redis services.
+- Consider storing different data in different Redis services.
 
-Keep the lock granularity as small as possible.
+- Keep the lock granularity as small as possible.
 
-In scenarios where the result of Redis command execution is not important, consider using one-way interfaces (choose carefully).
+- In scenarios where the result of Redis command execution is not important, consider using one-way interfaces (choose carefully).
 
 ## Differences between tRPC-Cpp Redis Client and Redis Official Client
 
-- Commands not supported by tRPC-Cpp Redis Client
+### Commands not supported by tRPC-Cpp Redis Client
 
 | Command (Command Group) |                               Explanation                                                   |
 | :-----------:| :----------------------------------------------------------------------------------------: |
@@ -296,63 +296,65 @@ In scenarios where the result of Redis command execution is not important, consi
 |    Dump      | Dump command is not supported. |
 |   Cluster Management  | Cluster management-related commands are not supported. |
 
-- Differences between tRPC-Cpp Redis Client and the Latest Official Client
+### Differences between tRPC-Cpp Redis Client and the Latest Official Client
+
 Redis Official Client version 6.0 has been released, and in comparison to the tRPC-Cpp client, there are the following differences:
 
-Authentication Process Supports Username
-In older versions, authentication only required a password and did not require a username. However, in version 6.0, authentication supports usernames, allowing for finer-grained access control permissions.
+1. Authentication Process Supports Username
 
-Support for More Data Types
-Redis 6.0 introduces a wider range of data types in addition to the basic data types. However, tRPC-Cpp currently only supports basic types.
+    In older versions, authentication only required a password and did not require a username. However, in version 6.0, authentication supports usernames, allowing for finer-grained access control permissions.
 
-| Type | tRPC-Cpp Redis Client Support  |   Note   |  
-| :-----------| :-------------------:|:----------------: |
-| REDIS_REPLY_STATUS |✓  |Basic Type |
-| REDIS_REPLY_ERROR | ✓ |Basic Type |
-| REDIS_REPLY_INTEGER | ✓  | Basic Type|
-| REDIS_REPLY_NIL | ✓  | Basic Type|
-| REDIS_REPLY_STRING |✓  | Basic Type|
-| REDIS_REPLY_ARRAY |✓ |Basic Type |
-| REDIS_REPLY_DOUBLE | ×| Extend Type|
-| REDIS_REPLY_BOOL | ×|Extend Type |
-| REDIS_REPLY_MAP | ×|Extend Type |
-| REDIS_REPLY_SET | ×|Extend Type |
-| REDIS_REPLY_PUSH | ×| Extend Type|
-| REDIS_REPLY_ATTR | ×| Extend Type|
-| REDIS_REPLY_BIGNUM | ×| Extend Type|
-| REDIS_REPLY_VERB | ×|Extend Type |
+2. Support for More Data Types
 
-3.Support SSL
-Redis 6.0 has the capability to support SSL, but it is not enabled by default. However, the current version of tRPC-Cpp does not support SSL.
+    Redis 6.0 introduces a wider range of data types in addition to the basic data types. However, tRPC-Cpp currently only supports basic types.
+
+    | Type | tRPC-Cpp Redis Client Support  |   Note   |  
+    | :-----------| :-------------------:|:----------------: |
+    | REDIS_REPLY_STATUS |✓  |Basic Type |
+    | REDIS_REPLY_ERROR | ✓ |Basic Type |
+    | REDIS_REPLY_INTEGER | ✓  | Basic Type|
+    | REDIS_REPLY_NIL | ✓  | Basic Type|
+    | REDIS_REPLY_STRING |✓  | Basic Type|
+    | REDIS_REPLY_ARRAY |✓ |Basic Type |
+    | REDIS_REPLY_DOUBLE | ×| Extend Type|
+    | REDIS_REPLY_BOOL | ×|Extend Type |
+    | REDIS_REPLY_MAP | ×|Extend Type |
+    | REDIS_REPLY_SET | ×|Extend Type |
+    | REDIS_REPLY_PUSH | ×| Extend Type|
+    | REDIS_REPLY_ATTR | ×| Extend Type|
+    | REDIS_REPLY_BIGNUM | ×| Extend Type|
+    | REDIS_REPLY_VERB | ×|Extend Type |
+
+3. Support SSL
+
+    Redis 6.0 has the capability to support SSL, but it is not enabled by default. However, the current version of tRPC-Cpp does not support SSL.
 
 # FAQ
 
 ## Data truncation issue?
 
-- **Problem description:**
+- Problem description:
 
-  When calling the function `Status trpc::redis::RedisServiceProxy::Command(const ClientContextPtr& context, Reply* reply, const char* format, ...);`, if the format string contains '\0', it will be truncated, resulting in incomplete writing of binary data.
+  > When calling the function `Status trpc::redis::RedisServiceProxy::Command(const ClientContextPtr& context, Reply* reply, const char* format, ...);`, 
+  > if the format string contains '\0', it will be truncated, resulting in incomplete writing of binary data.
 
-- **Solution:**
+- Solution:
 
-  When the format string contains characters such as '\0', '\r', '\n', etc., use "%b" and specify the length. For example:
-
-  ```cpp
-  Command(ctx_, &rep, "SET %b %b", "trpc", 4, "redis\0redis", 11);
-  Command(ctx_, &rep, "SET %b %b", "trpc", 4, "\xAC\xED\x00redis", 8);
-  ```
+  > When the format string contains characters such as '\0', '\r', '\n', etc., use `%b` and specify the length. For example:
+  > - Command(ctx_, &rep, "SET %b %b", "trpc", 4, "redis\0redis", 11);
+  > - Command(ctx_, &rep, "SET %b %b", "trpc", 4, "\xAC\xED\x00redis", 8);
 
 Therefore, it is recommended to use the trpc::redis::cmdgen{}.xxxx series of interfaces to generate the corresponding command. Then, pass the generated command directly to the proxy interface to access the Redis service.
 
 ## Error retrieving binary data with Get?
 
-- **Problem description:**
+- Problem description:
 
-  When converting binary data from a struct to a value and storing it in Redis using the 'SET' command with the '%b' format, retrieving the data with the 'GET' command in Redis always returns 'nil'.
+  > When converting binary data from a struct to a value and storing it in Redis using the `SET` command with the `%b` format, retrieving the data with the `GET` command in Redis always returns `nil`.
 
-- **Solution:**
+- Solution:
 
-  Upon analysis, it was found that there is a memory alignment issue with the user-defined struct.
+  > Upon analysis, it was found that there is a memory alignment issue with the user-defined struct.
 
 ## Redis reply GetString core?
 
@@ -381,17 +383,21 @@ Yes, it is possible, provided that you have a basic understanding of the Redis p
 
 ## Timeout errors and solutions
 
-1) Incorrect command causing server inability to respond: When constructing Redis commands manually, if an error occurs, the server may not be able to recognize it and will hang indefinitely without returning any data to the client, resulting in a timeout.
-Solution: It is recommended to use the provided interfaces to construct commands and avoid manual command construction.
+- Incorrect command causing server inability to respond
 
-2) Full-link timeout:
-If the timeout configuration is set to a relatively short duration, Redis may report a timeout error immediately after the call. To identify if it is a link timeout issue, log the time difference before and after the call. If this time difference is smaller than the configured timeout value, it can be concluded that it is a link timeout issue. In such cases, disabling the link timeout can be attempted.
+  When constructing Redis commands manually, if an error occurs, the server may not be able to recognize it and will hang indefinitely without returning any data to the client, resulting in a timeout. **It is recommended to use the provided interfaces to construct commands** and avoid manual command construction.
 
-3) Large data packets:
-If dealing with large data packets, adjust the timeout value appropriately within the allowed limits. Additionally, refer to "Common Performance Optimization Techniques" for further performance optimization.
+- Full-link timeout
 
-4) Cross-city access:
-If the downstream service nodes are distributed across multiple cities, cross-city access may occur. It is recommended to avoid deploying upstream and downstream services across different cities.
+  If the timeout configuration is set to a relatively short duration, Redis may report a timeout error immediately after the call. To identify if it is a link timeout issue, log the time difference before and after the call. If this time difference is smaller than the configured timeout value, it can be concluded that it is a link timeout issue. In such cases, disabling the link timeout can be attempted.
+
+- Large data packets
+
+  If dealing with large data packets, adjust the timeout value appropriately within the allowed limits. Additionally, refer to "Common Performance Optimization Techniques" for further performance optimization.
+
+- Cross-city access
+
+  If the downstream service nodes are distributed across multiple cities, cross-city access may occur. It is recommended to avoid deploying upstream and downstream services across different cities.
 
 ## When executing INCR followed by GET, if the value obtained using trpc::redis::Reply::GetInteger() is inconsistent with the expected result?
 
@@ -401,9 +407,13 @@ It is possible that the data type returned by the Redis server is a string. Conv
 
 In the given business scenario, there is only one Redis service. Some Redis access requests are heavy and time-consuming, while others are lightweight and quick. We want to set a higher timeout for the heavy requests and a lower timeout for the lightweight requests. There are two possible solutions:
 
-1）Request-level timeout parameter: Set the timeout individually in the client context for each request;
+- Request-level timeout parameter
 
-2）RedisServiceProxy-level timeout parameter: Treat the Redis service as two separate downstream services by configuring two RedisServiceProxy instances. The service names will be different, but the target will remain the same. Set different timeouts for the two services. When obtaining the RedisServiceProxy, use the service name to retrieve the appropriate proxy. Invoke different types of requests using the corresponding proxy, and so on.
+  Set the timeout individually in the client context for each request;
+
+- RedisServiceProxy-level timeout parameter
+
+  Treat the Redis service as two separate downstream services by configuring two RedisServiceProxy instances. The service names will be different, but the target will remain the same. Set different timeouts for the two services. When obtaining the RedisServiceProxy, use the service name to retrieve the appropriate proxy. Invoke different types of requests using the corresponding proxy, and so on.
 
 ## When fiber, if individual data entries are relatively large (>10MB), the program may unexpectedly crash (core dump)？
 
@@ -411,30 +421,32 @@ In this case, adjusting the fiber stack size configuration (fiber_stack_size) co
 
 ## When there are a large number of backend Redis nodes, accessing them through a pipeline can lead to out-of-memory (OOM) issues？
 
-Reason: When accessing backend nodes through a pipeline, each backend node creates max_conn_num (default is 64) FiberTcpPipelineConnector objects. These objects consume a significant amount of memory. Since there are multiple downstream nodes corresponding to each proxy and the overall number of FiberTcpPipelineConnectors can be high, it can lead to OOM issues.
+- Reason:
+  > When accessing backend nodes through a pipeline, each backend node creates max_conn_num (default is 64) FiberTcpPipelineConnector objects. These objects consume a significant amount of memory. Since there are multiple downstream nodes corresponding to each proxy and the overall number of FiberTcpPipelineConnectors can be high, it can lead to OOM issues.
 
-Solution: In pipeline mode, you can try reducing the number of max_conn_num in ServiceProxyOption. For example, setting it to 1 or reducing the fiber_pipeline_connector_queue_size in ServiceProxyOption can help mitigate the OOM problem.
+- Solution:
+  > In pipeline mode, you can try reducing the number of max_conn_num in ServiceProxyOption. For example, setting it to 1 or reducing the fiber_pipeline_connector_queue_size in ServiceProxyOption can help mitigate the OOM problem.
 
 ## Custom commands？
 
-Custom command：eco_mget key [key ...] mode
+- Custom command：eco_mget key [key ...] mode
 
-```cpp
-std::vector<std::string> keys;
-std::string mode;
-trpc::redis::Request req;
-req.params_.push_back("eco_mget");
-req.params_.insert(req.params_.end(), keys.begin(), keys.end());
-req.params_.push_back(mode);
+  ```cpp
+  std::vector<std::string> keys;
+  std::string mode;
+  trpc::redis::Request req;
+  req.params_.push_back("eco_mget");
+  req.params_.insert(req.params_.end(), keys.begin(), keys.end());
+  req.params_.push_back(mode);
+  
+  proxy->CommandArgv(ctx_, req, &reply);
+  ```
 
-proxy->CommandArgv(ctx_, req, &reply);
-```
+- Custom command：router_get cluster database collection
 
-Custom command：router_get cluster database collection
-
-```cpp
-std::string cluster;
-std::string database;
-std::string collection;
-proxy->Command(ctx_, &reply, "router_get %s %s %s", cluster.c_str(), database.c_str(), collection.c_str());
-```
+  ```cpp
+  std::string cluster;
+  std::string database;
+  std::string collection;
+  proxy->Command(ctx_, &reply, "router_get %s %s %s", cluster.c_str(), database.c_str(), collection.c_str());
+  ```

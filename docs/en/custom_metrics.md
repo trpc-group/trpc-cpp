@@ -130,6 +130,7 @@ The reporting of single-dimensional and multi-dimensional attributes involves th
 #### SingleAttrReport
 
 The interface definition for SingleAttrReport is as follows:
+
 ```cpp
 /// @brief Metrics data with single-dimensional attribute
 struct SingleAttrMetricsInfo {
@@ -171,6 +172,7 @@ Notes:
 #### MultiAttrReport
 
 The interface definition for MultiAttrReport is as follows:
+
 ```cpp
 /// @brief Metrics data with multi-dimensional attributes
 struct MultiAttrMetricsInfo {
@@ -221,6 +223,7 @@ The tRPC-Cpp encapsulates the Metrics plugins, allowing users to conveniently an
 Let's take Prometheus Metrics plugin as an example:
 
 * Enable caller reporting:
+
     ```yaml
     client: 
       filter: 
@@ -228,6 +231,7 @@ Let's take Prometheus Metrics plugin as an example:
     ```
 
 * Enable callee reporting:
+
     ```yaml
     server:
       filter:
@@ -237,6 +241,7 @@ Let's take Prometheus Metrics plugin as an example:
 ### Reporting attribute data using the unified interface
 
 The framework provides a set of [unified reporting interfaces](../../trpc/metrics/trpc_metrics_report.h). **Users only need to specify the name of the Metrics plugin to report the metrics data to the corresponding monitoring system**:
+
 ```cpp
 /// @brief Trpc metrics data for inter-module calls
 struct TrpcModuleMetricsInfo {

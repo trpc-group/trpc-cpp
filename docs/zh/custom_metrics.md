@@ -17,6 +17,7 @@
 **模调上报（ModuleReport）是指RPC模块间的调用监控数据上报，上报主调模块的信息、被调模块的信息、调用结果等。** 其又分为主调监控上报（统计客户端调用信息）和被调监控上报（统计服务端调用信息）两种类型。
 
 模调上报的接口定义如下：
+
 ```cpp
 constexpr int kMetricsCallerSource = 0;
 constexpr int kMetricsCalleeSource = 1;
@@ -63,13 +64,13 @@ class Metrics : public Plugin {
 
 需要注意：
 
-* `ModuleMetricsInfo`的`source`用于区分是主调上报还是被调上报，规定`0`表示主调，`1`表达被调。
+* `ModuleMetricsInfo`的`source`用于区分是主调上报还是被调上报，规定`0`表示主调，`1`表示被调。
 * `ModuleMetricsInfo`的`infos`可以记录一系列的键值对，主/被调的环境、服务、地址等信息均可以通过该字段来记录。
 * 框架尽可能地对最通用的字段进行定义。但由于不同监控系统的监控数据存在较大差异，可能存在一些无法使用`ModuleMetricsInfo`确定类型的字段进行记录的数据，这些信息可以通过`extend_info`来记录。
 
 ### 属性上报
 
-**属性上报是指除了在RPC调用时上报的模调监控数据外，框架和用户对其他可观察数据进行监控上报。** 
+**属性上报是指除了在RPC调用时上报的模调监控数据外，框架和用户对其他可观察数据进行监控上报。**
 
 其包括单维属性上报和多维属性上报两种，它们的主要区别如下：
 
@@ -129,6 +130,7 @@ class Metrics : public Plugin {
 #### 单维属性上报
 
 单维属性上报的接口定义如下：
+
 ```cpp
 /// @brief Metrics data with single-dimensional attribute
 struct SingleAttrMetricsInfo {
@@ -170,6 +172,7 @@ class Metrics : public Plugin {
 #### 多维属性上报
 
 多维属性上报的接口定义如下：
+
 ```cpp
 /// @brief Metrics data with multi-dimensional attributes
 struct MultiAttrMetricsInfo {
@@ -220,6 +223,7 @@ class Metrics : public Plugin {
 以Prometheus监控插件为例：
 
 * 启用主调上报：
+
     ```yaml
     client: 
       filter: 
@@ -227,6 +231,7 @@ class Metrics : public Plugin {
     ```
 
 * 启用被调上报：
+
     ```yaml
     server:
       filter:
@@ -236,6 +241,7 @@ class Metrics : public Plugin {
 ### 使用统一的接口上报属性数据
 
 框架提供了一组[统一的上报接口](../../trpc/metrics/trpc_metrics_report.h)，**用户只需要指定要上报的监控插件名，即可将监控数据上报到对应的监控系统** ：
+
 ```cpp
 /// @brief Trpc metrics data for inter-module calls
 struct TrpcModuleMetricsInfo {
@@ -332,6 +338,7 @@ int MultiAttrReport(TrpcMultiAttrMetricsInfo&& info);
 ## 注册插件和拦截器
 
 插件注册的接口：
+
 ```cpp
 using MetricsPtr = RefPtr<Metrics>;
 
@@ -343,6 +350,7 @@ class TrpcPlugin {
 ```
 
 拦截器注册的接口：
+
 ```cpp
 using MessageServerFilterPtr = std::shared_ptr<MessageServerFilter>;
 using MessageClientFilterPtr = std::shared_ptr<MessageClientFilter>;
@@ -360,6 +368,7 @@ class TrpcPlugin {
 举个例子进行说明。假设自定义了一个TestMetrics插件，TestServerFilter、TestClientFilter两个拦截器，那么
 
 1. 对于服务端场景，用户需要在服务启动的`TrpcApp::RegisterPlugins`函数中注册：
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
      public:
@@ -374,6 +383,7 @@ class TrpcPlugin {
     ```
 
 2. 对于纯客户端场景，需要在启动框架配置初始化后，框架其他模块启动前注册：
+
     ```cpp
     int main(int argc, char* argv[]) {
       ParseClientConfig(argc, argv);

@@ -7,6 +7,7 @@ Welcome to use tRPC-Cpp. The tRPC-Cpp framework is the cpp version of tRPC. It f
 # What tRPC-Cpp can do
 
 You can use it:
+
 - You can build support multiple protocols (one port can only correspond to one protocol) services ([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_service.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_service.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_service.md) etc.), and can handle client requests by synchronized/asynchronously .
 - You can access various protocol backend services ([trpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_client.md)/[http(s)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_client.md)/[grpc](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_client.md) etc.) synchronously, asynchronously and one-way, and call various storage systems (redis, etc.), and automatically integrate monitoring/tracing capabilities, making service development and operation more convenient and simple.
 - Support streaming rpc programming([trpc streaming](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/trpc_protocol_streaming_service.md), [grpc streaming](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/grpc_protocol_streaming_service.md), [http streaming upload/download](https://github.com/trpc-group/trpc-cpp/blob/main/docs/en/http_protocol_upload_download_service.md) etc.), to implement streaming applications like push, file upload, video/voice, etc.
@@ -18,27 +19,27 @@ You can use it:
 
 - Easy to expand
 
-Pluggable design is the biggest feature of the framework. Through the pluggable design of filter and plugin factory, the framework can support various protocols, solve the problem of interoperability with different services, and can connect with various service management systems to better solve the problem of service operation and maintenance, it is also convenient for users to implement customized development and solve the needs of different business personalization.
+    Pluggable design is the biggest feature of the framework. Through the pluggable design of filter and plugin factory, the framework can support various protocols, solve the problem of interoperability with different services, and can connect with various service management systems to better solve the problem of service operation and maintenance, it is also convenient for users to implement customized development and solve the needs of different business personalization.
 
 - high performance
 
-Conventional framework performance test data is only performance data in relatively simple scenarios, and does not represent good performance in real and different business scenarios. Considering that Tencent has many different business scenarios, the requirements for framework performance are also different, for example:
+    Conventional framework performance test data is only performance data in relatively simple scenarios, and does not represent good performance in real and different business scenarios. Considering that Tencent has many different business scenarios, the requirements for framework performance are also different, for example:
 
-- business accesses gateway scenarios: the feature is that the business logic is light, hign qps, large number of connections (long/short connections), heavy network io operations, and asynchronous programming is often used for programming;
-- recommendation/search scenarios: the feature is that the business logic is heavy, the qps is not large, each request needs to be calculated in parallel, pay attention to the long tail delay, and the programming often use synchronous programming;
-- game business scenarios: the feature is that logic very complex and  has stateful, large qps, single-threaded programming, and use synchronous programming;
-- storage scenarios:  the feature is that the business logic is light, large qps, low latency requirement, heavy network io and disk io operations, and asynchronous programming is often used for programming;
--...
+  - business accesses gateway scenarios: the feature is that the business logic is light, hign qps, large number of connections (long/short connections), heavy network io operations, and asynchronous programming is often used for programming;
+  - recommendation/search scenarios: the feature is that the business logic is heavy, the qps is not large, each request needs to be calculated in parallel, pay attention to the long tail delay, and the programming often use synchronous programming;
+  - game business scenarios: the feature is that logic very complex and  has stateful, large qps, single-threaded programming, and use synchronous programming;
+  - storage scenarios:  the feature is that the business logic is light, large qps, low latency requirement, heavy network io and disk io operations, and asynchronous programming is often used for programming;
+  - ...
 
-Therefore, in terms of high performance, tRPC pays more attention to meeting the performance requirements of users in different application scenarios.
+  Therefore, in terms of high performance, tRPC pays more attention to meeting the performance requirements of users in different application scenarios.
 
-In terms of framework design, we abstractly designed a layer of runtime, using pluggable ideas to expand and support multiple threading models, currently supporting io/handle merged or separated threading model, and fiber (m:n coroutine) threading model, to meet the performance requirements of different business scenarios. For example, in heavy io business scenarios of business gateways and storage types, the thread model of io/handle merge or separation is generally choosed, and in heavy cpu business scenarios of recommendation/search types, fiber( m:n coroutine) threading model is generally choosed, while game-like business logic stateful scenarios generally choose a single-threaded model.
+  In terms of framework design, we abstractly designed a layer of runtime, using pluggable ideas to expand and support multiple threading models, currently supporting io/handle merged or separated threading model, and fiber (m:n coroutine) threading model, to meet the performance requirements of different business scenarios. For example, in heavy io business scenarios of business gateways and storage types, the thread model of io/handle merge or separation is generally choosed, and in heavy cpu business scenarios of recommendation/search types, fiber( m:n coroutine) threading model is generally choosed, while game-like business logic stateful scenarios generally choose a single-threaded model.
 
-In terms of specific implementation, we also optimize the performance of the framework from several factors that mainly affect the performance of the framework (cpu/memory/io, etc.), such as: reduction of lock conflicts in task scheduling under multi-threading, network io to rpc data zero copy, memory pool/object pool, concurrent writing fd, etc. In addition, we have borrowed the performance optimization technical ideas of industry frameworks(seastar/brpc, etc.).
+  In terms of specific implementation, we also optimize the performance of the framework from several factors that mainly affect the performance of the framework (cpu/memory/io, etc.), such as: reduction of lock conflicts in task scheduling under multi-threading, network io to rpc data zero copy, memory pool/object pool, concurrent writing fd, etc. In addition, we have borrowed the performance optimization technical ideas of industry frameworks(seastar/brpc, etc.).
 
 - Rich ecosystem
 
-At present, most of Tencent's internal communication protocols and service management systems have supported by plugin, and also support ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
+    At present, most of Tencent's internal communication protocols and service management systems have supported by plugin, and also support ecosystems(such as: redis/etcd/promethues/opentelemetry, etc.), the business choose to use what you need.
 
 # How to use tRPC-Cpp
 

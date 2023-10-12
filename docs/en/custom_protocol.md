@@ -1,6 +1,5 @@
 [中文](../zh/custom_protocol.md)
 
-
 # Overview
 
 This article introduces how to develop custom protocol based on tRPC-Cpp (referred to as tRPC below). Developers can
@@ -95,7 +94,7 @@ Basic steps are as follows:
 
 We will use sample code for demonstration purposes.
 
-#### 1. Defining the protocol objects
+#### Defining the protocol objects
 
 The network message format for the custom protocol in the example is as follows:
 
@@ -131,17 +130,11 @@ class DemoResponseProtocol : public ::trpc::Protocol {
 };
 ```
 
-*Decode* packs the message.
+In this context, *ZeroCopyEncode* refers to unpacking a message, while *ZeroCopyDecode* refers to packing a message.
 
-*Encode* unpacks the message.
+Here, we would like to emphasize "RequestId". It can be used to identify different request and response messages. In scenarios where the connection is reused, multiple request and response messages can be transmitted concurrently on the same connection. If the protocol does not have message identification, the `GetRequest/SetRequest` interfaces do not need to be implemented, and the client will send request messages using a connection pool.
 
-Here, we would like to emphasize "RequestId". It can be used to identify different request and response messages. In
-scenarios where the connection is reused, multiple request and response messages can be transmitted concurrently on the
-same connection.
-If the protocol does not have message identification, the `GetRequest/SetRequest` interfaces do not need to be
-implemented, and the client will send request messages using a connection pool.
-
-#### 2. Implementing the interfaces of codec
+#### Implementing the interfaces of codec
 
 `ClientCodec` looks like as follows :
 
@@ -235,7 +228,7 @@ object is returned.
 *CreateResponseObject* creates and returns the `ResponseProtocol` object. In the sample code,
 a `DemoResponseProtocolPtr` object is returned.
 
-#### 3. Registering a plugin of codec
+#### Registering a plugin of codec
 
 For example, on the server side, the custom protocol `codec` plugin can be registered in the `RegisterPlugins`
 interface, so that the registered service can use this `codec` plugin.
@@ -250,7 +243,7 @@ class DemoServer : public ::trpc::TrpcApp {
 };
 ```
 
-#### 4. Developing a service to use the custom protocol
+#### Developing a service to use the custom protocol
 
 The tRPC framework provides services to the outside world through the registration of services. Therefore, to use a
 custom protocol, an instance of `ServiceImpl` needs to be developed to handle custom protocol requests and respond to
@@ -464,7 +457,7 @@ DemoResponseProtocol <.. DemoServiceImpl
 
 # FAQ
 
-## 1. After implementing the `codec` plugin, does the user need to handle the network message reception and transmission logic?
+## After implementing the `codec` plugin, does the user need to handle the network message reception and transmission logic?
 
 No, the user does not need to handle network-related operations. Just implement the `codec` related interfaces. The
 logic of the entire Client-Server process is driven by the framework, and message serialization, compression, network

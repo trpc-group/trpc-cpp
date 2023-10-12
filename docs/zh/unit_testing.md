@@ -1,7 +1,8 @@
+[English](../en/unit_testing.md)
 
 # 前言
 
-为了方便对用到网络调用的逻辑代码进行单元测试，一种常用的方式是进行网络mock，因此框架提供了基于[googletest(googlemock)](https://github.com/google/googletest)的测试方法。
+为了方便对用到网络调用的逻辑代码进行单元测试，一种常用的方式是进行网络 mock，因此框架提供了基于[googletest(googlemock)](https://github.com/google/googletest)的测试方法。
 
 接下来我们就如何编写服务端及客户端的单元测试进行说明。
 
@@ -11,7 +12,7 @@
 
 ## 同步回包场景下的单测编写
 
-此场景下不涉及网络调用，因此无需对网络进行mock。故单测编写比较简单，示例如下：
+此场景下不涉及网络调用，因此无需对网络进行 mock。故单测编写比较简单，示例如下：
 
 ```cpp
 TEST(GreeterServiceTest, SayHelloOK) {
@@ -30,11 +31,11 @@ TEST(GreeterServiceTest, SayHelloOK) {
 
 ## 异步回包场景下的单测编写
 
-异步回包场景相比同步回包场景，需要用户在程序中主动调用`context->SendUnaryResponse`进行回包。此场景涉及网络调用，故单测中需要对网络进行mock。
+异步回包场景相比同步回包场景，需要用户在程序中主动调用`context->SendUnaryResponse`进行回包。此场景涉及网络调用，故单测中需要对网络进行 mock。
 
 为了方便写单测，框架提供了针对这种测试场景的[MockServerTransport](/trpc/server/testing/server_testing.h#L44)类。
 
-使用时先调用`Service::SetServerTransport`接口将transport设置为MockServerTransport，然后通过gmock的EXPECT_CALL语法来对网络调用进行mock，伪代码如下所示：
+使用时先调用 `Service::SetServerTransport` 接口将 transport 设置为 MockServerTransport，然后通过 gmock 的 EXPECT_CALL 语法来对网络调用进行 mock，伪代码如下所示：
 
 ```cpp
 #include "trpc/server/testing/server_testing.h"
@@ -66,33 +67,32 @@ TEST(GreeterServiceTest, SayHelloOK) {
 }
 ```
 
-完整示例见unittest中的[GreeterServiceTestFixture_SayHelloOK](/examples/unittest/server/async/greeter_service_test.cc#L55)。
+完整示例见 unittest 中的[GreeterServiceTestFixture_SayHelloOK](/examples/unittest/server/async/greeter_service_test.cc#L55)。
 
 说明：
 
-在调用`SendUnaryResponse`进行异步回包时，要求对ServerContext对象的一些成员进行初始化，然后才能使用。
+在调用 `SendUnaryResponse` 进行异步回包时，要求对 ServerContext 对象的一些成员进行初始化，然后才能使用。
 
 因此为了方便测试代码编写，框架提供了[ServerContextPtr MakeServerContext(Service* service, ServerCodec* codec)](/trpc/server/testing/server_testing.h#L27)接口来生成测试用的ServerContext。
 
 # 客户端
 
-客户端调用分为同步及异步调用两种方式，两种情况都需要对网络进行mock，mock方法也类似。
+客户端调用分为同步及异步调用两种方式，两种情况都需要对网络进行 mock，mock方法也类似。就具体调用方式而言，主要分为两类：
 
-就具体调用方式而言，主要分为两类：
-1. 直接使用RPC接口进行调用，如tRPC协议
+1. 直接使用RPC接口进行调用，如 tRPC 协议
 2. 使用HttpServiceProxy、RedisServiceProxy等ServiceProxy子类进行调用
 
 下面对这两种场景下的单测编写进行说明。
 
 ## 使用RPC接口调用场景下的单测编写
 
-针对这种场景，框架提供了mock类，用户可以基于mock类，对RPC接口进行mock来编写单测。完整的代码示例见[unittest/client](/examples/unittest/client/greeter_client_test.cc)。
+针对这种场景，框架提供了 mock 类，用户可以基于 mock 类，对 RPC 接口进行 mock 来编写单测。完整的代码示例见[unittest/client](/examples/unittest/client/greeter_client_test.cc)。
 
-### mock类生成
+### mock 类生成
 
-以tRPC协议为例，框架支持通过pb文件生成对应的mock类，然后用户使用mock类进行编码。
+以 tRPC 协议为例，框架支持通过 protobuf 文件生成对应的 mock 类，然后用户使用 mock 类进行编码。
 
-比如有如下的pb文件`helloworld.proto`
+比如有如下的 protobuf 文件`helloworld.proto`
 
 ```protobuf
 syntax = "proto3";
@@ -109,9 +109,9 @@ message HelloReply {
 }
 ```
 
-通过在trpc_proto_library中添加`generate_new_mock_code = true`，即可开启mock类代码生成：
+通过在 trpc_proto_library 中添加`generate_new_mock_code = true`，即可开启 mock 类代码生成：
 
-```
+```bzl
 # 此处为BUILD文件的trpc_proto_library部分
 trpc_proto_library(
     name = "helloworld_proto",
@@ -125,7 +125,8 @@ trpc_proto_library(
 )
 ```
 
-编译之后，将生成包括Mock实现类的头文件`helloworld.trpc.pb.mock.h`, 其中`MockGreeterServiceProxy`类可用于客户端的Mock测试：
+编译之后，将生成包括Mock实现类的头文件 `helloworld.trpc.pb.mock.h`, 其中 `MockGreeterServiceProxy` 类可用于客户端的 mock
+测试：
 
 ```cpp
 class MockGreeterServiceProxy: public GreeterServiceProxy {
@@ -136,7 +137,7 @@ public:
 };
 ```
 
-在生成mock类后，我们就可以使用mock类来编写单元测试。
+在生成 mock 类后，我们就可以使用 mock 类来编写单元测试。
 
 ### 使用mock类进行单测编写
 
@@ -183,7 +184,7 @@ bool SayHello(GreeterServiceProxyPtr& proxy) {
 }
 ```
 
-这时我们使用`helloworld.trpc.pb.mock.h`中生成`MockGreeterServiceProxy`对象来对RPC接口进行mock，伪代码如下：
+这时我们使用 `helloworld.trpc.pb.mock.h` 中生成 `MockGreeterServiceProxy` 对象来对 RPC 接口进行 mock，伪代码如下：
 
 ```cpp
 using ::trpc::test::unittest;
@@ -229,9 +230,9 @@ TEST_F(TestFixture, AsyncSayHelloSuccess) {
 }
 ```
 
-## 使用HttpServiceProxy、RedisServiceProxy等ServiceProxy子类进行调用场景下的单测编写
+## 使用 HttpServiceProxy、RedisServiceProxy 等 ServiceProxy 子类进行调用场景下的单测编写
 
-针对这种场景，可以通过重载基类ServiceProxy的如下虚接口来进行网络mock:
+针对这种场景，可以通过重载基类 ServiceProxy 的如下虚接口来进行网络 mock:
 
 ```cpp
 /// @brief Synchronous call interface oriented to transport, it will be call by UnaryInvoke.
@@ -258,51 +259,52 @@ Status GetContent(HttpServiceProxyPtr& proxy, const std::string& url, rapidjson:
 
 则步骤如下：
 
-1. 实现HttpServiceProxy mock类MockHttpServiceProxy
-```cpp
-class MockHttpServiceProxy : public ::trpc::HttpServiceProxy {
- public:
-  MOCK_METHOD(void, UnaryTransportInvoke, (const ClientContextPtr& context, const ProtocolPtr& req, ProtocolPtr& rsp),
-              (override));
+1. 实现 HttpServiceProxy mock 类 MockHttpServiceProxy
 
-  MOCK_METHOD(Future<ProtocolPtr>, AsyncUnaryTransportInvoke, (const ClientContextPtr& context, const ProtocolPtr& req_protocol), (override));
-};
-```
+   ```cpp
+   class MockHttpServiceProxy : public ::trpc::HttpServiceProxy {
+    public:
+     MOCK_METHOD(void, UnaryTransportInvoke, (const ClientContextPtr& context, const ProtocolPtr& req, ProtocolPtr& rsp),
+                 (override));
+   
+     MOCK_METHOD(Future<ProtocolPtr>, AsyncUnaryTransportInvoke, (const ClientContextPtr& context, const ProtocolPtr& req_protocol), (override));
+   };
+   ```
+  
+2. 使用 MockHttpServiceProxy 类编写单测
 
-2. 使用MockHttpServiceProxy类编写单测
-
-```cpp
-using MockHttpServiceProxyPtr = std::shared_ptr<MockHttpServiceProxy>;
-
-class TestFixture : public ::testing::Test {
- public:
-  static void SetUpTestCase() { ... }
-
-  static void TearDownTestCase() { ... }
-
-  void SetUp() override {
-    mock_http_proxy_ = ::trpc::GetTrpcClient()->GetProxy<MockGreeterServiceProxy>("mock_http_proxy");
-  }
-
-  void TearDown() override {}
-
- protected:
-  MockHttpServiceProxyPtr mock_http_proxy_;
-};
-
-MockHttpServiceProxyPtr TestFixture::mock_http_proxy_ = nullptr;
-
-TEST_F(TestFixture, GetContentOK) {
-  // mock response
-  ProtocolPtr rsp = proxy->GetClientCodec()->CreateResponsePtr();
-  rsp.SetNonContiguousProtocolBody(...);
-  EXPECT_CALL(*proxy, UnaryTransportInvoke(::testing::_, ::testing::_, ::testing::_))
-      .Times(1)
-      .WillOnce(::testing::SetArgReferee<2>(rsp_data));
-
-  std::string url = "xxx";
-  rapidjson::Document json;
-  auto status = GetContent(mock_http_proxy_, url, &json);
-  EXPECT_TRUE(status.OK());
-}
-```
+   ```cpp
+   using MockHttpServiceProxyPtr = std::shared_ptr<MockHttpServiceProxy>;
+   
+   class TestFixture : public ::testing::Test {
+    public:
+     static void SetUpTestCase() { ... }
+   
+     static void TearDownTestCase() { ... }
+   
+     void SetUp() override {
+       mock_http_proxy_ = ::trpc::GetTrpcClient()->GetProxy<MockGreeterServiceProxy>("mock_http_proxy");
+     }
+   
+     void TearDown() override {}
+   
+    protected:
+     MockHttpServiceProxyPtr mock_http_proxy_;
+   };
+   
+   MockHttpServiceProxyPtr TestFixture::mock_http_proxy_ = nullptr;
+   
+   TEST_F(TestFixture, GetContentOK) {
+     // mock response
+     ProtocolPtr rsp = proxy->GetClientCodec()->CreateResponsePtr();
+     rsp.SetNonContiguousProtocolBody(...);
+     EXPECT_CALL(*proxy, UnaryTransportInvoke(::testing::_, ::testing::_, ::testing::_))
+         .Times(1)
+         .WillOnce(::testing::SetArgReferee<2>(rsp_data));
+   
+     std::string url = "xxx";
+     rapidjson::Document json;
+     auto status = GetContent(mock_http_proxy_, url, &json);
+     EXPECT_TRUE(status.OK());
+   }
+   ```

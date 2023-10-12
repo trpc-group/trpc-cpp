@@ -1,7 +1,5 @@
 [English](../en/custom_protocol.md)
 
-# 用户自定义协议开发指南
-
 # 前言
 
 本文介绍如何基于 tRPC-Cpp （下面简称 tRPC）开发用户自定义协议，开发者可以了解到如下内容：
@@ -90,7 +88,7 @@ CC -->> C: Request
 
 我们以体验的示例代码为例进行说明。
 
-**1. 定义协议对象**
+#### 定义协议对象
 
 示例中自定义协议的网络消息格式如下：
 
@@ -128,14 +126,11 @@ class DemoResponseProtocol : public ::trpc::Protocol {
 };
 ```
 
-*Decode* 打包消息。
+其中 *ZeroCopyEncode* 为打包消息，*ZeroCopyDecode* 为解包消息。
 
-*Encode* 解包消息。
+这里特别说明下 RequestId，它可以用来标识不同的请求和响应消息，在连接复用的场景下，支持多个请求和响应消息在同一个连接上并发传输。如果协议没有消息标识，GetRequest/SetRequest 接口不用实现，客户端会采用连接池方式发送请求消息。
 
-这里特别说明下 RequestId，它可以用来标识不同的请求和响应消息，在连接复用的场景下，支持多个请求和响应消息在同一个连接上并发传输。
-如果协议没有消息标识，GetRequest/SetRequest 接口不用实现，客户端会采用连接池方式发送请求消息。
-
-**2. 实现 codec 插件接口**
+#### 实现 codec 插件接口
 
 ClientCodec 接口如下：
 
@@ -189,9 +184,10 @@ service:
 
 *ZeroCopyCheck* 把消息从二进制缓冲区 |in| 中按照协议格式切割下来，然后放入队列 |out| 中，该队列的数据将会作为 `ZeroDecode`
 接口的输入参数。 此接口有三类返回值：
-- PacketChecker::PACKET_FULL，成功解析到一个或者多个消息。
-- PacketChecker::PACKET_LESS，到目前为止，消息符合协议格式要求，但不足以解析出一个完整消息，需后续更多的消息数据。
-- PacketChecker::PACKET_ERR，出错，比如消息不符和协议格式要求，返回此错误会导致连接关闭。
+
+* PacketChecker::PACKET_FULL，成功解析到一个或者多个消息。
+* PacketChecker::PACKET_LESS，到目前为止，消息符合协议格式要求，但不足以解析出一个完整消息，需后续更多的消息数据。
+* PacketChecker::PACKET_ERR，出错，比如消息不符和协议格式要求，返回此错误会导致连接关闭。
 
 *ZeroCopyDecode* 将解析好的网络消息解包，然后组装成协议对应的 RequestProtocol/ResponseProtocol 对象。比如，设置请求头部键-值对，设置消息内容。
 
@@ -205,15 +201,15 @@ service:
 
 *IsComplex* 报告协议是否支持连接复用，在示例代码中，此接口返回 true，表示支持连接复用，因为协议中有 PacketID 来标识同一连接上不同的消息。此接口是 ClientCodec 特有的。
 
-*CreateRequestPtr* 创建并返回 RequestProtocol 对象。在示例代码中返回 DemoRequestProtocolPtr 对象。 
+*CreateRequestPtr* 创建并返回 RequestProtocol 对象。在示例代码中返回 DemoRequestProtocolPtr 对象。
 
-*CreateResponsePtr* 创建并返回 ResponseProtocol 对象。在示例代码中返回 DemoResponseProtocolPtr 对象。 
+*CreateResponsePtr* 创建并返回 ResponseProtocol 对象。在示例代码中返回 DemoResponseProtocolPtr 对象。
 
 *CreateRequestObject* 创建并返回 RequestProtocol 对象。在示例代码中返回 DemoRequestProtocolPtr 对象。
 
 *CreateResponseObject* 创建并返回 ResponseProtocol 对象。在示例代码中返回 DemoResponseProtocolPtr 对象。
 
-**3. 注册 codec 插件**
+#### 注册 codec 插件
 
 以服务端为例，自定义协议 codec 插件可以在 `RegisterPlugins` 接口中注册，这样注册的 Service 就可以使用上这个 codec 插件了。
 
@@ -227,15 +223,15 @@ class DemoServer : public ::trpc::TrpcApp {
 };
 ```
 
-**4. 开发 Service 来使用自定义协议**
+#### 开发 Service 来使用自定义协议
 
 tRPC 框架是通过注册 Service 的方式对外提供服务。
-所以，为了用上自定义协议，需要开发一个 ServiceImpl 来处理自定义协议请求，然后回复响应。 
+所以，为了用上自定义协议，需要开发一个 ServiceImpl 来处理自定义协议请求，然后回复响应。
 
 tRPC 框架提供了 `NonRpcServiceImpl` 接口。我们只需要做两件事：
+
 1. 实现 `Execute` 接口，这里添加具体请求的处理过程。
 2. 注册请求路由，这个过程一般放在构造方法中。
-
 
 ```cpp
 class DemoServiceImpl : public ::trpc::NonRpcServiceImpl {
@@ -286,6 +282,7 @@ class DemoServer : public ::trpc::TrpcApp {
 ```
 
 服务配置如下：
+
 ```yaml
 # @file: trpc_cpp.yaml
 #...
@@ -307,11 +304,13 @@ server:
 使用 tRPC 客户端访问 DemoServiceImpl 也很简单，和访问 tRPC 服务一样。
 
 首先，注册 ClientCodec 插件。
+
 ```cpp
 ::trpc::TrpcPlugin::GetInstance()->RegisterClientCodec(std::make_shared<DemoClientCodec>());
 ```
 
-然后，创建 `NonRpcServiceProxy` 对象 proxy，调用 `UnaryInvoke` 或者 `AsyncUnaryInvoke` 方法。 
+然后，创建 `NonRpcServiceProxy` 对象 proxy，调用 `UnaryInvoke` 或者 `AsyncUnaryInvoke` 方法。
+
 ```cpp
 int Call() {
   ::trpc::ServiceProxyOption option;
@@ -436,6 +435,7 @@ DemoResponseProtocol <.. DemoServiceImpl
 
 # FAQ
 
-## 1 实现 codec 插件后，用户需要处理网络消息接收和发送逻辑吗？
+## 实现 codec 插件后，用户需要处理网络消息接收和发送逻辑吗？
+
 用户不需要处理网络相关操作，实现 codec 相关接口即可。
 Client-Server 整个主流程的逻辑有框架驱动，其中消息序列化、压缩、网络消息接收和发送均由框架处理。

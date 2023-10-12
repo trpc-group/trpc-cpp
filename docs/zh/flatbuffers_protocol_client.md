@@ -1,6 +1,5 @@
 [English](../en/flatbuffers_protocol_client.md)
 
-
 # 前言
 
 本章介绍tRPC-Cpp框架调用flatbuffers的客户端例子，flatbuffers 的原理和背景可以参考：[flatbuffers_protocol_service](flatbuffers_protocol_service.md)

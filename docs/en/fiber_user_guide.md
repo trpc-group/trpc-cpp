@@ -44,87 +44,86 @@ global:
         fiber_scheduling_name: v1                                 #fiber_scheduling_name
 ```
 
-
 # Class && Interface
 
 ## Start and Run Fiber
 
-Interface：
-
-```cpp
-// @brief Create a fiber and run it
-// @note  If the program creates too many fibers, system has not memory, it will return failure.
-bool StartFiberDetached(Function<void()>&& start_proc);
-
-// @brief Create a fiber by attrs and run it
-bool StartFiberDetached(Fiber::Attributes&& attrs, Function<void()>&& start_proc);
-```
-
-By default, Fiber is created with runtime attributes initiated and executed by the framework, which may be scheduled in other dispatch groups. However, it is also possible to customize the Fiber runtime attributes using Fiber::Attributes:
-
-```cpp
-  struct Attributes {
-    // How to start a Fiber: By default, Post will enqueue the Fiber for scheduling execution. 
-    // Alternatively, you can choose the Dispatch method for immediate execution.
-    fiber::Launch launch_policy = fiber::Launch::Post;
-
-    // Which scheduling group should the Fiber execute in? By default, it selects the nearest group 
-    // (i.e., Fibers from the same calling thread execute in the same group).
-    // You can choose kUnspecifiedSchedulingGroup for random selection or specify a fixed group (0 to the number of groups - 1).
-    std::size_t scheduling_group = kNearestSchedulingGroup;
-
-    // Is it allowed for the Fiber to execute in other scheduling groups? By default, it is allowed.
-    bool scheduling_group_local = false;
-  };
-```
-
-To create a Fiber with default attributes：
-
-```cpp
-trpc::StartFiberDetached([&] {
-  Handle();
-});
-```
-
-You can also specify Fiber::Attributes to run the Fiber in a specific scheduling group:
-
-```cpp
-trpc::Fiber::Attributes attr;
-attr.scheduling_group = 1;
-
-trpc::StartFiberDetached(attr, [&] {
-  Handle();
-});
-```
+- Interface：
+  
+  ```cpp
+  // @brief Create a fiber and run it
+  // @note  If the program creates too many fibers, system has not memory, it will return failure.
+  bool StartFiberDetached(Function<void()>&& start_proc);
+  
+  // @brief Create a fiber by attrs and run it
+  bool StartFiberDetached(Fiber::Attributes&& attrs, Function<void()>&& start_proc);
+  ```
+  
+  By default, Fiber is created with runtime attributes initiated and executed by the framework, which may be scheduled in other dispatch groups. However, it is also possible to customize the Fiber runtime attributes using Fiber::Attributes:
+  
+  ```cpp
+    struct Attributes {
+      // How to start a Fiber: By default, Post will enqueue the Fiber for scheduling execution. 
+      // Alternatively, you can choose the Dispatch method for immediate execution.
+      fiber::Launch launch_policy = fiber::Launch::Post;
+  
+      // Which scheduling group should the Fiber execute in? By default, it selects the nearest group 
+      // (i.e., Fibers from the same calling thread execute in the same group).
+      // You can choose kUnspecifiedSchedulingGroup for random selection or specify a fixed group (0 to the number of groups - 1).
+      std::size_t scheduling_group = kNearestSchedulingGroup;
+  
+      // Is it allowed for the Fiber to execute in other scheduling groups? By default, it is allowed.
+      bool scheduling_group_local = false;
+    };
+  ```
+  
+- Create a Fiber with default attributes：
+  
+  ```cpp
+  trpc::StartFiberDetached([&] {
+    Handle();
+  });
+  ```
+  
+  You can also specify Fiber::Attributes to run the Fiber in a specific scheduling group:
+  
+  ```cpp
+  trpc::Fiber::Attributes attr;
+  attr.scheduling_group = 1;
+  
+  trpc::StartFiberDetached(attr, [&] {
+    Handle();
+  });
+  ```
 
 ## Collaboration between multiple Fibers
 
-FiberLatch used for collaboration between multiple Fibers, as shown in the example:
+- FiberLatch used for collaboration between multiple Fibers, as shown in the example:
 
-```cpp
-trpc::FiberLatch l(1);
-trpc::StartFiberDetached([&] {
-  Handle();
+  ```cpp
+  trpc::FiberLatch l(1);
+  trpc::StartFiberDetached([&] {
+    Handle();
+        
+    // As the execution unit is about to finish, the FiberLatch is decremented. When it reaches zero, it will awaken the synchronous waiting operation.
+    l.CountDown();
+  });    
       
-  // As the execution unit is about to finish, the FiberLatch is decremented. When it reaches zero, it will awaken the synchronous waiting operation.
-  l.CountDown();
-});    
-    
-// The synchronous waiting operation is awakened only when the value of the FiberLatch is reduced to 0.
-l.Wait();
-```
+  // The synchronous waiting operation is awakened only when the value of the FiberLatch is reduced to 0.
+  l.Wait();
+  ```
 
-FiberLatch Interface:
+- FiberLatch Interface:
 
-|Interface |  Function |Parameter |Return value|
-| :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
-| FiberLatch(std::ptrdiff_t count) |  Creates a FiberLatch with an internal count of count|count: internal count | void |
-| CountDown(std::ptrdiff_t update = 1) |  Decrements the internal count by update|update: value to subtract from the internal count | void |
-| TryWait() |  Checks if the internal count is already 0| Noop | bool: returns true if the internal count is 0, otherwise false |
-| Wait() |  Blocks and waits until the internal count is 0| Noop  | void |
-| ArriveAndWait(std::ptrdiff_t update = 1) |  Combined interface of CountDown() and Wait()| | void |
-| bool WaitFor(const std::chrono::duration<Rep, Period>& timeout)  | Waits for the internal count to be 0 within the specified timeout duration|timeout: timeout duration | void |
-| bool WaitUntil(const std::chrono::time_point<Clock, Duration>& timeout)  | Waits for the internal count to be 0 within the specified timeout duration|timeout: timeout time point | void |
+  |Interface |  Function |Parameter |Return value|
+  | :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
+  | FiberLatch(std::ptrdiff_t count) |  Creates a FiberLatch with an internal count of count|count: internal count | void |
+  | CountDown(std::ptrdiff_t update = 1) |  Decrements the internal count by update|update: value to subtract from the internal count | void |
+  | TryWait() |  Checks if the internal count is already 0| Noop | bool: returns true if the internal count is 0, otherwise false |
+  | Wait() |  Blocks and waits until the internal count is 0| Noop  | void |
+  | ArriveAndWait(std::ptrdiff_t update = 1) |  Combined interface of CountDown() and Wait()| | void |
+  | bool WaitFor(const std::chrono::duration<Rep, Period>& timeout)  | Waits for the internal count to be 0 within the specified timeout duration|timeout: timeout duration | void |
+  | bool WaitUntil(const std::chrono::time_point<Clock, Duration>& timeout)  | Waits for the internal count to be 0 within the specified timeout duration|timeout: timeout time point | void |
 
 ## Mutual exclusive access between Fibers
 
@@ -149,17 +148,19 @@ for(size_t i=0; i<10; ++i) {
 latch.wait();
 ```
 
-FiberMutex can be used in conjunction with RAII tools like std::scoped_lock to avoid forgetting to release lock resources.
+Note:
 
-FiberLatch Interface:
+- FiberMutex can be used in conjunction with RAII tools like std::scoped_lock to avoid forgetting to release lock resources.
 
-|Interface |  Function |Parameter |Return value|
-| :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
-| void wait(`std::unique_lock<FiberMutex>`& lock)  | Wait until notify_xxx()  | lock FiberMutex| void |
-| void lock()  | Protect shared data with locks | Noop | void |
-| void unlock()  | Release the lock and wake up the corresponding Fiber | Noop | void |
-| bool try_lock() | Can the lock be acquired? If it has already been locked, return failure. | Noop | bool, return false if it has been locked, otherwise return true |
+- FiberLatch Interface:
 
+  |Interface |  Function |Parameter |Return value|
+  | :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
+  | void wait(std::unique_lock&lt;FiberMutex>&amp; lock)  | Wait until notify_xxx()  | lock FiberMutex| void |
+  | void lock()  | Protect shared data with locks | Noop | void |
+  | void unlock()  | Release the lock and wake up the corresponding Fiber | Noop | void |
+  | bool try_lock() | Can the lock be acquired? If it has already been locked, return failure. | Noop | bool, return false if it has been locked, otherwise return true |
+  
 ## Shared data when read priority
 
 Read-write lock used for shared data between Fibers: FiberSharedMutex. Example:
@@ -215,92 +216,91 @@ void Update(const std::string& key, const std::string& value){
 
 ## ConditionVariable
 
-Used for Fiber condition notification: FiberConditionVariable. Example:
+- Used for Fiber condition notification: FiberConditionVariable. Example:
+  
+  ```cpp
+  
+  FiberConditionVariable cv;
+  FiberMutex lock;
+  bool set;
+  
+  void Wait(){
+    std::unique_lock lk(lock);
+    cv.wait(lk, [&] { return set; });
+  }
+  
+  void Notify(){
+    std::scoped_lock _(lock);
+    set = true;
+    cv.notify_one();
+  }
+  ```
 
-```cpp
+- FiberConditionVariable Interface:
 
-FiberConditionVariable cv;
-FiberMutex lock;
-bool set;
-
-void Wait(){
-  std::unique_lock lk(lock);
-  cv.wait(lk, [&] { return set; });
-}
-
-void Notify(){
-  std::scoped_lock _(lock);
-  set = true;
-  cv.notify_one();
-}
-```
-
-FiberConditionVariable Interface:
-
-|Interface |  Function |Parameter |Return value|
-| :-------------------------------------------------------| :-------------------------------|:--------------------------|:--------------------------------|
-| void wait(`std::unique_lock<FiberMutex>`& lock)  | wait notify_xxx()  | lock FiberMutex| void |
-| std::cv_status wait_for(`std::unique_lock<FiberMutex>`& lock,const std::chrono::duration<Rep, Period>& expires_in)  | wait notify or timeout | lock FiberMutex，expires_in | cv_status ，return std::cv_status::no_timeout if no_timeout ，or return std::cv_status::timeout |
-| std::cv_status wait_until(`std::unique_lock<FiberMutex>`& lock,const std::chrono::time_point<Clock, Duration>& expires_at)  | wait notify or timeout  | lock FiberMutex，expires_at | cv_status ，return std::cv_status::no_timeout if no_timeout ，or return std::cv_status::timeout |
-| notify_one()  | notify one waiter | | void |
-| notify_all()  | notify all waiter | | void |
-| void wait(`std::unique_lock<FiberMutex>`& lock, Predicate pred)  | until pre is true to Wait() | lock FiberMutex，pred| void |
-
+  |Interface |  Function |Parameter |Return value|
+  | :-------------------------------------------------------| :-------------------------------|:--------------------------|:--------------------------------|
+  | void wait(std::unique_lock&lt;FiberMutex>&amp; lock)  | wait notify_xxx()  | lock FiberMutex| void |
+  | std::cv_status wait_for(std::unique_lock&lt;FiberMutex>&amp; lock,const std::chrono::duration<Rep, Period>& expires_in)  | wait notify or timeout | lock FiberMutex，expires_in | cv_status ，return std::cv_status::no_timeout if no_timeout ，or return std::cv_status::timeout |
+  | std::cv_status wait_until(std::unique_lock&lt;FiberMutex>&amp; lock,const std::chrono::time_point<Clock, Duration>& expires_at)  | wait notify or timeout  | lock FiberMutex，expires_at | cv_status ，return std::cv_status::no_timeout if no_timeout ，or return std::cv_status::timeout |
+  | notify_one()  | notify one waiter | | void |
+  | notify_all()  | notify all waiter | | void |
+  | void wait(std::unique_lock&lt;FiberMutex>&amp; lock, Predicate pred)  | until pre is true to Wait() | lock FiberMutex，pred| void |
+  
 ## Timer
 
 If there is a need to execute timed tasks within a Fiber, currently there are several options available:
 
-- 1.SetFiberTimer+KillFiberTimer:
+1. SetFiberTimer and KillFiberTimer:
 
-  ```cpp
-  // create fiber timer，run after 100ms
-  auto timer_id = SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
-    Handle();
-  });
-   
-  // kill timer 
-  KillFiberTimer(timer_id);
-  ```
+   ```cpp
+   // create fiber timer，run after 100ms
+   auto timer_id = SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
+     Handle();
+   });
+    
+   // kill timer 
+   KillFiberTimer(timer_id);
+   ```
 
-- 2.SetFiberTimer+FiberTimerKiller as RAII:
+2. SetFiberTimer and FiberTimerKiller as RAII:
 
-  ```cpp
-  // FiberTimerKiller
-  FiberTimerKiller killer;
-  killer.reset(SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
-    Handle();
-  }));
+    ```cpp
+    // FiberTimerKiller
+    FiberTimerKiller killer;
+    killer.reset(SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
+      Handle();
+    }));
+    
+    // When the FiberTimerKiller is destructed, it automatically releases the corresponding timer.
+    
+    ```
+
+3. CreateFiberTimer and EnableFiberTimer:
+
+    ```cpp
+    // create fiber timer，run after 100ms
+    auto timer_id = CreateFiberTimer(trpc::ReadSteadyClock() + 100ms, [&](auto timer_id) {
+      // NOT Run In FiberWorker
+      Handle();
+    });
+     
+    // Enable
+    EnableFiberTimer(timer_id);
+    
+    // Callback
+    void OnTimeout(std::uint64_t timer_id){
+      HandleTimeout();
+    
+      // Kill
+      KillFiberTimer(timer_id);
+    }
+    ```
   
-  // When the FiberTimerKiller is destructed, it automatically releases the corresponding timer.
+    Note:
+     - The SetFiberTimer interface creates a Fiber to run a custom callback.
+     - The CreateFiberTimer interface runs the custom callback in the TimerThread, so Fiber features cannot be used in the callback.
   
-  ```
-
-- 3.CreateFiberTimer+EnableFiberTimer:
-
-  ```cpp
-  // create fiber timer，run after 100ms
-  auto timer_id = CreateFiberTimer(trpc::ReadSteadyClock() + 100ms, [&](auto timer_id) {
-    // NOT Run In FiberWorker
-    Handle();
-  });
-   
-  // Enable
-  EnableFiberTimer(timer_id);
-  
-  // Callback
-  void OnTimeout(std::uint64_t timer_id){
-    HandleTimeout();
-  
-    // Kill
-    KillFiberTimer(timer_id);
-  }
-  ```
-
-Note:
-
-- The SetFiberTimer interface creates a Fiber to run a custom callback.
-- The CreateFiberTimer interface runs the custom callback in the TimerThread, so Fiber features cannot be used in the callback.
-
 ## Synchronize and collaborate with non-framework threads
 
 Synchronize and collaborate with non-framework threads：FiberEvent

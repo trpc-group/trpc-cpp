@@ -18,11 +18,12 @@ Using it can help you optimize memory usage and improve performance in your prog
 It's recommended to read:
 [Why Use Arena Allocation?](https://developers.google.com/protocol-buffers/docs/reference/arenas#why)
 
-Arena is used by the protobuf library to take over the memory management of PB objects.
-Its principle is simple: protobuf pre-allocates a memory block, and PB objects created multiple times reuse this memory
-block. When parsing and constructing messages, objects are "placement new" on the allocated memory block. When the
-objects on the arena are destructed, all memory is released, and ideally, no destructor of the contained objects needs
-to be called.
+Arena is used by the protobuf library to take over the memory management of PB objects. Its principle is simple:
+
+* protobuf pre-allocates a memory block, and PB objects created multiple times reuse this memory
+block.
+* When parsing and constructing messages, objects are "placement new" on the allocated memory block. 
+* When the objects on the arena are destructed, all memory is released, and ideally, no destructor of the contained objects needs to be called.
 
 Benefits:
 
@@ -104,24 +105,26 @@ file:
   option cc_enable_arenas = true;
   ```
 
-## Creating a PB object
+* **Creating a PB object**
 
-```c++
-// include arena.h
-#include "google/protobuf/arena.h"
+  When calling an RPC service on the client side, if you need to use an arena, you need to actively invoke the `google::protobuf::Arena::CreateMessage<MyMessage>(...)` interface. On the RPC server side, you don't need the above steps; you just need to enable the arena through compilation options.
 
-google::protobuf::Arena arena_req;
-auto* req = google::protobuf::Arena::CreateMessage<RequestType>(&arena_req);
-
-google::protobuf::Arena arena_rsp;
-auto* rsp = google::protobuf::Arena::CreateMessage<ResponseType>(&arena_rsp);
-```
-
-Line 2: Include the header file required for arena.
-
-Lines 4-7: Define two arena objects to manage the memory of `req` and `rsp`, respectively.
-
-Lines 5 and 8: Use two arenas to create two PB objects.
+  ```c++
+  // include arena.h
+  #include "google/protobuf/arena.h"
+  
+  google::protobuf::Arena arena_req;
+  auto* req = google::protobuf::Arena::CreateMessage<RequestType>(&arena_req);
+  
+  google::protobuf::Arena arena_rsp;
+  auto* rsp = google::protobuf::Arena::CreateMessage<ResponseType>(&arena_rsp);
+  ```
+  
+  Line 2: Include the header file required for arena.
+  
+  Lines 4-7: Define two arena objects to manage the memory of `req` and `rsp`, respectively.
+  
+  Lines 5 and 8: Use two arenas to create two PB objects.
 
 ## Precautions
 

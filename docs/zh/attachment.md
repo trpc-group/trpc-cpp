@@ -1,6 +1,5 @@
 [English](../en/attachment.md)
 
-
 # 前言
 
 对于一些应用场景，业务传递的数据中包含大文件数据（如模型、多媒体转码数据等），如果将这种数据作为IDL定义的结构中一个普通字段（如pb的string、bytes），打包在协议的Unary包体中进行传输，将会产生较大的序列化、反序列化、内存拷贝的开销，影响请求的耗时。
@@ -14,6 +13,7 @@
 ## 客户端
 
 在客户端，用户可以通过`ClientContext`来设置请求的附件，以及获取从服务端响应返回的附件。
+
 ```cpp
 class ClientContext {
 ...
@@ -23,13 +23,14 @@ class ClientContext {
   
   /// @brief Get response attachment
   const NoncontiguousBuffer& GetResponseAttachment();
-...
-}
+// ...
+};
 ```
 
 ## 服务端
 
 在服务端，用户可以通过`ServerContext`来获取请求的附件，和设置回包响应的附件。
+
 ```cpp
 class ServerContext {
 ...
@@ -39,6 +40,6 @@ class ServerContext {
 
   /// @brief Set response attachment data
   void SetResponseAttachment(NoncontiguousBuffer&& attachment);
-...
-}
+// ...
+};
 ```

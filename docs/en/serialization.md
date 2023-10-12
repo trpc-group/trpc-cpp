@@ -8,8 +8,8 @@ the following:
 * How to use JSON as a message type.
 * How to use binary data as a message type.
 
-The tPRC framework uses Protocol Buffers Message as the request and response message types by default. It also
-supports using tRPC protocol to transmit JSON and binary data messages.
+The tPRC framework uses `Protobuf Message` as the request and response message types by default. It also
+supports using `trpc` protocol to transmit JSON and binary data messages.
 In other worlds, JSON and binary data can be used as request and response message types.
 
 # How to use JSON as a message type
@@ -76,88 +76,92 @@ Registering `DemoServiceImpl` is exactly the same as registering an tRPC service
 
 **Note: Use the `trpc` protocol for the `protocol` configuration item in the configuration file.**
 
-```cpp
-class DemoServer : public ::trpc::TrpcApp {
- public:
-  int Initialize() override {
-    const auto& config = ::trpc::TrpcConfig::GetInstance()->GetServerConfig();
-    // Set the service name, which must be the same as the value of the `server:service:name` configuration item
-    // in the framework configuration file, otherwise the framework cannot receive requests normally
-    std::string service_name = fmt::format("{}.{}.{}.{}", "trpc", config.app, config.server, "demo_service");
+* Register demo code
 
-    TRPC_FMT_INFO("service name:{}", service_name);
+  ```cpp
+  class DemoServer : public ::trpc::TrpcApp {
+   public:
+    int Initialize() override {
+      const auto& config = ::trpc::TrpcConfig::GetInstance()->GetServerConfig();
+      // Set the service name, which must be the same as the value of the `server:service:name` configuration item
+      // in the framework configuration file, otherwise the framework cannot receive requests normally
+      std::string service_name = fmt::format("{}.{}.{}.{}", "trpc", config.app, config.server, "demo_service");
+  
+      TRPC_FMT_INFO("service name:{}", service_name);
+  
+      RegisterService(service_name, std::make_shared<DemoServiceImpl>());
+  
+      return 0;
+    }
+  
+    void Destroy() override {}
+  };
+  ```
 
-    RegisterService(service_name, std::make_shared<DemoServiceImpl>());
+* Configuration
 
+  ```yaml
+  # @file: trpc_cpp.yaml
+  #...
+  server:
+    app: test
+    server: helloworld
+    admin_port: 18888
+    admin_ip: 0.0.0.0
+    service:
+      - name: trpc.test.helloworld.demo_service
+        protocol: trpc
+        network: tcp
+        ip: 0.0.0.0
+        port: 12349
+  #...
+  ```
+
+* Service invocation
+
+  Using an tRPC client to access `DemoServiceImpl` is also simple, just like accessing an tRPC service. Create an `RpcServiceProxy` object `proxy` and call the `UnaryInvoke` or `AsyncUnaryInvoke` method.
+  
+  ```cpp
+  int Call() {
+    ::trpc::ServiceProxyOption option;
+  
+    option.name = FLAGS_target;
+    option.codec_name = "trpc";
+    option.network = "tcp";
+    option.conn_type = "long";
+    // ...
+    
+    auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::RpcServiceProxy>(FLAGS_target, option);
+  
+    std::string req_json_str = "{\"age\":18,\"height\":180}";
+    rapidjson::Document hello_req;
+    hello_req.Parse(req_json_str.c_str());
+  
+    if (hello_req.HasParseError()) {
+      std::cout << "json parse error: " << hello_req.GetParseError()
+                << ", msg: " << rapidjson::GetParseError_En(hello_req.GetParseError()) << std::endl;
+      return -1;
+    }
+  
+    ::trpc::ClientContextPtr context = ::trpc::MakeClientContext(proxy);
+    context->SetTimeout(1000);
+    context->SetFuncName("JsonSayHello");
+  
+    rapidjson::Document hello_rsp;
+    ::trpc::Status status = proxy->UnaryInvoke<rapidjson::Document, rapidjson::Document>(context, hello_req, &hello_rsp);
+  
+    if (!status.OK()) {
+      std::cout << "invoke error: " << status.ErrorMessage() << std::endl;
+      return -1;
+    }
+  
+    for (rapidjson::Value::ConstMemberIterator iter = hello_rsp.MemberBegin(); iter != hello_rsp.MemberEnd(); ++iter) {
+      std::cout << "json name: " << iter->name.GetString() << ", value: " << iter->value.GetInt() << std::endl;
+    }
+  
     return 0;
   }
-
-  void Destroy() override {}
-};
-```
-
-```yaml
-# @file: trpc_cpp.yaml
-#...
-server:
-  app: test
-  server: helloworld
-  admin_port: 18888
-  admin_ip: 0.0.0.0
-  service:
-    - name: trpc.test.helloworld.demo_service
-      protocol: trpc
-      network: tcp
-      ip: 0.0.0.0
-      port: 12349
-#...
-```
-
-Using an tRPC client to access `DemoServiceImpl` is also simple, just like accessing an tRPC service.
-
-Create an `RpcServiceProxy` object `proxy` and call the `UnaryInvoke` or `AsyncUnaryInvoke` method.
-
-```cpp
-int Call() {
-  ::trpc::ServiceProxyOption option;
-
-  option.name = FLAGS_target;
-  option.codec_name = "trpc";
-  option.network = "tcp";
-  option.conn_type = "long";
-  // ...
-  
-  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::RpcServiceProxy>(FLAGS_target, option);
-
-  std::string req_json_str = "{\"age\":18,\"height\":180}";
-  rapidjson::Document hello_req;
-  hello_req.Parse(req_json_str.c_str());
-
-  if (hello_req.HasParseError()) {
-    std::cout << "json parse error: " << hello_req.GetParseError()
-              << ", msg: " << rapidjson::GetParseError_En(hello_req.GetParseError()) << std::endl;
-    return -1;
-  }
-
-  ::trpc::ClientContextPtr context = ::trpc::MakeClientContext(proxy);
-  context->SetTimeout(1000);
-  context->SetFuncName("JsonSayHello");
-
-  rapidjson::Document hello_rsp;
-  ::trpc::Status status = proxy->UnaryInvoke<rapidjson::Document, rapidjson::Document>(context, hello_req, &hello_rsp);
-
-  if (!status.OK()) {
-    std::cout << "invoke error: " << status.ErrorMessage() << std::endl;
-    return -1;
-  }
-
-  for (rapidjson::Value::ConstMemberIterator iter = hello_rsp.MemberBegin(); iter != hello_rsp.MemberEnd(); ++iter) {
-    std::cout << "json name: " << iter->name.GetString() << ", value: " << iter->value.GetInt() << std::endl;
-  }
-
-  return 0;
-}
-```
+  ```
 
 # How to use binary data as a message type
 
@@ -170,13 +174,10 @@ graph LR
 ```
 
 The framework currently supports using `std::string` or `::trpc::NoncontiguousBuffer` as the request and response message
-types.
-In the figure above, the Client and Server use binary data as the request and response messages, and we
+types. In the figure above, the Client and Server use binary data as the request and response messages, and we
 use `std::string` or `::trpc::NoncontiguousBuffer` as the request and response message types in programming.
 
-The specific steps are the same as the implementation process of using `rapidjson::Document` as the request
-and response message types.
-Let's take a look at the key fragments of the sample code. For specific details, please refer to the sample code.
+The specific steps are the same as the implementation process of using `rapidjson::Document` as the request and response message types. Let's take a look at the key fragments of the sample code. For specific details, please refer to the sample code.
 
 ```cpp
 class DemoServiceImpl : public ::trpc::RpcServiceImpl {

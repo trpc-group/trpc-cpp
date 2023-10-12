@@ -8,66 +8,71 @@ The [Quick-Start guide](quick_start.md) provides an introduction to developing a
 
 See [How to choose and configure the runtime](runtime.md#how-to-choose-and-configure-the-runtime)
 
-## Define Proto Service
+## Define Protobuf Service
 
-A Proto Service is a logical combination of a set of interfaces. It requires defining a package, Proto Service, RPC name, and the data types for interface requests and responses.
+A Protobuf Service is a logical combination of a set of interfaces. It requires defines as follows:
+
+* `package` name
+* `service` name
+* `rpc` name
+* the `message` types for interface requests and responses.
 
 ### IDL protocol types
 
-The [IDL](https://en.wikipedia.org/wiki/Interface_description_language) language can describe interfaces in a programming language-independent manner, and use tools to convert IDL files into stub code in a specific language, allowing developers to focus on business logic development. For services using IDL protocol types, the definition of Proto Service typically involves the following five steps (using tRPC protocol as an example):
+The [IDL](https://en.wikipedia.org/wiki/Interface_description_language) language can describe interfaces in a programming language-independent manner, and use tools to convert IDL files into stub code in a specific language, allowing developers to focus on business logic development. For services using IDL protocol types, the definition of Protobuf Service typically involves the following five steps (using tRPC protocol as an example):
 
-Step 1: Define services through proto IDL file
+1. **Define services through proto IDL file**
 
-```protobuf
-syntax = "proto3";
-package trpc.test.helloworld;
+   ```protobuf
+   syntax = "proto3";
+   package trpc.test.helloworld;
+   
+   service Greeter {
+       rpc SayHello (HelloRequest) returns (HelloReply) {}
+   }
+   
+   message HelloRequest {
+       string msg = 1;
+   }
+   
+   message HelloReply {
+       string msg = 1;
+   }
+   ```
 
-service Greeter {
-    rpc SayHello (HelloRequest) returns (HelloReply) {}
-}
+2. **Generate project code based on proto IDL file**
 
-message HelloRequest {
-    string msg = 1;
-}
+    Refer to the steps in the [Quick Start Guide](quick_start.md).
 
-message HelloReply {
-    string msg = 1;
-}
-```
+3. Implement server-side logic
 
-Step 2: Generate project code based on proto IDL file
+    Refer to the steps in the [Quick Start Guide](quick_start.md).
 
-Refer to the steps in the [Quick Start Guide](quick_start.md).
+4. Register the Proto Service to the Server
 
-Step 3: Implement server-side logic
+  This step has already been done in the generated stub code, and the specific code can be found in `helloworld_server.cc`:
 
-Refer to the steps in the [Quick Start Guide](quick_start.md).
+   ```cpp
+   int helloworldServer::Initialize() {
+    
+     std::string service_name("trpc.");
+     service_name += trpc::TrpcConfig::GetInstance()->GetServerConfig().app;
+     service_name += ".";
+     service_name += trpc::TrpcConfig::GetInstance()->GetServerConfig().server;
+     service_name += ".Greeter";
+    
+     TRPC_LOG_INFO("service name1:" << service_name);
+    
+     trpc::ServicePtr my_service(new GreeterServiceImpl());
+    
+     // The service_name needs to correspond to the service/name in the configuration file to associate the service configuration.
+     RegisterService(service_name, my_service);
+    
+     return 0;
+   }
+   ```
 
-Step 4：Register the Proto Service to the Server
-
-This step has already been done in the generated stub code, and the specific code can be found in "helloworld_server.cc":
-
-```cpp
-int helloworldServer::Initialize() {
- 
-  std::string service_name("trpc.");
-  service_name += trpc::TrpcConfig::GetInstance()->GetServerConfig().app;
-  service_name += ".";
-  service_name += trpc::TrpcConfig::GetInstance()->GetServerConfig().server;
-  service_name += ".Greeter";
- 
-  TRPC_LOG_INFO("service name1:" << service_name);
- 
-  trpc::ServicePtr my_service(new GreeterServiceImpl());
- 
-  // The service_name needs to correspond to the service/name in the configuration file to associate the service configuration.
-  RegisterService(service_name, my_service);
- 
-  return 0;
-}
-```
-
-Next, the user needs to implement the specific interfaces in greeter_service.cc, referring to the steps in the [Quick Start Guide](quick_start.md).
+   Next, the user needs to implement the specific interfaces in greeter_service.cc, referring to the steps in the [Quick Start Guide](quick_start.md).
 
 ### Non-IDL protocol types
 
@@ -76,9 +81,9 @@ One of the common protocols is the HTTP protocol. For detailed information, plea
 
 ## Provide the corresponding framework configuration file
 
-As a server, the framework configuration file needs to provide configurations for both the 'global' and 'server' sections. The 'plugins' section should be configured based on the plugins being used.
+As a server, the framework configuration file needs to provide configurations for both the `global` and `server` sections. The `plugins` section should be configured based on the plugins being used.
 
-Here is an example configuration for using the fiber m:n coroutine runtime:
+Here is an example configuration for using the fiber M:N coroutine runtime:
 
 ```yaml
 global:
@@ -138,7 +143,7 @@ void SendUnaryResponse(const Status& status);
 
 ### The default maximum length for request packets is 10MB
 
-For the built-in trpc and HTTP protocols in the framework, the maximum length of request packets is limited to 10MB. This limitation is at the service level, users can modify it by increasing the 'max_packet_size' configuration option for the service. The procedure is as follows:
+For the built-in trpc and http protocols in the framework, the maximum length of request packets is limited to 10MB. This limitation is at the service level, users can modify it by increasing the `max_packet_size` configuration option for the service. The procedure is as follows:
 
 ```yaml
 server:
@@ -149,7 +154,7 @@ server:
 
 ### Idle connection timeout
 
-The default connection timeout for the server is 60 seconds. If the caller does not send any data for 60 seconds continuously, the connection will be disconnected. This limitation is at the service level and can be modified using the 'idle_time' configuration option:
+The default connection timeout for the server is 60 seconds. If the caller does not send any data for 60 seconds continuously, the connection will be disconnected. This limitation is at the service level and can be modified using the `idle_time` configuration option:
 
 ```yaml
 server:
@@ -226,7 +231,7 @@ See [Fixed thread](../../examples/features/request_dispatch/README.md).
 
 ### Timeout Control
 
-See [Timeout control]().
+See [Timeout control](./timeout_control.md).
 
 ### Transparent proxy
 
@@ -238,4 +243,4 @@ See [Timer]().
 
 ### Flow-Control & Overload-Protect
 
-See [Flow-Control & Overload-Protect]().
+* See [overload_control_concurrency_limiter](./overload_control_concurrency_limiter.md)

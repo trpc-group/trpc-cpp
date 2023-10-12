@@ -88,11 +88,13 @@ The framework provides a callback interface for handling requests in case of tim
 #### Server-side timeout handling function
 
 The types of server-side timeout handling function are as follows:
+
 ```cpp
 using ServiceTimeoutHandleFunction = std::function<void(const ServerContextPtr& context)>;
 ```
 
 Users need to set a custom timeout handling function for the service during service initialization.
+
 ```cpp
 // custom timeout handling function
 void UserServiceTimeoutFunc(const trpc::ServerContextPtr& context) {

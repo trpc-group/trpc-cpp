@@ -281,7 +281,7 @@ response->SetStatus(::trpc::http::ResponseStatus::kFound);
 response->SetHeader("Location", "https://github.com/");
 ```
 
-## Basic routing matching rules
+### Basic routing matching rules
 
 The following matching rules are currently supported:
 
@@ -290,7 +290,7 @@ The following matching rules are currently supported:
 * Regular expression match.
 * Placeholder match.
 
-### Exact match
+#### Exact match
 
 When filling in the path directly in `Path(path_value)`, exact matching is used by default. That is, the
 request will only be processed by the corresponding handler when the path in the request URI exactly matches
@@ -305,7 +305,7 @@ curl http://$ip:$port/hello/img_x -X GET  # response status 200
 curl http://$ip:$port/hello/img -X GET    # response status 404
 ```
 
-### Prefix match
+#### Prefix match
 
 By appending a path placeholder using `Path(path_value).Remainder("path")`, prefix matching can be used. That is, the
 request can be processed by the corresponding handler only when the path prefix in the request URI matches the path.
@@ -326,7 +326,7 @@ curl http://$ip:$port/hello1 -X GET       # response status 404
 curl http://$ip:$port/hello1/img -X GET   # response status 404
 ```
 
-### Regular expression match
+#### Regular expression match
 
 By wrapping `path_value` with `<regex()>`, regular expression matching can be used. That is, the actual path value
 filled in is a regular expression, and the request will be processed by the corresponding handler when the path in the
@@ -341,7 +341,7 @@ curl http://$ip:$port/img/d_123/ccd -X GET`    # response status 200
 curl http://$ip:$port/img/123_123/ccd -X GET`  # response status 404
 ```
 
-### Placeholder match
+#### Placeholder match
 
 By wrapping `path_value` with `<ph()>`, placeholder matching can be used. That is, the actual path value can contain
 placeholders. When the path in the request URI matches the regular expression, the request will be processed by the
@@ -365,7 +365,7 @@ The values of the placeholders can be easily obtained:
 }
 ```
 
-```bash 
+```bash
 curl http://$ip:$port/channels/xyz/clients/123 -X GET  # response status 200
 curl http://$ip:$port/channels/clients -X GET          # response status 404
 ```
@@ -648,9 +648,7 @@ For more details, please refer to the documentation [http upload download](./htt
 
 # Developing HTTP RPC Service
 
-## Quick Start
-
-### Providing tRPC service under HTTP Protocol
+## Providing tRPC service under HTTP Protocol
 
 In some scenarios, some RPC services may need to support HTTP clients externally. That is, the tRPC protocol header and
 payload are transmitted through the HTTP protocol. This can be easily achieved by modifying the configuration items
@@ -659,58 +657,58 @@ without modifying the code: `protocol: trpc` -> `protocol: trpc_over_http`.
 If we need to support both tRPC and HTTP clients at the same time, we can register two RPC service instances during
 the service initialization phase.
 
-The code snippet is as follows:
+* The code snippet is as follows:
 
-```cpp
-class HelloWorldServer : public ::trpc::TrpcApp {
- public:
-  int Initialize() override {
-    // ...
-    std::string service_name = "trpc.test.helloworld.Greeter"; 
-    RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
+  ```cpp
+  class HelloWorldServer : public ::trpc::TrpcApp {
+   public:
+    int Initialize() override {
+      // ...
+      std::string service_name = "trpc.test.helloworld.Greeter"; 
+      RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
+  
+      std::string service_over_http_name = "trpc.test.helloworld.GreeterHTTP"; 
+      RegisterService(service_over_http_name, std::make_shared<GreeterServiceImpl>());
+      // ...
+      return 0;
+    }
+  };
+  ```
+  
+* The configuration snippet is as follows:
 
-    std::string service_over_http_name = "trpc.test.helloworld.GreeterHTTP"; 
-    RegisterService(service_over_http_name, std::make_shared<GreeterServiceImpl>());
-    // ...
-    return 0;
-  }
-};
-```
-
-The configuration snippet is as follows:
-
-```yaml
-# @file: trpc_cpp.yaml
-# ...
-service:
-  - name: trpc.test.helloworld.Greeter
-    protocol: trpc
-    network: tcp
-    ip: 0.0.0.0
-    port: 12345
-  - name: trpc.test.helloworld.GreeterHTTP
-    protocol: trpc_over_http
-    network: tcp
-    ip: 0.0.0.0
-    port: 23456
-# ...
-```
+  ```yaml
+  # @file: trpc_cpp.yaml
+  # ...
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 12345
+    - name: trpc.test.helloworld.GreeterHTTP
+      protocol: trpc_over_http
+      network: tcp
+      ip: 0.0.0.0
+      port: 23456
+  # ...
+  ```
 
 # FAQ
 
-## 1. How to write routing rules to match all paths?
+## How to write routing rules to match all paths?
 
 ```cpp
 // e.g. :
 r.Add(trpc::http::MethodType::POST, trpc::http::Path("").Remainder("path"), handler);
 ```
 
-## 2. Why does the service crash with a coredump after enabling SSL?
+## Why does the service crash with a coredump after enabling SSL?
 
 Please make sure that the file paths for the certificate, private key, and other files in the SSL
 configuration item are configured correctly.
 
-## 3. Why does it take an extra 1 second to upload 1KB+ data using curl?
+## Why does it take an extra 1 second to upload 1KB+ data using curl?
 
 When uploading data using curl/libcurl, when the body is larger than 1K, it will first ask the server if it allows
 sending large data packets (the request header adds "Expect: 100 continue").

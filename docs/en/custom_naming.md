@@ -14,7 +14,7 @@ To implement a custom naming service plugin, you need to complete the following 
 
 First, the plugin developer needs to create a class that inherits from the corresponding naming service base class (such as trpc::Limiter, trpc::Registry, or trpc::Selector) and implement the methods in the base class. Next, we provide examples for custom rate limiter plugins (CustomLimiter), custom service registry plugins (CustomRegistry), and custom service selector plugins (CustomSelector).
 
-Custom rate limiter plugin example:
+### Custom rate limiter plugin example
 
 - **custom_limiter.h**
 
@@ -65,7 +65,7 @@ Custom rate limiter plugin example:
 
 In this example, the CustomLimiter class inherits from the trpc::Limiter base class and implements the ShouldLimit() and FinishLimit() methods. Developers can modify this example according to actual needs to implement support for custom rate limiter plugins.
 
-Custom service registry plugin example:
+### Custom service registry plugin example
 
 - **custom_registry.h**
 
@@ -116,7 +116,7 @@ Custom service registry plugin example:
 
 In this example, the CustomRegistry class inherits from the trpc::Registry base class and implements the Register() and Unregister() methods. Developers can modify this example according to actual needs to implement support for custom service registry plugins.
 
-Custom service selector plugin example:
+### Custom service selector plugin example
 
 - **custom_selector.h**
 
@@ -143,20 +143,20 @@ Custom service selector plugin example:
 
 - **custom_selector.cc**
 
-  ```cpp
-  #include "custom_selector.h"
+   ```cpp
+   #include "custom_selector.h"
   
-  namespace trpc::custom_selector {
+   namespace trpc::custom_selector {
 
-    CustomSelector::CustomSelector() {
-      // Initialization operations, such as passing configuration parameters, etc.
-    }
-    
-    int CustomSelector::Select(const TrpcSelectorInfo& info, TrpcEndpointInfo& endpoint) {
-      // ...
-    }
-  }
-  ```
+     CustomSelector::CustomSelector() {
+       // Initialization operations, such as passing configuration parameters, etc.
+     }
+     
+     int CustomSelector::Select(const TrpcSelectorInfo& info, TrpcEndpointInfo& endpoint) {
+       // ...
+     }
+   }
+   ```
 
 In this example, the CustomSelector class inherits from the trpc::Selector base class and implements the Select() method.
 

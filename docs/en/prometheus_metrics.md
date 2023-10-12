@@ -15,13 +15,13 @@ This document introduces how to use Prometheus in tRPC-Cpp. Developers can learn
 
 # Enable prometheus
 
-By default, tRPC-Cpp does not compile related code with prometheus. To enable it, users need to add the relevant compilation options during program compilation.
+By default, tRPC-Cpp framework does not compile related code with prometheus. To enable it, users need to add the relevant compilation options during program compilation.
 
 ## Bazel
 
 Add the `"trpc_include_prometheus"` compilation option during Bazel compilation.
 
-For example, add it in .bazelrc file.
+For example, add it in `.bazelrc` file.
 
 ```sh
 build --define trpc_include_prometheus=true
@@ -29,7 +29,7 @@ build --define trpc_include_prometheus=true
 
 ## CMake
 
-Add the `"TRPC_BUILD_WITH_METRICS_PROMETHEUS"` compilation option during CMake compilation.
+Add the `TRPC_BUILD_WITH_METRICS_PROMETHEUS` compilation option during CMake compilation.
 
 For example:
 
@@ -72,7 +72,7 @@ The description of the configuration item are as follow.
 
 ### Caller reporting
 
-Simply add the prometheus filter to the `"client"` section of the framework's configuration file to enable client-side monitoring.
+Simply add the `prometheus` filter to the `client` section of the framework's configuration file to enable client-side monitoring.
 
 ```yaml
 client:
@@ -111,7 +111,7 @@ Statistical labels:
 
 ### Callee reporting
 
-Simply add the prometheus filter to the `"server"` section of the framework's configuration file to enable client-side monitoring.
+Simply add the `prometheus` filter to the `server` section of the framework's configuration file to enable client-side monitoring.
 
 ```yaml
 server:
@@ -124,6 +124,7 @@ server:
 
 Statistical data:
 
+```mermaid
 | Metrics Name | Metrics Type | Description |
 | ------ | ------ | ------ |
 | rpc_server_counter_metric | Counter | Total number of requests received by the server |
@@ -148,6 +149,7 @@ Statistical labels:
 | pConSetId | Set to which the callee belongs |
 | frame_ret_code | Framework error code |
 | interface_ret_code | Interface error code |
+```
 
 ## AttributeReport
 
@@ -162,7 +164,7 @@ In addition to automatically collecting RPC call data, the plugin also defines a
 | prometheus_summary_metric | Summary |
 | prometheus_histogram_metric | Histogram |
 
-### Statistical Strategies
+### Statistical strategies
 
 The statistical strategies provided by the plugin are as follow.
 
@@ -376,7 +378,7 @@ counter.Increment(1);
 
 # Export metrics data
 
-In tRPC-Cpp, Prometheus is only responsible for collecting metrics data and does not provide the functionality to actively push metrics data. However, the framework provides external interfaces to directly access the collected prometheus data. Additionally, if the service has enabled the admin feature, metrics data can also be obtained by accessing the admin interface.
+In tRPC-Cpp framework, Prometheus is only responsible for collecting metrics data and does not provide the functionality to actively push metrics data. However, the framework provides external interfaces to directly access the collected prometheus data. Additionally, if the service has enabled the admin feature, metrics data can also be obtained by accessing the admin interface.
 
 ## Retrieve by interface
 

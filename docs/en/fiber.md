@@ -6,10 +6,10 @@ This article delves into the principles and implementation of Fiber from various
 
 # Principle
 
-Fiber is essentially an M:N coroutine, which means it schedules and runs multiple user-level threads on multiple native threads of the system, similar to goroutines in the Go programming language. The diagram below illustrates the principle of M:N coroutines:
+Fiber is essentially an `M:N` coroutine, which means it schedules and runs multiple user-level threads on multiple native threads of the system, similar to goroutines in the Go programming language. The diagram below illustrates the principle of `M:N` coroutines:
 ![img](/docs/images/m_n_coroutine_en.png)
 
-Compared to native threads, M:N coroutines have the following advantages:
+Compared to native threads, `M:N` coroutines have the following advantages:
 
 1. Facilitates synchronous programming and provides better usability;
 
@@ -17,7 +17,7 @@ Compared to native threads, M:N coroutines have the following advantages:
 
 3. High parallelism, making full use of resources: Can run concurrently on multiple threads;
 
-After researching and analyzing various M:N coroutines, tRPC Cpp has designed and implemented its own M:N coroutine called Fiber. Fiber has the following characteristics：
+After researching and analyzing various `M:N` coroutines, tRPC-Cpp has designed and implemented its own `M:N` coroutine called Fiber. Fiber has the following characteristics：
 
 1. Multiple threads compete for a shared Fiber queue, which, with careful design, can achieve low scheduling latency. Currently, the size of the scheduling group (number of threads within a group) is limited to between 8 and 15;
 
@@ -43,7 +43,7 @@ The diagram shows components with fixed quantities: Main Thread (globally unique
 
 ### SchedulingGroup
 
-The M:N thread model, compared to the N:1 model and common coroutine designs, introduces more cache misses, resulting in performance degradation. This is an unavoidable cost to ensure the stability of performance metrics such as response time. However, this does not mean that the performance is inferior to other N:1 frameworks or coroutine frameworks. The overall performance of a system can be optimized in various ways, and the scheduling model alone does not determine the overall performance of a framework. Here, we focus on the scheduling model, while other performance optimization aspects of the framework are not discussed in detail for now
+The `M:N` thread model, compared to the N:1 model and common coroutine designs, introduces more cache misses, resulting in performance degradation. This is an unavoidable cost to ensure the stability of performance metrics such as response time. However, this does not mean that the performance is inferior to other N:1 frameworks or coroutine frameworks. The overall performance of a system can be optimized in various ways, and the scheduling model alone does not determine the overall performance of a framework. Here, we focus on the scheduling model, while other performance optimization aspects of the framework are not discussed in detail for now
 
 #### Why?
 
@@ -65,72 +65,72 @@ In order to improve scalability in a multi-core, multi-threaded environment, the
 
 Therefore, a scheduling group includes:
 
-**1. Queue: Used to store all the ready-to-run fibers;**
+1. **Queue: Used to store all the ready-to-run fibers**
 
-To better meet the performance requirements in different scenarios, we currently have two scheduling strategies, and one difference between these strategies lies in the design of the queue:
+    To better meet the performance requirements in different scenarios, we currently have two scheduling strategies, and one difference between these strategies lies in the design of the queue:
 
-**a. Scheduling Strategy v1 (default strategy): There is only one global queue within the scheduling group. This global queue approach is more general-purpose;**
+    * **Scheduling Strategy v1 (default strategy): There is only one global queue within the scheduling group. This global queue approach is more general-purpose;**
 
-**b. Scheduling Strategy v2: Utilizes the industry-standard global queue along with a local queue with a single producer and multiple consumers. This strategy is more suitable for CPU-intensive scenarios as it allows for prioritized execution within the local queue;**
+    * **Scheduling Strategy v2: Utilizes the industry-standard global queue along with a local queue with a single producer and multiple consumers. This strategy is more suitable for CPU-intensive scenarios as it allows for prioritized execution within the local queue;**
 
-Regardless of whether it is v1 or v2, the design of the queue itself is a bounded lock-free queue. The lock-free design aims to avoid frequent contention and performance degradation. As for the bounded nature of the queue, we conducted an analysis and comparison between bounded and unbounded queues, ultimately choosing a bounded queue for the following reasons:
+    Regardless of whether it is v1 or v2, the design of the queue itself is a bounded lock-free queue. The lock-free design aims to avoid frequent contention and performance degradation. As for the bounded nature of the queue, we conducted an analysis and comparison between bounded and unbounded queues, ultimately choosing a bounded queue for the following reasons:
 
-| Option          |  Advantages | Disadvantages |
-| :----------| :-------------------------------------------------------------------------------|:--------------------------------------------------|
-|Bounded Queue|1. Lock-free implementation eliminates the need to consider memory deallocation, making it easier to implement. <br> 2. Multiple implementation options such as arrays, linked lists, etc., provide more optimization possibilities in terms of performance. <br> 3. Stable performance without occasional delays caused by memory allocation.|Requires introducing configuration options, which may require manual tuning.|
-|Unbounded Queue|Simple，no need to introduce configuration options.|1. Many factors limit the number of fibers that can coexist. <br> 2. If there is truly a massive number of fibers that need to be executed in the system, it usually indicates other bottlenecks in the system|
+    | Option          |  Advantages | Disadvantages |
+    | :----------| :-------------------------------------------------------------------------------|:--------------------------------------------------|
+    |Bounded Queue|1. Lock-free implementation eliminates the need to consider memory deallocation, making it easier to implement. <br> 2. Multiple implementation options such as arrays, linked lists, etc., provide more optimization possibilities in terms of performance. <br> 3. Stable performance without occasional delays caused by memory allocation.|Requires introducing configuration options, which may require manual tuning.|
+    |Unbounded Queue|Simple，no need to introduce configuration options.|1. Many factors limit the number of fibers that can coexist. <br> 2. If there is truly a massive number of fibers that need to be executed in the system, it usually indicates other bottlenecks in the system|
 
-Therefore, in most cases, a sufficiently large preset value can satisfy the majority of environments. When the preset value is insufficient, the program itself often cannot run properly, and the benefits brought by automatic expansion of an unbounded queue are rarely seen in practical scenarios. Hence, a bounded queue was chosen as our run queue.
+    Therefore, in most cases, a sufficiently large preset value can satisfy the majority of environments. When the preset value is insufficient, the program itself often cannot run properly, and the benefits brought by automatic expansion of an unbounded queue are rarely seen in practical scenarios. Hence, a bounded queue was chosen as our run queue.
 
-**2. A group of threads called FiberWorkers: they retrieve fibers from the Queue and execute them;**
+2. **A group of threads called FiberWorkers: they retrieve fibers from the Queue and execute them**
 
-**3. A thread called TimerWorker: responsible for generating fibers for timed tasks on demand;**
+3. **A thread called TimerWorker: responsible for generating fibers for timed tasks on demand**
 
-Each FiberWorker maintains a thread-local array of timers. Each timer corresponds to a uint64 ID, which represents the address of an Entry object. The TimerWorker maintains a priority queue of timers and iteratively reads the arrays of each FiberWorker, adding them to the priority queue. It then executes the timers in order based on the current time and sleeps (blocks on a condition variable) until the next timer expires.
+    Each FiberWorker maintains a thread-local array of timers. Each timer corresponds to a uint64 ID, which represents the address of an Entry object. The TimerWorker maintains a priority queue of timers and iteratively reads the arrays of each FiberWorker, adding them to the priority queue. It then executes the timers in order based on the current time and sleeps (blocks on a condition variable) until the next timer expires.
 
-Typically, the expiration callback of a timer will start a fiber to execute the actual task (although it is not mandatory). The reason for using a separate system thread to implement the timer is twofold: it maintains the purity of FiberWorkers and avoids blocking operations occupying a FiberWorker thread for an extended period
+    Typically, the expiration callback of a timer will start a fiber to execute the actual task (although it is not mandatory). The reason for using a separate system thread to implement the timer is twofold: it maintains the purity of FiberWorkers and avoids blocking operations occupying a FiberWorker thread for an extended period
 
 ### FiberEntity
 
-A fiber is represented by FiberEntity, and here are some of its important members displayed：
+* A fiber is represented by FiberEntity, and here are some of its important members displayed：
 
-```cpp
-  DoublyLinkedListEntry chain;
-  std::uint64_t debugging_fiber_id;
-  volatile std::uint64_t ever_started_magic;
-  Spinlock scheduler_lock;
-  FiberState state = FiberState::Ready;
-  std::uint64_t last_ready_tsc;
-  SchedulingGroup* scheduling_group = nullptr;
-  std::size_t stack_size = 0;
-  void* state_save_area = nullptr;
-  bool is_from_system = false;
-  bool scheduling_group_local = false;
-  Function<void()> resume_proc = nullptr;
-  object_pool::LwSharedPtr<ExitBarrier> exit_barrier;
-  Function<void()> start_proc = nullptr;
-```
+  ```cpp
+    DoublyLinkedListEntry chain;
+    std::uint64_t debugging_fiber_id;
+    volatile std::uint64_t ever_started_magic;
+    Spinlock scheduler_lock;
+    FiberState state = FiberState::Ready;
+    std::uint64_t last_ready_tsc;
+    SchedulingGroup* scheduling_group = nullptr;
+    std::size_t stack_size = 0;
+    void* state_save_area = nullptr;
+    bool is_from_system = false;
+    bool scheduling_group_local = false;
+    Function<void()> resume_proc = nullptr;
+    object_pool::LwSharedPtr<ExitBarrier> exit_barrier;
+    Function<void()> start_proc = nullptr;
+  ```
 
-The physical memory layout of Fiber
+* The physical memory layout of Fiber
 
-```txt
-+--------------------------+  <- Stack bottom
-| fiber control block      |
-+--------------------------+  <- 512 byte
-| ...                      |
-| ...                      |  <- (Used stack space)
-| ...                      |
-+--------------------------+  <- Stack top.
-| ...                      |
-| ...                      |  <- (Unused stack space)
-| ...                      |
-+--------------------------+  <- Stack limit
-| guard page (opt)         |  <- (User fiber only)
-+--------------------------+  <- Stack limit + PAGE_SIZE
-```
-
-Note: Each stack may also have an inaccessible guard page to detect stack overflow. By default, the guard page is enabled, which means that each stack has two memory segments (VMA). If not enabled, usually only one VMA is needed (but there is a risk of stack overflow detection failure). The configuration option 'fiber_stack_enable_guard_page' is used to indicate whether the guard page is enabled。
-
+  ```mermaid
+  +--------------------------+  <- Stack bottom
+  | fiber control block      |
+  +--------------------------+  <- 512 byte
+  | ...                      |
+  | ...                      |  <- (Used stack space)
+  | ...                      |
+  +--------------------------+  <- Stack top.
+  | ...                      |
+  | ...                      |  <- (Unused stack space)
+  | ...                      |
+  +--------------------------+  <- Stack limit
+  | guard page (opt)         |  <- (User fiber only)
+  +--------------------------+  <- Stack limit + PAGE_SIZE
+  ```
+  
+  Note: Each stack may also have an inaccessible guard page to detect stack overflow. By default, the guard page is enabled, which means that each stack has two memory segments (VMA). If not enabled, usually only one VMA is needed (but there is a risk of stack overflow detection failure). The configuration option `fiber_stack_enable_guard_page` is used to indicate whether the guard page is enabled。
+  
 ## Task scheduling
 
 ### Scheduling
@@ -147,27 +147,27 @@ The process of a fiber being created and executed by a FiberWorker is a typical 
 
 Due to the significant drawbacks of the aforementioned algorithms, we have designed our own wake-up algorithm:
 
-#### Scheduling Strategy v1 (default strategy): Fiber adopts a balanced strategy by employing up to 2 threads for parallel polling
+* **Scheduling Strategy v1 (default strategy): Fiber adopts a balanced strategy by employing up to 2 threads for parallel polling**
 
-1. When fetching a Fiber, if one is available, it is executed directly. If no Fiber is available and there are fewer than 2 polling threads, it enters the polling state;
+  1. When fetching a Fiber, if one is available, it is executed directly. If no Fiber is available and there are fewer than 2 polling threads, it enters the polling state;
+  
+  2. If a polling thread successfully fetches a Fiber, it wakes up another thread before executing the Fiber. If polling times out, it goes to sleep;
+  
+  3. When producing a Fiber, if there are polling threads available, it instructs one of them to exit polling and fetch the Fiber. Otherwise, it wakes up a thread;
+  
+  In the selection of polling threads/sleeping threads, they are ordered based on a fixed numbering scheme, and the first (LSB) option is chosen. This is because multiple fibers are likely cooperative tasks, and running them on specific threads (FiberWorkers can be configured to bind to specific cores, and the operating system tends to run the same thread on a fixed CPU) improves CPU cache efficiency.
+  
+* **Scheduling Strategy v2: Prioritizing local queues while also supporting task stealing between global and local queues (inspired by the implementation ideas of the taskflow runtime)**
 
-2. If a polling thread successfully fetches a Fiber, it wakes up another thread before executing the Fiber. If polling times out, it goes to sleep;
+   1. The task queue consists of a global (MPMC) and local (SPMC) queue, and supporting task stealing between global and local queues;
 
-3. When producing a Fiber, if there are polling threads available, it instructs one of them to exit polling and fetch the Fiber. Otherwise, it wakes up a thread;
+   2. When executing parallel tasks, the worker thread can add tasks to its local queue without notification, avoiding system call overhead;
 
-In the selection of polling threads/sleeping threads, they are ordered based on a fixed numbering scheme, and the first (LSB) option is chosen. This is because multiple fibers are likely cooperative tasks, and running them on specific threads (FiberWorkers can be configured to bind to specific cores, and the operating system tends to run the same thread on a fixed CPU) improves CPU cache efficiency.
+   3. Taskflow's native notifier is used for inter-thread communication, reducing notification overhead;
 
-#### Scheduling Strategy v2: Prioritizing local queues while also supporting task stealing between global and local queues (inspired by the implementation ideas of the taskflow runtime)
+   4. In Taskflow's task scheduling, tasks cannot block the thread during execution. Once this happens, one of the threads will consume 100% of the CPU. However, when the fiber reactor executes epoll_wait and there are no network events, it may block the thread. To solve this problem, we treat the reactor fiber as an special type fiber and put it into the separate queue to avoid frequent detection of reactor tasks in the running queue, which would cause the worker thread to be unable to sleep and result in 100% CPU usage.
 
-1. The task queue consists of a global (MPMC) and local (SPMC) queue, and supporting task stealing between global and local queues;
-
-2. When executing parallel tasks, the worker thread can add tasks to its local queue without notification, avoiding system call overhead;
-
-3. Taskflow's native notifier is used for inter-thread communication, reducing notification overhead;
-
-4. In Taskflow's task scheduling, tasks cannot block the thread during execution. Once this happens, one of the threads will consume 100% of the CPU. However, when the fiber reactor executes epoll_wait and there are no network events, it may block the thread. To solve this problem, we treat the reactor fiber as an special type fiber and put it into the separate queue to avoid frequent detection of reactor tasks in the running queue, which would cause the worker thread to be unable to sleep and result in 100% CPU usage.
-
-Relevant information can be found at [taskflow executor](https://github.com/taskflow/taskflow/blob/master/taskflow/core/executor.hpp)
+   Relevant information can be found at [taskflow executor](https://github.com/taskflow/taskflow/blob/master/taskflow/core/executor.hpp)
 
 ### Steal
 
@@ -194,6 +194,6 @@ Fiber's user-level threading has similarities to Pthreads in terms of thread pos
 
 After that, there are also:
 
-1. The FiberLatch class for interacting with external threads;
+1. The FiberEvent class for interacting with external threads;
 
 2. Tools like BlockingGet for asynchronous programming with Futures;

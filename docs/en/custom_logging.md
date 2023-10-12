@@ -18,11 +18,11 @@ First, the plugin developer needs to create a class that inherits from the trpc:
 | Method Name | Return Type | Description |
 |-------------|-------------|-------------|
 | std::string LoggerName() const | std::string | Returns the name of the remote logging plugin. |
-| void Log(const trpc::Log::Level level, const char* filename_in, int line_in, const char* funcname_in, std::string_view msg, const std::unordered_map<uint32_t, std::any>& extend_fields_msg) | void | Sends log information to the remote server. |
+| void Log(const trpc::Log::Level level, const char\* filename_in, int line_in, const char* funcname_in, std::string_view msg, const std::unordered_map<uint32_t, std::any>& extend_fields_msg) | void | Sends log information to the remote server. |
 
 Here is an example of a custom remote logging plugin：
 
-- custom_remote_logging.h
+- **custom_remote_logging.h**
 
   ```cpp
   #pragma once
@@ -48,7 +48,7 @@ Here is an example of a custom remote logging plugin：
   }  // namespace trpc::custom_remote_logging
   ```
 
-- custom_provider.cc
+- **custom_remote_logging.cc**
 
   ```cpp
   #include "custom_remote_logging.h"
@@ -69,13 +69,13 @@ Here is an example of a custom remote logging plugin：
   }  // namespace trpc::custom_remote_logging
   ```
 
-In this example, the CustomProvider class inherits from the trpc::config::Provider interface and implements the Name(), Read(), and Watch() methods. Developers can modify this example according to their actual needs to support custom data sources.
+In this example, the `CustomRemoteLogging` class inherits from the `trpc::Logging` interface and implements the `LoggerName`, `Log` methods. Developers can modify this example according to their actual needs to support custom remote logger.
 
 ## Register Custom Remote Logging Plugin
 
 After creating the custom remote logging plugin, you need to register it with the trpc::DefaultLog plugin. You can modify the Init() function to register the custom remote logging plugin with trpc::DefaultLog:
 
-- custom_remote_logging_api.cc
+- **custom_remote_logging_api.cc**
 
   ```cpp
   #include "trpc/common/trpc_plugin.h"
@@ -140,7 +140,7 @@ plugins:
 
 After completing the development and registration of the custom remote log output plugin, you can use this plugin in your program. Here is a simple example:
 
-```cpp 
+```cpp
 #include "custom_remote_logging_api.h"
 
 int main() {
@@ -158,7 +158,7 @@ int main() {
 }
 ```
 
-In this example, we first call trpc::custom_remote_logging::Init() to initialize the custom remote log plugin, and then use trpc::LogFactory::GetInstance() to get the log factory instance. Next, we can use the log_factory->Get()->LogIt() method to output logs, which will be sent to the remote server via the custom remote log plugin.
+In this example, we first call `trpc::custom_remote_logging::Init()` to initialize the custom remote log plugin, and then use `trpc::LogFactory::GetInstance()` to get the log factory instance. Next, we can use the `log_factory->Get()->LogIt()` method to output logs, which will be sent to the remote server via the custom remote log plugin.
 
 # Print Remote Logs with Log Macros
 

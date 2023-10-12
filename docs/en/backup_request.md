@@ -3,8 +3,9 @@
 # Overview
 
 Sometimes, to ensure availability or reduce tail latency, it is necessary to simultaneously access two services and take the response from whichever arrives first. There are generally two approaches to implementing this functionality:
+
 1. Concurrently send two requests and take the result from the one that returns first.
-2. Set a reasonable resend time. If a request times out or fails 
+2. Set a reasonable resend time. If a request times out or fails
 within the resend time, send the second request and take the result from the one that returns first.
 
 One issue with approach 1 is that it doubles the backend traffic. Approach 2, on the other hand, typically results in only one request under normal circumstances, keeping the backend traffic mostly unchanged. Considering this, we chooses to implement approach 2.
@@ -91,10 +92,12 @@ If the strategy of the 'retry_hedging_limit' retry rate limiting filter does not
 ## View the triggering results of backup requests
 
 The framework provides two tvar variables related to backup requests internally (where service_name is the name of the called service):
-"trpc/client/service_name/backup_request" —— indicate how many times the backup request has been triggered
-"trpc/client/service_name/backup_request_success" —— represent the number of times the backup request has resulted in a successful invocation
+
+- trpc/client/service_name/backup_request: indicate how many times the backup request has been triggered
+- trpc/client/service_name/backup_request_success: represent the number of times the backup request has resulted in a successful invocation
 
 These two variables can be viewed using management commands:
+
 ```shell
 curl http://admin_ip:admin_port/cmds/var/xxx # xxx represent tvar variables
 ```
@@ -105,6 +108,6 @@ It also supports reporting attribute monitoring to the corresponding platform.
 
 1. Interface idempotence: Users need to ensure that the RPC calls they use are idempotent across different nodes.
 2. Before enabling backup requests, it is important to ensure that the backend service has sufficient processing capacity to avoid triggering a service avalanche when backup requests are made.
-3. It is necessary to select an appropriate resend time to reduce call latency while avoiding excessive traffic impact on the backend service. Usually, metrics such as P90/P95/P99 can be used as a basis for selection.
+3. It is necessary to select an appropriate resend time to reduce call latency while avoiding excessive traffic impact on the backend service. Usually, metrics such as P90/P95/P99 latency can be used as a basis for selection.
 4. Backup requests are not suitable for UDP, one-way calls, or streaming calls.
 5. If there is only one available node in the backend service or the set resend time is greater than the request timeout, the backup request will degrade into a normal one-to-one call.

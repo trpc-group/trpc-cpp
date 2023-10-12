@@ -3,7 +3,7 @@
 # Overview
 
 tRPC-Cpp supports tRPC protocol by default, and also supports HTTP protocol. Users can send Plain Text or JSON data in
-HTTP requests to access standard HTTP services, or send Protocol Buffers data in requests to access RPC services. This
+HTTP requests to access standard HTTP services, or send protobuf data in requests to access RPC services. This
 allows an RPC service to support both tRPC and HTTP protocols at the same time, and currently supports accessing tRPC
 services through HTTP clients.
 
@@ -175,7 +175,7 @@ Note: The Post2 below is just an interface name and does not use the HTTP2 proto
 
 #### HEAD  PUT  OPTIONS  PATCH  DELETE
 
-Note: The Put2 below is just an interface name and does not use the HTTP2 protocol.
+*Note: The Put2 below is just an interface name and does not use the HTTP2 protocol.*
 
 ```cpp
 /// @brief Gets an HTTP response of an HTTP HEAD method request from HTTP server.
@@ -222,7 +222,7 @@ Future<HttpResponse> AsyncDelete(const ClientContextPtr& context, const std::str
 
 ### CONNECT method is not currently supported
 
-tRPC has not yet implemented the HTTP CONNECT related logic.
+tRPC-Cpp has not yet implemented the HTTP CONNECT related logic.
 
 ### Status
 
@@ -359,7 +359,7 @@ HTTPS is short for HTTP over SSL and can be enabled through the following steps:
   > When using `bazel build`, add the `--define trpc_include_ssl=true` compilation parameter.
   > Note: We can also add it to the `.bazelrc` file.
 
-  **Note: tRPC supports HTTPS based on OpenSSL. Please make sure that OpenSSL is correctly installed in the compilation
+  **Note: tRPC-Cpp supports HTTPS based on OpenSSL. Please make sure that OpenSSL is correctly installed in the compilation
 and runtime environment.**
 
   ```cpp
@@ -414,7 +414,7 @@ and runtime environment.**
 
 ### Getting the Response content of Non-2xx responses
 
-tRPC has filtered HTTP response codes:
+tRPC-Cpp has filtered HTTP response codes:
 
 * When the response code is 2xx, the caller can get the corresponding response message.
 * When the response code is not 2xx, the caller can only get the response code but not the response message.
@@ -431,7 +431,7 @@ class MyHttpServiceProxy : public ::trpc::http::HttpSeriveProxy {
 ### Large File Upload + Download
 
 In HTTP services, there are scenarios where large files need to be read or sent. Reading the entire file into memory is
-inefficient and can cause high memory pressure, making it impractical for uploading large files. tRPC provides a set of
+inefficient and can cause high memory pressure, making it impractical for uploading large files. tRPC-Cpp provides a set of
 HTTP stream reading/writing data chunk interfaces that can be used to receive/send large files in chunks.
 
 * For large files with known length, set `Content-Length: $length` and send them in chunks (or use chunked transfer
@@ -451,7 +451,7 @@ this RPC service using the `HTTP` protocol.
 * Set the configuration item `protocol: trpc_over_http`.
 
 ```cpp
-// Template parameters: Protocol Buffers Message.
+// Template parameters: protobuf Message.
 template <class RequestMessage, class ResponseMessage>
 Status UnaryInvoke(const ClientContextPtr& context, const RequestMessage& req, ResponseMessage* rsp);
 template <class RequestMessage, class ResponseMessage>
@@ -502,26 +502,26 @@ be transmitted correctly.
 
 # FAQ
 
-## 1. How to get the HTTP response status code, such as 200, 404?
+## How to get the HTTP response status code, such as 200, 404?
 
 If you only need to get the status code of 2xx, you can use the interface that returns `HttpResponse*`.
 If you need to get the status code of non-2xx, please override the `CheckHttpResponse(...)` method.
 
-## 2. Does the `target` configuration item in the configuration file support the `domain:Port` format?
+## Does the `target` configuration item in the configuration file support the `domain:Port` format?
 
 Yes, it is supported. You need to:
 
 * Set `target` to `xx.example.com:8080`.
 * Set `selector_name` to `domain`.
 
-## 3. Is the thread blocked during the execution of the synchronous interface?
+## Is the thread blocked during the execution of the synchronous interface?
 
 * If the `fiber` coroutine is used, the synchronous interface execution process is a synchronous call, which is executed
   asynchronously and does not block the thread.
 * If the `merge or separate` thread model is used, the synchronous interface call will block the caller thread, but the
   network-related operations are executed asynchronously.
 
-## 4. How to use the `curl` command to send Protocol Buffer data to an HTTP service?
+## How to use the `curl` command to send Protobuf data to an HTTP service?
 
 Refer to the following command (replace your own data + IP:Port + RPC method name):
 
@@ -533,16 +533,16 @@ curl -T http_rpc_hello_request.pb -H "Content-Type:application/pb" 'http://127.0
 curl -T http_rpc_hello_request.json -H "Content-Type:application/json" 'http://127.0.0.1:24756/trpc.test.httpserver.Greeter/SayHello'
 ```
 
-## 5. When using a self-signed certificate for debugging, how to handle the client certificate verification failure?
+## When using a self-signed certificate for debugging, how to handle the client certificate verification failure?
 
 ssl configuration item: `insecure`: whether to verify the legality of the other party's certificate. By default, the
 legality of the other party's certificate is verified. In the debugging scenario, when using a self-signed certificate,
 you can set this parameter to true to skip the certificate verification process.
 
-## 6. When calling interfaces such as `HttpUnaryInvoke`, an error is prompted: `... err=unmatched codec ...`, how to handle it?
+## When calling interfaces such as `HttpUnaryInvoke`, an error is prompted: `... err=unmatched codec ...`, how to handle it?
 
 Try to set the codec configuration item used by HttpServiceProxy: `protocol: http`.
 
-## 7. When calling an tRPC RPC service through HTTP, if the called party sets an alias through @alias, how to set the URL Path?
+## When calling an tRPC RPC service through HTTP, if the called party sets an alias through @alias, how to set the URL Path?
 
 Replace the parameter value: `client_context->SetFuncName("${your-alias-name}")`.

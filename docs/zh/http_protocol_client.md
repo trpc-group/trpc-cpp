@@ -1,20 +1,18 @@
 [English](../en/http_protocol_client.md)
 
-# 访问 HTTP 服务指南
-
-**主题：如何基于 tRPC-Cpp 访问 HTTP 服务**
+# 前言
 
 tRPC-Cpp 默认支持 tRPC 协议，同时也支持 HTTP 协议。
-用户可在 HTTP 请求中发送 Plain Text 或者 JSON 等数据来访问标准 HTTP 服务，也可在请求中发送 Protocol Buffers 数据来访问
+用户可在 HTTP 请求中发送 Plain Text 或者 JSON 等数据来访问标准 HTTP 服务，也可在请求中发送 Protobuf 数据来访问
 RPC 服务。
 这可以使一个 RPC 服务同时支持 tRPC 和 HTTP 协议，当前支持通过 HTTP 客户端访问 tRPC 服务。
 
 本文介绍如何基于 tRPC-Cpp （下面简称 tRPC）访问 HTTP 服务，开发可以了解到如下内容：
 
 * 访问 HTTP 标准服务
-    * 快速上手：使用一个 HTTP Client 访问 HTTP 服务。
-    * 基础用法：设置请求常用接口；获取响应常用接口。
-    * 进阶用法：发送 HTTPS请求；请求消息压缩、响应消息解压缩；大文件上传、下载。
+  * 快速上手：使用一个 HTTP Client 访问 HTTP 服务。
+  * 基础用法：设置请求常用接口；获取响应常用接口。
+  * 进阶用法：发送 HTTPS请求；请求消息压缩、响应消息解压缩；大文件上传、下载。
 * 访问 HTTP RPC 服务
 * FAQ
 
@@ -37,7 +35,7 @@ sh examples/features/http/run.sh
 
 示例程序输出：
 
-``` text
+```text
 # 部分过程输出片段内容
 response content: hello world!
 response content: {"msg":"hello world!"}
@@ -74,47 +72,46 @@ final result of http calling: 1
 
 1. 获取 `HttpServiceProxyPtr` 对象 `proxy`：使用 `::trpc::GetTrpcClient()->GetProxy<HttpServiceProxy>(...)`。
 
-```cpp
-std::string service_name{"http_client_xx"};
-::trpc::ServiceProxyOption option;
+   ```cpp
+   std::string service_name{"http_client_xx"};
+   ::trpc::ServiceProxyOption option;
+   
+   // ... 此处省略  option 初始化过程
+   // 此处的 proxy 获取后在其他地方可继续使用，不需要每次都获取
+   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
+   ```
 
-// ... 此处省略  option 初始化过程
-// 此处的 proxy 获取后在其他地方可继续使用，不需要每次都获取
-auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
-```
-
-> 创建 HttpServiceProxyPtr 有 3 种方式：
->
-> -1- 代码中设置 `ServiceProxyOption` 对象。
->
-> -2- 使用 yaml 配置文件指定 service 配置项。（推荐）
-> 
-> -3- 通过回调函数初始化 `ServiceProxyOption`  + yaml 配置项。
->
-> 可参考 [client_guide](./client_guide.md)
+   > 创建 HttpServiceProxyPtr 有 3 种方式：
+   >
+   > -1- 代码中设置 `ServiceProxyOption` 对象。
+   >
+   > -2- 使用 yaml 配置文件指定 service 配置项。（推荐）
+   >
+   > -3- 通过回调函数初始化 `ServiceProxyOption`  + yaml 配置项。
+   >
+   > 可参考 [client_guide](./client_guide.md)
 
 2. 创建 `ClientContextPtr` 对象 `context`：使用 `MakeClientContext(proxy)`。
 
-```cpp
-auto ctx = ::trpc::MakeClientContext(proxy);
-```
+   ```cpp
+   auto ctx = ::trpc::MakeClientContext(proxy);
+   ```
 
 3. 调用 `GetString` 。
 
-
-```cpp
-// ...
-auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
-auto ctx = ::trpc::MakeClientContext(proxy);
-std::string rsp_str;
-auto status = proxy->GetString(ctx, "http://example.com/foo", &rsp_str);
-if (!status.OK()) {
-  // Error ...
-} else {
-  // Ok ...
-}
-// ...
-```
+   ```cpp
+   // ...
+   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
+   auto ctx = ::trpc::MakeClientContext(proxy);
+   std::string rsp_str;
+   auto status = proxy->GetString(ctx, "http://example.com/foo", &rsp_str);
+   if (!status.OK()) {
+     // Error ...
+   } else {
+     // Ok ...
+   }
+   // ...
+   ```
 
 ## 基础用法
 
@@ -144,7 +141,7 @@ Get 接口从服务端获取一个 JSON/字符串，提供同步调用和异步�
 | HttpServiceProxy | Status Get2(const ClientContextPtr&amp; context, const std::string&amp; url, HttpResponse* rsp)          | 使用 GET 方法获取 HTTP 响应     | context 客户端上下文<br> url 资源位置 <br> rsp 存放HTTP响应  | Status                         | 同步接口 |
 | HttpServiceProxy | Future&lt;rapidjson::Document> AsyncGet(const ClientContextPtr&amp; context, const std::string&amp; url) | 使用 GET 方法获取一个 JSON 响应消息 | context 客户端上下文<br> url 资源位置                    | Future&lt;rapidjson::Document> | 异步接口 |
 | HttpServiceProxy | Future&lt;std::string> AsyncGetString(const ClientContextPtr&amp; context, const std::string&amp; url)   | 使用 GET 方法获取一个字符串响应消息    | context 客户端上下文<br> url 资源位置 <br>               | Future&lt;std::string>         | 异步接口 |
-| HttpServiceProxy | Future<HttpResponse> AsyncGet2(const ClientContextPtr&amp; context, const std::string&amp; url)          | 使用 GET 方法获取 HTTP 响应     | context 客户端上下文<br> url 资源位置 <br>               | Future&lt;HttpResponse>        | 异步接口 |
+| HttpServiceProxy | Future&lt;HttpResponse> AsyncGet2(const ClientContextPtr&amp; context, const std::string&amp; url)          | 使用 GET 方法获取 HTTP 响应     | context 客户端上下文<br> url 资源位置 <br>               | Future&lt;HttpResponse>        | 异步接口 |
 
 #### POST
 
@@ -169,7 +166,7 @@ Post 接口支持发送一个JSON/字符串请求给服务端，然后从服务�
 
 #### HEAD  PUT  OPTIONS  PATCH  DELETE
 
-提示：下面的 Put2 仅仅是一个接口名，并非是使用 HTTP2 协议。
+*提示：下面的 Put2 仅仅是一个接口名，并非是使用 HTTP2 协议。*
 
 ```cpp
 /// @brief Gets an HTTP response of an HTTP HEAD method request from HTTP server.
@@ -216,7 +213,7 @@ Future<HttpResponse> AsyncDelete(const ClientContextPtr& context, const std::str
 
 ### 暂未支持 CONNECT 方法
 
-tRPC 侧暂未实现 HTTP CONNECT 相关逻辑。
+tRPC-Cpp 侧暂未实现 HTTP CONNECT 相关逻辑。
 
 ### 接口返回值 Status
 
@@ -260,8 +257,8 @@ HTTP Client 选择目标 IP:Port 是通过 `target: ip:port` 和 `selector: $nam
 一般情况下，URL 按规范方式填写即可。其中 "host:port"，可以采取占位符方式填写，"host" 和 "port" 可以填写成你期望发送给服务器端的值。
 比如：
 
-- 填写 `xx.example.com`，完整 URL：`http://xx.example.com/to/path` ，则 HTTP 请求头部会填充：`Host: xx.example.com`。
-- 填写 `xx.example.com:8080`， 完整 URL：`http://xx.example.com:8080/to/path` ， 则 HTTP
+* 填写 `xx.example.com`，完整 URL：`http://xx.example.com/to/path` ，则 HTTP 请求头部会填充：`Host: xx.example.com`。
+* 填写 `xx.example.com:8080`， 完整 URL：`http://xx.example.com:8080/to/path` ， 则 HTTP
   请求头部会填充：`Host: xx.example.com:8080`。
 
 ### 设置/获取 HTTP 请求头
@@ -325,77 +322,77 @@ bool HttpPost(const HttpServiceProxyPtr& proxy) {
 
 ### 压缩或者解压缩消息体
 
-tRPC 当前不会自动压缩或者解压缩消息体，主要基于如下考虑：
+tRPC-Cpp 当前不会自动压缩或者解压缩消息体，主要基于如下考虑：
 
-- 通用性，这个操作交由用户自行处理会更灵活。
-- 压缩、解压缩代码不是很复杂，tRPC 提供了压缩和解压缩工具，当前支持 gzip，lz4， snappy，zlib
+* 通用性，这个操作交由用户自行处理会更灵活。
+* 压缩、解压缩代码不是很复杂，tRPC 提供了压缩和解压缩工具，当前支持 gzip，lz4， snappy，zlib
   等 [compressor](../../trpc/compressor)
 
 ### 发送 HTTPS 请求
 
 HTTPS 是 HTTP over SSL 的简称，可以通过如下方式开启 SSL。
 
-- 编译代码时开启 SSL 编译选项。
+* 编译代码时开启 SSL 编译选项。
 
-> 使用 bazel build 时，增加 --define trpc_include_ssl=true 编译参数。
-> 提示：也可以加到 .bazelrc 文件中。
+  > 使用 bazel build 时，增加 --define trpc_include_ssl=true 编译参数。
+  > 提示：也可以加到 .bazelrc 文件中。
+  
+  **提示：tRPC-Cpp 基于 OpenSSL 支持 HTTPS，请确保编译、运行环境正确安装 OpenSSL 。**
 
-**提示：tRPC 基于 OpenSSL 支持 HTTPS，请确保编译、运行环境正确安装 OpenSSL 。**
+  ```cpp
+  // e.g. 
+  bazel build --define trpc_include_ssl=true //https/http_client/...
+  ```
 
-```cpp
-// e.g. 
-bazel build --define trpc_include_ssl=true //https/http_client/...
-```
-
-在 `client` 配置中，`service` 配置项中新增 `ssl` 配置项，具体配置如下：
-
-| 名称               | 功能                                        | 取值范围                                    | 默认值               | 可选状态       | 说明                                                              |
-|------------------|-------------------------------------------|-----------------------------------------|-------------------|------------|-----------------------------------------------------------------|
-| ciphers          | 加密套件                                      | 不限                                      | null              | `required` | 在启用SSL时，如果不正确设置，服务会启动失败                                         |
-| enable           | 是否启用SSL                                   | {true, false}                           | false             | optional   | 建议在配置项明确指定，明确意图                                                 |
-| sni_name         | 设置 SSL 协议中 SNI 扩展字段，也可简单理解为在 SSL 中设置 Host | 不限                                      | null              | optional   | 建议设置成 URL 中 Host 值，一般可简单理解为 HTTP 中 Host 值，即域名                   |
-| ca_cert_path     | CA 证书路径                                   | 不限，xx/path/to/ca.pem                    | null              | optional   | 在自签证书场景使用较多                                                     |
-| cert_path        | 证书路径                                      | 不限，xx/path/to/server.pem                | null              | optional   | 双向认证必选，其他情况无效                                                   |
-| private_key_path | 私钥路径                                      | 不限，xx/path/to/server.key                | null              | optional   | 双向认证必选，其他情况无效                                                   |
-| protocols        | SSL协议版本                                   | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional   | -                                                               |
-| insecure         | 是否校验对方证书合法性                               | {true, false}                           | false             | optional   | 默认校验对方证书合法性。在调试场景中，一般使用自签证书，证书不一定能够通过校验，将此参数设置成 true 可以跳过证书校验环节 |
-
-举个例子：
-
-```yaml
-# @file: trpc_cpp.yaml
-# ...
-client:
-  service:
-    - name: http_client
-      selector_name: direct
-      target: 127.0.0.1:24756
-      protocol: http
-      network: tcp
-      conn_type: long
-      ## <-- 新增的 SSL 配置项
-      ssl:
-        enable: true # 可选参数（默认为 false ，禁用 SSL）
-        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # 必选参数
-        # 下面可选参数按需配置，这里简要列举下
-        # sni_name: www.xxops.com # 可选参数
-        # ca_cert_path: ./https/cert/xxops-com-chain.pem # 可选参数
-        # cert_path: xx_cert.pem # 可选参数，双向认证必选
-        # private_key_path: xx_key.pem # 可选参数，双向认证必选
-        # insecure: true # 可选参数（默认为 false，禁用非安全模式）
-        # protocols: # 可选参数
-        #   - SSLv2
-        #   - SSLv3
-        #   - TLSv1
-        #   - TLSv1.1
-        #   - TLSv1.2
-        ## --> 新增的SSL配置项
-# ...
-```
+* 在 `client` 配置中，`service` 配置项中新增 `ssl` 配置项，具体配置如下：
+  
+  | 名称               | 功能                                        | 取值范围                                    | 默认值               | 可选状态       | 说明                                                              |
+  |------------------|-------------------------------------------|-----------------------------------------|-------------------|------------|-----------------------------------------------------------------|
+  | ciphers          | 加密套件                                      | 不限                                      | null              | `required` | 在启用SSL时，如果不正确设置，服务会启动失败                                         |
+  | enable           | 是否启用SSL                                   | {true, false}                           | false             | optional   | 建议在配置项明确指定，明确意图                                                 |
+  | sni_name         | 设置 SSL 协议中 SNI 扩展字段，也可简单理解为在 SSL 中设置 Host | 不限                                      | null              | optional   | 建议设置成 URL 中 Host 值，一般可简单理解为 HTTP 中 Host 值，即域名                   |
+  | ca_cert_path     | CA 证书路径                                   | 不限，xx/path/to/ca.pem                    | null              | optional   | 在自签证书场景使用较多                                                     |
+  | cert_path        | 证书路径                                      | 不限，xx/path/to/server.pem                | null              | optional   | 双向认证必选，其他情况无效                                                   |
+  | private_key_path | 私钥路径                                      | 不限，xx/path/to/server.key                | null              | optional   | 双向认证必选，其他情况无效                                                   |
+  | protocols        | SSL协议版本                                   | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional   | -                                                               |
+  | insecure         | 是否校验对方证书合法性                               | {true, false}                           | false             | optional   | 默认校验对方证书合法性。在调试场景中，一般使用自签证书，证书不一定能够通过校验，将此参数设置成 true 可以跳过证书校验环节 |
+  
+  举个例子：
+  
+  ```yaml
+  # @file: trpc_cpp.yaml
+  # ...
+  client:
+    service:
+      - name: http_client
+        selector_name: direct
+        target: 127.0.0.1:24756
+        protocol: http
+        network: tcp
+        conn_type: long
+        ## <-- 新增的 SSL 配置项
+        ssl:
+          enable: true # 可选参数（默认为 false ，禁用 SSL）
+          ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # 必选参数
+          # 下面可选参数按需配置，这里简要列举下
+          # sni_name: www.xxops.com # 可选参数
+          # ca_cert_path: ./https/cert/xxops-com-chain.pem # 可选参数
+          # cert_path: xx_cert.pem # 可选参数，双向认证必选
+          # private_key_path: xx_key.pem # 可选参数，双向认证必选
+          # insecure: true # 可选参数（默认为 false，禁用非安全模式）
+          # protocols: # 可选参数
+          #   - SSLv2
+          #   - SSLv3
+          #   - TLSv1
+          #   - TLSv1.1
+          #   - TLSv1.2
+          ## --> 新增的SSL配置项
+  # ...
+  ```
 
 ### 获取非 2xx 响应的响应内容
 
-tRPC 对 HTTP 响应码做了过滤处理：
+tRPC-Cpp 对 HTTP 响应码做了过滤处理：
 
 * 响应码为 2xx 时，调用者可以获取对应的响应消息。
 * 响应码非 2xx 时，调用者仅可以获取到响应码，但无响应消息。
@@ -412,10 +409,10 @@ class MyHttpServiceProxy : public ::trpc::http::HttpSeriveProxy {
 ### 大文件上传 + 下载
 
 在 HTTP 服务中，有部分场景需要读取或者发送大文件的场景，将文件完整读入内存压力较大且效率较低，对于大文件的上传可行性不高。
-tRPC 提供一套 HTTP 流式读取/写入数据分片的接口，可以分片接收/发送大文件。
+tRPC-Cpp 提供一套 HTTP 流式读取/写入数据分片的接口，可以分片接收/发送大文件。
 
-- 对于已经知晓长度的大文件，设置 `Content-Length: $length` 后分块发送（当然也可以使用 chunked 分块发送，如果对端支持的话）。
-- 对于未知长度的大文件，设置 `Transfer-Encoding: chunked` 后分块发送。
+* 对于已经知晓长度的大文件，设置 `Content-Length: $length` 后分块发送（当然也可以使用 chunked 分块发送，如果对端支持的话）。
+* 对于未知长度的大文件，设置 `Transfer-Encoding: chunked` 后分块发送。
 
 具体可以参考 [HTTP 上传 下载](./http_protocol_upload_download_service.md)。
 
@@ -431,7 +428,7 @@ tRPC 提供一套 HTTP 流式读取/写入数据分片的接口，可以分片�
 * 设置配置项 `protocol: trpc_over_http`。
 
 ```cpp
-// 模版参数为 Protocol Buffers Message 对象。
+// 模版参数为 protobuf message 对象。
 template <class RequestMessage, class ResponseMessage>
 Status UnaryInvoke(const ClientContextPtr& context, const RequestMessage& req, ResponseMessage* rsp);
 template <class RequestMessage, class ResponseMessage>
@@ -461,15 +458,16 @@ bool HttpRpcCall(const HttpServiceProxyPtr& proxy) {
 }
 ```
 
-##  设置 `trpc-trans-info`
+## 设置 `trpc-trans-info`
 
 如果服务端希望使用 HTTP 协议透传 tRPC 协议 `trans_info`，客户端如何处理 ？
 设置方法：把 `trpc-trans-info: {"k1": "v1", "k2": "v2"}` 当做一个 HTTP Header，
 其中 HTTP Header 名称为：`trpc-trans-info`  ， 值为 `{"k1": "v1", "k2": "v2"}` 是一个 JSON 串。
-并使用` ClientContext::SetHttpHeader('trpc-trans-info', 'json_string')` 设置。
+并使用 `ClientContext::SetHttpHeader('trpc-trans-info', 'json_string')` 设置。
 
 和如下 curl 命令行类似：
-```
+
+```sh
 curl -H 'trpc-trans-info: {"k1": "v1", "k2": "v2" }'  -T xx.seriealized.pb $url
 ```
 
@@ -478,28 +476,28 @@ curl -H 'trpc-trans-info: {"k1": "v1", "k2": "v2" }'  -T xx.seriealized.pb $url
 
 # FAQ
 
-## 1. 如何获取 HTTP 响应状态码，比如 200，404？
+## 如何获取 HTTP 响应状态码，比如 200，404？
 
 如果只需要获取 2xx 的状态码，可直接使用返回为 `HttpResponse*` 的接口。
 如果需要获取非 2xx 的状态码，请 override `CheckHttpResponse(...)` 方法。
 
-## 2. 配置文件中的 `target` 配置项是否支持 `域名:Port` 格式？
+## 配置文件中的 `target` 配置项是否支持 `域名:Port` 格式？
 
 支持的，需要：
 
 * `target` 设置成 `xx.example.com:8080` 。
 * 将 `selector_name` 设置成 `domain`。
 
-## 3. 同步接口执行过程中是阻塞线程？
+## 同步接口执行过程中是阻塞线程？
 
 * 如果使用了 `fiber` 协程，同步接口执行过程是同步调用，异步执行，不阻塞线程。
 * 如果使用了 `merge or separate` 线程模型，同步接口调用会阻塞调用者线程，但是网络相关操作是异步执行的。
 
-## 4. 如何使用 `curl` 命令发送 Protocol Buffer 数据给 HTTP Service？
+## 如何使用 `curl` 命令发送 Protobuf 数据给 HTTP Service？
 
 参考如下命令（替换你自己的数据 + IP:Port + RPC 方法名）：
 
-```
+```sh
 ## 其中 http_rpc_hello_request.pb 是 PB 消息序列化后的内容。
 curl -T http_rpc_hello_request.pb -H "Content-Type:application/pb" 'http://127.0.0.1:24756/trpc.test.httpserver.Greeter/SayHello'
 
@@ -507,15 +505,15 @@ curl -T http_rpc_hello_request.pb -H "Content-Type:application/pb" 'http://127.0
 curl -T http_rpc_hello_request.json -H "Content-Type:application/json" 'http://127.0.0.1:24756/trpc.test.httpserver.Greeter/SayHello'
 ```
 
-## 5. 使用自签证书调试时，客户端校验证书不通过，如何处理？
+## 使用自签证书调试时，客户端校验证书不通过，如何处理？
 
 ssl 配置项：`insecure` ：是否校验对方证书合法性，默认校验对方证书合法性。在调试场景中，使用自签证书时，可以将此参数设置成 true
 可以跳过证书校验环节。
 
-## 6. 调用 HttpUnaryInvoke 等接口时，提示错误：`... err=unmatched codec ...`，如何处理？
+## 调用 HttpUnaryInvoke 等接口时，提示错误：`... err=unmatched codec ...`，如何处理？
 
 尝试设置 HttpServiceProxy 使用的 codec 配置项：`procotol: http`。
 
-## 7. 通过 HTTP 调用 tRPC RPC 服务时，被调方通过 @alias 设置了一个别名如何设置 URL Path ？
+## 通过 HTTP 调用 tRPC RPC 服务时，被调方通过 @alias 设置了一个别名如何设置 URL Path ？
 
 方法：client_context->SetFuncName("${your-alias-name}") ，替换下参数值。

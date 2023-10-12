@@ -14,7 +14,7 @@ needed for data compression.
 
 # How to enable compression and decompression features for RPC calls
 
-The "tRPC" protocol of the tRPC framework (usually written as "trpc" when used) supports data compression.
+The `tRPC` protocol of the tRPC framework (usually written as `trpc` when used) supports data compression.
 Other protocols may not necessarily support data compression, it depends on their specific implementation.
 
 ## Features
@@ -35,7 +35,7 @@ The following compression levels are currently supported:
 The compression effect gradually improves from `kFastest` to `kBest`, but it also consumes more CPU. If the compression
 level is not specified, the framework generally uses kDefault.
 
-Note: Snappy does not have a compression level parameter. When using it, simply set the compression algorithm directly.
+**Note: Snappy does not have a compression level parameter. When using it, simply set the compression algorithm directly.**
 
 Taking the following call chain as an example, let's explain the strategy for choosing the compression algorithm during
 an RPC call.
@@ -48,14 +48,14 @@ graph LR
     B --> |4 Response-B| A
 ```
 
-In the scenario of A->B, when B replies to the client, it will use the compression algorithm set in the request
+In the scenario of `A->B`, when B replies to the client, it will use the compression algorithm set in the request
 by A at the kDefault level by default, unless B sets additional compression parameters for the response message.
 
 For example, if Request-B in the figure uses gzip compression at the kFastest level for the request message, and Server
 B does not set any compression parameters, then Server B will use gzip compression at the kDefault level to compress the
 Response-B message when replying.
 
-In the scenario of A->B->C, the compression parameters set by A will not be passed to C by default unless B sets
+In the scenario of `A->B->C`, the compression parameters set by A will not be passed to C by default unless B sets
 compression parameters for C.
 
 For example, if Request-B in the figure compresses the request message using gzip at the kFastest level, and Request-C
@@ -71,7 +71,7 @@ side, the framework will automatically compress the request message content and 
 on the server side, the framework will automatically uncompress the request message content and compress the response
 message content.
 
-### Setting compression parameters for requests**
+### Setting compression parameters for requests
 
 When requesting downstream services, set the compression algorithm and compression level.
 
@@ -88,7 +88,7 @@ When requesting downstream services, set the compression algorithm and compressi
 
 The above code sets gzip compression and kFastest compression level to compress the request message content.
 
-### Updating compression parameters for responses**
+### Updating compression parameters for responses
 
 If compression parameters are set in the request, the server will use the compression algorithm specified in the request
 by default, but the compression level will use kDefault. If you want to update the compression parameters, you can set
@@ -103,7 +103,7 @@ ServerContext.
   // ...
 ```
 
-### Using compression and decompression interfaces directly**
+### Using compression and decompression interfaces directly
 
 In some scenarios, you may want to use the framework's compression/decompression capabilities directly.
 
@@ -133,9 +133,7 @@ a `compressor` plugin to meet our own needs.
 
 ## Basic steps
 
-We need to focus on the following aspects of the compressor plugin:
-
-### Compression and decompression of messages.
+We need to focus on the compressor plugin for these tasks: message compression and decompression.
 
 The basic steps are:
 
@@ -146,7 +144,7 @@ The basic steps are:
 
 Reference: [trpc_gzip](../../trpc/compressor/gzip)
 
-### Implement the compressor plugin interface.**
+### Implement the compressor plugin interface
 
 ```cpp
 class MyCompressor : public Compressor {
@@ -168,7 +166,7 @@ compression level.
 
 *DoDecompress* decompresses the data in |in| and stores the decompressed data in |out|.
 
-### Register the compressor plugin**
+### Register the compressor plugin
 
 Register the custom implemented compressor plugin during program initialization.
 

@@ -2,45 +2,49 @@
 
 # 前言
 
-tRPC-Cpp对[Prometheus](https://prometheus.io/)的部分功能进行了封装，实现了在框架内采集Prometheus监控数据，并对外提供监控数据导出的能力。
+tRPC-Cpp 框架对 [Prometheus](https://prometheus.io/)的部分功能进行了封装，实现了在框架内采集 Prometheus 监控数据，并对外提供监控数据导出的能力。
 
-这篇文档介绍如何在tRPC-Cpp中使用Prometheus，开发者可以了解到如下内容：
-* 如何开启Prometheus监控
-* Prometheus监控插件提供的能力：
+这篇文档介绍如何在 tRPC-Cpp 框架中使用 Prometheus，开发者可以了解到如下内容：
+
+* 如何开启 Prometheus 监控
+* Prometheus 监控插件提供的能力：
   * 模调监控上报
   * 属性监控上报
-* 如何使用Prometheus原生API上报自定义数据
+* 如何使用 Prometheus 原生 API 上报自定义数据
 * 如何导出监控数据
 
-# 开启Prometheus监控
+# 开启 Prometheus 监控
 
-tRPC-Cpp默认不会编译Prometheus相关的代码。若要开启，用户需要在程序编译时加上相关的编译选项。
+tRPC-Cpp 框架默认不会编译 Prometheus 相关的代码。若要开启，用户需要在程序编译时加上相关的编译选项。
 
-## Bazel启用方式
+## Bazel 启用方式
 
-bazel编译时加上`“trpc_include_prometheus”`编译选项。
+bazel 编译时加上`“trpc_include_prometheus”`编译选项。
 
-例如在.bazelrc中加上：
-```
+例如在 `.bazelrc` 中加上：
+
+```sh
 build --define trpc_include_prometheus=true
 ```
 
-## CMake启用方式
+## CMake 启用方式
 
-cmake编译时加上`“TRPC_BUILD_WITH_METRICS_PROMETHEUS”`编译选项。
+cmake 编译时加上 `TRPC_BUILD_WITH_METRICS_PROMETHEUS` 编译选项。
 
 例如：
+
 ```cmake
 cmake -DTRPC_BUILD_WITH_METRICS_PROMETHEUS=ON -DCMAKE_BUILD_TYPE=Release ..
 ```
 
-# Prometheus监控插件
+# Prometheus 监控插件
 
-tRPC-Cpp基于Prometheus提供了一个Metrics插件，其遵循框架规定的[Metrics接口定义](../../trpc/metrics/metrics.h)，提供了模调监控上报和属性监控上报能力。
+tRPC-Cpp 框架基于 Prometheus 提供了一个 Metrics 插件，其遵循框架规定的 [Metrics 接口定义](../../trpc/metrics/metrics.h)，提供了模调监控上报和属性监控上报能力。
 
 ## 插件配置
 
-只要在编译时打开了Prometheus相关的[编译选项](#开启prometheus监控)，框架就会在启动时自动注册Prometheus监控插件。可以框架配置文件中对插件的参数进行配置（不配置则全部使用默认参数）：
+只要在编译时打开了 Prometheus 相关的[编译选项](#开启 prometheus 监控)，框架就会在启动时自动注册 Prometheus 监控插件。可以框架配置文件中对插件的参数进行配置（不配置则全部使用默认参数）：
+
 ```yaml
 plugins:
   metrics:
@@ -68,7 +72,8 @@ plugins:
 
 ### 主调监控上报
 
-只需在框架配置文件的`“client”`中加上Prometheus拦截器，即可开启主调监控：
+只需在框架配置文件的 `client` 中加上 `prometheus` 拦截器，即可开启主调监控：
+
 ```yaml
 client:
   ...
@@ -76,7 +81,7 @@ client:
     - prometheus
 ```
 
-**开启后框架会自动采集主调的RPC调用数据。**
+**开启后框架会自动采集主调的 RPC 调用数据。**
 
 统计数据：
 
@@ -106,7 +111,8 @@ client:
 
 ### 被调监控上报
 
-只需在框架配置文件的`“server”`中加上Prometheus拦截器，即可开启被调监控：
+只需在框架配置文件的 `server` 中加上 `prometheus` 拦截器，即可开启被调监控：
+
 ```yaml
 server:
   ...
@@ -118,6 +124,7 @@ server:
 
 统计数据：
 
+```mermaid
 | 监控名 | 监控类型 | 说明 |
 | ------ | ------ | ------ |
 | rpc_server_counter_metric | Counter | 服务端收到的请求总次数 |
@@ -142,6 +149,7 @@ server:
 | pConSetId | 被调所属set |
 | frame_ret_code | 调用的框架错误码 |
 | interface_ret_code | 调用的接口错误码 |
+```
 
 ## 属性监控上报
 
@@ -174,13 +182,13 @@ server:
 
 1. `SummaryQuantiles`
 
-    该类型的参数用于指定要统计的分位数，在进行`QUANTILES`统计时会用到。实际的类型为：`std::vector<std::vector<double>>`，对应Prometheus中的`Summary::Quantiles`。
-    
+    该类型的参数用于指定要统计的分位数，在进行 `QUANTILES` 统计时会用到。实际的类型为：`std::vector<std::vector<double>>`，对应 Prometheus 中的 `Summary::Quantiles`。
+
     其赋值不能为空，且每个分位数必须由两个值组成，第一个表示要统计的分位数，第二个值表示可以接受的误差范围。例如要统计允许误差为0.05的0.5分位数，和允许误差为0.1的0.9分位数，则可以设置为：`{{0.5, 0.05}, {0.9, 0.1}}`。
 
 2. `HistogramBucket`
 
-    该类型的参数用于指定数据统计的区间，在进行`HISTOGRAM`统计时会用到。实际类型为：`std::vector<double>`，对应Prometheus中的`Histogram::BucketBoundaries`。
+    该类型的参数用于指定数据统计的区间，在进行 `HISTOGRAM` 统计时会用到。实际类型为：`std::vector<double>`，对应 Prometheus 中的 `Histogram::BucketBoundaries`。
 
 ### 上报方式
 
@@ -188,17 +196,17 @@ server:
 
 #### 插件便捷接口上报
 
-Prometheus监控插件提供了一组适配Prometheus数据的便捷上报接口，可以不用像通用的单维属性上报、多维属性上报接口那样繁琐地构造通用数据结构进行上报。**推荐用户使用这些接口**。
+Prometheus 监控插件提供了一组适配 Prometheus 数据的便捷上报接口，可以不用像通用的单维属性上报、多维属性上报接口那样繁琐地构造通用数据结构进行上报（**推荐用户使用这些接口**）。
 
-1. API文件
+1. API 文件
 
-    要使用这组接口，需要首先引入tRPC-Cpp的`Prometheus API`文件：
+    要使用这组接口，需要首先引入 tRPC-Cpp 框架的 `Prometheus API` 文件：
 
     ```cpp
     #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
     ```
 
-2. 上报`SET`类型数据
+2. 上报 `SET` 类型数据
 
     ```cpp
     namespace trpc::prometheus {
@@ -212,7 +220,7 @@ Prometheus监控插件提供了一组适配Prometheus数据的便捷上报接口
     }
     ```
 
-3. 上报`SUM`类型数据
+3. 上报 `SUM` 类型数据
 
     ```cpp
     namespace trpc::prometheus {
@@ -226,7 +234,7 @@ Prometheus监控插件提供了一组适配Prometheus数据的便捷上报接口
     }
     ```
 
-4. 上报`MID`类型数据
+4. 上报 `MID` 类型数据
 
     ```cpp
     namespace trpc::prometheus {
@@ -240,7 +248,8 @@ Prometheus监控插件提供了一组适配Prometheus数据的便捷上报接口
     }
     ```
 
-5. 上报`QUANTILES`类型数据
+5. 上报 `QUANTILES` 类型数据
+
     ```cpp
     namespace trpc::prometheus {
 
@@ -255,7 +264,8 @@ Prometheus监控插件提供了一组适配Prometheus数据的便捷上报接口
     }
     ```
 
-6. 上报`HISTOGRAM`类型数据
+6. 上报 `HISTOGRAM` 类型数据
+
     ```cpp
     namespace trpc::prometheus {
 
@@ -274,21 +284,22 @@ Prometheus监控插件提供了一组适配Prometheus数据的便捷上报接口
 
 #### 通用单维属性上报
 
-Prometheus监控插件支持框架通用的单维属性上报方式，即通过构造`::trpc::TrpcSingleAttrMetricsInfo`然后使用`::trpc::metrics::SingleAttrReport`接口来上报。**Prometheus的单维属性上报是指上报统计标签只包含一个键值对的数据。**。
+Prometheus 监控插件支持框架通用的单维属性上报方式，即通过构造 `::trpc::TrpcSingleAttrMetricsInfo` 然后使用`::trpc::metrics::SingleAttrReport` 接口来上报。**Prometheus 的单维属性上报是指上报统计标签只包含一个键值对的数据。**。
 
-设置`::trpc::TrpcSingleAttrMetricsInfo`值需要注意：
+设置 `::trpc::TrpcSingleAttrMetricsInfo` 值需要注意：
 
-1. `plugin_name`必须指定为Prometheus监控插件的名字：`::trpc::prometheus::kPrometheusMetricsName`
+1. `plugin_name` 必须指定为 Prometheus 监控插件的名字：`::trpc::prometheus::kPrometheusMetricsName`
 
-2. `single_attr_info.policy`必须正确设置成需要的统计策略。
+2. `single_attr_info.policy` 必须正确设置成需要的统计策略。
 
-3. `single_attr_info.name`表示标签的key，`single_attr_info.dimension`表示标签的value。
+3. `single_attr_info.name` 表示标签的 key，`single_attr_info.dimension` 表示标签的 value。
 
-4. `single_attr_info.value`是要进行统计观察的值。
+4. `single_attr_info.value` 是要进行统计观察的值。
 
-5. `single_attr_info.quantiles`、`single_attr_info.bucket`分别在进行`QUANTILES`和`HISTOGRAM`类型数据上报时需要设置。
+5. `single_attr_info.quantiles`、`single_attr_info.bucket` 分别在进行 `QUANTILES` 和 `HISTOGRAM` 类型数据上报时需要设置。
 
-例如上报SUM类型的数据：
+例如上报 SUM 类型的数据：
+
 ```cpp
 #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
 
@@ -303,19 +314,20 @@ single_metrics_info.single_attr_info.value = 1;
 
 #### 通用多维属性上报
 
-Prometheus监控插件支持框架通用的多维属性上报方式，即通过构造`::trpc::TrpcMultiAttrMetricsInfo`然后使用`::trpc::metrics::MultiAttrReport`接口来上报。**Prometheus的单维属性上报是指上报统计标签包含多个键值对的数据。**。
+Prometheus 监控插件支持框架通用的多维属性上报方式，即通过构造 `::trpc::TrpcMultiAttrMetricsInfo` 然后使用`::trpc::metrics::MultiAttrReport`接口来上报。**Prometheus 的单维属性上报是指上报统计标签包含多个键值对的数据。**。
 
-设置`::trpc::TrpcMultiAttrMetricsInfo`值需要注意：
+设置 `::trpc::TrpcMultiAttrMetricsInfo` 值需要注意：
 
-1. `plugin_name`必须指定为Prometheus监控插件的名字：`::trpc::prometheus::kPrometheusMetricsName`
+1. `plugin_name` 必须指定为 Prometheus 监控插件的名字：`::trpc::prometheus::kPrometheusMetricsName`
 
-2. `multi_attr_info.tags`设置为对应的键值对集合。
+2. `multi_attr_info.tags` 设置为对应的键值对集合。
 
-3. `multi_attr_info.values`只能有一个pair值，pair.first设置为需要的统计策略，pair.second设置为要进行统计观察的值。
+3. `multi_attr_info.values`只能有一个 pair 值，pair.first 设置为需要的统计策略，pair.second 设置为要进行统计观察的值。
 
-4. `multi_attr_info.quantiles`、`multi_attr_info.bucket`分别在进行`QUANTILES`和`HISTOGRAM`类型数据上报时需要设置。
+4. `multi_attr_info.quantiles`、`multi_attr_info.bucket` 分别在进行 `QUANTILES` 和 `HISTOGRAM` 类型数据上报时需要设置。
 
-例如上报SUM类型的数据：
+例如上报 SUM 类型的数据：
+
 ```cpp
 #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
 
@@ -328,9 +340,10 @@ multi_metrics_info.multi_attr_info.tags = {{"multi_test_key1", "multi_test_value
 
 # 自定义监控项
 
-用户可以参照[Prometheus](https://github.com/jupp0r/prometheus-cpp)原生的API自定义自己的监控项和监控数据，而不用局限于框架提供的监控项和监控策略。
+用户可以参照 [Prometheus](https://github.com/jupp0r/prometheus-cpp) 原生的 API 自定义自己的监控项和监控数据，而不用局限于框架提供的监控项和监控策略。
 
-框架提供了获取Prometheus监控项的接口，用户获取监控族之后即可以上报自己的监控数据。获取接口如下：
+框架提供了获取 Prometheus 监控项的接口，用户获取监控族之后即可以上报自己的监控数据。获取接口如下：
+
 ```cpp
 namespace trpc::prometheus {
 
@@ -352,7 +365,8 @@ namespace trpc::prometheus {
 }  // namespace trpc::prometheus
 ```
 
-例如获取一个`Counter`类型的监控项并上报：
+例如获取一个 `Counter` 类型的监控项并上报：
+
 ```cpp
 #include "trpc/metrics/prometheus/prometheus_metrics_api.h"
 
@@ -364,11 +378,12 @@ counter.Increment(1);
 
 # 导出监控数据
 
-tRPC-Cpp Prometheus只负责采集监控数据，没有提供主动push监控数据的功能。但框架提供了对外接口用以直接获取采集到的Prometheus数据，另外，若服务开启了admin功能，也可以通过访问admin接口来获取监控数据。
+tRPC-Cpp Prometheus 只负责采集监控数据，没有提供主动 Push 监控数据的功能；但框架提供了对外接口用以直接获取采集到的 Prometheus 数据，另外，若服务开启了 [admin 功能](./admin_service.md)，也可以通过访问 admin 接口来获取监控数据。
 
 ## 通过接口获取
 
-框架提供了`Collect`接口直接获取原生到的Prometheus数据，用户可以自己决定监控数据的使用：
+框架提供了 `Collect` 接口直接获取原生到的 Prometheus 数据，用户可以自己决定监控数据的使用：
+
 ```cpp
 namespace trpc::prometheus {
 
@@ -380,6 +395,6 @@ std::vector<::prometheus::MetricFamily> Collect();
 
 同样地，要使用该接口，需要引用 `trpc/metrics/prometheus/prometheus_metrics_api.h` 文件。
 
-## 通过admin获取
+## 通过 admin 获取
 
-如果服务开启了[admin功能](./admin_service.md)，则可以通过访问 `http://admin_ip:admin_port/metrics` 获取序列化为字符串后的Prometheus数据。
+如果服务开启了 [admin 功能](./admin_service.md)，则可以通过访问 `http://admin_ip:admin_port/metrics` 获取序列化为字符串后的 Prometheus 数据。

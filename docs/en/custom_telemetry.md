@@ -67,7 +67,7 @@ The Telemetry plugin needs to inherit [trpc::Telemetry](../../trpc/telemetry/tel
 | GetMetrics | Get the instance of Metrics plugin. | Used to standardize the implementation of metrics reporting functionality. |
 | GetLog | Get the instance of remote Logging plugin. | Used to standardize the implementation of logs collection functionality. |
 
-First, you need to implement internal Tracing plugin, Metrics plugin, and remote Logging plugin. Please refer to their respective development documents for more details. They are [Custom Tracing Plugin document](./custom_tracing.md), [Custom Metrics Plugin document](./custom_metrics.md), and [Custom Logging Plugin document](). Then you can implement the Telemetry plugin to manage the internal instances of plugins uniformly. The main logic of Telemetry plugin is as follows:
+First, you need to implement internal Tracing plugin, Metrics plugin, and remote Logging plugin. Please refer to their respective development documents for more details. They are [Custom Tracing Plugin document](./custom_tracing.md), [Custom Metrics Plugin document](./custom_metrics.md), and [Custom Logging Plugin document](./custom_logging.md). Then you can implement the Telemetry plugin to manage the internal instances of plugins uniformly. The main logic of Telemetry plugin is as follows:
 
 * Responsible for the initialization, startup, shutdown, and destruction of each plugin instance.
 * Registers the remote Logging plugin instance with the framework's logging component, enabling logging printing through logging macros.

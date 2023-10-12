@@ -40,6 +40,7 @@ class ServerContext {
 
   /// @brief Set response attachment data
   void SetResponseAttachment(NoncontiguousBuffer&& attachment);
-...
+
+  // ...
 }
 ```

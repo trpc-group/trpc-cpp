@@ -78,9 +78,7 @@ To facilitate the writing of test code, we provides the [ServerContextPtr MakeSe
 
 # Client
 
-Client calls can be categorized into two types: synchronous and asynchronous. In both cases, mocking the network is necessary, and the mocking way are similar.
-
-Regarding the specific calling way, there are two main categories:
+Client calls can be categorized into two types: synchronous and asynchronous. In both cases, mocking the network is necessary, and the mocking way are similar. Regarding the specific calling way, there are two main categories:
 
 1. Invoke with RPC interfaces directly, such as tRPC protocol
 2. Invoke with ServiceProxy subclasses like HttpServiceProxy, RedisServiceProxy

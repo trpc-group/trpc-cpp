@@ -43,6 +43,7 @@ tRPC-Cpp不对调用链插件遵循的协议标准进行限制。用户可以使
 tRPC-Cpp使用[调用链插件](../../trpc/tracing/tracing.h)来进行调用链采集和上报的公共初始化（如配置采样策略、数据上报的后端地址、数据上报的方式等）。而上下游调用链信息的串联和上报通过[拦截器](filter.md)在RPC调用的过程中自动进行，用户只需要在框架配置文件中配置上对应的插件拦截器即可。
 
 在节点内部，调用链信息约定保存在`Context`的`FilterData`中，存储的index为插件的`PluginID`。并且约定了服务端和客户端FilterData中的[调用链数据格式](../../trpc/tracing/tracing_filter_index.h)：
+
 ```cpp
 /// @brief The tracing-related data that server saves in the context for transmission
 struct ServerTracingSpan {
@@ -102,89 +103,93 @@ struct ClientTracingSpan {
 
 ### 实现客户端拦截器
 
-#### 埋点选择
+* **埋点选择**
 
-拦截器前置埋点逻辑的执行需要在进行协议编码之前，使得调用链数据可以注入到协议的元数据中。因此，埋点对可以选择“`CLIENT_PRE_RPC_INVOKE` + `CLIENT_POST_RPC_INVOKE`”，或者“`CLIENT_PRE_SEND_MSG` + `CLIENT_POST_RECV_MSG`”。主要区别在于调用的耗时统计不同，以及是否需要未序列化的用户数据。
+  拦截器前置埋点逻辑的执行需要在进行协议编码之前，使得调用链数据可以注入到协议的元数据中。因此，埋点对可以选择“`CLIENT_PRE_RPC_INVOKE` + `CLIENT_POST_RPC_INVOKE`”，或者“`CLIENT_PRE_SEND_MSG` + `CLIENT_POST_RECV_MSG`”。主要区别在于调用的耗时统计不同，以及是否需要未序列化的用户数据。
 
-#### 前置埋点处理
+* **前置埋点处理**
 
-在拦截器的前置埋点处，需要完成以下的逻辑处理：
+  在拦截器的前置埋点处，需要完成以下的逻辑处理：
+  
+  1. 创建Span
+  
+      首先需要从`ClientContext`的`FilterData`中获取`ClientTracingSpan`：
 
-1. 创建Span
+      ```cpp
+      ClientTracingSpan* client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
+      ```
+  
+      可能会存在以下几种情况：
+  
+      * client_span 为空指针：如果 ClientContext 不是调用`MakeClientContext`接口根据 ServerContext 构造的，则框架不会自动设置 ClientTracingSpan。这种情况客户端拦截器需要**自行创建 ClientTracingSpan 并设置到 FilterData 中**。
 
-    首先需要从`ClientContext`的`FilterData`中获取`ClientTracingSpan`：
-    ```cpp
-    ClientTracingSpan* client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
-    ```
+          ```cpp
+          context->SetFilterData(PluginID, ClientTracingSpan());
+          client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
+          ```
 
-    可能会存在以下几种情况：
+      * client_span 不为空，但 client_span->parent_span 为空：`MakeClientContext`自动设置了ClientTracingSpan，但由于服务端没有调用链信息（没有配置服务端拦截器），所以parent_span为空。
+      * client_span 和 client_span->parent_span均 不为空：表示有上游调用链信息需要继承。
+  
+      **如果parent_span为空，则需要创建一个拥有新的TraceID、没有ParentSpan的`Span`；若parent_span不为空，则需要创建一个TraceID与parent_span相同、ParentSpan为parent_span的`Span`。**
+  
+  2. 将调用链信息注入到元信息中
+  
+      **注入方式取决于通信协议以及调用链遵循的标准。**
+  
+      例如使用`trpc`协议和`OpenTelemetry`标准时，需要将Trace、Span等信息转换为OpenTelemetry标准的键值对，写入到trpc请求头的透传信息中。
+  
+  3. 将创建的Span存储到FilterData中
+  
+      ```cpp
+      client_span->span = std::move(Span);
+      ```
 
-    * client_span为空指针：如果ClientContext不是调用`MakeClientContext`接口根据ServerContext构造的，则框架不会自动设置ClientTracingSpan。这种情况客户端拦截器需要**自行创建ClientTracingSpan并设置到FilterData中**。
-        ```cpp
-        context->SetFilterData(PluginID, ClientTracingSpan());
-        client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
-        ```
-    * client_span不为空，但client_span->parent_span为空：`MakeClientContext`自动设置了ClientTracingSpan，但由于服务端没有调用链信息（没有配置服务端拦截器），所以parent_span为空。
-    * client_span和client_span->parent_span均不为空：表示有上游调用链信息需要继承。
+* **后置埋点处理**
 
-    **如果parent_span为空，则需要创建一个拥有新的TraceID、没有ParentSpan的`Span`；若parent_span不为空，则需要创建一个TraceID与parent_span相同、ParentSpan为parent_span的`Span`。**
-
-2. 将调用链信息注入到元信息中
-
-    **注入方式取决于通信协议以及调用链遵循的标准。**
-    
-    例如使用`trpc`协议和`OpenTelemetry`标准时，需要将Trace、Span等信息转换为OpenTelemetry标准的键值对，写入到trpc请求头的透传信息中。
-
-3. 将创建的Span存储到FilterData中
-
-    ```cpp
-    client_span->span = std::move(Span);
-    ```
-
-#### 后置埋点处理
-
-在拦截器的后置埋点处，需要完成的逻辑比较简单，只需要从`ClientContext`取出客户端调用链信息进行上报即可。
+  在拦截器的后置埋点处，需要完成的逻辑比较简单，只需要从`ClientContext`取出客户端调用链信息进行上报即可。
 
 ### 实现服务端拦截器
 
-#### 埋点选择
+* **埋点选择**
 
-拦截器前置埋点逻辑需要在进行协议解码之后，使得可以从协议的元数据中提取上游的调用链信息。因此，埋点对可以选择“`SERVER_POST_RECV_MSG` + `SERVER_PRE_SEND_MSG`”，或者“`SERVER_PRE_RPC_INVOKE` + `SERVER_POST_RPC_INVOKE`”。主要区别在于调用的耗时统计不同，以及是否需要未序列化的用户数据。
+  拦截器前置埋点逻辑需要在进行协议解码之后，使得可以从协议的元数据中提取上游的调用链信息。因此，埋点对可以选择“`SERVER_POST_RECV_MSG` + `SERVER_PRE_SEND_MSG`”，或者“`SERVER_PRE_RPC_INVOKE` + `SERVER_POST_RPC_INVOKE`”。主要区别在于调用的耗时统计不同，以及是否需要未序列化的用户数据。
 
-#### 前置埋点处理
+* **前置埋点处理**
+  
+  在拦截器的前置埋点处，需要完成以下的逻辑处理：
+  
+  1. 从请求的元数据中取出上游的调用链信息
+  
+      **提取方式取决于通信协议以及调用链遵循的标准。**
+  
+      例如使用`trpc`协议和`OpenTelemetry`标准时，需要从trpc请求头的透传信息中取出调用链对应的键值对数据，然后还原成OpenTelemetry的数据结构。
+  
+      注意提取结果可能存在以下两种情况：
+  
+      * 调用链信息为空：说明上游并不是需要观察的调用链的一环，没有调用链信息需要继承。
+      * 调用链信息不为空：说明上游是需要观察的调用链的一环，有调用链信息需要继承。
+  
+  2. 创建 Span
+  
+      **如果步骤1提取到的上游调用链信息为空，则需要创建一个拥有新的TraceID、没有ParentSpan的`Span`；若提取到的上游调用链信息不为空，则需要创建一个与上游拥有相同TraceID、ParentSpan为上游Span的`Span`。**
+  
+  3. 将创建的Span存储到FilterData中
+  
+      ```cpp
+      ServerTracingSpan svr_span;
+      svr_span.span = std::move(Span);
+      context->SetFilterData<ServerTracingSpan>(PluginID, std::move(svr_span));
+      ```
 
-在拦截器的前置埋点处，需要完成以下的逻辑处理：
+* **后置埋点处理**
 
-1. 从请求的元数据中取出上游的调用链信息
-
-    **提取方式取决于通信协议以及调用链遵循的标准。**
-
-    例如使用`trpc`协议和`OpenTelemetry`标准时，需要从trpc请求头的透传信息中取出调用链对应的键值对数据，然后还原成OpenTelemetry的数据结构。
-
-    注意提取结果可能存在以下两种情况：
-
-    * 调用链信息为空：说明上游并不是需要观察的调用链的一环，没有调用链信息需要继承。
-    * 调用链信息不为空：说明上游是需要观察的调用链的一环，有调用链信息需要继承。
-
-2. 创建Span
-
-    **如果步骤1提取到的上游调用链信息为空，则需要创建一个拥有新的TraceID、没有ParentSpan的`Span`；若提取到的上游调用链信息不为空，则需要创建一个与上游拥有相同TraceID、ParentSpan为上游Span的`Span`。**
-
-3. 将创建的Span存储到FilterData中
-
-    ```cpp
-    ServerTracingSpan svr_span;
-    svr_span.span = std::move(Span);
-    context->SetFilterData<ServerTracingSpan>(PluginID, std::move(svr_span));
-    ```
-
-#### 后置埋点处理
-
-在拦截器的后置埋点处，需要完成的逻辑比较简单，从`ServerContext`取出服务端调用链信息进行上报即可。
+  在拦截器的后置埋点处，需要完成的逻辑比较简单，从`ServerContext`取出服务端调用链信息进行上报即可。
 
 ## 注册插件和拦截器
 
 插件注册的接口：
+
 ```cpp
 using TracingPtr = RefPtr<Tracing>;
 
@@ -196,6 +201,7 @@ class TrpcPlugin {
 ```
 
 拦截器注册的接口：
+
 ```cpp
 using MessageServerFilterPtr = std::shared_ptr<MessageServerFilter>;
 using MessageClientFilterPtr = std::shared_ptr<MessageClientFilter>;
@@ -213,6 +219,7 @@ class TrpcPlugin {
 举个例子进行说明。假设自定义了一个TestTracing插件，TestServerFilter、TestClientFilter两个拦截器，那么
 
 1. 对于服务端场景，用户需要在服务启动的`TrpcApp::RegisterPlugins`函数中注册：
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
      public:
@@ -227,6 +234,7 @@ class TrpcPlugin {
     ```
 
 2. 对于纯客户端场景，需要在启动框架配置初始化后，框架其他模块启动前注册：
+
     ```cpp
     int main(int argc, char* argv[]) {
       ParseClientConfig(argc, argv);
