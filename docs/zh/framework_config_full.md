@@ -1,10 +1,13 @@
 
-# 1 前言
+[English](../en/framework_config_full.md)
+
+# 前言
+
 与精简版本配置相比，完整版配置包含了一些自定义的高级配置。
 
-# 2 说明
+# 说明
 
-tRPC-Cpp的框架全部配置文件定义：
+tRPC-Cpp 框架的全部配置文件定义：
 
 ```yaml
 #全局配置
@@ -41,7 +44,6 @@ global:
           scheduling_name: non_fiber                              #业务逻辑线程调度器名称
           local_queue_size: 10240                                 #每个handle线程的私有任务队列大小
           max_timer_size: 20480                                   #每个handle线程最大定时器个数
-        max_reactor_timer_size: 10240                             #reactor定时器数量上限，如果不填默认为10240
         io_cpu_affinitys: "0-1"                                   #将io线程绑定到核0和1上
         handle_cpu_affinitys: "2-8"                               #将 handle 线程绑定到核2-8这6个核上，仅在分离模式生效
         disallow_cpu_migration: false                             #是否严格绑核，true：表示每个线程只绑定到一个核上，此时配置的核酸必须大于或者等于相应的线程数；false：每一个线程可以绑定到多个核上
@@ -67,9 +69,11 @@ global:
         fiber_stack_enable_guard_page: true                       #是否启用fiber栈保护，如果不配置默认值为true，建议启用。
         fiber_scheduling_name: v1                                 #表示fiber运行/切换的调度器实现，目前提供两种调度器机制的实现：v1/v2，如果不配置默认值是v1版本即原来fiber调度的实现，v2版本是参考taskflow的调度实现
   
-  tvar:#tvar的相关配置，详情请参考《tvar》文档
+  tvar:
+    #tvar的相关配置，详情请参考《tvar》文档
 
-  rpcz:#rpcz的相关配置，详情请参考《rpcz》文档
+  rpcz:
+    #rpcz的相关配置，详情请参考《rpcz》文档
 
 
 #服务端配置

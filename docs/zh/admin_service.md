@@ -18,7 +18,9 @@ tRPC-Cpp内置了一个基于HTTP协议的管理服务，提供一组运维管�
 * 如何自定义管理命令
 
 # 开启管理服务
+
 tRPC-Cpp 默认是不启动管理服务的。若要开启，用户需要在框架配置文件中显式对`“server”`的`“admin_ip”`和`“admin_port”`进行配置，同时保证admin_port不为0。例如：
+
 ```yaml
 global:
   ...
@@ -29,9 +31,11 @@ server:
 ```
 
 # 内置管理命令
+
 框架内置了一组方便用户查看和修改服务状态的管理命令。
 
 ## 访问方式
+
 框架内置的管理命令有两种调用方式：
 
 ### 通过浏览器访问
@@ -66,7 +70,7 @@ server:
 | [/cmds/var](#查看框架和用户自定义的tvar变量) | GET | 无 | 查看框架和用户自定义的tvar变量 |
 | [/cmds/profile/cpu](#cpu使用情况信息采集) | POST | [enable](#cpu使用情况信息采集) | 采集CPU使用情况 |
 | [/cmds/profile/heap](#内存使用情况信息采集) | POST | [enable](#内存使用情况信息采集) | 采集内存使用情况 |
-| [/cmds/rpcz](#查看rpcz信息) | GET | 详见[rpcz 使用文档](./rpcz.md) | 查看rpcz信息 |
+| [/cmds/rpcz](#查看 rpcz 信息) | GET | 详见[rpcz 使用文档](./rpcz.md) | 查看rpcz信息 |
 | [/metrics](#获取prometheus监控数据) | GET | 无 | 获取Prometheus监控数据 |
 | [/client_detach](#断开与某个客户端地址的连接) | POST | [service_name, remote_ip](#断开与某个客户端地址的连接) | 断开与某个客户端地址的连接 |
 
@@ -75,7 +79,9 @@ server:
 本节对内置管理命令主要功能的使用方法进行介绍。由于管理页面上能完成的操作，基本上都可以通过自行构造HTTP请求来访问，所以我们只详细介绍构造HTTP请求的访问方式（以curl工具为例进行展示），对应的浏览器使用方式在页面上找到对应的模块点击操作即可。
 
 ### 查看/修改日志级别
+
 #### 查看日志级别
+
 对应接口：`GET /cmds/loglevel`
 
 参数：
@@ -85,6 +91,7 @@ server:
 | logger | string | 要查询的logger名 | 否，不设置则默认为”default“ |
 
 使用例子：
+
 ```shell
 # 查询 default logger 的日志级别，返回结果中的“level”即为日志级别
 $ curl http://admin_ip:admin_port/cmds/loglevel?logger=default
@@ -95,6 +102,7 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist
 ```
 
 #### 修改日志级别
+
 对应接口：`PUT /cmds/loglevel`
 
 参数：
@@ -105,19 +113,21 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist
 | value | string | 新的日志级别，取值范围：TRACE，DEBUG，INFO，WARNING，ERROR，CRITICAL | 是 |
 
 使用例子：
+
 ```shell
 # 修改 default logger 的日志级别，返回结果中的“level”为修改后的日志级别
-$ curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERROR'
+curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERROR'
 {"errorcode":0,"message":"","level":"ERROR"}
 # value取值非法，返回错误信息
-$ curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERR'
+curl http://admin_ip:admin_port/cmds/loglevel?logger=default -X PUT -d 'value=ERR'
 {"errorcode":-3,"message":"wrong level, please use TRACE,DEBUG,INFO,WARNING,ERROR,CRITICAL"}
 # 修改一个不存在的logger，返回错误信息
-$ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'value=ERROR'
+curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'value=ERROR'
 {"errorcode":-4,"message":"set level failed, does logger exist?"}
 ```
 
 ### 重新加载框架配置
+
 对应接口：`POST /cmds/reload-config`
 
 参数：无
@@ -127,6 +137,7 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'valu
 使用方法：
 
 1. 在框架配置文件中加上自定义配置，如加上“custom”配置：
+
    ```yaml
    global:
      ...
@@ -141,11 +152,13 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'valu
 2. 注册配置更新回调函数
 
     回调函数类型：
+
     ```cpp
     void(const YAML::Node&)
     ```
 
     注册接口：
+
     ```cpp
     class TrpcApp {
     public:
@@ -158,6 +171,7 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'valu
     ```
 
     注册方式：
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
     public:
@@ -173,17 +187,20 @@ $ curl http://admin_ip:admin_port/cmds/loglevel?logger=not_exist -X PUT -d 'valu
     回调函数的参数“root”是整个yaml文件解析后的根结点，可以使用框架提供的“ConfigHelper”工具类找到业务配置对应的节点，获取新配置数据。具体使用例子可参考 [admin example](../../examples/features/admin/proxy/)。
 
 3. 下发命令
+
     ```shell
     $ curl http://admin_ip:admin_port/cmds/reload-config -X POST
     {"errorcode":0,"message":"reload config ok"}
     ```
 
 ### 查看服务端统计信息
+
 对应接口：`GET /cmds/stats`
 
 参数：无
 
 接口说明：**必须在框架配置文件中打开统计开关，将`“server”`的`“enable_server_stats”`配置为`true`。另外可以通过`“server_stats_interval”`配置统计周期。**
+
 ```yaml
 server:
   ...
@@ -194,6 +211,7 @@ server:
 ```
 
 使用例子：
+
 ```shell
 $ curl http://dmin_ip:admin_port/cmds/stats
 {"errorcode":0,"message":"","stats":{"conn_count":1,"total_req_count":11,"req_concurrency":1,"now_req_count":3,"last_req_count":4,"total_failed_req_count":0,"now_failed_req_count":0,"last_failed_req_count":0,"total_avg_delay":0.18181818181818183,"now_avg_delay":0.3333333333333333,"last_avg_delay":0.25,"max_delay":1,"last_max_delay":1}}
@@ -218,6 +236,7 @@ $ curl http://dmin_ip:admin_port/cmds/stats
 | last_max_delay | 上一周期的最大延时 |
 
 ### 查看框架和用户自定义的tvar变量
+
 对应接口：`GET /cmds/var`
 
 参数：无
@@ -225,6 +244,7 @@ $ curl http://dmin_ip:admin_port/cmds/stats
 接口说明：直接访问“/cmds/var”可以查看框架和用户自定义的全部tvar变量。在路径后面加上更具体的变量路径可以访问特定的变量，例如“/cmds/var/trpc”访问框架内部的变量，“/cmds/var/user”访问用户自定义的变量。更详细的tvar变量使用方式请参考 [tvar 使用文档](./tvar.md)。
 
 使用例子：
+
 ```shell
 $ curl http://127.0.0.1:8889/cmds/var
 {
@@ -256,6 +276,7 @@ $ curl http://127.0.0.1:8889/cmds/var
 ### CPU和内存使用情况采集
 
 #### 启用方式
+
 **tRPC-Cpp 默认不允许通过管理命令来采集CPU和内存使用情况。若需要采集相关信息，需要在程序编译时加上 `“TRPC_ENABLE_PROFILER”` 宏定义并链接 `“tcmalloc_and_profiler”`。**
 
 下面分别介绍Bazel和CMake启用该功能的方式：
@@ -267,7 +288,8 @@ $ curl http://127.0.0.1:8889/cmds/var
     该编译选项会自动定义“TRPC_ENABLE_PROFILER”宏并链接“/usr/lib64/libtcmalloc_and_profiler.so”。需要确保tcmalloc正确安装，“/usr/lib64/libtcmalloc_and_profiler.so”存在。
 
     例如在.bazelrc文件中加上编译选项开启：
-    ```
+
+    ```sh
     # .bazelrc文件
     build --define trpc_enable_profiler=true
     ```
@@ -277,12 +299,15 @@ $ curl http://127.0.0.1:8889/cmds/var
     该编译选项会自动定义“TRPC_ENABLE_PROFILER”，但需要用户自行链接“libtcmalloc_and_profiler”。
 
     例如用户的“libtcmalloc_and_profiler.so”在“/user-path/lib”路径下，则可以在.bazelrc文件中加上编译选项：
-    ```
+
+    ```sh
     # .bazelrc文件
     build --define trpc_enable_profiler_v2=true
     ```
+
     并在服务的BUILD文件中链接“libtcmalloc_and_profiler”：
-    ```
+
+    ```bzl
     cc_binary(
         name = "helloworld_server",
         srcs = ["helloworld_server.cc"],
@@ -296,12 +321,15 @@ $ curl http://127.0.0.1:8889/cmds/var
 3. 自行定义“TRPC_ENABLE_PROFILER”和链接“tcmalloc_and_profiler”
 
     例如在.bazelrc文件中加上编译宏：
-    ```
+
+    ```sh
     # .bazelrc文件
     build --copt='-DTRPC_ENABLE_PROFILER'
     ```
+
     并在服务的BUILD文件中链接“libtcmalloc_and_profiler”：
-    ```
+
+    ```bzl
     cc_binary(
         name = "helloworld_server",
         srcs = ["helloworld_server.cc"],
@@ -315,6 +343,7 @@ $ curl http://127.0.0.1:8889/cmds/var
 ##### CMake启用方式
 
 需要在CMakeLists.txt文件中定义“TRPC_ENABLE_PROFILER”和链接“tcmalloc_and_profiler”：
+
 ```cmake
 # 定义“TRPC_ENABLE_PROFILER”
 add_definitions(-DTRPC_ENABLE_PROFILER)
@@ -327,6 +356,7 @@ target_link_libraries(${TARGET_SERVER} ${TCMALLOC_LIBRARY})
 ```
 
 #### CPU使用情况信息采集
+
 对应接口：`POST /cmds/profile/cpu`
 
 参数：
@@ -338,26 +368,31 @@ target_link_libraries(${TARGET_SERVER} ${TCMALLOC_LIBRARY})
 使用方式：
 
 1. 开始采样
+
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/profile/cpu?enable=y -X POST
+    curl http://admin_ip:admin_port/cmds/profile/cpu?enable=y -X POST
     {"errorcode":0,"message":"OK"}
     ```
 
 2. 停止采样
+
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/profile/cpu?enable=n -X POST
+    curl http://admin_ip:admin_port/cmds/profile/cpu?enable=n -X POST
     {"errorcode":0,"message":"OK"}
     ```
-    成功停止后会在命令执行路径生成文件“cpu.prof”。
+
+    成功停止后会在命令执行路径生成文件 `cpu.prof`。
 
 3. 解析输出文件
 
     可以使用gperftools的自带工具pprof进行解析：
+
     ```shell
-    $ pprof 二进制可执行程序 ./cpu.prof --pdf > cpu.pdf
+    pprof 二进制可执行程序 ./cpu.prof --pdf > cpu.pdf
     ```
 
 #### 内存使用情况信息采集
+
 对应接口：`POST /cmds/profile/heap`
 
 参数：
@@ -369,36 +404,43 @@ target_link_libraries(${TARGET_SERVER} ${TCMALLOC_LIBRARY})
 使用方式：
 
 1. 开始采样
+
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/profile/heap?enable=y -X POST
+    curl http://admin_ip:admin_port/cmds/profile/heap?enable=y -X POST
     {"errorcode":0,"message":"OK"}
     ```
 
 2. 停止采样
+
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/profile/heap?enable=n -X POST
+    curl http://admin_ip:admin_port/cmds/profile/heap?enable=n -X POST
     {"errorcode":0,"message":"OK"}
     ```
+
     成功停止后会在命令执行路径生成文件“heap.prof”。
 
 3. 解析输出文件
 
     可以使用gperftools的自带工具pprof进行解析：
+
     ```shell
-    $ pprof 二进制可执行程序 ./heap.prof --pdf > heap.pdf
+    pprof 二进制可执行程序 ./heap.prof --pdf > heap.pdf
     ```
 
-### 查看rpcz信息
+### 查看 rpcz 信息
+
 对应接口：`GET /cmds/rpcz`
 
 rpcz使用方式请参考 [rpcz 使用文档](./rpcz.md)。
 
 ### 获取Prometheus监控数据
+
 对应接口：`GET /metrics`
 
 Prometheus使用方式请参考[Prometheus 使用文档](./prometheus_metrics.md)。
 
 ### 断开与某个客户端地址的连接
+
 对应接口：`POST /client_detach`
 
 参数：
@@ -411,15 +453,17 @@ Prometheus使用方式请参考[Prometheus 使用文档](./prometheus_metrics.md
 接口说明：**该接口目前只在default线程模型下生效。**
 
 使用例子：
+
 ```shell
 # 断开与“trpc.app.server.service”服务的“ip:port”的全部连接
-$ curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.app.server.service' -d 'remote_ip=ip:port'
+curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.app.server.service' -d 'remote_ip=ip:port'
 # service不存在，返回错误信息
-$ curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.app.server.not_exist' -d 'remote_ip=ip:port'
+curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.app.server.not_exist' -d 'remote_ip=ip:port'
 {"message":"service is not exist"}
 ```
 
 # 自定义管理命令
+
 tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他管理操作。
 具体的使用例子参考[admin example](../../examples/features/admin/proxy/)。
 
@@ -428,6 +472,7 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
 1. 自定义命令
 
     用户需要继承 `trpc::AdminHandlerBase` 实现自定义管理命令的逻辑。其定义如下：
+
     ```cpp
     class AdminHandlerBase : public http::HandlerBase {
     public:
@@ -453,6 +498,7 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
     * Handle：可以对返回结果的格式进行灵活地控制，例如返回html格式的数据。
 
     示例：
+
     ```cpp
     #include "trpc/admin/admin_handler.h"
 
@@ -475,6 +521,7 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
 2. 注册命令
 
     注册接口：
+
     ```cpp
     class TrpcApp {
     public:
@@ -487,6 +534,7 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
     ```
 
     注册方式：
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
     public:
@@ -502,7 +550,8 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
 3. 调用命令
 
     服务启动后，可以通过访问 `http://admin_ip:admin_port/myhandler` 来触发自定义的管理命令：
+
     ```shell
-    $ curl http://admin_ip:admin_port/myhandler
+    curl http://admin_ip:admin_port/myhandler
     {"errorcode":0,"message":"success"}
     ```

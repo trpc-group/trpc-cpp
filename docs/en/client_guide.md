@@ -10,9 +10,9 @@ This article first outlines the entire process of service invocation to introduc
 
 ## Runtime
 
-"runtime" refers to the abstraction of the thread model in the tRPC-Cpp framework, which supports three different runtimes.
+`runtime` refers to the abstraction of the thread model in the tRPC-Cpp framework, which supports three different runtimes.
 
-- fiber: similar to goroutines in the Go language, coroutines can be scheduled between different threads, meaning that "m" coroutines can run on "n" threads.
+- fiber: similar to goroutines in the Go language, coroutines can be scheduled between different threads, meaning that `m` coroutines can run on `n` threads.
 - separate: The I/O and handle are separated, with network packet sending/receiving and user business code processing running on different threads. Inter-thread communication is achieved through queues.
 - merge: The I/O and handle are merged, with network packet sending/receiving and user business code processing both handled within the same thread. However, caution must be exercised when choosing this model, as any blocking calls within the business code can block the entire thread.
 
@@ -57,13 +57,13 @@ Before starting client development, users need to determine their development mo
 
 ## Proxy mode
 
-(Server A) --proxy invoke 1--> (Server B) --proxy invoke 2--> (Server C)
+> (Server A) --proxy invoke 1--> (Server B) --proxy invoke 2--> (Server C)
 
 In this case, the service functions as both a server and a client.
 
 ## Pure client mode
 
-(Client) --direct invoke--> (Server)
+> (Client) --direct invoke--> (Server)
 
 In this case, the service functions solely as a client.
 
@@ -154,7 +154,7 @@ Retrieve the addressing method from the callee service to resolve and obtain the
 
 There are currently three supported addressing methods.
 
-### Polaris
+### MeshPolaris
 
 The callee service provides the following information: namespace, env, and service. These can be set for the ServiceProxy either through configuration files or programmatically.
 
@@ -219,13 +219,11 @@ auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::Greeter
 
 Refers to [framework configuration](framework_config_lite.md)
 
-## fiber invoke synchronously
+## Invoke backend service
 
 ### Init
 
-Only in pure client-side invocation mode, users need to obtain the configuration file and initialize the relevant parameters themselves. To obtain the TrpcClient, use the trpc::GetTrpcClient() interface.
-
-Taking pure client-side mode as an example, the code is as follows:
+Only in **pure client-side invocation mode**, users need to obtain the configuration file and initialize the relevant parameters themselves. To obtain the `TrpcClient` by `trpc::GetTrpcClient()` interface, the code is as follows:
 
 ```cpp
 int main(int argc, char** argv) {
@@ -242,116 +240,80 @@ int main(int argc, char** argv) {
 
 ### Obtain ServiceProxy
 
-#### Proxy mode
+- **Proxy mode**
 
-```cpp
-int RouteServer::Initialize() {
-  std::string service_name("trpc.");
-  service_name += ::trpc::TrpcConfig::GetInstance()->GetServerConfig().app;
-  service_name += ".";
-  service_name += ::trpc::TrpcConfig::GetInstance()->GetServerConfig().server;
-  service_name += ".Forward";
+  ```cpp
+  int RouteServer::Initialize() {
+    std::string service_name("trpc.");
+    service_name += ::trpc::TrpcConfig::GetInstance()->GetServerConfig().app;
+    service_name += ".";
+    service_name += ::trpc::TrpcConfig::GetInstance()->GetServerConfig().server;
+    service_name += ".Forward";
+  
+    TRPC_LOG_INFO("service name:" << service_name);
+    RegisterService(service_name, std::make_shared<ForwardServiceImpl>());
+  
+    // trpc::test::helloworld::GreeterServiceProxy are defined by the protobuf files of the called service.
+    // "trpc.test.helloworld.Greeter" resides in configuration file.
+    auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>(
+        "trpc.test.helloworld.Greeter");
+  
+    return 0;
+  }
+  ```
 
-  TRPC_LOG_INFO("service name:" << service_name);
-  RegisterService(service_name, std::make_shared<ForwardServiceImpl>());
+- **Pure client mode**
 
-  // trpc::test::helloworld::GreeterServiceProxy are defined by the protobuf files of the called service.
-  // "trpc.test.helloworld.Greeter" resides in configuration file.
-  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>(
-      "trpc.test.helloworld.Greeter");
-
-  return 0;
-}
-```
-
-#### Pure client mode
-
-```cpp
-int Run() {
-  trpc::ServiceProxyOption option;
-
-  // proxy configuration.
-  option.name = FLAGS_target;
-  option.codec_name = "trpc";
-  option.network = "tcp";
-  option.conn_type = "long";
-  option.timeout = 1000;
-  option.selector_name = "direct";
-  option.target = FLAGS_addr;
-
-  auto prx = trpc::GetTrpcClient()->GetProxy<::trpc::test::route::ForwardServiceProxy>(FLAGS_target, option);
-  // Ignore other logic.
-}
-```
-
-### Trigger rpc invoke
-
-```cpp
-trpc::Status status = proxy->SayHello(client_context, route_request, &route_reply);
-```
-
-## future invoke asynchronously
-
-### Init
-
-```cpp
-int main(int argc, char** argv) {
-  google::ParseCommandLineFlags(&argc, &argv, true);
-
-  // Read configuration file.
-  int ret = trpc::TrpcConfig::GetInstance()->Init(FLAGS_config);
-  assert(ret == 0 && "future client need config and need valid future config");
-
-  // The Run function is the callback function for the business logic. It runs the business logic and includes the logic to obtain the ServiceProxy object.
-  return ::trpc::RunInTrpcRuntime([]() { return Run(); });
-}
-```
-
-### Obtain ServiceProxy
-
-#### Proxy mode
-
-```cpp
-RouteService::RouteService() {
-  proxy_ = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>(
-      "trpc.test.helloworld.Greeter");
-}
-```
-
-#### Pure client mode
-
-```cpp
-int main(int argc, char* argv[]) {
-  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::routeserver::RouteServiceProxy>(FLAGS_service);
-  // Ignore other logics.
-  return 0;
-}
-```
+  ```cpp
+  int Run() {
+    trpc::ServiceProxyOption option;
+  
+    // proxy configuration.
+    option.name = FLAGS_target;
+    option.codec_name = "trpc";
+    option.network = "tcp";
+    option.conn_type = "long";
+    option.timeout = 1000;
+    option.selector_name = "direct";
+    option.target = FLAGS_addr;
+  
+    auto prx = trpc::GetTrpcClient()->GetProxy<::trpc::test::route::ForwardServiceProxy>(FLAGS_target, option);
+    // Ignore other logic.
+  }
+  ```
 
 ### Trigger rpc invoke
 
-```cpp
-  auto fut =
-      proxy->AsyncSayHello(client_ctx, hello_req)
-          .Then([client_ctx, context](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) mutable {
-            ::trpc::Status status;
-            ::trpc::test::routeserver::RouteReply reply;
+- **Fiber invoke synchronously**
 
-            if (fut.IsReady()) {
-              reply.set_msg(fmt::format("{}  {}", fut.GetValue0().msg(), "Nice to meet you."));
+  ```cpp
+  trpc::Status status = proxy->SayHello(client_context, route_request, &route_reply);
+  ```
 
-              // Handle attachment data.
-              ::trpc::NoncontiguousBuffer rsp_atta = client_ctx->GetResponseAttachment();
-              context->SetResponseAttachment(std::move(rsp_atta));
-            } else {
-              std::string exception_msg = fut.GetException().what();
-              status.SetErrorMessage(exception_msg);
-              status.SetFuncRetCode(kErrorCodeFuture);
-              TRPC_FMT_ERROR("future route service failed: {}", exception_msg);
-              reply.set_msg(exception_msg);
-            }
+- **Future invoke asynchronously**
 
-            context->SendUnaryResponse(status, reply);
-            return ::trpc::MakeReadyFuture<>();
-          });
-```
+  ```cpp
+    auto fut =
+        proxy->AsyncSayHello(client_ctx, hello_req)
+            .Then([client_ctx, context](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) mutable {
+              ::trpc::Status status;
+              ::trpc::test::routeserver::RouteReply reply;
+  
+              if (fut.IsReady()) {
+                reply.set_msg(fmt::format("{}  {}", fut.GetValue0().msg(), "Nice to meet you."));
+  
+                // Handle attachment data.
+                ::trpc::NoncontiguousBuffer rsp_atta = client_ctx->GetResponseAttachment();
+                context->SetResponseAttachment(std::move(rsp_atta));
+              } else {
+                std::string exception_msg = fut.GetException().what();
+                status.SetErrorMessage(exception_msg);
+                status.SetFuncRetCode(kErrorCodeFuture);
+                TRPC_FMT_ERROR("future route service failed: {}", exception_msg);
+                reply.set_msg(exception_msg);
+              }
+  
+              context->SendUnaryResponse(status, reply);
+              return ::trpc::MakeReadyFuture<>();
+            });
+  ```

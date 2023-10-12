@@ -1,12 +1,10 @@
 [English](../en/tvar.md)
 
-# tRPC-Cpp tvar使用指南
+# 前言
 
-## 前言
+`tvar` 是 tRPC-Cpp 框架提供给用户的一个多线程统计类库，辅助用户记录和跟踪程序运行过程中的各种状态。
 
-tvar是框架提供给用户的一个多线程统计类库，辅助用户记录和跟踪程序运行过程中的各种状态。
-
-## 设计原理
+# 设计原理
 
 本文分析了业界支持统计类库的三个同类型框架，分别从统计类型多样性，写入效率，查询效率以及实现原理四个方面，对它们进行了对比，
 
@@ -17,15 +15,15 @@ tvar是框架提供给用户的一个多线程统计类库，辅助用户记录�
 | 查询效率 | 一般 | 低 | 低 |
 | 实现原理 | global atomic | thread local atomic | thread local atomic |
 
-从上表可知，envoy的实现原理是多线程操作同一个全局原子变量，并发写入时会存在cache bouncing，因此在写多读少场景下，性能较差，但是在读多写少场景下，性能较好。
+从上表可知，envoy 的实现原理是多线程操作同一个全局原子变量，并发写入时会存在 cache bouncing，因此在写多读少场景下，性能较差，但是在读多写少场景下，性能较好。
 
-相比之下，brpc和flare的实现原理是各个线程写入自己本地私有的原子变量，从而避免了写入时的cache bouncing，因此在写多读少场景下，性能更好，但是在读的时候，需要先对各个线程的私有变量做聚合，因此在读多写少场景下，性能会变差。
+相比之下，brpc 和 flare 的实现原理是各个线程写入自己本地私有的原子变量，从而避免了写入时的 cache bouncing，因此在写多读少场景下，性能更好，但是在读的时候，需要先对各个线程的私有变量做聚合，因此在读多写少场景下，性能会变差。
 
-考虑到tvar是面向写多读少的场景设计的，因此同时借鉴了brpc和flare的设计方案，通过thread_local机制来提高写入性能，并且在统计类型多样性上，使用brpc的方案。
+考虑到tvar是面向写多读少的场景设计的，因此同时借鉴了 brpc 和 flare 的设计方案，通过 thread_local 机制来提高写入性能，并且在统计类型多样性上，使用 brpc 的方案。
 
-## 统计类型
+# 统计类型
 
-目前tvar一共支持11种统计类型，如下表所示，
+目前 tvar 一共支持11种统计类型，如下表所示，
 
 | 类型名称 | 功能 |
 |---------|-----|
@@ -41,24 +39,24 @@ tvar是框架提供给用户的一个多线程统计类库，辅助用户记录�
 | PerSecond | 获取一段时间内每秒的平均统计值 |
 | LatencyRecorder | 获取qps以及分位耗时 |
 
-## 使用指南
+# 使用指南
 
-### 配置
+## 配置
 
 ```yaml
 global:
   tvar:
-    window_size: 10           # 窗口大小，单位是秒，用于Window，PerSecond和LatencyRecorder三个统计类型
-    save_series: true         # 是否存储历史数据，默认是true
-    abort_on_same_path: true  # 如果发现注册的两个tvar变量有相同的曝光路径时，是否直接abort退出进程，默认是true
-    latency_p1: 80            # 用户自定义分位值1，只能传1-99以内的整数，对应1%到99%
-    latency_p2: 90            # 用户自定义分位值2，只能传1-99以内的整数，对应1%到99%
-    latency_p3: 99            # 用户自定义分位值3，只能传1-99以内的整数，对应1%到99%
+    window_size: 10            # 窗口大小，单位是秒，用于Window，PerSecond和LatencyRecorder三个统计类型
+    save_series: true          # 是否存储历史数据，默认是true
+    abort_on_same_path: true   # 如果发现注册的两个tvar变量有相同的曝光路径时，是否直接abort退出进程，默认是true
+    latency_p1: 80             # 用户自定义分位值1，只能传1-99以内的整数，对应1%到99%
+    latency_p2: 90             # 用户自定义分位值2，只能传1-99以内的整数，对应1%到99%
+    latency_p3: 99             # 用户自定义分位值3，只能传1-99以内的整数，对应1%到99%
 ```
 
-### 使用
+## 使用
 
-#### Counter
+### Counter
 
 ```cpp
 #include <cstdint>
@@ -86,7 +84,7 @@ int main() {
 }
 ```
 
-#### Gauge
+### Gauge
 
 ```cpp
 #include <cstdint>
@@ -118,7 +116,7 @@ int main() {
 }
 ```
 
-#### Maxer
+### Maxer
 
 ```cpp
 #include <cstdint>
@@ -149,7 +147,7 @@ int main() {
 }
 ```
 
-#### Miner
+### Miner
 
 ```cpp
 #include <cstdint>
@@ -180,7 +178,7 @@ int main() {
 }
 ```
 
-#### Averager
+### Averager
 
 ```cpp
 #include <cstdint>
@@ -211,7 +209,7 @@ int main() {
 }
 ```
 
-#### IntRecorder
+### IntRecorder
 
 ```cpp
 #include <cstdint>
@@ -242,7 +240,7 @@ int main() {
 }
 ```
 
-#### Status
+### Status
 
 ```cpp
 // 包含头文件
@@ -267,7 +265,7 @@ int main() {
 }
 ```
 
-#### PassiveStatus
+### PassiveStatus
 
 ```cpp
 #include <cstdint>
@@ -310,7 +308,7 @@ int main() {
 }
 ```
 
-#### Window
+### Window
 
 ```cpp
 #include <cstdint>
@@ -358,7 +356,7 @@ int main() {
 | PerSecond | 不支持 | 本身已经是窗口语义 |
 | LatencyRecorder | 不支持 | 本身已经是窗口语义 |
 
-#### PerSecond
+### PerSecond
 
 ```cpp
 #include <cstdint>
@@ -406,7 +404,7 @@ int main() {
 | Window | 不支持 | 本身用于实现PerSecond |
 | LatencyRecorder | 不支持 | 本身已经是窗口语义 |
 
-#### LatencyRecorder
+### LatencyRecorder
 
 ```cpp
 // 包含头文件
@@ -444,9 +442,9 @@ LatencyRecorder统计的信息及其含义如下表所示，
 | latency_p2 | 默认值90，即p90；用户可以通过配置latency_p2自定义分位 |
 | latency_p3 | 默认值99，即p99；用户可以通过配置latency_p3自定义分位 |
 
-### 查询
+## 查询
 
-#### 查询当前值
+### 查询当前值
 
 ```bash
 curl http://admin_ip:admin_port/cmds/var/{path}
@@ -492,7 +490,7 @@ curl http://admin_ip:admin_port/cmds/var/user
 }
 ```
 
-#### 查询历史值
+### 查询历史值
 
 ```bash
 curl http://admin_ip:admin_port/cmds/var/{path}?history=true
@@ -529,15 +527,15 @@ curl http://admin_ip:admin_port/cmds/var/user/b/gauge?history=true
 | 数值类型的Maxer | 不支持 | Maxer如果不重置的话，没办法采集到1秒内的数据，建议使用Window<数值类型的Maxer> |
 | 数值类型的Miner | 不支持 | Miner如果不重置的话，没办法采集到1秒内的数据，建议使用Window<数值类型的Miner> |
 | 数值类型的Averager | 不支持 | 没办法采集到1秒内的数据，建议使用Window<数值类型的Averager> |
-| IntRecorder | 不支持 | 没办法采集到1秒内的数据，建议使用Window<IntRecorder> |
+| IntRecorder | 不支持 | 没办法采集到1秒内的数据，建议使用Window&lt;IntRecorder> |
 | 数值类型的Status | 支持 | 无 |
-| Window<数值类型的Counter>	 | 支持 | 无 |
+| Window<数值类型的Counter>	| 支持 | 无 |
 | Window<数值类型的Gauge> | 支持 | 无 |
 | 数值类型的PassiveStatus | 支持 | 无 |
-| Window<数值类型的Maxer>	| 支持 | 无 |
+| Window<数值类型的Maxer>| 支持 | 无 |
 | Window<数值类型的Miner> | 支持 | 无 |
-| Window<IntRecorder> | 支持 | 无 |
+| Window&lt;IntRecorder> | 支持 | 无 |
 | Window<数值类型的PassiveStatus> | 支持 | 无 |
 | PerSecond<数值类型的Counter> | 支持 | 无 |
 | PerSecond<数值类型的Gauge> | 支持 | 无 |
-| PerSecond<PassiveStatus> | 支持 | 无 |
+| PerSecond&lt;PassiveStatus> | 支持 | 无 |

@@ -2,15 +2,15 @@
 
 # 前言
 
-超时控制是rpc框架的一个基本能力，让服务调用按照一个约定的时间去执行，可以避免陷入无限的等待之中，从而提高系统的可用性和稳定性，优化资源的使用，也可以减少客户端和服务端的不一致行为。
+超时控制是 RPC 框架的一个基本能力，让服务调用按照一个约定的时间去执行，可以避免陷入无限的等待之中，从而提高系统的可用性和稳定性，优化资源的使用，也可以减少客户端和服务端的不一致行为。
 
-这篇文档将对tRPC-Cpp的超时控制机制进行介绍。
+这篇文档将对 tRPC-Cpp 框架的超时控制机制进行介绍。
 
 # 机制
 
 ## 整体介绍
 
-tRPC-Cpp超时控制机制的原理图如下：
+tRPC-Cpp 框架超时控制机制的原理图如下：
 
 ![timeout control](../images/timeout_control.png)
 
@@ -28,14 +28,14 @@ tRPC-Cpp超时控制机制的原理图如下：
 
 注意：
 
-1. 通信协议需要支持携带链路超时，达到服务端能感知客户端超时时长的目的。例如`trpc`协议。
-2. 服务端进一步发起rpc调用时，需要使用`MakeClientContext`接口，根据ServerContext构造ClientContext，自动计算剩余调用时间。
+1. 通信协议需要支持携带链路超时，达到服务端能感知客户端超时时长的目的。例如 `trpc` 协议。
+2. 服务端进一步发起rpc调用时，需要使用 `MakeClientContext` 接口，根据ServerContext构造ClientContext，自动计算剩余调用时间。
 
 ## 超时配置
 
 ### 链路超时
 
-链路超时时间默认会从最源头的服务一直通过协议字段透传下去，服务端可以通过`“server”`的`”disable_request_timeout“`选项来配置是否启用全链路超时机制。默认取值为`false`，表示会继承上游的设置的链路超时时间；配置`true`为禁用，表示忽略上游调用当前服务时协议传递过来的链路超时时间。
+链路超时时间默认会从最源头的服务一直通过协议字段透传下去，服务端可以通过`'server'` 的 `'disable_request_timeout'` 选项来配置是否启用全链路超时机制。默认取值为 `false`，表示会继承上游的设置的链路超时时间；配置 `true` 为禁用，表示忽略上游调用当前服务时协议传递过来的链路超时时间。
 
 ```yaml
 server:
@@ -46,7 +46,7 @@ server:
 
 ### 消息超时
 
-每个服务都可通过`“server”`的`“timeout”`选项来配置该服务所有请求的最长处理超时时间。不设置默认为UINT32_MAX。
+每个服务都可通过 `'server'` 的 `'timeout'` 选项来配置该服务所有请求的最长处理超时时间。不设置默认为 UINT32_MAX。
 
 ```yaml
 server:
@@ -57,7 +57,7 @@ server:
 
 ### 调用超时
 
-每个客户端都可以通过`“client”`的`“timeout”`选项配置调用超时。不设置默认为UINT32_MAX。
+每个客户端都可以通过  `'client'` 的 `'timeout'` 选项配置调用超时。不设置默认为UINT32_MAX。
 
 ```yaml
 client:
@@ -68,16 +68,16 @@ client:
 
 除了该配置选项外，框架中还有其他的调用超时设置方式：
 
-1. 通过`GetProxy`获取代理时，显式指定了option的timeout，则调用超时以代码为准，配置文件指定的不生效。但我们建议使用配置文件方式，更加灵活和直观。
-2. 客户端可以在代码中为每次调用单独设置超时时间，方式为调用ClientContext的`SetTimeout`接口。
+1. 通过 `GetProxy` 获取代理时，显式指定了 option 的 timeout，则调用超时以代码为准，配置文件指定的不生效。但我们建议使用配置文件方式，更加灵活和直观。
+2. 客户端可以在代码中为每次调用单独设置超时时间，方式为调用 ClientContext 的 `SetTimeout` 接口。
 
     ```cpp
     void SetTimeout(uint32_t value, bool ignore_proxy_timeout = false);
     ```
 
-    这种情况下，最终的调用超时是由代理的timeout配置和SetTimeout的值共同决定的：
-    * ignore_proxy_timeout设置为false时，框架会取两者中的较小值作为调用超时。
-    * ignore_proxy_timeout设置为true时，则忽略代理的timeout配置，以用SetTimeout的值为准。
+    这种情况下，最终的调用超时是由代理的 timeout 配置和 SetTimeout 的值共同决定的：
+    * ignore_proxy_timeout 设置为 false 时，框架会取两者中的较小值作为调用超时。
+    * ignore_proxy_timeout 设置为 true 时，则忽略代理的 timeout 配置，以用 SetTimeout 的值为准。
 
 ## 拓展功能
 
@@ -88,11 +88,13 @@ client:
 #### 服务端超时处理函数
 
 服务端超时处理函数的类型如下：
+
 ```cpp
 using ServiceTimeoutHandleFunction = std::function<void(const ServerContextPtr& context)>;
 ```
 
 用户需要在服务初始化时为Service设置自定义的超时处理函数：
+
 ```cpp
 // 自定义超时处理函数
 void UserServiceTimeoutFunc(const trpc::ServerContextPtr& context) {
@@ -112,11 +114,13 @@ int RouteServer::Initialize() {
 #### 客户端超时处理函数
 
 客户端超时处理函数的类型如下：
+
 ```cpp
 using ClientTimeoutHandleFunction = std::function<void(const ClientContextPtr&)>;
 ```
 
 用户需要在初始化proxy时设置自定义的客户端超时处理函数：
+
 ```cpp
 // 自定义超时处理函数
 void UserClientTimeoutFunc(const trpc::ClientContextPtr& context) {
@@ -124,22 +128,22 @@ void UserClientTimeoutFunc(const trpc::ClientContextPtr& context) {
 }
 
 {
-	...
-    // 设置自定义的超时处理函数
-	trpc::ServiceProxyOption option;
-	option.proxy_callback.client_timeout_handle_function = UserClientTimeoutFunc;
-	GreeterProxyPtr proxy =
+ // ...
+ // 设置自定义的超时处理函数
+ trpc::ServiceProxyOption option;
+ option.proxy_callback.client_timeout_handle_function = UserClientTimeoutFunc;
+ GreeterProxyPtr proxy =
         trpc::GetTrpcClient()->GetProxy<trpc::test::helloworld::GreeterServiceProxy>(service_name, &option);
-	...
+ // ...
 }
 ```
 
 # FAQ
 
-### 1 为什么设置了很大的超时时间，但实际上耗时很短就提示超时失败了？
+## 为什么设置了很大的超时时间，但实际上耗时很短就提示超时失败了？
 
-框架对每次收到的请求都有一个最长处理时间的限制，每次rpc后端调用的超时时间都是根据当前剩余最长处理时间和调用超时实时计算的，这种情况大概率是因为多个串行rpc调用时，前面已经把时间耗的差不多了，所以留给这次rpc的时间不够用了。
+框架对每次收到的请求都有一个最长处理时间的限制，每次 RPC 后端调用的超时时间都是根据当前剩余最长处理时间和调用超时实时计算的，这种情况大概率是因为多个串行rpc调用时，前面已经把时间耗的差不多了，所以留给这次rpc的时间不够用了。
 
-### 2 为什么客户端没有配置超时时间，但是发现超时时长是5s？
+## 为什么客户端没有配置超时时间，但是发现超时时长是 5s？
 
-对于客户端代理和ClientContext都没有设置超时时间的情况，框架会将实际超时时间设置为5s，而不是无限大。
+对于客户端代理和 ClientContext 都没有设置超时时间的情况，框架会将实际超时时间设置为 5s，而不是无限大。

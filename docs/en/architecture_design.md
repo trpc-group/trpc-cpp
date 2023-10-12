@@ -118,7 +118,7 @@ The service exit process generally includes the following processes:
 
 ## Pluggable design
 
-The pluggable architecture design of tRPC is based on "**plugin factory based on interface mechanism**" and "**filter based on AOP**".
+The pluggable architecture design of tRPC is based on **plugin factory based on interface mechanism** and **filter based on AOP**.
 
 ### Plugin factory
 

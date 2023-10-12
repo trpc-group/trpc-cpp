@@ -41,7 +41,7 @@ First, plugin developers need to create a class that inherits from the `trpc::co
 | std::string Read(const std::string&) | std::string | Reads the configuration file content from the data source. |
 | void Watch(trpc::config::ProviderCallback callback) | void | Listens for changes in the configuration files in the data source and calls the callback function when changes occur. |Here is an example of a custom data source `Provider` plugin:
 
-- custom_provider.h
+- **custom_provider.h**
 
   ```cpp
   #pragma once
@@ -72,7 +72,7 @@ First, plugin developers need to create a class that inherits from the `trpc::co
   }  // namespace trpc::config::custom_provider
   ```
 
-- custom_provider.cc
+- **custom_provider.cc**
 
   ```cpp
   #include "custom_provider.h"
@@ -108,7 +108,7 @@ In this example, the `CustomProvider` class inherits from the `trpc::config::Pro
 
 After creating the custom `Provider` plugin, you also need to provide an initialization interface, such as `Init()`. It is recommended to define the interface in `custom_provider_api.h` and implement it in `custom_provider_api.cc`. For example:
 
-- custom_provider_api.h
+- **custom_provider_api.h**
 
   ```cpp
   #pragma once
@@ -120,7 +120,7 @@ After creating the custom `Provider` plugin, you also need to provide an initial
   }  // namespace trpc::config::custom_provider
   ```
 
-- custom_provider_api.cc
+- **custom_provider_api.cc**
 
   ```cpp
   #include "trpc/common/trpc_plugin.h"
@@ -152,7 +152,7 @@ First, plugin developers need to create a class that inherits from the `trpc::co
 |std::unordered_map<std::string, std::string> Decode(const std::string& content) |std::unordered_map<std::string, std::string> |Decode the contents of the configuration file read from the data source into a std::unordered_map of key/value pairs  |
 Here's an example of a custom Codec plugin：
 
-- custom_codec.h
+- **custom_codec.h**
 
   ```cpp
   #pragma once
@@ -187,7 +187,7 @@ Here's an example of a custom Codec plugin：
   }  // namespace trpc::config::custom_codec
   ```
 
-- custom_codec_api.cc
+- **custom_codec_api.cc**
 
   ```cpp
   #include "trpc/common/trpc_plugin.h"
@@ -211,7 +211,7 @@ In the above example, `CustomCodec` is the implemented custom encoder/decoder pl
 
 After creating the custom `Codec` plugin, plugin developers need to provide an initialization interface, such as `Init()`. It is recommended to define the interface in `custom_codec_api.h` and implement it in `custom_codec_api.cc`. For example:
 
-- custom_codec_api.h
+- **custom_codec_api.h**
 
   ```cpp
   #pragma once
@@ -223,7 +223,7 @@ After creating the custom `Codec` plugin, plugin developers need to provide an i
   }  // namespace trpc::config::custom_codec
   ```
 
-- custom_codec_api.cc
+- **custom_codec_api.cc**
 
   ```cpp
   #include "trpc/common/trpc_plugin.h"

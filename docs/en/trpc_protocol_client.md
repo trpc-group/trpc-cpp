@@ -6,7 +6,7 @@ This document primarily introduces how to use the tRPC-Cpp framework to invoke a
 
 ## tRPC Protocol
 
-The tRPC protocol is implemented based on ProtoBuf and has the ability to support streaming transmission, connection reuse, end-to-end timeouts, and transparent information transmission. For more details, please refer to the [tRPC Protocol Design](https://github.com/trpc-group/trpc/blob/main/docs/cn/trpc_protocol_design.md).
+The tRPC protocol is implemented based on Protobuf and has the ability to support streaming transmission, connection reuse, end-to-end timeouts, and transparent information transmission. For more details, please refer to the [tRPC Protocol Design](https://github.com/trpc-group/trpc/blob/main/docs/cn/trpc_protocol_design.md).
 
 ## Use Cases
 
@@ -19,7 +19,7 @@ The tRPC protocol is implemented based on ProtoBuf and has the ability to suppor
 
 ## Interface Form
 
-The framework supports generating stub code based on ProtoBuf. For reference, please see [Compiling and Generating Stub Code](./trpc_protocol_service.md#compile-and-generate-stub-code). For the client, the generated code is as follows:
+The framework supports generating stub code based on Protobuf. For reference, please see [Compiling and Generating Stub Code](./trpc_protocol_service.md#compile-and-generate-stub-code). For the client, the generated code is as follows:
 ![rpc_interface](../images/trpc_protocol_client-rpc_interface.png)
 It can be observed that two types of classes are generated: `GreeterServiceProxy` and `AsyncGreeterServiceProxy`. The `AsyncGreeterServiceProxy` class only has asynchronous interfaces, which is equivalent to `GreeterServiceProxy::AsyncSayHello`. On the other hand, `GreeterServiceProxy` contains three types of interfaces.
 
@@ -41,7 +41,7 @@ The usage of synchronous programming interfaces differs in the proxy mode and th
 
 ### Synchronous calling by proxy mode
 
-The standard implementation approach is to use an IDL (such as ProtoBuf) to generate a service proxy class called `xxxServiceProxy`, where *xxx* represents the service name defined in the IDL. For example, in the diagram from the previous section, it would be `GreeterServiceProxy`.
+The standard implementation approach is to use an IDL (such as Protobuf) to generate a service proxy class called `xxxServiceProxy`, where *xxx* represents the service name defined in the IDL. For example, in the diagram from the previous section, it would be `GreeterServiceProxy`.
 
 - The synchronous calling method by proxy mode, using [forward_service](../../examples/features/fiber_forward/proxy/forward_service.cc) as an example, is as follows in pseudocode:
 
@@ -476,9 +476,9 @@ In the coroutine model, both TCP and UDP protocols are supported. However, in th
 
 Sometimes, to ensure availability, it is necessary to access two services simultaneously, and the response from whichever service arrives first is used. In the tRPC-Cpp framework, when the user sets to use `backup-request`, it selects a specified number of node IPs (usually 2) simultaneously based on the settings. If the first request does not receive a response within the `delay` time, the same request is sent to the remaining nodes simultaneously, and the earliest response is used. For more information, please refer to [backup-request](./backup-request.md).
 
-## Support for requests that accept non-contiguous buffers serialized in ProtoBuf
+## Support for requests that accept non-contiguous buffers serialized in Protobuf
 
-Currently, there is a business requirement to allow requests to accept non-contiguous buffers serialized in ProtoBuf. This scenario is commonly seen when there is a need to reuse a request body and make multiple adjustments to its content. To avoid unnecessary copying of the request body, the modified ProtoBuf request can be serialized and saved before making downstream calls. You can refer to the following example for more information:
+Currently, there is a business requirement to allow requests to accept non-contiguous buffers serialized in Protobuf. This scenario is commonly seen when there is a need to reuse a request body and make multiple adjustments to its content. To avoid unnecessary copying of the request body, the modified Protobuf request can be serialized and saved before making downstream calls. You can refer to the following example for more information:
 
 ```c++
 
@@ -503,14 +503,14 @@ trpc::Status ForwardServiceImpl::SayHelloUseNoncontiguousBufferReq(
   std::vector<trpc::NoncontiguousBuffer> vec_req_buffer;
   vec_req_buffer.resize(exe_count);
 
-  // ProtoBuf data that needs to be reused.
+  // Protobuf data that needs to be reused.
   trpc::test::helloworld::HelloRequest reuse_request;
 
   for (size_t i = 0; i < exe_count; i++) {
     // Full request
     reuse_request.set_msg(" modify as you like,i:" + std::to_string(i));
 
-    // Call the ProtoBuf serialization tool to serialize.
+    // Call the Protobuf serialization tool to serialize.
     trpc::NoncontiguousBuffer req_buffer;
     bool encode_ret = pb_serialization->Serialize(
         trpc::serialization::kPbMessage,
@@ -534,7 +534,7 @@ trpc::Status ForwardServiceImpl::SayHelloUseNoncontiguousBufferReq(
       // Set func name
       client_context->SetFuncName("/trpc.test.helloworld.Greeter/SayHello");
 
-      // Directly invoke `PbSerializedReqUnaryInvoke` with the request type as a serialized trpc::NoncontiguousBuffer and the response type as a ProtoBuf.
+      // Directly invoke `PbSerializedReqUnaryInvoke` with the request type as a serialized trpc::NoncontiguousBuffer and the response type as a Protobuf.
       trpc::Status status =
           route_proxy_->PbSerializedReqUnaryInvoke<trpc::test::helloworld::HelloReply>(
               client_context, vec_req_buffer[i], &vec_final_reply[i]);

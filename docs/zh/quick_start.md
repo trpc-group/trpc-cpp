@@ -1,31 +1,31 @@
-# Quick-Start
+[English](../en/quick_start.md)
 
-## 前言
+# 前言
 
-本文通过一个简单的代码示例帮助您开始了解和使用tRPC-Cpp。
+本文通过一个简单的代码示例帮助您开始了解和使用 tRPC-Cpp 框架。
 
-## 开发环境搭建
+# 开发环境搭建
 
-在 C++ 世界中，没有普遍接受的标准来管理项目依赖项。 因此在构建和运行本文中的 Hello World 示例之前，您需要进行开发环境的安装，具体可以参考 [环境搭建](setup_env.md) 这篇文章。刚开始体验tRPC-Cpp时建议使用bazel, 本节中接下来的步骤主要介绍如何使用bazel编译和运行 Hello World 示例。
+在 C++ 世界中，没有普遍接受的标准来管理项目依赖项。 因此在构建和运行本文中的 Hello World 示例之前，您需要进行开发环境的安装，具体可以参考 [环境搭建](setup_env.md) 这篇文章。刚开始体验 tRPC-Cpp 框架 时建议使用 bazel, 本节中接下来的步骤主要介绍如何使用 bazel 编译和运行 Hello World 示例。
 
-## 编译和运行demo示例
+# 编译和运行 demo 示例
 
-### 编译框架
+## 编译框架
 
-从github下载框架源代码
+从 github 下载框架源代码
 
 ```shell
 git clone https://github.com/trpc-group/trpc-cpp
 ```
 
-编译tRPC-Cpp框架代码
+编译 tRPC-Cpp 框架代码
 
 ```shell
 cd trpc-cpp
 ./build.sh
 ```
 
-使用bazel编译第一次编译框架时会比较慢，可能需要等几分钟。编译的结果信息bazel会输出到终端，若编译成功，可以看到类似如下的信息:
+使用 bazel 编译第一次编译框架时会比较慢，可能需要等几分钟。编译的结果信息 bazel 会输出到终端，若编译成功，可以看到类似如下的信息:
 
 ```shell
 INFO: Elapsed time: 279.100s, Critical Path: 48.83s
@@ -35,9 +35,9 @@ INFO: Build completed successfully, 5459 total actions
 
 若出现失败，可能是网络原因（无法拉取远程代码）、环境安装（gcc、框架依赖的库版本过低）等导致。
 
-### 编译示例代码
+## 编译示例代码
 
-tRPC-Cpp框架代码编译成功后，接下来开始编译和运行 Hello World 示例。
+tRPC-Cpp 框架代码编译成功后，接下来开始编译和运行 Hello World 示例。
 
 执行如下的命令编译 Hello World 示例代码。
 
@@ -45,7 +45,7 @@ tRPC-Cpp框架代码编译成功后，接下来开始编译和运行 Hello World
 bazel build //examples/helloworld/...
 ```
 
-### 运行示例代码
+## 运行示例代码
 
 编译成功后，运行服务端程序。
 
@@ -80,13 +80,13 @@ cat helloworld_fiber.log
 [2023-08-25 15:30:56.587] [default] [info] [greeter_service.cc:38] request message: fiber
 ```
 
-到这里，恭喜您已经成功使用 tRPC-Cpp 运行了一个客户端-服务器应用程序。
+到这里，恭喜您已经成功使用 tRPC-Cpp 框架运行了一个客户端-服务器应用程序。
 
-## 更新服务实现
+# 更新服务实现
 
-现在让我们看看如何添加一个新的RPC方法来更新给服务端程序以供客户端调用。
+现在让我们看看如何添加一个新的 RPC 方法来更新给服务端程序以供客户端调用。
 
-当前我们tRPC-Cpp提供的服务是使用protocol buffers IDL定义来实现的，服务器和客户端存根都有一个 SayHello() RPC 方法，该方法从客户端获取 HelloRequest 参数并从服务器返回 HelloReply，并且该方法的定义如下：
+当前我们 tRPC-Cpp 框架提供的服务是使用 protobuf IDL 定义来实现的，服务器和客户端存根都有一个 SayHello() RPC 方法，该方法从客户端获取 HelloRequest 参数并从服务器返回 HelloReply，并且该方法的定义如下：
 
 ```protobuf
 syntax = "proto3";
@@ -106,7 +106,7 @@ message HelloReply {
 }
 ```
 
-打开examples/helloworld/helloworld.proto，并添加一个新的SayHelloAgain()方法，具有相同的请求和响应类型。
+打开 examples/helloworld/helloworld.proto，并添加一个新的 SayHelloAgain() 方法，具有相同的请求和响应类型。
 
 ```protobuf
 syntax = "proto3";
@@ -128,9 +128,9 @@ message HelloReply {
 }
 ```
 
-### 然后更新服务端程序
+## 然后更新服务端程序
 
-打开examples/helloworld/greeter_service.h，给GreeterServiceImpl添加SayHelloAgain方法。
+打开 examples/helloworld/greeter_service.h，给 GreeterServiceImpl 添加 SayHelloAgain 方法。
 
 ```cpp
 class GreeterServiceImpl : public ::trpc::test::helloworld::Greeter {
@@ -145,7 +145,7 @@ class GreeterServiceImpl : public ::trpc::test::helloworld::Greeter {
 };
 ```
 
-打开examples/helloworld/greeter_service.cc，给GreeterServiceImpl添加SayHelloAgain方法的代码实现。
+打开 examples/helloworld/greeter_service.cc，给 GreeterServiceImpl 添加 SayHelloAgain 方法的代码实现。
 
 ```cpp
 ::trpc::Status GreeterServiceImpl::SayHelloAgain(::trpc::ServerContextPtr context,
@@ -165,9 +165,9 @@ class GreeterServiceImpl : public ::trpc::test::helloworld::Greeter {
 }
 ```
 
-### 更新客户端调用代码
+## 更新客户端调用代码
 
-现在存根中提供了一个新的 SayHelloAgain() 方法。 我们将遵循与先前调用 SayHello() 的代码，实现一下调用 SayHelloAgain() 的函数，打开examples/helloworld/test/fiber_client.cc，在DoRpcCall函数后面添加如下代码。
+现在存根中提供了一个新的 SayHelloAgain() 方法。 我们将遵循与先前调用 SayHello() 的代码，实现一下调用 SayHelloAgain() 的函数，打开 examples/helloworld/test/fiber_client.cc，在 DoRpcCall 函数后面添加如下代码。
 
 ```cpp
 int DoRpcCallAgain(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy) {
@@ -199,7 +199,7 @@ int Run() {
 }
 ```
 
-### 运行验证
+## 运行验证
 
 编译整个示例代码
 
@@ -228,8 +228,8 @@ get rsp msg: Hello, fiber
 get again rsp msg: Hello, fiber Again
 ```
 
-## 下一步
+# 下一步
 
-- 通过 [tRPC-Cpp架构设计](architecture_design.md) 和 [术语介绍](https://github.com/trpc-group/trpc/blob/main/docs/zh/terminology.md) 学习 tRPC-Cpp 的工作原理。
+- 通过 [tRPC-Cpp 架构设计](architecture_design.md) 和 [术语介绍](https://github.com/trpc-group/trpc/blob/main/docs/zh/terminology.md) 学习 tRPC-Cpp 的工作原理。
 - 阅读 [基础教程](basic_tutorial.md) 来开发tRPC-Cpp服务。
 - 阅读 [用户指南](../README.md) 来更全面的使用 tRPC-Cpp。

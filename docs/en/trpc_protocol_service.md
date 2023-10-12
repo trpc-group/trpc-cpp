@@ -1,11 +1,10 @@
 [中文](../zh/trpc_protocol_service.md)
 
-
 # Overview
 
 Compared to the [quick_start](./quick_start.md)t, this document focuses more on server-side development using the tRPC protocol and provides more comprehensive and detailed content. Developers can learn from this article about
 
-- The way to generate tRPC stub code using ProtoBuf IDL files.
+- The way to generate tRPC stub code using Protobuf IDL files.
 - The basic process of tRPC protocol server-side development
 - To enable the use of server-side plugins.
 - Some features of the framework, such as setting callbacks during service initialization.
@@ -14,11 +13,11 @@ Therefore, using the tRPC protocol as an example, this document connects the com
 
 For a more comprehensive tRPC protocol reference, please refer to [trpc_protocol_design](https://github.com/trpc-group/trpc/blob/main/docs/en/trpc_protocol_design.md). The tRPC protocol is the default protocol and is also recommended for practical use.
 
-# Generate service stub code based on ProtoBuf
+# Generate service stub code based on Protobuf
 
-This chapter introduces the process of generating stub code based on ProtoBuf files. If the user does not need ProtoBuf files, they can ignore this section.
+This chapter introduces the process of generating stub code based on Protobuf files. If the user does not need Protobuf files, they can ignore this section.
 
-## Write ProtoBuf IDL file
+## Write Protobuf IDL file
 
 Here, [helloworld.proto](../../examples/helloworld/helloworld.proto) is used as an example.
 
@@ -45,16 +44,16 @@ This file defines a `Service` called `Greeter`, which contains an `rpc Method` c
 In addition, there are a few other points to note:
 
 - The `syntax` is recommended to be set as `proto3`. tRPC is default based on proto3, but it also supports proto2.
-- The recommended format for the `package` content is `trpc.{app}.{server}`, where `app` is your application name and `server` is your service process name. The scaffolding generation tool will parse ProtoBuf the `app` and `server` from the ProtoBuf file to generate the project. It is suggested to define your own `app` and `server` names for the `helloworld.proto` file to facilitate service deployment.
+- The recommended format for the `package` content is `trpc.{app}.{server}`, where `app` is your application name and `server` is your service process name. The scaffolding generation tool will parse Protobuf the `app` and `server` from the Protobuf file to generate the project. It is suggested to define your own `app` and `server` names for the `helloworld.proto` file to facilitate service deployment.
 - When defining `rpc` methods, a `server` (service process) can have multiple services (grouping of `rpc` logic). Typically, there is one `service` per `server`, and a `service` can have multiple `rpc` calls.
-- When writing ProtoBuf, it is necessary to adhere to [the official Google specification](https://protobuf.dev/programming-guides/style/).
+- When writing Protobuf, it is necessary to adhere to [the official Google specification](https://protobuf.dev/programming-guides/style/).
 
-The above defines a standard ProtoBuf IDL file. Next, we will build the project code.
+The above defines a standard Protobuf IDL file. Next, we will build the project code.
 
-## Build the project code based on the ProtoBuf IDL file
+## Build the project code based on the Protobuf IDL file
 
 If the user has already built the project, this section can be skipped, and you can proceed to the next section.
-To facilitate project building, the framework provides a script for quickly building projects based on ProtoBuf IDL files: [create_trpc_server.sh](../../create_trpc_server.sh). The usage of this script can be found in the README. To build the project using the script, execute the following command:
+To facilitate project building, the framework provides a script for quickly building projects based on Protobuf IDL files: [create_trpc_server.sh](../../create_trpc_server.sh). The usage of this script can be found in the README. To build the project using the script, execute the following command:
 
 ```sh
 ./create_trpc_server.sh ./ ./helloworld.proto 
@@ -219,7 +218,7 @@ public:
 };
 ```
 
-The `SayHello` method is the name of the RPC method defined in the ProtoBuf file. If there are multiple methods, multiple methods will be generated here, and the user can rewrite each method according to their business needs. From the inheritance, it can be seen that the parent class is `::trpc::test::helloworld::Greeter` (defined in **bazel-bin/test/helloworld/helloworld.trpc.pb.h**), which inherits from `::trpc::RpcServiceImpl` (refer to: [rpc_service_impl](../../trpc/server/rpc/rpc_service_impl.h)). Therefore, it can be traced that `GreeterServiceImpl` is a subclass of `::trpc::Service` (refer to: [service](../../trpc/server/service.h)).
+The `SayHello` method is the name of the RPC method defined in the Protobuf file. If there are multiple methods, multiple methods will be generated here, and the user can rewrite each method according to their business needs. From the inheritance, it can be seen that the parent class is `::trpc::test::helloworld::Greeter` (defined in **bazel-bin/test/helloworld/helloworld.trpc.pb.h**), which inherits from `::trpc::RpcServiceImpl` (refer to: [rpc_service_impl](../../trpc/server/rpc/rpc_service_impl.h)). Therefore, it can be traced that `GreeterServiceImpl` is a subclass of `::trpc::Service` (refer to: [service](../../trpc/server/service.h)).
 
 In the above example, the value of `reply` is directly set in the `SayHello` method, which is a synchronous response. If the user wants to reply to the client later on their own, they can use asynchronous response. Please refer to: [Asynchronous response](./server_guide.md#Asynchronous-response) for more details.
 

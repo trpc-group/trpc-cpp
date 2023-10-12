@@ -12,7 +12,7 @@ In order to write correct, efficient, and reliable code, users need to understan
 
 - Both Future and Promise support move semantics but prohibit copying, which ensures a one-to-one relationship between Promise and Future.
 - Due to the implementation using right-value moves, the GetValue and GetException interfaces can only be called once, and repeated calls are prohibited.
-- Future/Promise supports a variable number of parameters. The result returned by Future is of type std::tuple, and to obtain the specific value, user needs to call std::get<N> to retrieve the value of the Nth parameter.
+- Future/Promise supports a variable number of parameters. The result returned by Future is of type std::tuple, and to obtain the specific value, user needs to call std::get&lt;N> to retrieve the value of the Nth parameter.
 - Error handling in Future/Promise is done by returning an Exception object instead of throwing an exception. If a Future call fails, it returns an Exception to the user, who can retrieve the error information using GetException.
 - Support is provided for registering callbacks to capture both Future and Value. However, it is recommended to use callbacks that capture Future because capturing Value callbacks cannot detect errors.
 - The underlying scheduler of Future is implemented based on the [Continuation](https://en.wikipedia.org/wiki/Continuation) principle.

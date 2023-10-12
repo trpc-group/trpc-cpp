@@ -189,7 +189,7 @@ Usage:
 3. Invoke the command
 
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/reload-config -X POST
+    curl http://admin_ip:admin_port/cmds/reload-config -X POST
     {"errorcode":0,"message":"reload config ok"}
     ```
 
@@ -213,7 +213,7 @@ server:
 Example:
 
 ```shell
-$ curl http://dmin_ip:admin_port/cmds/stats
+curl http://dmin_ip:admin_port/cmds/stats
 {"errorcode":0,"message":"","stats":{"conn_count":1,"total_req_count":11,"req_concurrency":1,"now_req_count":3,"last_req_count":4,"total_failed_req_count":0,"now_failed_req_count":0,"last_failed_req_count":0,"total_avg_delay":0.18181818181818183,"now_avg_delay":0.3333333333333333,"last_avg_delay":0.25,"max_delay":1,"last_max_delay":1}}
 ```
 
@@ -246,7 +246,7 @@ Interface description: You can directly access "/cmds/var" to view all tvar vari
 Example:
 
 ```shell
-$ curl http://127.0.0.1:8889/cmds/var
+curl http://127.0.0.1:8889/cmds/var
 {
   "trpc" : 
   {
@@ -406,14 +406,14 @@ Usage:
 1. Start sampling
 
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/profile/heap?enable=y -X POST
+    curl http://admin_ip:admin_port/cmds/profile/heap?enable=y -X POST
     {"errorcode":0,"message":"OK"}
     ```
 
 2. Stop sampling
 
     ```shell
-    $ curl http://admin_ip:admin_port/cmds/profile/heap?enable=n -X POST
+    curl http://admin_ip:admin_port/cmds/profile/heap?enable=n -X POST
     {"errorcode":0,"message":"OK"}
     ```
 
@@ -462,7 +462,7 @@ $ curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.ap
 {"message":"service is not exist"}
 ```
 
-# Customize management commands
+# Custom management commands
 
 The tRPC-Cpp allows users to customize and register management commands to perform additional management operations as needed by the user. For specific usage examples, please refer to the [admin example](../../examples/features/admin/proxy/).
 
@@ -551,6 +551,6 @@ Usage:
     After the service is started, you can trigger the custom management command by accessing `http://admin_ip:admin_port/myhandler`.
 
     ```shell
-    $ curl http://admin_ip:admin_port/myhandler
+    curl http://admin_ip:admin_port/myhandler
     {"errorcode":0,"message":"success"}
     ```

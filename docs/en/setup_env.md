@@ -2,7 +2,7 @@
 
 # Overview
 
-This article introduces how to setup the development environment for tRPC-Cpp.
+This article introduces how to setup the development environment for tRPC-Cpp framework.
 
 # Summary of Environmental Requirements
 
@@ -14,9 +14,9 @@ GCC Version: Since tRPC-Cpp utilizes C++17 standard features, it is recommended 
 
 # Specific Environment Guidelines
 
-tRPC-Cpp relies on third-party libraries (such as protobuf, gflags, fmtlib) for its source code dependencies. Therefore, additional installation of dependency libraries is usually not required. Once the compilation environment is set up, it is typically sufficient to clone the code repository and compile it directly for execution.
+tRPC-Cpp framework relies on third-party libraries (such as protobuf, gflags, fmtlib) for its source code dependencies. Therefore, additional installation of dependency libraries is usually not required. Once the compilation environment is set up, it is typically sufficient to clone the code repository and compile it directly for execution.
 
-Below is a detailed guide on how to compile and run tRPC-Cpp on CentOS and Ubuntu.
+Below is a detailed guide on how to compile and run tRPC-Cpp framework on CentOS and Ubuntu.
 
 ## CentOS
 
@@ -28,25 +28,25 @@ Currently, there are two supported compilation methods for tRPC-Cpp: Bazel and C
 
 It is recommended to use Bazel version 3.5.1 or later when compiling and running tRPC-Cpp.
 
-- **Install bazel(For reference only, there are other methods available)**
+1. **Install bazel(For reference only, there are other methods available)**
 
-   ``` sh
-   # install jdk
-   yum install java-11-openjdk
-   yum install java-11-openjdk-devel
-   
-   # installbazel
-   mkdir -p /root/env/bazel
-   wget https://github.com/bazelbuild/bazel/releases/download/3.5.1/bazel-3.5.1-installer-linux-x86_64.sh -O /root/env/bazel/bazel.sh
-   chmod +x /root/env/bazel/bazel.sh
-   /root/env/bazel/bazel.sh > /dev/null
-   rm -rf /root/env
-   
-   # check version
-   bazel --version
-   ```
+     ```sh
+     # install jdk
+     yum install java-11-openjdk
+     yum install java-11-openjdk-devel
+     
+     # installbazel
+     mkdir -p /root/env/bazel
+     wget https://github.com/bazelbuild/bazel/releases/download/3.5.1/bazel-3.5.1-installer-linux-x86_64.sh -O /root/env/bazel/bazel.sh
+     chmod +x /root/env/bazel/bazel.sh
+     /root/env/bazel/bazel.sh > /dev/null
+     rm -rf /root/env
+     
+     # check version
+     bazel --version
+     ```
 
-- **build and run tRPC-Cpp examples**
+2. **build and run tRPC-Cpp examples**
 
     After cloning the repository to your local machine, you can compile and run it directly. Here are the specific steps:
 
@@ -61,26 +61,26 @@ It is recommended to use Bazel version 3.5.1 or later when compiling and running
 
 Since the FetchContent feature of CMake is required for fetching third-party dependencies from source code, it is recommended to use **CMake version 3.14 or later**.
 
-- **Install cmake(For reference only, there are other methods available)**
+1. **Install cmake(For reference only, there are other methods available)**
 
-  ``` sh
-  yum install -y cmake3
-  ln -s /usr/bin/cmake3 /usr/bin/cmake
-  
-  # check version
-  cmake -version
-  ```
-
-- **build and run tRPC-Cpp examples**
-
-    After cloning the repository to your local machine, you can compile and run it directly. Here are the specific steps:
-
-   ```sh
-   cd trpc-cpp
+   ``` sh
+   yum install -y cmake3
+   ln -s /usr/bin/cmake3 /usr/bin/cmake
    
-   # Compile and run the examples provided by the framework using Cmake
-   ./run_examples_cmake.sh
+   # check version
+   cmake -version
    ```
+
+2. **build and run tRPC-Cpp examples**
+
+   After cloning the repository to your local machine, you can compile and run it directly. Here are the specific steps:
+ 
+    ```sh
+    cd trpc-cpp
+    
+    # Compile and run the examples provided by the framework using Cmake
+    ./run_examples_cmake.sh
+    ```
 
 ## Ubuntu
 
@@ -92,25 +92,25 @@ Currently, there are two supported compilation methods for tRPC-Cpp: Bazel and C
 
 It is recommended to use Bazel version 3.5.1 or later when compiling and running tRPC-Cpp.
 
-- **Install bazel(For reference only, there are other methods available)**
+1. **Install bazel(For reference only, there are other methods available)**
 
-  ```sh
-  # install jdk
-  apt install g++ unzip zip
-  apt-get install default-jdk
-  
-  # install bazel
-  mkdir -p /root/env/bazel
-  wget https://github.com/bazelbuild/bazel/releases/download/3.5.1/bazel-3.5.1-installer-linux-x86_64.sh -O /root/env/bazel/bazel.sh
-  chmod +x /root/env/bazel/bazel.sh
-  /root/env/bazel/bazel.sh > /dev/null
-  rm -rf /root/env
-  
-  # check version
-  bazel --version  
-  ```
+   ```sh
+   # install jdk
+   apt install g++ unzip zip
+   apt-get install default-jdk
+   
+   # install bazel
+   mkdir -p /root/env/bazel
+   wget https://github.com/bazelbuild/bazel/releases/download/3.5.1/bazel-3.5.1-installer-linux-x86_64.sh -O /root/env/bazel/bazel.sh
+   chmod +x /root/env/bazel/bazel.sh
+   /root/env/bazel/bazel.sh > /dev/null
+   rm -rf /root/env
+   
+   # check version
+   bazel --version
+   ```
 
-- **build and run tRPC-Cpp examples**
+2. **build and run tRPC-Cpp examples**
 
     After cloning the repository to your local machine, you can compile and run it directly. Here are the specific steps:
 
@@ -125,25 +125,25 @@ It is recommended to use Bazel version 3.5.1 or later when compiling and running
 
 Since the FetchContent feature of CMake is required for fetching third-party dependencies from source code, it is recommended to use **CMake version 3.14 or later**.
 
-- **Install cmake(For reference only, there are other methods available)**
+1. **Install cmake(For reference only, there are other methods available)**
 
-  ```sh
-  apt install cmake
-  
-  # check version
-  cmake -version
-  ```
+   ```sh
+   apt install cmake
+   
+   # check version
+   cmake -version
+   ```
 
-- **build and run tRPC-Cpp examples**
+2. **build and run tRPC-Cpp examples**
 
-  After cloning the repository to your local machine, you can compile and run it directly. Here are the specific steps:
+    After cloning the repository to your local machine, you can compile and run it directly. Here are the specific steps:
 
-  ```sh
-  cd trpc-cpp
-  
-  # Compile and run the examples provided by the framework using Cmake
-  ./run_examples_cmake.sh
-  ```
+   ```sh
+   cd trpc-cpp
+   
+   # Compile and run the examples provided by the framework using Cmake
+   ./run_examples_cmake.sh
+   ```
 
 # FAQ
 
@@ -155,20 +155,20 @@ You need to add the directory of the bazel executable to the PATH environment va
 
 - yum command
 
-```sh
-yum install centos-release-scl-rh centos-release-scl
-yum install devtoolset-7-gcc devtoolset-7-gcc-c++
-scl enable devtoolset-7 bash
-```
+  ```sh
+  yum install centos-release-scl-rh centos-release-scl
+  yum install devtoolset-7-gcc devtoolset-7-gcc-c++
+  scl enable devtoolset-7 bash
+  ```
 
 - Compile use Source Code
 
-```sh
-git clone git://gcc.gnu.org/git/gcc.git yourSomeLocalDir
-./configure 
-make 
-make install
-```
+  ```sh
+  git clone git://gcc.gnu.org/git/gcc.git yourSomeLocalDir
+  ./configure 
+  make 
+  make install
+  ```
 
 Compiling from source code may take a longer time.
 

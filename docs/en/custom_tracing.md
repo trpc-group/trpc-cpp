@@ -103,88 +103,88 @@ For specific information about filters, please refer to the [filters documentati
 
 ### Implementing client filter
 
-#### Filter points selection
+* **Filter points selection**
 
-The execution of pre-filter logic needs to be done before protocol encoding, allowing the injection of tracing data into the protocol's metadata. Therefore, there are two options for selecting: "`CLIENT_PRE_RPC_INVOKE` + `CLIENT_POST_RPC_INVOKE`" or "`CLIENT_PRE_SEND_MSG` + `CLIENT_POST_RECV_MSG`". The main difference lies in the timing statistics of the calls and whether unserialized user data is required.
+  The execution of pre-filter logic needs to be done before protocol encoding, allowing the injection of tracing data into the protocol's metadata. Therefore, there are two options for selecting: "`CLIENT_PRE_RPC_INVOKE` + `CLIENT_POST_RPC_INVOKE`" or "`CLIENT_PRE_SEND_MSG` + `CLIENT_POST_RECV_MSG`". The main difference lies in the timing statistics of the calls and whether unserialized user data is required.
 
-#### Pre-filter handling
+* **Pre-filter handling**
 
-At the pre-filter point of the filter, the following logic needs to be completed:
+  At the pre-filter point of the filter, the following logic needs to be completed:
 
-1. Creating Span
+  1. Creating Span
 
-    First, it is necessary to retrieve the `ClientTracingSpan` from the `FilterData` of `ClientContext`:
+      First, it is necessary to retrieve the `ClientTracingSpan` from the `FilterData` of `ClientContext`:
 
-    ```cpp
-    ClientTracingSpan* client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
-    ```
+      ```cpp
+      ClientTracingSpan* client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
+      ```
 
-    There may be several possible scenarios:
+      There may be several possible scenarios:
 
-    * client_span is a null pointer: If ClientContext is not constructed using the `MakeClientContext` interface based on ServerContext, the framework will not automatically set the ClientTracingSpan. In this case, the ClientFilter needs to **create the ClientTracingSpan manually and set it in the FilterData**.
+       * client_span is a null pointer: If ClientContext is not constructed using the `MakeClientContext` interface based on ServerContext, the framework will not automatically set the ClientTracingSpan. In this case, the ClientFilter needs to **create the ClientTracingSpan manually and set it in the FilterData**.
 
-        ```cpp
-        context->SetFilterData(PluginID, ClientTracingSpan());
-        client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
-        ```
+         ```cpp
+         context->SetFilterData(PluginID, ClientTracingSpan());
+         client_span = context->GetFilterData<ClientTracingSpan>(PluginID);
+         ```
 
-    * client_span is not null, but client_span->parent_span is null: `MakeClientContext` automatically sets the ClientTracingSpan, but since the server does not have any tracing data (no ServerFilter configured), the parent_span is null.
-    * both client_span and client_span->parent_span are not null: it indicates that there is upstream tracing data that needs to be inherited.
+       * client_span is not null, but client_span->parent_span is null: `MakeClientContext` automatically sets the ClientTracingSpan, but since the server does not have any tracing data (no ServerFilter configured), the parent_span is null.
+       * both client_span and client_span->parent_span are not null: it indicates that there is upstream tracing data that needs to be inherited.
 
-    **If parent_span is null, it is necessary to create a `Span` with a new TraceID and no ParentSpan. If parent_span is not null, it is necessary to create a `Span` with the same TraceID as parent_span and taking parent_span as the ParentSpan.**
+      **If parent_span is null, it is necessary to create a `Span` with a new TraceID and no ParentSpan. If parent_span is not null, it is necessary to create a `Span` with the same TraceID as parent_span and taking parent_span as the ParentSpan.**
 
-2. Injecting the tracing data into the metadata
+  2. Injecting the tracing data into the metadata
 
-    **The injection method depends on the communication protocol and the tracing standards.**
+      **The injection method depends on the communication protocol and the tracing standards.**
 
-    For example, when using the `trpc` protocol and following the `OpenTelemetry` standards, it is necessary to convert Trace, Span, and other information into key-value pairs following the OpenTelemetry standard and write them into the transparent information in the headers of the trpc request.
+      For example, when using the `trpc` protocol and following the `OpenTelemetry` standards, it is necessary to convert Trace, Span, and other information into key-value pairs following the OpenTelemetry standard and write them into the transparent information in the headers of the trpc request.
 
-3. Storing the created Span into the FilterData
+  3. Storing the created Span into the FilterData
 
-    ```cpp
-    client_span->span = std::move(Span);
-    ```
+      ```cpp
+      client_span->span = std::move(Span);
+      ```
 
-#### Post-filter handling
+* **Post-filter handling**
 
-At the post-filter point of the filter, the logic to be completed is relatively simple, just need to retrieve the client tracing data from `ClientContext` and report it.
+  At the post-filter point of the filter, the logic to be completed is relatively simple, just need to retrieve the client tracing data from `ClientContext` and report it.
 
 ### Implementing server filter
 
-#### Filter points selection
+* **Filter points selection**
 
-The execution of pre-filter logic needs to be done after protocol decoding, allowing extracting upstream tracing data from the metadata of the protocol. Therefore, there are two options for selecting: "`SERVER_POST_RECV_MSG` + `SERVER_PRE_SEND_MSG`" or "`SERVER_PRE_RPC_INVOKE` + `SERVER_POST_RPC_INVOKE`". The main difference lies in the timing statistics of the calls and whether unserialized user data is required.
+  The execution of pre-filter logic needs to be done after protocol decoding, allowing extracting upstream tracing data from the metadata of the protocol. Therefore, there are two options for selecting: "`SERVER_POST_RECV_MSG` + `SERVER_PRE_SEND_MSG`" or "`SERVER_PRE_RPC_INVOKE` + `SERVER_POST_RPC_INVOKE`". The main difference lies in the timing statistics of the calls and whether unserialized user data is required.
 
-#### Pre-filter handling
+* **Pre-filter handling**
 
-At the pre-filter point of the filter, the following logic needs to be completed:
+  At the pre-filter point of the filter, the following logic needs to be completed:
 
-1. Extracting the upstream tracing data from the metadata of the request
+  1. Extracting the upstream tracing data from the metadata of the request
 
-    **The extraction method depends on the communication protocol and the tracing standards.**
+      **The extraction method depends on the communication protocol and the tracing standards.**
 
-    For example, when using the `trpc` protocol and following the `OpenTelemetry` standards, it is necessary to extract the key-value pairs corresponding to the tracing from the transparent information in the trpc request header, and then reconstruct it into the data structure of OpenTelemetry.
+      For example, when using the `trpc` protocol and following the `OpenTelemetry` standards, it is necessary to extract the key-value pairs corresponding to the tracing from the transparent information in the trpc request header, and then reconstruct it into the data structure of OpenTelemetry.
 
-    Note that there may be two possible scenarios when extracting the results:
+      Note that there may be two possible scenarios when extracting the results:
 
-    * tracing data is empty: it indicates that the upstream is not part of the observed call chain and there is no tracing data to inherit.
-    * tracing data is not empty: it indicates that the upstream is part of the observed call chain and there is tracing data to inherit.
+       * tracing data is empty: it indicates that the upstream is not part of the observed call chain and there is no tracing data to inherit.
+       * tracing data is not empty: it indicates that the upstream is part of the observed call chain and there is tracing data to inherit.
 
-2. Creating Span
+  2. Creating Span
 
-    **If the extracted upstream tracing data is empty in step 1, it is necessary to create a Span with a new TraceID and no ParentSpan. If the extracted upstream tracing data is not empty, it is necessary to create a Span with the same TraceID as the upstream and taking the upstream Span as ParentSpan.**
+      **If the extracted upstream tracing data is empty in step 1, it is necessary to create a Span with a new TraceID and no ParentSpan. If the extracted upstream tracing data is not empty, it is necessary to create a Span with the same TraceID as the upstream and taking the upstream Span as ParentSpan.**
 
-3. Storing the created Span into the FilterData
+  3. Storing the created Span into the FilterData
 
-    ```cpp
-    ServerTracingSpan svr_span;
-    svr_span.span = std::move(Span);
-    context->SetFilterData<ServerTracingSpan>(PluginID, std::move(svr_span));
-    ```
+      ```cpp
+      ServerTracingSpan svr_span;
+      svr_span.span = std::move(Span);
+      context->SetFilterData<ServerTracingSpan>(PluginID, std::move(svr_span));
+      ```
 
-#### Post-filter handling
+* **Post-filter handling**
 
-At the post-filter point of the filter, the logic to be completed is relatively simple, just need to retrieve the server tracing data from `ServerContext` and report it.
+  At the post-filter point of the filter, the logic to be completed is relatively simple, just need to retrieve the server tracing data from `ServerContext` and report it.
 
 ## Registering the plugin and filters
 

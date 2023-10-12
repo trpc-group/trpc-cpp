@@ -42,7 +42,6 @@ global:
           scheduling_name: non_fiber                              #scheduling_name
           local_queue_size: 10240                                 #local_queue_size
           max_timer_size: 20480                                   #max_timer_size
-        max_reactor_timer_size: 10240                             #max_reactor_timer_size
         io_cpu_affinitys: "0-1"                                   #Bind the I/O threads to cores 0 and 1.
         handle_cpu_affinitys: "2-8"                               #Bind the I/O threads to cores 2 ~ 8.
         disallow_cpu_migration: false                             #Whether to bind cores strictly, true: indicates that each thread is bound to a single core, in which case the configured number of cores must be greater than or equal to the corresponding number of threads; false: each thread can be bound to multiple cores.
@@ -68,9 +67,11 @@ global:
         fiber_stack_enable_guard_page: true                       #fiber_stack_enable_guard_page
         fiber_scheduling_name: v1                                 #fiber_scheduling_name
   
-  tvar:# see [tvar]
+  tvar:
+    # see tvar.md
 
-  rpcz:# see [rpcz]
+  rpcz:
+    # see rpcz.md
 
 
 server:                                                             

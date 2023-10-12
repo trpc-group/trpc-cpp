@@ -54,7 +54,8 @@ The framework takes inspiration from Java's Aspect-Oriented Programming (AOP) pa
 
 * Flow-Control & Overload-Protect
 
-    It provides the ability for flow controlling and overload protecting. For more details, please refer to the [documentation of customizing Flow-Control & Overload-Protect plugin]().
+    It provides the ability for flow controlling and overload protecting. For more details, please refer to the **documentation of customizing Flow-Control & Overload-Protect plugin**.
+  * [overload_control_concurrency_limiter](./overload_control_concurrency_limiter.md)
 
 * Auth
 
@@ -84,7 +85,7 @@ trpc::TrpcPlugin::GetInstance()->RegisterMetrics(trpc::MakeRefCounted<CustomMetr
 
 There may be dependencies between different plugins, for example, configuration retrieval may require querying the name service first. This requires that the initialization, destruction, and other operations of multiple plugins must be performed in a certain order.
 
-tPPC-Cpp provides a set of solutions for plugin dependency management.
+tPPC-Cpp framework provides a set of solutions for plugin dependency management.
 
 1. First, plugin developers need to explicitly specify the other plugins that their implementation depends on, and return the names of the dependent plugins through the `GetDependencies` interface.
 

@@ -12,7 +12,7 @@
 
 ## 链路追踪
 
-遥测插件要求实现`GetTracing`接口，用于获取一个调用链插件的实例，即要求链路追踪功能的实现和使用方式需要遵循框架[调用链插件的规范](./custom_tracing.md)。
+遥测插件要求实现 `GetTracing` 接口，用于获取一个调用链插件的实例，即要求链路追踪功能的实现和使用方式需要遵循框架[调用链插件的规范](./custom_tracing.md)。
 
 ```cpp
 class Telemetry : public Plugin {
@@ -24,7 +24,7 @@ class Telemetry : public Plugin {
 
 ## 监控上报
 
-遥测插件要求实现`GetMetrics`接口，用于获取一个监控插件的实例，即要求监控上报功能的实现和使用方式需要遵循框架[监控插件的规范](./custom_metrics.md)。
+遥测插件要求实现 `GetMetrics` 接口，用于获取一个监控插件的实例，即要求监控上报功能的实现和使用方式需要遵循框架[监控插件的规范](./custom_metrics.md)。
 
 ```cpp
 class Telemetry : public Plugin {
@@ -36,7 +36,7 @@ class Telemetry : public Plugin {
 
 ## 日志采集
 
-遥测插件要求实现`GetLog`接口，用于获取一个远程日志插件的实例，即要求日志采集功能的实现和使用方式需要遵循框架[远程日志插件的规范]()。
+遥测插件要求实现`GetLog`接口，用于获取一个远程日志插件的实例，即要求日志采集功能的实现和使用方式需要遵循框架[远程日志插件的规范](./custom_logging.md)。
 
 ```cpp
 class Telemetry : public Plugin {
@@ -67,7 +67,7 @@ class Telemetry : public Plugin {
 | GetMetrics | 获取监控插件实例 | 用于规范监控上报功能的实现 |
 | GetLog | 获取远程日志插件实例 | 用于规范日志采集功能的实现 |
 
-首先需要实现内部调用链插件、监控插件和远程日志插件，具体请参考[开发自定义调用链插件文档](./custom_tracing.md)、[开发自定义监控插件文档](./custom_metrics.md)和[开发自定义远程日志插件文档]()。然后实现遥测插件，对内部的插件实例进行统一管理。遥测插件的主要逻辑如下：
+首先需要实现内部调用链插件、监控插件和远程日志插件，具体请参考[开发自定义调用链插件文档](./custom_tracing.md)、[开发自定义监控插件文档](./custom_metrics.md)和[开发自定义远程日志插件文档](./custom_logging.md)。然后实现遥测插件，对内部的插件实例进行统一管理。遥测插件的主要逻辑如下：
 
 * 负责各插件实例的初始化、启动、停止、销毁等。
 * 将远程日志插件实例注册到框架的日志组件中，使得可以通过日志宏来进行日志打印。
@@ -92,6 +92,7 @@ class Telemetry : public Plugin {
 ## 注册插件和拦截器
 
 插件注册的接口：
+
 ```cpp
 using TelemetryPtr = RefPtr<Telemetry>;
 
@@ -103,6 +104,7 @@ class TrpcPlugin {
 ```
 
 拦截器注册的接口：
+
 ```cpp
 using MessageServerFilterPtr = std::shared_ptr<MessageServerFilter>;
 using MessageClientFilterPtr = std::shared_ptr<MessageClientFilter>;
@@ -120,6 +122,7 @@ class TrpcPlugin {
 举个例子进行说明。假设自定义了一个TestTelemetry插件，TestServerFilter、TestClientFilter两个拦截器，那么
 
 1. 对于服务端场景，用户需要在服务启动的`TrpcApp::RegisterPlugins`函数中注册：
+
     ```cpp
     class HelloworldServer : public ::trpc::TrpcApp {
      public:
@@ -134,6 +137,7 @@ class TrpcPlugin {
     ```
 
 2. 对于纯客户端场景，需要在启动框架配置初始化后，框架其他模块启动前注册：
+
     ```cpp
     int main(int argc, char* argv[]) {
       ParseClientConfig(argc, argv);

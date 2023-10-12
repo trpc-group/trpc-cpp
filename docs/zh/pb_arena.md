@@ -1,7 +1,5 @@
 [English](../en/pb_arena.md)
 
-# RPC 服务使用 PB-Arena 优化
-
 # 前言
 
 本文主要是介绍 RPC 服务如何使用 arena 优化，开发者可以了解到如下内容：
@@ -11,19 +9,19 @@
 * 如何在调用 RPC 服务时使用 arena。
 * FAQ。
 
-# arena 原理
+# Arena 原理
 
 [arena](https://developers.google.com/protocol-buffers/docs/reference/overview)
 是 protobuf 3.0 版本开始支持的一个特性，它用来接管 PB 对象的生命周期；使用它可以帮助你优化程序的内存使用、提高性能。
 
 建议先阅读：[Why Use Arena Allocation?](https://developers.google.com/protocol-buffers/docs/reference/arenas#why)
 
-原理：
-arena 是由 protobuf 库去接管 PB 对象的内存管理。
-它的原理很简单，protobuf 预先分配一个内存块，多次创建的 PB 对象复用这个内存块。
-解析消息和构建消息等触发对象创建时是在已分配好的内存块上
+Arena 是由 protobuf 库去接管 PB 对象的内存管理。它的原理很简单如下：
+
+* protobuf 预先分配一个内存块，多次创建的 PB 对象复用这个内存块。
+* 解析消息和构建消息等触发对象创建时是在已分配好的内存块上
 [placement new](https://github.com/protocolbuffers/protobuf/blob/v3.8.0/src/google/protobuf/arena.h#L611) 出来；
-arena 上的对象析构时会释放所有内存，理想情况下不需要运行任何被包含对象的析构函数。
+* arena 上的对象析构时会释放所有内存，理想情况下不需要运行任何被包含对象的析构函数。
 
 好处：
 
@@ -37,22 +35,23 @@ arena 上的对象析构时会释放所有内存，理想情况下不需要运�
 
 PB 对象的生命周期由框架管理，可通过编译选项开启 arena 优化。
 
-## 启用 arena
+## 服务端启用 arena
 
-**使用 proto option 开启 arena**
-我们需要在每个`.proto`文件中启用 arena 分配，因此需要在每个`.proto`文件中添加如下 ` option`：
+* **使用 proto option 开启 arena**
 
-```protobuf
-option cc_enable_arenas = true;
-```
+  我们需要在每个`.proto`文件中启用 arena 分配，因此需要在每个`.proto`文件中添加如下 `option`：
 
-**编译时开启 arena 选项**
+  ```protobuf
+   option cc_enable_arenas = true;
+  ```
 
-在`.bazelrc` 中添加如下编译选项：
+* **编译时开启 arena 选项**
 
-```
-build --define trpc_proto_use_arena=true
-```
+  在`.bazelrc` 中添加如下编译选项：
+
+  ```sh
+  build --define trpc_proto_use_arena=true
+  ```
 
 执行以上两个步骤就可以开启 arena 优化。
 
@@ -91,48 +90,48 @@ int XxxxServer::Initialize() {
 这种情况下，PB 对象由用户创建，PB 对象的生命周期由用户代码管理，`框架没法干预 PB 对象的生命周期`，因此需要用户自行使用 arena
 优化内存。
 
-## 启用 arena
+## 客户端启用 arena
 
-**使用 proto option 开启 arena**
-我们需要在每个`.proto`文件中启用 arena 分配，因此需要在每个`.proto`文件中添加如下 ` option`：
+* **使用 proto option 开启 arena**
 
-```protobuf
-option cc_enable_arenas = true;
-```
+  我们需要在每个`.proto`文件中启用 arena 分配，因此需要在每个`.proto`文件中添加如下 ` option`：
 
-**创建 PB 对象**
+  ```protobuf
+  option cc_enable_arenas = true;
+  ```
 
-在客户端调用 RPC 服务时，如果需要使用 arena，我们需要主动调用`google::protobuf::Arena::CreateMessage<MyMessage>(...)`接口。
-在 RPC 服务端时，不需要上述步骤，只需要通过编译选项来开启 arena。
+* **创建 PB 对象**
 
-```cpp
-// 包含 arena 头文件
-#include "google/protobuf/arena.h"
+  在客户端调用 RPC 服务时，如果需要使用 arena，我们需要主动调用`google::protobuf::Arena::CreateMessage<MyMessage>(...)`接口。在 RPC 服务端时，不需要上述步骤，只需要通过编译选项来开启 arena。
 
-google::protobuf::Arena arena_req;
-auto* req = google::protobuf::Arena::CreateMessage<MyRequest>(&arena_req);
-
-google::protobuf::Arena arena_rsp;
-auto* rsp = google::protobuf::Arena::CreateMessage<MyResponse>(&arena_rsp);
-```
-
-第 2 行：包含 arena 需要的头文件。
-
-第 4~7 行：定义了两个 arena 对象，分别管理 req 和 rsp 的内存。
-
-第 5 行和第 8 行：用两个 arena 分别创建两个 PB 对象。
+  ```cpp
+  // 包含 arena 头文件
+  #include "google/protobuf/arena.h"
+  
+  google::protobuf::Arena arena_req;
+  auto* req = google::protobuf::Arena::CreateMessage<MyRequest>(&arena_req);
+  
+  google::protobuf::Arena arena_rsp;
+  auto* rsp = google::protobuf::Arena::CreateMessage<MyResponse>(&arena_rsp);
+  ```
+  
+  第 2 行：包含 arena 需要的头文件。
+  
+  第 4~7 行：定义了两个 arena 对象，分别管理 req 和 rsp 的内存。
+  
+  第 5 行和第 8 行：用两个 arena 分别创建两个 PB 对象。
 
 ## 注意事项
 
 arena 维护的所有对象都是在 arena 析构的时候统一释放的。在使用过程中，它内部维护的内存块只会不断地append，并不会删除。
 所以，这也决定了由 arena 维护的对象要么只能是局部对象，要么是不可变的。否则它的内存会无限增长下去。
 
-- 建议 arena 对象不要重复使用，一个 arena 管理一个 PB 对象的生命周期。
-    - 重复使用可能会导致 arena 扩容，影响性能。
-    - 一个 arena 生成多个 PB 对象，生命周期不好管理。
-- arena 对象的生命周期要么是局部的、要么不可变。
-- arena 的生命周期要比所管理的对象长。
-- CreateMessage 创建出来的 PB 对象禁止删除。
+* 建议 arena 对象不要重复使用，一个 arena 管理一个 PB 对象的生命周期。
+  * 重复使用可能会导致 arena 扩容，影响性能。
+  * 一个 arena 生成多个 PB 对象，生命周期不好管理。
+* arena 对象的生命周期要么是局部的、要么不可变。
+* arena 的生命周期要比所管理的对象长。
+* CreateMessage 创建出来的 PB 对象禁止删除。
 
 如果使用不当，会导致服务出现 OOM、Core dump，需要熟悉原理后再使用。
 
@@ -140,9 +139,9 @@ arena 维护的所有对象都是在 arena 析构的时候统一释放的。在�
 
 经测试，在 PB 结构较大且复杂时，使用 arena 后，性能提升约`14%`。
 
-**测试设备配置**
+## 测试设备配置
 
-```
+```txt
 // 云主机
 Architecture:          x86_64
 CPU(s):                8
@@ -158,7 +157,7 @@ L2 cache:              4096K
 L3 cache:              16384K
 ```
 
-**测试逻辑**
+## 测试逻辑
 
 为了模拟真实的场景，我们借用某业务的 proto 文件定义。
 测试逻辑：
@@ -166,11 +165,11 @@ L3 cache:              16384K
 * 并发起 4 个线程线程，每个线程循环执行 500 次任务。
 * 在每个任务中，创建 Request 和 Response 两个复杂 PB 结构体，并填充 repeated 字段，使得结构体的 ByteSizeLong() 大概是 200K。
 
-**编译选项**
+## 编译选项
 
 开启 O2 编译，区分是否使用 tc_malloc 库。
 
-**测试结果**
+## 测试结果
 
 |           | 不链接 tc_malloc | 链接tc_malloc |
 |-----------|---------------|-------------|
@@ -180,6 +179,7 @@ L3 cache:              16384K
 
 # FAQ
 
-## 1 程序崩溃，提示：`CHECK failed: GetArenaNotVirtual() == nullptr`
+## 程序崩溃，提示：`CHECK failed: GetArenaNotVirtual() == nullptr`
+
 使用 CreateMessage 创建出来的 PB 对象`禁止删除`，检查下是否析构了 PB 对象。
 只有析构了 CreateMessage 创建出来的对象会触发这个错误。

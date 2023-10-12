@@ -1,8 +1,6 @@
 [English](../en/http_protocol_service.md)
 
-# HTTP 服务开发指南
-
-**主题：如何基于 tRPC-Cpp 开发 HTTP 服务**
+# 前言
 
 目前 tRPC-Cpp 支持 HTTP 标准服务和 HTTP RPC 服务（这两个名称仅仅为了区分两种不同服务）。
 > HTTP 标准服务是一个普通的 HTTP 服务，不使用 proto 文件定义服务接口，用户需要自己编写代码定义服务接口，注册 URL 路由。
@@ -13,12 +11,12 @@
 服务，开发者可以了解到如下内容：
 
 * 如何开发 HTTP 标准服务。
-    * 快速上手：快速搭建一个 HTTP 服务。
-    * 功能特性一览：RESTful；HTTPS。
-    * 基础用法：获取请求、响应常用接口；配置请求路由规则。
-    * 进阶用法：分组路由规则；HTTPS；消息体压缩、解压缩；文件上传、下载等。
+  * 快速上手：快速搭建一个 HTTP 服务。
+  * 功能特性一览：RESTful；HTTPS。
+  * 基础用法：获取请求、响应常用接口；配置请求路由规则。
+  * 进阶用法：分组路由规则；HTTPS；消息体压缩、解压缩；文件上传、下载等。
 * 如何开发 HTTP RPC 服务
-    * 快速上手：支持 HTTP 客户端访问 tRPC 服务。
+  * 快速上手：支持 HTTP 客户端访问 tRPC 服务。
 * FAQ
 
 # 开发 HTTP 标准服务
@@ -39,7 +37,7 @@ sh examples/features/http/run.sh
 
 示例程序输出：
 
-``` text
+```text
 # 部分过程输出片段内容
 response content: hello world!
 response content: {"msg":"hello world!"}
@@ -296,9 +294,9 @@ response->SetHeader("Location", "https://github.com/");
  r.Add(trpc::http::MethodType::GET, trpc::http::Path("/hello/img_x"), handler);
 ```
 
-```bash 
-$ curl http://$ip:$port/hello/img_x -X GET  # 响应码 200
-$ curl http://$ip:$port/hello/img -X GET    # 响应码 404
+```bash
+curl http://$ip:$port/hello/img_x -X GET  # 响应码 200
+curl http://$ip:$port/hello/img -X GET    # 响应码 404
 ```
 
 #### 前缀匹配
@@ -358,13 +356,13 @@ r.Add(trpc::http::MethodType::GET, trpc::http::Path("<ph(/channels/<channel_id>/
 }
 ```
 
-```bash 
+```bash
 curl http://$ip:$port/channels/xyz/clients/123 -X GET  # 响应码 200
 curl http://$ip:$port/channels/clients -X GET          # 响应码 404
 ```
 
-**注意**
-> * 占位符的符号仅支持字母、数字、下划线。
+**注意:**
+  > 占位符的符号仅支持字母、数字、下划线。
 
 ## 进阶用法
 
@@ -496,190 +494,188 @@ trpc::http::HttpHandlerGroups(routes).Path("/api", TRPC_HTTP_ROUTE_HANDLER({
 为了降低网页传输时间，加快页面渲染速度，HTTP 服务可能会压缩响应消息体。
 tRPC 当前不会自动压缩或者解压缩消息体，主要基于如下考虑：
 
-- 通用性，这个操作交由用户自行处理会更灵活。
-- 压缩、解压缩代码不是很复杂，tRPC 提供了压缩和解压缩工具，当前支持 gzip，lz4， snappy，zlib
+* 通用性，这个操作交由用户自行处理会更灵活。
+* 压缩、解压缩代码不是很复杂，tRPC 提供了压缩和解压缩工具，当前支持 gzip，lz4， snappy，zlib
   等 [compressor](../../trpc/compressor)
 
 ### 处理 HTTPS 请求
 
 HTTPS 是 HTTP over SSL 的简称，可以通过如下方式开启 SSL。
 
-- 编译代码时开启 SSL 编译选项。
+* 编译代码时开启 SSL 编译选项。
 
-> 使用 bazel build 时，增加 --define trpc_include_ssl=true 编译参数。
-> 提示：也可以加到 .bazelrc 文件中。
+  > 使用 bazel build 时，增加 --define trpc_include_ssl=true 编译参数。
+  > 提示：也可以加到 .bazelrc 文件中。
 
-**提示：tRPC 基于 OpenSSL 支持 HTTPS，请确保编译、运行环境正确安装 OpenSSL 。**
+  **提示：tRPC 基于 OpenSSL 支持 HTTPS，请确保编译、运行环境正确安装 OpenSSL 。**
 
-```cpp
-// e.g. 
-bazel build --define trpc_include_ssl=true //https:http_server
-```
+  ```cpp
+  // e.g. 
+  bazel build --define trpc_include_ssl=true //https:http_server
+  ```
 
-- 在配置文件中设置 SSL 相关配置，具体配置项如下：
+* 在配置文件中设置 SSL 相关配置，具体配置项如下：
 
-| 名称               | 功能       | 取值范围                                    | 默认值               | 可选状态       | 说明                          |
-|------------------|----------|-----------------------------------------|-------------------|------------|-----------------------------|
-| cert_path        | 证书路径     | 不限，xx/path/to/server.pem                | null              | `required` | 在启用 SSL 时，如果不设置正确路径，服务会启动失败 |
-| private_key_path | 私钥路径     | 不限，xx/path/to/server.key                | null              | `required` | 在启用 SSL 时，如果不设置正确路径，服务会启动失败 |
-| ciphers          | 加密套件     | 不限                                      | null              | `required` | 在启用 SSL 时，如果不正确设置，服务会启动失败   |
-| enable           | 是否启用SSL  | {true, false}                           | false             | optional   | 建议在配置项明确指定，明确意图             |
-| mutual_auth      | 是否启用双向认证 | {true, false}                           | false             | optional   | -                           |
-| ca_cert_path     | CA证书路径   | 不限，xx/path/to/ca.pem                    | null              | optional   | 双向认证是开启有效                   |
-| protocols        | SSL协议版本  | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional   | -                           |
-
-举个例子：
-
-```yaml
-# @file: trpc_cpp.yaml
-# ...
-server:
-  service:
-    - name: default_http_service
-      network: tcp
-      ip: 0.0.0.0
-      port: 24756
-      protocol: http
-      # ...
-      ## <-- 新增的 SSL 配置项
-      ssl:
-        enable: true  # 可选配置（默认为 false，表示禁用 SSL）
-        cert_path: ./https/cert/server_cert.pem # 必选配置
-        private_key_path: ./https/cert/server_key.pem # 必选配置
-        ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # 必选配置
-        # mutual_auth: true # 可选配置（默认为 false，表示不开启双向认证）
-        # ca_cert_path: ./https/cert/xxops-com-chain.pem # 可选配置，双向认证的 CA 路径
-        # protocols: # 可选配置
-        #   - SSLv2
-        #   - SSLv3
-        #   - TLSv1
-        #   - TLSv1.1
-        #  - TLSv1.2
-        ## --> 新增的SSL配置项
-# ...
-```
+  | 名称               | 功能       | 取值范围                                    | 默认值               | 可选状态       | 说明                          |
+  |------------------|----------|-----------------------------------------|-------------------|------------|-----------------------------|
+  | cert_path        | 证书路径     | 不限，xx/path/to/server.pem                | null              | `required` | 在启用 SSL 时，如果不设置正确路径，服务会启动失败 |
+  | private_key_path | 私钥路径     | 不限，xx/path/to/server.key                | null              | `required` | 在启用 SSL 时，如果不设置正确路径，服务会启动失败 |
+  | ciphers          | 加密套件     | 不限                                      | null              | `required` | 在启用 SSL 时，如果不正确设置，服务会启动失败   |
+  | enable           | 是否启用SSL  | {true, false}                           | false             | optional   | 建议在配置项明确指定，明确意图             |
+  | mutual_auth      | 是否启用双向认证 | {true, false}                           | false             | optional   | -                           |
+  | ca_cert_path     | CA证书路径   | 不限，xx/path/to/ca.pem                    | null              | optional   | 双向认证是开启有效                   |
+  | protocols        | SSL协议版本  | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional   | -                           |
+  
+  举个例子：
+  
+  ```yaml
+  # @file: trpc_cpp.yaml
+  # ...
+  server:
+    service:
+      - name: default_http_service
+        network: tcp
+        ip: 0.0.0.0
+        port: 24756
+        protocol: http
+        # ...
+        ## <-- 新增的 SSL 配置项
+        ssl:
+          enable: true  # 可选配置（默认为 false，表示禁用 SSL）
+          cert_path: ./https/cert/server_cert.pem # 必选配置
+          private_key_path: ./https/cert/server_key.pem # 必选配置
+          ciphers: HIGH:!aNULL:!kRSA:!SRP:!PSK:!CAMELLIA:!RC4:!MD5:!DSS # 必选配置
+          # mutual_auth: true # 可选配置（默认为 false，表示不开启双向认证）
+          # ca_cert_path: ./https/cert/xxops-com-chain.pem # 可选配置，双向认证的 CA 路径
+          # protocols: # 可选配置
+          #   - SSLv2
+          #   - SSLv3
+          #   - TLSv1
+          #   - TLSv1.1
+          #  - TLSv1.2
+          ## --> 新增的SSL配置项
+  # ...
+  ```
 
 ### 服务异步响应客户端
 
 如果服务端处理 HTTP Request 的逻辑异步执行，然后用户期望自己主动回复响应给客户端，而不是让 tRPC 自动回复 HTTP 响应，可以采用如下方式：
 
-- 关闭 tRPC 回包: context->SetResponse(false) 。
-- 回包时，将 HTTP Response 序列化成非连续 Buffer，然后调用 context->SendResponse(buffer) 发送响应包。
+* 关闭 tRPC 回包: context->SetResponse(false) 。
+* 回包时，将 HTTP Response 序列化成非连续 Buffer，然后调用 context->SendResponse(buffer) 发送响应包。
 
-```cpp
-// ServerContext 接口
-void SetResponse(bool is_response);
-Status SendResponse(NoncontiguousBuffer&& buffer);
-
-// HTTP Response 接口
-bool SerializeToString(NoncontiguousBuffer& buff) const;
-```
-
-代码片段：
-
-```cpp
-// 使用示例
-trpc::Status Get(const trpc::ServerContextPtr& context, const trpc::http::RequestPtr req, trpc::http::Response* rep) {
-  // ...
-  // 关闭 tRPC 主动回包
-  context->SetResponse(false);
-  // 异步操作，比如 Future 模式异步调用
-  DoAsyncWork(context,req);
-  // ...
-  return trpc::kSucctStatus;
-}
-
-void DoAsyncWork(const trpc::ServerContextPtr& context,const trpc::http::RequestPtr& req){
-  // ...
+  ```cpp
+  // ServerContext 接口
+  void SetResponse(bool is_response);
+  Status SendResponse(NoncontiguousBuffer&& buffer);
   
-  trpc::http::Response http_response;
-  // 生成正常响应的函数签名  void GenerateCommonReply(HttpRequest* req);
-  http_response.GenerateCommonReply(req.get());
+  // HTTP Response 接口
+  bool SerializeToString(NoncontiguousBuffer& buff) const;
+  ```
 
-  // 设置响应内容，比如
-  http_response.SetContent("DoAsyncWork");
+* 代码片段：
+  
+  ```cpp
+  // 使用示例
+  trpc::Status Get(const trpc::ServerContextPtr& context, const trpc::http::RequestPtr req, trpc::http::Response* rep) {
+    // ...
+    // 关闭 tRPC 主动回包
+    context->SetResponse(false);
+    // 异步操作，比如 Future 模式异步调用
+    DoAsyncWork(context,req);
+    // ...
+    return trpc::kSucctStatus;
+  }
+  
+  void DoAsyncWork(const trpc::ServerContextPtr& context,const trpc::http::RequestPtr& req){
+    // ...
     
-  // 将 HTTP Response 序列化为非连续 Buffer
-  trpc::NoncontiguousBuffer out;
-  http_response.SerializeToString(out);
-    
-  // 使用 ServerContext 主动回包
-  context->SendResponse(std::move(out));
-}
-```
+    trpc::http::Response http_response;
+    // 生成正常响应的函数签名  void GenerateCommonReply(HttpRequest* req);
+    http_response.GenerateCommonReply(req.get());
+  
+    // 设置响应内容，比如
+    http_response.SetContent("DoAsyncWork");
+      
+    // 将 HTTP Response 序列化为非连续 Buffer
+    trpc::NoncontiguousBuffer out;
+    http_response.SerializeToString(out);
+      
+    // 使用 ServerContext 主动回包
+    context->SendResponse(std::move(out));
+  }
+  ```
 
 ### 大文件上传 + 下载
 
 在 HTTP 服务中，有部分场景需要读取或者发送大文件的场景，将文件完整读入内存压力较大且效率较低，对于大文件的上传可行性不高。
 tRPC 提供一套 HTTP 流式读取/写入数据分片的接口，可以分片接收/发送大文件。
 
-- 对于已经知晓长度的大文件，设置 `Content-Length: $length` 后分块发送（当然也可以使用 chunked 分块发送，如果对端支持的话）。
-- 对于未知长度的大文件，设置 `Transfer-Encoding: chunked` 后分块发送。
+* 对于已经知晓长度的大文件，设置 `Content-Length: $length` 后分块发送（当然也可以使用 chunked 分块发送，如果对端支持的话）。
+* 对于未知长度的大文件，设置 `Transfer-Encoding: chunked` 后分块发送。
 
 具体可以参考 [http 上传 下载](./http_protocol_upload_download_service.md)。
 
 # 开发 HTTP RPC 服务
 
-## 快速上手
-
-### 在 HTTP 协议下提供 tRPC 服务
+## 在 HTTP 协议下提供 tRPC 服务
 
 某些场景下，一些 RPC 服务可能需要对外支持 HTTP 客户端。即，通过 HTTP 协议传输 tRPC 协议头部和载荷。
 可以通过修改配置项，无需修改代码，轻松实现：`protocol: trpc` -> `protocol: trpc_over_http` 。
 
 如果需要同时支持 tRPC 和 HTTP 客户端，可以在服务初始化阶段注册两个 RPC Service 实例。
 
-代码片段：
+* 代码片段：
 
-```cpp
-class HelloWorldServer : public ::trpc::TrpcApp {
- public:
-  int Initialize() override {
-    // ...
-    std::string service_name = "trpc.test.helloworld.Greeter"; 
-    RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
+  ```cpp
+  class HelloWorldServer : public ::trpc::TrpcApp {
+   public:
+    int Initialize() override {
+      // ...
+      std::string service_name = "trpc.test.helloworld.Greeter"; 
+      RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
+  
+      std::string service_over_http_name = "trpc.test.helloworld.GreeterHTTP"; 
+      RegisterService(service_over_http_name, std::make_shared<GreeterServiceImpl>());
+      // ...
+      return 0;
+    }
+  };
+  ```
 
-    std::string service_over_http_name = "trpc.test.helloworld.GreeterHTTP"; 
-    RegisterService(service_over_http_name, std::make_shared<GreeterServiceImpl>());
-    // ...
-    return 0;
-  }
-};
-```
+* 配置片段：
 
-配置片段：
-
-```yaml
-# @file: trpc_cpp.yaml
-# ...
-service:
-  - name: trpc.test.helloworld.Greeter
-    protocol: trpc
-    network: tcp
-    ip: 0.0.0.0
-    port: 12345
-  - name: trpc.test.helloworld.GreeterHTTP
-    protocol: trpc_over_http
-    network: tcp
-    ip: 0.0.0.0
-    port: 23456
-# ...
-```
+  ```yaml
+  # @file: trpc_cpp.yaml
+  # ...
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc
+      network: tcp
+      ip: 0.0.0.0
+      port: 12345
+    - name: trpc.test.helloworld.GreeterHTTP
+      protocol: trpc_over_http
+      network: tcp
+      ip: 0.0.0.0
+      port: 23456
+  # ...
+  ```
 
 # FAQ
 
-## 1. 如果匹配所有路径需要怎么写路由规则？
+## 如果匹配所有路径需要怎么写路由规则？
 
 ```cpp
 // e.g. :
 r.Add(trpc::http::MethodType::POST, trpc::http::Path("").Remainder("path"), handler);
 ```
 
-## 2. 为什么开启 SSL 后启动服务出现 coredump ?
+## 为什么开启 SSL 后启动服务出现 coredump ?
 
 请确保 ssl 配置项中的证书、私钥等文件路径配置正确。
 
-## 3. 使用 curl 上传 1KB+ 数据时，为什么会多等待 1s ?
+## 使用 curl 上传 1KB+ 数据时，为什么会多等待 1s ?
 
 curl/libcurl 在上传数据时，当 body 大于 1K 时，会先询问下服务器是否允许发送大数据包（请求头中增加 "Expect： 100 continue"）。
 如果允许则回复一个 100 continue 码，然后libcurl 继续发送请求体。

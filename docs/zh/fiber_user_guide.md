@@ -1,12 +1,16 @@
 
-# 1 前言
+[English](../en/fiber_user_guide.md)
+
+# 前言
 
 本文从开发者角度介绍如何使用Fiber，包括配置、常用类及接口、常见问题等几部分。关于Fiber原理可以阅读[Fiber](./fiber.md)。
 
-# 2 配置
+# 配置
+
 目前Fiber的功能需要在Fiber执行环境中运行，有Fiber执行环境第一步就需要正确的Fiber配置，这里只展示Fiber部分的配置。
 
 为简化使用，开发者只需要填写一些必填的配置项就即可，以下是精简Fiber配置:
+
 ```yaml
 global:
   threadmodel:
@@ -15,10 +19,11 @@ global:
         concurrency_hint: 8             # 运行的Fiber Worker物理线程个数，建议配置为实际可用核数个数(否则读取系统配置)
 xxx
 ```
+
 其中推荐手动填入concurrency_hint配置项，避免出现因读取系统配置而导致的问题。
 
-
 除了精简版配置，还可以自定义高阶配置项，以下是完整Fiber配置:
+
 ```yaml
 global:
   threadmodel:
@@ -40,83 +45,89 @@ global:
         fiber_scheduling_name: v1                                 #表示fiber运行/切换的调度器实现，目前提供两种调度器机制的实现：v1/v2，如果不配置默认值是v1版本即原来fiber调度的实现，v2版本是参考taskflow的调度实现
 ```
 
+# 常用类及接口
 
-# 3 常用类及接口
-## 1 创建运行Fiber
+## 创建运行 Fiber
 
-接口形式：
-```cpp
-// @brief 创建Fiber并运行，按照默认属性
-// @note  注意如果创建太多系统内存则会返回失败false.
-bool StartFiberDetached(Function<void()>&& start_proc);
+- 接口形式：
 
-// @brief 创建Fiber并运行，可以自定义属性
-bool StartFiberDetached(Fiber::Attributes&& attrs, Function<void()>&& start_proc);
-```
-创建Fiber默认的运行属性是由框架发起调度(可能会在其他调度组)并执行，当然也可以自定义Fiber运行属性Fiber::Attributes:
-```cpp
-  struct Attributes {
-    // 如何启动一个Fiber, 默认Post会将Fiber入队等待调度执行，可选Dispatch方式(马上执行)
-    fiber::Launch launch_policy = fiber::Launch::Post;
+  ```cpp
+  // @brief 创建Fiber并运行，按照默认属性
+  // @note  注意如果创建太多系统内存则会返回失败false.
+  bool StartFiberDetached(Function<void()>&& start_proc);
+  
+  // @brief 创建Fiber并运行，可以自定义属性
+  bool StartFiberDetached(Fiber::Attributes&& attrs, Function<void()>&& start_proc);
+  ```
+  
+  创建 Fiber 默认的运行属性是由框架发起调度(可能会在其他调度组)并执行，当然也可以自定义 Fiber 运行属性Fiber::Attributes:
+  
+  ```cpp
+    struct Attributes {
+      // 如何启动一个Fiber, 默认Post会将Fiber入队等待调度执行，可选Dispatch方式(马上执行)
+      fiber::Launch launch_policy = fiber::Launch::Post;
+  
+      // Fiber用什么策略选择在哪个线程组中执行，默认是选择最近的(即来自同一个主调线程的Fiber在同一个线程组中执行)
+      // 可选随机kUnspecifiedSchedulingGroup或者指定(0-线程组个数-1)来选择固定线程组
+      std::size_t scheduling_group = kNearestSchedulingGroup;
+  
+      // 是否允许Fiber在其他线程组执行，默认是允许的
+      bool scheduling_group_local = false;
+    };
+  ```
+  
+- 创建一个默认属性的 Fiber
+  
+  ```cpp
+  trpc::StartFiberDetached([&] {
+    Handle();
+  });
+  ```
+  
+  也可以指定Fiber::Attributes，如指定Fiber在某个调度组中运行：
+  
+  ```cpp
+  trpc::Fiber::Attributes attr;
+  attr.scheduling_group = 1;
+  
+  trpc::StartFiberDetached(attr, [&] {
+    Handle();
+  });
+  ```
 
-    // Fiber用什么策略选择在哪个线程组中执行，默认是选择最近的(即来自同一个主调线程的Fiber在同一个线程组中执行)
-    // 可选随机kUnspecifiedSchedulingGroup或者指定(0-线程组个数-1)来选择固定线程组
-    std::size_t scheduling_group = kNearestSchedulingGroup;
+## Fiber 间多任务协作
 
-    // 是否允许Fiber在其他线程组执行，默认是允许的
-    bool scheduling_group_local = false;
-  };
-```
-
-
-如创建一个默认属性的Fiber：
-```cpp
-trpc::StartFiberDetached([&] {
-  Handle();
-});
-```
-
-
-也可以指定Fiber::Attributes，如指定Fiber在某个调度组中运行：
-```cpp
-trpc::Fiber::Attributes attr;
-attr.scheduling_group = 1;
-
-trpc::StartFiberDetached(attr, [&] {
-  Handle();
-});
-```
-
-## 2 Fiber间多任务协作
-用于Fiber间多任务之间协作的FiberLatch，示例如:
-```cpp
-trpc::FiberLatch l(1);
-trpc::StartFiberDetached([&] {
-  Handle();
+- 用于 Fiber 间多任务之间协作的 FiberLatch，示例如:
+  
+  ```cpp
+  trpc::FiberLatch l(1);
+  trpc::StartFiberDetached([&] {
+    Handle();
+        
+    // 这次执行单元即将结束，FiberLatch减一，减到0会唤醒同步等待操作
+    l.CountDown();
+  });    
       
-  // 这次执行单元即将结束，FiberLatch减一，减到0会唤醒同步等待操作
-  l.CountDown();
-});    
-    
- // 同步等待FiberLatch的值减至0，才唤醒
-l.Wait();
-```
+   // 同步等待FiberLatch的值减至0，才唤醒
+  l.Wait();
+  ```
 
+- FiberLatch 接口:
+  
+  |接口名称 |  功能 |参数 |返回值|
+  | :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
+  | FiberLatch(std::ptrdiff_t count) |  创建一个内部计数为count的FiberLatch|count 内部计数 | void |
+  | CountDown(std::ptrdiff_t update = 1) |  内部计数减去update|update 内部计数减去 | void |
+  | TryWait() |  内部计数实际已经等于0| 无 | bool，如果内部计数等于0返回true，否则返回false |
+  | Wait() |  阻塞等待直到内部计数等于0| 无  | void |
+  | ArriveAndWait(std::ptrdiff_t update = 1) |  CountDown()和Wait()的合并接口| | void |
+  | bool WaitFor(const std::chrono::duration<Rep, Period>& timeout)  | 在超时时间内等待内部计数等于0|timeout 时间点 | void |
+  | bool WaitUntil(const std::chrono::time_point<Clock, Duration>& timeout)  | 在超时时间内等待内部计数等于0|timeout 时间点 | void |
 
-FiberLatch接口:
+## Fiber 间互斥访问
 
-|接口名称 |  功能 |参数 |返回值|
-| :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
-| FiberLatch(std::ptrdiff_t count) |  创建一个内部计数为count的FiberLatch|count 内部计数 | void |
-| CountDown(std::ptrdiff_t update = 1) |  内部计数减去update|update 内部计数减去 | void |
-| TryWait() |  内部计数实际已经等于0| 无 | bool，如果内部计数等于0返回true，否则返回false |
-| Wait() |  阻塞等待直到内部计数等于0| 无  | void |
-| ArriveAndWait(std::ptrdiff_t update = 1) |  CountDown()和Wait()的合并接口| | void |
-| bool WaitFor(const std::chrono::duration<Rep, Period>& timeout)  | 在超时时间内等待内部计数等于0|timeout 时间点 | void |
-| bool WaitUntil(const std::chrono::time_point<Clock, Duration>& timeout)  | 在超时时间内等待内部计数等于0|timeout 时间点 | void |
+用于 Fiber 之间共享数据互斥访问FiberMutex，示例如:
 
-## 3 Fiber间互斥访问
-用于Fiber之间共享数据互斥访问FiberMutex，示例如:
 ```cpp
 trpc::FiberLatch latch(10);
 trpc::FiberMutex mu;
@@ -138,20 +149,22 @@ latch.wait();
 
 注意：
 
-- FiberMutex可以配合std::scoped_lock等RAII工具类使用，避免忘记释放锁资源。
+- FiberMutex 可以配合 std::scoped_lock 等 RAII 工具类使用，避免忘记释放锁资源。
 
-FiberLatch接口:
+- FiberLatch 接口:
+  
+  |接口名称 |  功能 |参数 |返回值|
+  | :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
+  | void wait(std::unique_lock&lt;FiberMutex>&amp; lock)  | 等待直到notify_xxx()  | lock FiberMutex锁| void |
+  | void lock()  | 加锁保护共享数据 | 无 | void |
+  | void unlock()  | 释放锁并唤醒对应的Fiber | 无 | void |
+  | bool try_lock() | 是否可以加锁，即当前已经被加锁过则返回失败 | 无 | bool，加锁过则返回失败，否则返回true |
 
-|接口名称 |  功能 |参数 |返回值|
-| :-------------------------------------------------------| :---------------------|:---------------------|:----------------------|
-| void wait(std::unique_lock<FiberMutex>& lock)  | 等待直到notify_xxx()  | lock FiberMutex锁| void |
-| void lock()  | 加锁保护共享数据 | 无 | void |
-| void unlock()  | 释放锁并唤醒对应的Fiber | 无 | void |
-| bool try_lock() | 是否可以加锁，即当前已经被加锁过则返回失败 | 无 | bool，加锁过则返回失败，否则返回true |
+## 共享数据读优先
 
-## 4 共享数据读优先
-用于Fiber之间共享数据读优先读写锁:FiberSharedMutex，示例如:
-```cpp 
+用于 Fiber 之间共享数据读优先读写锁:FiberSharedMutex，示例如:
+
+```cpp
 trpc::FiberSharedMutex rwlock_;
 
 // 使用写锁互斥
@@ -170,8 +183,11 @@ void Get(){
   rwlock_.unlock_shared();
 }
 ```
-## 5 共享数据写优先
-用于Fiber之间共享数据写优先读写锁:FiberSeqLoc，示例如:
+
+## 共享数据写优先
+
+用于 Fiber 之间共享数据写优先读写锁: FiberSeqLoc，示例如:
+
 ```cpp
 trpc::FiberSeqLoc seqlock;
 
@@ -196,88 +212,99 @@ void Update(const std::string& key, const std::string& value){
   seqlock.WriteSeqUnlock();
 }
 ```
-## 6 条件通知
-用于Fiber条件通知:FiberConditionVariable，示例如:
-```cpp
 
-FiberConditionVariable cv;
-FiberMutex lock;
-bool set;
+## 条件通知
 
-void Wait(){
-  std::unique_lock lk(lock);
-  cv.wait(lk, [&] { return set; });
-}
+- 用于 Fiber 条件通知: FiberConditionVariable，示例如:
 
-void Notify(){
-  std::scoped_lock _(lock);
-  set = true;
-  cv.notify_one();
-}
-```
+  ```cpp
+  
+  FiberConditionVariable cv;
+  FiberMutex lock;
+  bool set;
+  
+  void Wait(){
+    std::unique_lock lk(lock);
+    cv.wait(lk, [&] { return set; });
+  }
+  
+  void Notify(){
+    std::scoped_lock _(lock);
+    set = true;
+    cv.notify_one();
+  }
+  ```
 
-FiberConditionVariable接口:
+- FiberConditionVariable 接口:
 
-|接口名称 |  功能 |参数 |返回值|
-| :-------------------------------------------------------| :-------------------------------|:--------------------------|:--------------------------------|
-| void wait(std::unique_lock<FiberMutex>& lock)  | 等待直到notify_xxx()  | lock FiberMutex锁| void |
-| std::cv_status wait_for(std::unique_lock<FiberMutex>& lock,const std::chrono::duration<Rep, Period>& expires_in)  | 等待直到notify或者超时  | lock FiberMutex锁，expires_in时间 | cv_status ，如果超时内被唤醒则返回std::cv_status::no_timeout，否则返回std::cv_status::timeout |
-| std::cv_status wait_until(std::unique_lock<FiberMutex>& lock,const std::chrono::time_point<Clock, Duration>& expires_at)  | 等待直到notify或者超时  | lock FiberMutex锁，expires_at时间 | cv_status ，如果超时内被唤醒则返回std::cv_status::no_timeout，否则返回std::cv_status::timeout |
-| notify_one()  | 唤醒其中一个等待waiter | | void |
-| notify_all()  | 唤醒所有等待waiter | | void |
-| void wait(std::unique_lock<FiberMutex>& lock, Predicate pred)  | 一直到pre符合条件，才开始Wait | lock FiberMutex锁，pred 符合的条件| void |
+  |接口名称 |  功能 |参数 |返回值|
+  | :-------------------------------------------------------| :-------------------------------|:--------------------------|:--------------------------------|
+  | void wait(std::unique_lock&lt;FiberMutex>&amp;  lock)  | 等待直到notify_xxx()  | lock FiberMutex锁| void |
+  | std::cv_status wait_for(std::unique_lock&lt;FiberMutex>&amp;  lock,const std::chrono::duration<Rep, Period>& expires_in)  | 等待直到notify或者超时  | lock FiberMutex锁，expires_in时间 | cv_status ，如果超时内被唤醒则返回std::cv_status::no_timeout，否则返回std::cv_status::timeout |
+  | std::cv_status wait_until(std::unique_lock&lt;FiberMutex>&amp;  lock,const std::chrono::time_point<Clock, Duration>& expires_at)  | 等待直到notify或者超时  | lock FiberMutex锁，expires_at时间 | cv_status ，如果超时内被唤醒则返回std::cv_status::no_timeout，否则返回std::cv_status::timeout |
+  | notify_one()  | 唤醒其中一个等待waiter | | void |
+  | notify_all()  | 唤醒所有等待waiter | | void |
+  | void wait(std::unique_lock&lt;FiberMutex>&amp;  lock, Predicate pred)  | 一直到pre符合条件，才开始Wait | lock FiberMutex锁，pred 符合的条件| void |
+  
+## 定时任务
 
-## 7 定时任务
 有需要再Fiber中执行定时任务的需求，目前提供以下几种方式：
 
-- 1.SetFiberTimer创建并启用+KillFiberTimer手动释放:
-```cpp
-// 起一个fiber timer，到100ms后执行
-auto timer_id = SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
-  Handle();
-});
- 
-// 删除对应timer，回收资源 
-KillFiberTimer(timer_id);
-```
+1. SetFiberTimer 创建并启用 KillFiberTimer 手动释放:
 
-- 2.SetFiberTimer创建并启用+FiberTimerKiller RAII式释放:
-```cpp
-// 类中定义一个成员变量FiberTimerKiller
-FiberTimerKiller killer;
-killer.reset(SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
-  Handle();
-}));
+   ```cpp
+   // 起一个fiber timer，到100ms后执行
+   auto timer_id = SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
+     Handle();
+   });
+    
+   // 删除对应timer，回收资源 
+   KillFiberTimer(timer_id);
+   ```
 
-// FiberTimerKiller析构时自动释放对应的timer
+2. SetFiberTimer 创建并启用 FiberTimerKiller RAII 式释放:
 
-```
-- 3.CreateFiberTimer创建+EnableFiberTimer启用:
-```cpp
-// 创建一个fiber timer，到100ms后执行
-auto timer_id = CreateFiberTimer(trpc::ReadSteadyClock() + 100ms, [&](auto timer_id) {
-  // 注意这里是不是在FiberWorker中运行,所以在cb不能使用Fiber特性
-  Handle();
-});
- 
-// 启用
-EnableFiberTimer(timer_id);
+   ```cpp
+   // 类中定义一个成员变量FiberTimerKiller
+   FiberTimerKiller killer;
+   killer.reset(SetFiberTimer(trpc::ReadSteadyClock() + 100ms, [&]() {
+     Handle();
+   }));
+   
+   // FiberTimerKiller析构时自动释放对应的timer
+   
+   ```
 
-// 注册的定时回调
-void OnTimeout(std::uint64_t timer_id){
-  HandleTimeout();
+3. CreateFiberTimer创建+EnableFiberTimer启用:
 
-  // 关闭定时器资源
-  KillFiberTimer(timer_id);
-}
-```
+   ```cpp
+   // 创建一个fiber timer，到100ms后执行
+   auto timer_id = CreateFiberTimer(trpc::ReadSteadyClock() + 100ms, [&](auto timer_id) {
+     // 注意这里是不是在FiberWorker中运行,所以在cb不能使用Fiber特性
+     Handle();
+   });
+    
+   // 启用
+   EnableFiberTimer(timer_id);
+   
+   // 注册的定时回调
+   void OnTimeout(std::uint64_t timer_id){
+     HandleTimeout();
+   
+     // 关闭定时器资源
+     KillFiberTimer(timer_id);
+   }
+  
+   ```
 
-注意：
-- SetFiberTimer接口会创建一个Fiber运行自定义cb，所以可以在cb使用Fiber特性；
-- CreateFiberTimer接口则是在自己的TimerThread中运行自定义cb，并没有运行在FiberWorker中，所以在cb不能使用Fiber特性；
+   注意：
+   - SetFiberTimer 接口会创建一个 Fiber 运行自定义 cb，所以可以在 cb 使用 Fiber 特性；
+   - CreateFiberTimer 接口则是在自己的 TimerThread 中运行自定义 cb，并没有运行在 FiberWorker 中，所以在 cb 不能使用 Fiber 特性；
 
-## 8 同非框架线程同步协作
+## 同非框架线程同步协作
+
 用于同非框架线程的同步协作FiberEvent
+
 ```cpp
 auto ev = std::make_unique<FiberEvent>();
 
@@ -294,8 +321,10 @@ thread_pool.push([&](){
 ev->Wait();
 ```
 
-## 9 异步编程
-也支持在Fiber中使用trpc::Future进行异步编程:
+## 异步编程
+
+也支持在 Fiber 中使用 trpc::Future 进行异步编程:
+
 ```cpp
 trpc::StartFiberDetached([&] {
   auto rpc_future = Async_rpc();
@@ -313,5 +342,6 @@ trpc::StartFiberDetached([&] {
 
 ```
 
-# 4 FAQ
+# FAQ
+
 查阅[Fiber FAQ](./fiber_faq.md)

@@ -1,44 +1,42 @@
 [English](../en/rpcz.md)
 
-# tRPC-Cpp rpcz使用指南
+# 前言
 
-## 前言
+当用户在定位一个性能问题/耗时问题时，时常需要在框架或者用户代码逻辑中增加很多日志，效率低。rpcz 作为一个调试工具，它可以提供一个请求经过服务端或者客户端不同采样点处的详细信息，方便用户快速地定位问题。
 
-当用户在定位一个性能问题/耗时问题时，时常需要在框架或者用户代码逻辑中增加很多日志，效率低。rpcz作为一个调试工具，它可以提供一个请求经过服务端或者客户端不同采样点处的详细信息，方便用户快速地定位问题。
+# 设计思路
 
-## 设计思路
+## 基本概念
 
-### 基本概念
+### Span
 
-#### Span
+`Span` 是一种信息载体，记录一次rpc请求过程中的基本信息，比如请求来源，包大小，在不同埋点处的时间信息，用户自定义的属性等，最终向用户展示的信息来源于span。
 
-span是一种信息载体，记录一次rpc请求过程中的基本信息，比如请求来源，包大小，在不同埋点处的时间信息，用户自定义的属性等，最终向用户展示的信息来源于span。
+### 框架 rpcz
 
-#### 框架rpcz
-
-框架rpcz主要用于分析框架自身在处理rpc请求过程中的关键路径，进一步细分为三种场景，
+框架 rpcz 主要用于分析框架自身在处理rpc请求过程中的关键路径，进一步细分为三种场景，
 
 - 纯服务端处理接收的请求和发送的响应
 - 纯客户端处理发送的请求和接收的响应
 - 作为中转服务时处理的请求+发送的响应
 
-#### 用户自定义rpcz
+### 用户自定义 rpcz
 
-用户自定义rpcz主要用于分析业务代码在处理rpcz请求过程中的关键路径，只记录业务逻辑层的各个自定义采样点的信息，跟框架解耦。
+用户自定义 rpcz 主要用于分析业务代码在处理 rpcz 请求过程中的关键路径，只记录业务逻辑层的各个自定义采样点的信息，跟框架解耦。
 
-### 整体方案
+## 整体方案
 
 ![rpcz整体方案](../images/rpcz_design_zh.png)
 
-如上图所示，针对框架rpcz，基于filter机制实现，在第一个框架埋点处判断是否需要对当前请求进行采样，在后续多个框架埋点处设置span信息，并在最后一个框架埋点处将span信息存储到线程私有的变量中；针对用户自定义rpcz，绕开了filter机制，在业务代码中，由用户自定义埋点，在业务埋点处创建根span对象以及子span对象，并且设置对应的属性，在最后一个业务埋点处将根span对象写入线程私有的变量中。后续由固定的旁路线程去汇聚线程私有的span信息，写入全局的哈希表中，方便业务通过admin命令进行查询。
+如上图所示，针对框架 rpcz，基于 filter 机制实现，在第一个框架埋点处判断是否需要对当前请求进行采样，在后续多个框架埋点处设置span信息，并在最后一个框架埋点处将 span 信息存储到线程私有的变量中；针对用户自定义 rpcz，绕开了 filter 机制，在业务代码中，由用户自定义埋点，在业务埋点处创建根 span 对象以及子 span 对象，并且设置对应的属性，在最后一个业务埋点处将根 span 对象写入线程私有的变量中。后续由固定的旁路线程去汇聚线程私有的 span 信息，写入全局的哈希表中，方便业务通过 admin 命令进行查询。
 
-### 埋点设计
+## 埋点设计
 
-用户自定义rpcz的埋点设计跟框架rpcz不同，与此同时，针对框架rpcz，纯服务端，纯客户端和中转场景的埋点设计也不同，下文会分开讨论。
+用户自定义 rpcz 的埋点设计跟框架 rpcz 不同，与此同时，针对框架 rpcz，纯服务端，纯客户端和中转场景的埋点设计也不同，下文会分开讨论。
 
-#### 纯服务端
+### 纯服务端
 
-纯服务端是框架rpcz的一种细分场景，其埋点设计如下图所示，
+纯服务端是框架 rpcz 的一种细分场景，其埋点设计如下图所示，
 
 ![rpcz纯服务端埋点设计方案](../images/rpcz_server_filter_point_zh.png)
 
@@ -55,13 +53,13 @@ span是一种信息载体，记录一次rpc请求过程中的基本信息，比�
 | P7 | SERVER_POST_SCHED_SEND_MSG | 设置时间信息 | 把响应从发送调度队列取出之后 |
 | P8 | SERVER_POST_IO_SEND_MSG | 设置时间信息，span信息写入线程私有变量 | 调用writev把回包写入内核后 |
 
-#### 纯客户端
+### 纯客户端
 
-纯客户端也是框架rpcz的一种细分场景，其埋点设计如下图所示，
+纯客户端也是框架 rpcz 的一种细分场景，其埋点设计如下图所示，
 
 ![rpcz纯客户端埋点设计方案](../images/rpcz_client_filter_point_zh.png)
 
-上图中的埋点P1到P9的含义如下表，
+上图中的埋点 P1 到 P9 的含义如下表，
 
 | 图中标识 | 埋点名称 |         动作        |       说明       |
 |---------|--------|---------------------|-----------------|
@@ -75,18 +73,17 @@ span是一种信息载体，记录一次rpc请求过程中的基本信息，比�
 | P8 | CLIENT_POST_RECV_MSG | 设置时间信息 | 完成transport层调用后的埋点 |
 | P9 | CLIENT_POST_RPC_INVOKE | 设置时间信息，span信息写入线程私有变量 | 完成rpc层调用后的埋点 |
 
+### 中转
 
-#### 中转
+中转也是框架 rpcz 的一种细分场景，其埋点设计在纯服务端的埋点设计中嵌入了客户端的埋点设计。
 
-中转也是框架rpcz的一种细分场景，其埋点设计在纯服务端的埋点设计中嵌入了客户端的埋点设计。
+### 用户自定义
 
-#### 用户自定义
+跟框架 filter 机制完全解耦，具体埋点的地方由用户在业务逻辑层自己控制。相比于框架 rpcz，这里的埋点是个虚拟的概念，没有固定的宏名称，业务在需要的地方随时可以打点。
 
-跟框架filter机制完全解耦，具体埋点的地方由用户在业务逻辑层自己控制。相比于框架rpcz，这里的埋点是个虚拟的概念，没有固定的宏名称，业务在需要的地方随时可以打点。
+## 采样设计
 
-### 采样设计
-
-为了控制span占用内存的大小，首先通过高低水位采样来控制采样的速率。值得注意的是，这里的高低水位采样对用户自定义rpcz不生效。
+为了控制 span 占用内存的大小，首先通过高低水位采样来控制采样的速率。值得注意的是，这里的高低水位采样对用户自定义 rpcz 不生效。
 
 ![rpcz高低水位采样设计方案](../images/rpcz_sample_zh.png)
 
@@ -96,21 +93,21 @@ span是一种信息载体，记录一次rpc请求过程中的基本信息，比�
 - high_water_level：高水位
 - sample_rate：采样率
 
-在1秒钟的时间窗口内，当采样数小于lower_water_level时，则百分之百采样；当采样数大于等于lower_water_level时，则按照概率进行采样，每sample_rate个请求采样一次；当采样数大于high_water_level时，停止采样。
+在1秒钟的时间窗口内，当采样数小于 lower_water_level 时，则百分之百采样；当采样数大于等于 lower_water_level 时，则按照概率进行采样，每 sample_rate 个请求采样一次；当采样数大于 high_water_level 时，停止采样。
 
-### 内存回收
+## 内存回收
 
-为了控制span占用内存的大小，框架还通过过期时长来控制span在内存中存储的时间，关键参数只有一个，
+为了控制 span 占用内存的大小，框架还通过过期时长来控制 span 在内存中存储的时间，关键参数只有一个，
 
-- cache_expire_interval：span在内存中缓存的时长
+- cache_expire_interval：span 在内存中缓存的时长
 
-当一个span在内存中存储的时长超过cache_expire_interval，则会被删除，回收对应的内存空间。
+当一个 span 在内存中存储的时长超过 cache_expire_interval，则会被删除，回收对应的内存空间。
 
-### 对外接口
+## 对外接口
 
-#### 框架rpcz
+### 框架 rpcz 接口
 
-框架rpcz场景下，绝大部分功能都内置在框架filter机制中，对用户透明。不过用户仍然可以设置自定义的采样逻辑，绕过框架默认的高低水位采样，同时使用TRPC_RPCZ_PRINT来打印日志。
+框架 rpcz 场景下，绝大部分功能都内置在框架 filter 机制中，对用户透明。不过用户仍然可以设置自定义的采样逻辑，绕过框架默认的高低水位采样，同时使用 TRPC_RPCZ_PRINT 来打印日志。
 
 ```cpp
 /// @brief 提供给用户设置的采样函数, 用户可自行控制采样逻辑
@@ -132,9 +129,9 @@ void SetClientSampleFunction(const CustomerClientRpczSampleFunction& sample_func
   } while (0)
 ```
 
-#### 用户自定义rpcz
+### 用户自定义 rpcz 接口
 
-相比于框架rpcz，用户自定义rpcz有更加丰富的对外接口，让用户自行控制什么时机创建span，什么时机打点，什么时机提交span。
+相比于框架 rpcz，用户自定义 rpcz 有更加丰富的对外接口，让用户自行控制什么时机创建 span，什么时机打点，什么时机提交 span。
 
 ```cpp
 /// @brief 面向kSpanTypeUser类型的span对象，提供给用户创建根span对象，不带上下文
@@ -188,80 +185,76 @@ class Span : public LinkNode<Span> {
 };
 ```
 
-## 使用指南
+# 使用指南
 
-### 编译
+## 编译
 
-#### bazel编译选项
+### Bazel 编译选项
 
 ```bash
 bazel build --define trpc_include_rpcz=true
 ```
 
-#### cmake编译选项
+### Cmake 编译选项
 
 ```bash
 cmake .. -DTRPC_BUILD_WITH_RPCZ=ON
 ```
 
-### 配置
+## 配置
 
-#### 全局配置
+### 全局配置
 
 ```yaml
 global:
   rpcz:
-    lower_water_level: 500     # 低水位，对框架rpcz生效，对用户自定义rpcz不生效
-    high_water_level: 1000     # 高水位，对框架rpcz生效，对用户自定义rpcz不生效
-    sample_rate: 50            # 采样率，对框架rpcz生效，对用户自定义rpcz不生效
-    cache_expire_interval: 10  # span信息存储时长，10秒级别的分辨率
-    collect_interval_ms: 500   # 定时收集TLS时间间隔
-    remove_interval_ms: 5000   # 定时删除TLS时间间隔
-    print_spans_num: 10        # 打印span概要信息的条数
+    lower_water_level: 500      # 低水位，对框架rpcz生效，对用户自定义rpcz不生效
+    high_water_level: 1000      # 高水位，对框架rpcz生效，对用户自定义rpcz不生效
+    sample_rate: 50             # 采样率，对框架rpcz生效，对用户自定义rpcz不生效
+    cache_expire_interval: 10   # span 信息存储时长，10秒级别的分辨率
+    collect_interval_ms: 500    # 定时收集 TLS 时间间隔
+    remove_interval_ms: 5000    # 定时删除TLS时间间隔
+    print_spans_num: 10         # 打印span概要信息的条数
 ```
 
-#### filter配置
+### Filter 配置
 
 ```yaml
-# 服务端配置，纯服务端和中转场景需要开启
-server:
-  # 服务端级别filter，所有服务端service共享
-  filter:
+server: # 服务端配置，纯服务端和中转场景需要开启
+  filter: # 服务端级别 filter，所有服务端 service 共享
     - rpcz
   service:
     - name: server_service
-      # service级别的filter
-      filter:
+      filter: # service级别的filter
         - rpcz
 
-# 客户端配置，纯客户端和中转场景需要开启
-client:
-  # 客户端级别filter，所有客户端service共享
-  filter:
+ 
+client: # 客户端配置，纯客户端和中转场景需要开启
+  filter: # 客户端级别filter，所有客户端service共享
     - rpcz
   service:
     - name: client_service
-      # service级别的filter
+       service级别的filter
       filter:
         - rpcz
 ```
 
-值得注意的是，用户自定义rpcz场景下，无须配置filter。
+值得注意的是，用户自定义 rpcz 场景下，无须配置 filter。
 
-#### admin配置
+### Admin 配置
 
 ```yaml
-#服务端配置
-server:
-  admin_port: 21111  # 端口号用户自行修改，这里只是举例
-  admin_ip: 0.0.0.0  # ip用户自行修改，这里只是举例
+
+server: # 服务端配置
+  admin_port: 21111   # 端口号用户自行修改，这里只是举例
+  admin_ip: 0.0.0.0   # ip 用户自行修改，这里只是举例
 ```
 
-### 设置自定义采样函数
+## 设置自定义采样函数
 
-自定义采样函数只对框架rpcz生效，对用户自定义rpcz不生效。
+自定义采样函数只对框架 rpcz 生效，对用户自定义 rpcz 不生效。
 
-#### 设置服务端自定义采样函数
+### 设置服务端自定义采样函数
 
 纯服务端和中转场景下，可以设置服务端自定义采样函数。
 
@@ -286,7 +279,7 @@ int xxxServer::Initialize() {
 }
 ```
 
-#### 设置客户端自定义采样函数
+### 设置客户端自定义采样函数
 
 纯客户端场景下，可以设置客户端自定义采样函数，其他场景不需要设置。
 
@@ -303,7 +296,7 @@ int xxx() {
 }
 ```
 
-### 使用TRPC_RPCZ_PRINT打印日志
+## 使用 TRPC_RPCZ_PRINT 打印日志
 
 ```cpp
 // 头文件
@@ -318,7 +311,7 @@ int Test(const trpc::ServerContextPtr& context) {
 }
 ```
 
-### 使用自定义rpcz
+## 使用自定义 rpcz
 
 ```cpp
 #include "trpc/rpcz/trpc_rpcz.h"
@@ -377,15 +370,15 @@ int Test(const trpc::ServerContextPtr& context) {
 }
 ```
 
-### admin查询
+## Admin 查询
 
-#### 查询概要信息
+### 查询概要信息
 
 ```bash
 curl http://127.0.0.1:21111/cmds/rpcz
 ```
 
-其中127.0.0.1是配置中的admin_ip，21111是配置中的admin_port。查询得到的输出如下，
+其中 127.0.0.1 是配置中的 admin_ip；21111 是配置中的 admin_port。查询得到的输出如下，
 
 ```bash
 2023-09-05 16:04:45:159729   cost=190322(us) span_type=U span_id=11  request=0 response=0 [ok]
@@ -400,24 +393,24 @@ curl http://127.0.0.1:21111/cmds/rpcz
 |-----|------|-----|
 | 时间| 2023-09-05 16:04:45:159729 | 经过第一个埋点的具体时刻信息，精确到微秒 |
 | 总耗时 | cost=190322(us) | 一个rpc请求的的全部耗时 |
-| span类型 | span_type=U | 可选为（S/C/U); S表示服务端或者中转模式下的采样； C表示客户端的采样；U表示用户自定义的采样 |
+| span类型 | span_type=U | 可选为（S/C/U）; S 表示服务端或者中转模式下的采样； C 表示客户端的采样；U 表示用户自定义的采样 |
 | span id | span_id=11 | 每个rpcz采样数据的唯一表示，通过它查询具体的某个span详细信息 |
 | 服务接口名 | trpc.test.helloworld.Greeter/SayHello | 对端的服务名+接口名，用户自定义rpcz场景下为空 |
 | 请求大小 | request=109 | 请求包大小，单位字节，用户自定义rpcz场景下为0 |
 | 响应大小 | response=33 | 响应包大小，单位字节，用户自定义rpcz场景下为0 |
 | 返回码 | [ok] | 根据框架返回码判断请求是否成功, ok表示请求成功，failed表示失败，用户自定义场景下肯定为[ok] |
 
-#### 查询某个span信息
+### 查询某个 span 信息
 
 ```bash
 curl http://127.0.0.1:21111/cmds/rpcz?span_id=11
 ```
 
-##### 框架rpcz
+#### 框架 rpcz 输出结果
 
-针对框架rpcz，以中转场景为例，查询得到的输出如下，
+针对框架 rpcz，以中转场景为例，查询得到的输出如下，
 
-```bash
+```mermaid
 2023-09-05 17:04:10:695773   Received request(119) from trpc..(9.218.34.103:43376) protocal=trpc span_id=0
 2023-09-05 17:04:10:695957   184(us) enter recv queue
 2023-09-05 17:04:10:695992   35(us) leave recv queue
@@ -463,10 +456,9 @@ curl http://127.0.0.1:21111/cmds/rpcz?span_id=11
 - leave send queue，这一行表示客户端响应出发送队列，主要是客户端响应在发送队列排队的耗时
 - io send done，这一行表示客户端响应发送到内核，主要是用户态排队和writev的耗时
 
+#### 用户自定义 rpcz 查询
 
-##### 用户自定义rpcz
-
-针对用户自定义rpcz，查询得到的输出如下，是格式化的json字符串，
+针对用户自定义rpcz，查询得到的输出如下，是格式化的 json 字符串，
 
 ```json
 [
@@ -563,7 +555,6 @@ curl http://127.0.0.1:21111/cmds/rpcz?span_id=11
 ]
 ```
 
-用户无须理解json字段的含义，将获取到的json字符串写入一个文件中，再上传到 https://ui.perfetto.dev/ 网站，即可得到可视化的span信息，如下图所示，
-
+用户无须理解 json 字段的含义，将获取到的 json 字符串写入一个文件中，再上传到 <https://ui.perfetto.dev/> 网站，即可得到可视化的 span 信息，如下图所示，
 
 ![rpcz perfetto可视化效果](../images/rpcz_perfetto.png)

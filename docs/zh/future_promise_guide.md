@@ -1,37 +1,35 @@
 [English](../en/future_promise_guide.md)
 
-# tRPC-Cpp future/promise使用指南
+# 前言
 
-## 前言
+future/promise 是一种异步编程模型，它可以让用户摆脱传统的回调陷阱，从而使用更加优雅、清晰的方式进行异步编程。虽然 C++11 已经开始支持std::future/std::promise，但是后者过于简单，因此 tRPC-Cpp 框架提供了一套自己的 future/promise 实现，除了支持链式回调，还提供丰富的工具来支持并发调用和串行调用。
 
-future/promise是一种异步编程模型，它可以让用户摆脱传统的回调陷阱，从而使用更加优雅、清晰的方式进行异步编程。虽然C++11已经开始支持std::future/std::promise，但是后者过于简单，因此tRPC-Cpp框架提供了一套自己的future/promise实现，除了支持链式回调，还提供丰富的工具来支持并发调用和串行调用。
+# 设计原理
 
-## 设计原理
-
-### 设计思想
+## 设计思想
 
 为了写出正确且高效可靠的代码，用户需要了解下面的原则，
 
-- Future/Promise都支持move语义、但是禁止拷贝，这可以保证Promise和Future之间的一对一关系
-- 由于GetValue和GetException接口实现上使用了右值移动，所以GetValue和GetException只能调用一次，禁止重复调用
-- Future/Promise支持可变参数个数，Future的结果返回的是std::tuple类型，获取具体的value时需要调用std::get<N>获取第N个参数的值
-- Future/Promise的错误处理使用返回Exception对象的方式，而不是抛异常的方式，如果Future调用失败了，则返回一个Exception给用户，用户使用GetException得到错误信息
-- 支持注册捕获Future的回调和捕获Value的回调，因为捕获Value的回调方式无法感知到错误，故建议使用捕获Future的回调
-- Future底层调度器基于例程[Continuation](https://en.wikipedia.org/wiki/Continuation)原理实现
+- Future/Promise 都支持 move 语义、但是禁止拷贝，这可以保证 Promise 和 Future 之间的一对一关系
+- 由于 GetValue 和 GetException 接口实现上使用了右值移动，所以 GetValue 和 GetException 只能调用一次，禁止重复调用
+- Future/Promise 支持可变参数个数，Future 的结果返回的是 std::tuple 类型，获取具体的 value 时需要调用 std::get&lt;N> 获取第N个参数的值
+- Future/Promise 的错误处理使用返回 Exception 对象的方式，而不是抛异常的方式，如果Future调用失败了，则返回一个 Exception 给用户，用户使用 GetException 得到错误信息
+- 支持注册捕获 Future 的回调和捕获 Value 的回调，因为捕获 Value 的回调方式无法感知到错误，故建议使用捕获 Future 的回调
+- Future 底层调度器基于例程[Continuation](https://en.wikipedia.org/wiki/Continuation)原理实现
 
-### 结构图
+## 结构图
 
 ![future/promise结构图](../images/future_promise_structure_zh.png)
 
-### 状态转换图
+## 状态转换图
 
 ![future/promise状态转换图](../images/future_promise_state_zh.png)
 
-## 使用指南
+# 使用指南
 
-### 基础用法
+## 基础用法
 
-#### 设置结果（SetValue/SetException）
+### 设置结果（SetValue/SetException）
 
 通过`SetValue`设置值，如下所示，
 
@@ -59,7 +57,7 @@ auto fut = pr.GetFuture();
 pr.SetException(CommonException("system error"));
 ```
 
-#### 获取结果（GetValue0/GetValue/GetException）
+### 获取结果（GetValue0/GetValue/GetException）
 
 当future对象处于就绪状态时，它的值会被设置，当future对象处于异常状态时，它的异常会被设置，用户在使用时需求根据future的状态来决定是获取对应的值还是异常。
 
@@ -102,7 +100,7 @@ if (fut.IsReady()) {
 }
 ```
 
-获取异常使用`GetException`接口，如下所示，
+获取异常使用 `GetException` 接口，如下所示，
 
 ```cpp
 // 这里以单个参数的promise对象举例，针对多个参数的promise对象，也是一样的写法
@@ -120,11 +118,11 @@ if (fut.IsFailed()) {
 }
 ```
 
-#### 设置future回调（Then）
+### 设置 Future 回调（Then）
 
-可以使用Future类的Then接口为Future设置回调，框架支持捕获Future的回调和捕获值的回调。
+可以使用 Future 类的 Then 接口为 Future 设置回调，框架支持捕获 Future 的回调和捕获值的回调。
 
-捕获Future的回调，`推荐使用`，用户可以在回调中判断请求成功或者失败，如下所示，
+捕获 Future 的回调（`推荐使用`），用户可以在回调中判断请求成功或者失败，如下所示，
 
 ```cpp
 fut.Then([](Future<T>&& fut) {
@@ -142,7 +140,7 @@ fut.Then([](Future<T>&& fut) {
 });
 ```
 
-捕获值的回调，`不推荐使用`，只有调用成功后才会执行回调，不便于处理调用失败的场景，如下所示，
+捕获值的回调（`不推荐使用`），只有调用成功后才会执行回调，不便于处理调用失败的场景，如下所示，
 
 ```cpp
 fut.Then([](T&& val) {
@@ -152,9 +150,9 @@ fut.Then([](T&& val) {
 });
 ```
 
-#### 创建就绪或者异常的Future（MakeReadyFuture/MakeExceptionFuture）
+### 创建就绪或者异常的 Future（MakeReadyFuture/MakeExceptionFuture）
 
-创建就绪的Future，如下所示，
+创建就绪的 Future，如下所示，
 
 ```cpp
 auto fut = MakeReadyFuture<std::string>("hello, world");
@@ -166,9 +164,9 @@ auto fut = MakeReadyFuture<std::string>("hello, world");
 auto fut = MakeExceptionFuture<std::string>(CommonException("system error"));
 ```
 
-#### 阻塞等待Future就绪（BlockingGet）
+### 阻塞等待 Future 就绪（BlockingGet）
 
-BlockingGet接口会一直等待直到future就绪或者异常。
+BlockingGet 接口会一直等待直到 Future 就绪或者异常。
 
 ```cpp
 auto res_fut = future::BlockingGet(std::move(fut));
@@ -182,29 +180,29 @@ if (res_fut.IsReady()) {
 }
 ```
 
-### 高级用法
+## 高级用法
 
-#### 串行任务，等待最后一个回调执行完毕（Then）
+### 串行任务，等待最后一个回调执行完毕（Then）
 
 示例代码如下，
 
 ```cpp
   fut.Then([](Future<T>&& fut) {
-	  auto value = fut.GetValue0();
+    auto value = fut.GetValue0();
     // 处理第一个future的结果
 
     // 第一个回调函数返回一个Future
     // return ...
   })
   .Then([](Future<T>&& fut) {
-	  auto value = fut.GetValue0();
+    auto value = fut.GetValue0();
     // 处理第二个future的结果
 
     // 第二个回调函数返回一个Future
     // return ...
   })
   .Then([](Future<T>&& fut) {
-	  auto value = fut.GetValue0();
+    auto value = fut.GetValue0();
     // 处理第三个future的结果
 
     // 第三个回调函数返回一个Future
@@ -212,16 +210,16 @@ if (res_fut.IsReady()) {
   });
 ```
 
-#### 串行任务，直到条件函数返回true或者Future函数返回异常（DoUntil）
+### 串行任务，直到条件函数返回 true 或者 Future 函数返回异常（DoUntil）
 
-这是DoUntil的第一种使用方式，用户可以指定一个条件函数和一个Future函数，有两个条件会终止Future函数的执行，
+这是 DoUntil 的第一种使用方式，用户可以指定一个条件函数和一个 Future 函数，有两个条件会终止Future函数的执行，
 
-- 当这个条件函数返回真(true)的时候，终止后续Future函数的执行
-- 当Future函数返回异常就绪值的时候，终止后续Future函数的执行
+- 当这个条件函数返回真(true)的时候，终止后续 Future 函数的执行
+- 当 Future 函数返回异常就绪值的时候，终止后续 Future 函数的执行
 
-其他情况下，会一直串行执行后续的Future函数。
+其他情况下，会一直串行执行后续的 Future 函数。
 
-条件函数返回真(true)，终止后续Future函数的执行，如下所示，
+条件函数返回真(true)，终止后续 Future 函数的执行，如下所示，
 
 ```cpp
 auto flag = std::make_shared<bool>(false);
@@ -240,9 +238,9 @@ DoUntil([flag]() { return *flag; },
         });
 ```
 
-注意：这里的Future函数可能一次也不执行，如果一开始条件函数就返回真(true)。
+注意：这里的 Future 函数可能一次也不执行，如果一开始条件函数就返回真(true)。
 
-Future函数返回异常就绪值，终止后续Future函数的执行，如下所示，
+Future函数返回异常就绪值，终止后续 Future 函数的执行，如下所示，
 
 ```cpp
 auto flag = std::make_shared<bool>(false);
@@ -262,9 +260,9 @@ DoUntil([flag]() { return *flag; },
         });
 ```
 
-#### 串行任务，直到Future函数返回false的就绪值（DoUntil）
+### 串行任务，直到 Future 函数返回 false 的就绪值（DoUntil）
 
-这是DoUntil的第二种使用方式，用户只需要指定一个Future函数，要求这个Future函数的返回值类型是Future<bool>，当某次Future函数返回false的就绪值时，终止后续的Future函数执行，否则持续执行下去，如下所示，
+这是 DoUntil 的第二种使用方式，用户只需要指定一个 Future 函数，要求这个 Future 函数的返回值类型是Future&lt;bool>，当某次 Future 函数返回 false 的就绪值时，终止后续的 Future 函数执行，否则持续执行下去，如下所示，
 
 ```cpp
 int counter = 0;
@@ -278,9 +276,9 @@ DoUntil([&counter, &sum](){
 });
 ```
 
-#### 串行任务，直到条件函数返回false或者Future函数返回异常（DoWhile）
+### 串行任务，直到条件函数返回 false 或者 Future  函数返回异常（DoWhile）
 
-DoWhile是DoUntil的变种，二者唯一的区别是，当条件函数返回false的时候，DoWhile会终止后续Future函数的执行，如下所示，
+DoWhile 是 DoUntil 的变种，二者唯一的区别是，当条件函数返回 false 的时候，DoWhile 会终止后续 Future 函数的执行，如下所示，
 
 ```cpp
 int counter = 0;
@@ -293,9 +291,9 @@ DoWhile([&counter]() { return counter++ < 10; },
         });
 ```
 
-#### 串行任务，直到Future函数返回异常的就绪值（Repeat）
+### 串行任务，直到 Future 函数返回异常的就绪值（Repeat）
 
-相比于DoWhile，Repeat依赖Future函数本身返回异常，来终止后续Future函数的执行，如下所示，
+相比于 DoWhile，Repeat 依赖 Future 函数本身返回异常，来终止后续 Future 函数的执行，如下所示，
 
 ```cpp
 int counter = 0;
@@ -306,14 +304,14 @@ Repeat([&counter]() {
       });
 ```
 
-#### 串行任务，直到迭代器遍历完成（DoForEach）
+### 串行任务，直到迭代器遍历完成（DoForEach）
 
-使用DoForEach，Future函数串行执行的次数取决于迭代器的大小，实际使用时区分4种语法，
+使用 DoForEach，Future 函数串行执行的次数取决于迭代器的大小，实际使用时区分4种语法，
 
-- 指定首尾Iterator，Future函数不带参数
-- 指定首尾Iterator，Future函数带参数，参数为迭代器的元素取值
-- 指定迭代器本身，Future函数不带参数
-- 指定迭代器本身，Future函数带参数，参数为迭代器的元素取值
+- 指定首尾 Iterator，Future 函数不带参数
+- 指定首尾 Iterator，Future 函数带参数，参数为迭代器的元素取值
+- 指定迭代器本身，Future 函数不带参数
+- 指定迭代器本身，Future 函数带参数，参数为迭代器的元素取值
 
 指定首尾Iterator，Future函数不带参数，如下所示，
 
@@ -327,7 +325,7 @@ DoForEach(c.begin(), c.end(), [&counter]() {
           });
 ```
 
-指定首尾Iterator，Future函数带参数，参数为迭代器的元素取值，如下所示，
+指定首尾 Iterator，Future 函数带参数，参数为迭代器的元素取值，如下所示，
 
 ```cpp
 std::vector<int> c(10, 1);
@@ -339,7 +337,7 @@ DoForEach(c.begin(), c.end(), [&counter](auto e) {
           });
 ```
 
-指定迭代器本身，Future函数不带参数，如下所示，
+指定迭代器本身，Future 函数不带参数，如下所示，
 
 ```cpp
 std::vector<int> c(10, 1);
@@ -351,7 +349,7 @@ DoForEach(c, [&counter]() {
           });
 ```
 
-指定迭代器本身，Future函数带参数，参数为迭代器的元素取值，如下所示，
+指定迭代器本身，Future 函数带参数，参数为迭代器的元素取值，如下所示，
 
 ```cpp
 std::vector<int> c(10, 1);
@@ -363,14 +361,14 @@ DoForEach(c, [&counter](auto e) {
           });
 ```
 
-#### 串行任务，指定Future函数执行的总次数（DoFor）
+### 串行任务，指定 Future 函数执行的总次数（DoFor）
 
-使用DoFor，区分2种语法，
+使用 DoFor，区分2种语法，
 
-- Future函数不带参数，实际执行次数为总次数大小
-- Future函数带参数，参数为总次数变量，实际执行次数取决于总参数变量的状态
+- Future 函数不带参数，实际执行次数为总次数大小
+- Future 函数带参数，参数为总次数变量，实际执行次数取决于总参数变量的状态
 
-Future函数不带参数，实际执行次数为总次数大小，如下所示，
+Future 函数不带参数，实际执行次数为总次数大小，如下所示，
 
 ```cpp
 int counter = 0;
@@ -380,7 +378,7 @@ DoFor(10, [&counter]() {
      });
 ```
 
-Future函数带参数，参数为总次数变量，实际执行次数取决于总参数变量的状态，如下所示，
+Future 函数带参数，参数为总次数变量，实际执行次数取决于总参数变量的状态，如下所示，
 
 ```cpp
 DoFor(counter, [&counter](std::size_t i) {
@@ -389,12 +387,12 @@ DoFor(counter, [&counter](std::size_t i) {
      });
 ```
 
-#### 并行任务，等待所有回包（WhenAll）
+### 并行任务，等待所有回包（WhenAll）
 
-如果希望实现并发3个请求，然后当3个请求都完成后，再发起1个请求，可以使用`WhenAll`，有2种语法，
+如果希望实现并发3个请求，然后当3个请求都完成后，再发起1个请求，可以使用 `WhenAll`，有2种语法，
 
 - 指定迭代器本身
-- 逐个指定Future对象
+- 逐个指定 Future 对象
 
 指定迭代器本身，对应的代码如下，
 
@@ -413,7 +411,7 @@ auto fut = WhenAll(futs.begin(), futs.end()).Then([](std::vector<trpc::Future<bo
 });
 ```
 
-逐个指定Future对象，对应的代码如下，
+逐个指定 Future 对象，对应的代码如下，
 
 ```cpp
 auto fut1 = AsyncOperation1();
@@ -429,9 +427,9 @@ auto fut = WhenAll(fut1, fut2, fut3).Then([](std::tuple<Future<uint32_t>, Future
 });
 ```
 
-#### 并行任务，等待任意一个回包（WhenAny）
+### 并行任务，等待任意一个回包（WhenAny）
 
-如果希望实现并发发送3个请求，然后当3个请求有一个完成后（包括成功或者失败），做相应的操作，可以使用WhenAny，示例代码如下，
+如果希望实现并发发送3个请求，然后当3个请求有一个完成后（包括成功或者失败），做相应的操作，可以使用 WhenAny，示例代码如下，
 
 ```cpp
 std::vector<Future<bool>> futs;
@@ -450,11 +448,11 @@ auto fut = WhenAny(vecs.begin(), vecs.end()).Then([](Future<size_t, std::tuple<b
 }
 ```
 
-如果需要等待其中的一个请求成功或者全部失败的时候才返回，可以使用WhenAnyWithoutException，其用法与WhenAny一致。
+如果需要等待其中的一个请求成功或者全部失败的时候才返回，可以使用 WhenAnyWithoutException，其用法与 WhenAny一致。
 
-#### 异步读写锁
+### 异步读写锁
 
-基于Future的异步读写锁，仅支持在tRPC框架的Worker线程中使用，且不支持跨线程加解锁，即非线程安全。
+基于 Future 的异步读写锁，仅支持在 tRPC-Cpp 框架的 Worker 线程中使用，且不支持跨线程加解锁，即非线程安全。
 
 ```cpp
 // 初始化锁对象，注意锁的生命周期，以及所属的worker线程
@@ -479,7 +477,7 @@ lock->ReadLock().Then([lock] (Future<>&& fut) {
 });
 ```
 
-除了上述用法，还提供了可自动解锁的WithLock方法，传入读或写的锁对象，以及用户lambda。
+除了上述用法，还提供了可自动解锁的 WithLock 方法，传入读或写的锁对象，以及用户 lambda。
 
 ```cpp
 // 初始化锁对象，注意锁的生命周期，以及所属的worker线程
@@ -501,11 +499,11 @@ WithLock(lock->ForRead(), [lock] {
 });
 ```
 
-### 自定义Executor
+## 自定义 Executor
 
-#### 网络IO型Executor（框架默认自带）
+### 网络 IO 型 Executor（框架默认自带）
 
-首先，继承trpc::Executor类(位于trpc/common/future/executor.h)，实现具体的ReactorExecutor，
+首先，继承 [trpc::Executor](../../trpc/common/future/executor.h)，实现具体的 ReactorExecutor
 
 ```cpp
 class ReactorExecutor : public Executor {
@@ -527,7 +525,7 @@ class ReactorExecutor : public Executor {
 };
 ```
 
-最后，为Future设置Then回调时，支持传入指定executor来执行此回调。
+最后，为 Future 设置 Then 回调时，支持传入指定 executor 来执行此回调。
 
 ```cpp
 for (int i = 0; i < reactor_num; ++i) {
@@ -538,9 +536,9 @@ for (int i = 0; i < reactor_num; ++i) {
 }
 ```
 
-#### CPU密集型Executor
+### CPU 密集型 Executor
 
-首先，首先需要继承trpc::Executor类(位于trpc/common/future/executor.h)，实现一个具体的ThreadPoolExecutor，
+首先，首先需要继承 [trpc::Executor](../../trpc/common/future/executor.h)，实现一个具体的 ThreadPoolExecutor，
 
 ```cpp
 class ThreadPoolExecutor : public trpc::Executor {
@@ -571,7 +569,7 @@ class ThreadPoolExecutor : public trpc::Executor {
 };
 ```
 
-最后，使用带Executor参数的Then回调，设置需要使用的executor，
+最后，使用带 Executor 参数的Then回调，设置需要使用的 executor，
 
 ```cpp
 auto executor = ThreadPoolExecutor::GetExecutor();

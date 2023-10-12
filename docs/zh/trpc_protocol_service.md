@@ -4,7 +4,7 @@
 
 相比较于 [tRPC-Cpp快速上手](./quick_start.md) ，此文档更专注于tRPC协议的服务端开发，内容更全面详实。通过此篇文章开发者可以了解到
 
-- 使用 ProtoBuf 的 IDL 文件生成 tRPC 桩代码方式
+- 使用 Protobuf 的 IDL 文件生成 tRPC 桩代码方式
 - tRPC 协议服务端开发基本流程
 - 开启使用服务端插件
 - 框架的一些特性，例如初始化服务时设置一些回调
@@ -13,11 +13,11 @@
 
 更完善的 tRPC 协议参考[trpc 协议设计](trpc_protocol_design.md)，tRPC 协议是默认协议，实际使用中也推荐使用 tRPC 协议。
 
-# 基于 ProtoBuf 生成服务桩代码
+# 基于 Protobuf 生成服务桩代码
 
-本章介绍基于 ProtoBuf 文件生成桩代码的流程，若用户无需 ProtoBuf 文件，可以忽略该章节
+本章介绍基于 Protobuf 文件生成桩代码的流程，若用户无需 Protobuf 文件，可以忽略该章节
 
-## 编写 ProtoBuf IDL 文件
+## 编写 Protobuf IDL 文件
 
 这里以[helloworld.proto](../../examples/helloworld/helloworld.proto)为例
 
@@ -44,16 +44,16 @@ message HelloReply {
 除此之外，还有几点需要注意一下
 
 - `syntax`建议使用`proto3`，tRPC 都是默认基于 proto3 的，当然也支持 proto2。
-- `package`内容格式建议为`trpc.{app}.{server}`，`app`为你的应用名，`server`为你的服务进程名，脚手架生成工具将会解析 ProtoBuf 文件的`app`和`server`，用于生成项目，上面`helloworld.proto`文件建议自己定义`app`和`server`的名字，方便服务的部署
+- `package`内容格式建议为`trpc.{app}.{server}`，`app`为你的应用名，`server`为你的服务进程名，脚手架生成工具将会解析 Protobuf 文件的`app`和`server`，用于生成项目，上面`helloworld.proto`文件建议自己定义`app`和`server`的名字，方便服务的部署
 - 定义`rpc`方法时，一个`server`（服务进程）可以有多个`service`（对`rpc`逻辑分组），一般是一个`server`一个`service`，一个`service`中可以有多个 `rpc` 调用。
-- 编写 ProtoBuf 时必须遵循[谷歌官方规范](https://protobuf.dev/programming-guides/style/)。
+- 编写 Protobuf 时必须遵循[谷歌官方规范](https://protobuf.dev/programming-guides/style/)。
 
-上述定义了一个标准的 ProtoBuf 协议的 IDL 文件，接下来构建项目代码。
+上述定义了一个标准的 Protobuf 协议的 IDL 文件，接下来构建项目代码。
 
-## 根据 ProtoBuf IDL 文件构建项目代码
+## 根据 Protobuf IDL 文件构建项目代码
 
 若用户已经构建了项目，则本节可以直接跳过，直接查看下节。
-为了方便用户构建项目，框架提供基于 ProtoBuf 的 IDL 文件快速构建项目的脚本: [create_trpc_server.sh](../../create_trpc_server.sh)，其使用方式参考[README](../../trpc/tools/trpc_create_server_plugin/README.md)，采用脚本构建项目命令
+为了方便用户构建项目，框架提供基于 Protobuf 的 IDL 文件快速构建项目的脚本: [create_trpc_server.sh](../../create_trpc_server.sh)，其使用方式参考[README](../../trpc/tools/trpc_create_server_plugin/README.md)，采用脚本构建项目命令
 
 ```sh
 ./create_trpc_server.sh ./ ./helloworld.proto 
@@ -215,7 +215,7 @@ public:
 };
 ```
 
-`SayHello`方法是 ProtoBuf 文件中定义的 rpc 方法名称；若有多个方法，这里也会生成多个，用户根据业务需求改写各个方法；从继承上可以看出其父类是`::trpc::test::helloworld::Greeter`(定义在**bazel-bin/test/helloworld/helloworld.trpc.pb.h**)，继承于`::trpc::RpcServiceImpl`（参考：[rpc_service_impl](../../trpc/server/rpc/rpc_service_impl.h)）；所以最终可以追溯`GreeterServiceImpl`属于`::trpc::Service`（参考：[service](../../trpc/server/service.h)）的子类。
+`SayHello`方法是 Protobuf 文件中定义的 rpc 方法名称；若有多个方法，这里也会生成多个，用户根据业务需求改写各个方法；从继承上可以看出其父类是`::trpc::test::helloworld::Greeter`(定义在**bazel-bin/test/helloworld/helloworld.trpc.pb.h**)，继承于`::trpc::RpcServiceImpl`（参考：[rpc_service_impl](../../trpc/server/rpc/rpc_service_impl.h)）；所以最终可以追溯`GreeterServiceImpl`属于`::trpc::Service`（参考：[service](../../trpc/server/service.h)）的子类。
 上述例子中是直接在`SayHello`中设置`reply`的值，属于同步返回回复；若用户希望后续自行回复客户端，则可使用**异步回复**，请参考：[service 异步回包](./server_guide.md#异步回包)
 
 ### 异步 API

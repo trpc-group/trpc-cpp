@@ -6,13 +6,13 @@ This tutorial provides a basic C++ programmer’s introduction to working with t
 
 In [Quick Start](quick_start.md), you have successfully run HelloWorld demo. Next, we will show an example of proxy service for forwarding request, through this example, you will understand how to:
 
-- Define the service in a .proto file.
+- Define the service in a `.proto` file.
 - Use trpc-cmdline tool to generate server and client code.
 - Use synchronous and asynchronous APIs to access backend services.
 
 The calling relationship of proxy service (we call it Forward for short) is as follows:
 
-Client <---> Forward <---> HelloWorld
+> Client <---> Forward <---> HelloWorld
 
 - `HelloWorld`: service in [Quick Start](quick_start.md)
 - `Forward`: receive the client's request, and then call the HelloWorld service
@@ -27,7 +27,7 @@ Before compiling and running the Forward example in this article, you need to:
 
 # Defining the service
 
-Our first step is to define the tRPC-Cpp service and the method request and response types using protocol buffers.
+Our first step is to define the tRPC-Cpp service and the method request and response types using Protobuf.
 
 To define a service, you can define a `service` with a specific name in `.proto` file.
 
@@ -160,7 +160,7 @@ The code in the server directory is the code related to the implementation of th
 
 The server directory contains a framework configuration file directory, 4 code files, and a bazel BUILD file.
 
-- Configuration directory: It contains two framework configuration files, one is the framework configuration file of fiber (M:N coroutine), which means that the current service will use the fiber runtime, and users will uses synchronous api to writing business code, and the other is the framework configuration file of ordinary thread runtime, which means that the current service will use the merged or separated operating environment of the framework, and the business code will use the asynchronous future-related api. **When the business writes tRPC-Cpp services, it must first choose a runtime environment of the framework**. Refer to [runtime](to do) for the introduction of the fiber runtime environment, merge or separate runtime environment, and how to choose.
+- Configuration directory: It contains two framework configuration files, one is the framework configuration file of fiber (M:N coroutine), which means that the current service will use the fiber runtime, and users will uses synchronous api to writing business code, and the other is the framework configuration file of ordinary thread runtime, which means that the current service will use the merged or separated operating environment of the framework, and the business code will use the asynchronous future-related api. **When the business writes tRPC-Cpp services, it must first choose a runtime environment of the framework**. Refer to [runtime](./runtime.md) for the introduction of the fiber runtime environment, merge or separate runtime environment, and how to choose.
 - BUILD file: indicates that the program is built using bazel rule which depends on relative bazel rule of forward.proto in proto directory.
 - Code file: Contains two types of files, one is the service process level code file (server.h and server.cc), which defines a ForwardServer class, which inherits the `TrpcApp` class of the framework, and the business needs to override its `Initialize` and `Destroy` methods to complete the business-related initialization operations during the startup process of the service process, and the business destruction operations during the shutdown process; one type is the service-level code file (service .h and service.cc), these two files are the concrete implementation of the proto interface.
 
@@ -234,250 +234,250 @@ Now that we have generated the service code based on the proto file and run it s
 
 ## Use fiber synchronously call the backend service
 
-### configure fiber runtime
-
-When using fiber, you need to set the fiber-related runtime options in the framework configuration file. For example: Forward fiber-related global configuration of ./server/conf/trpc_cpp_fiber.yaml is as follows:
-
-```shell
-global:
-  threadmodel:
-    fiber:                              # Fiber threadmodel
-      - instance_name: fiber_instance   # Thread instance unique identifier, currently does not support configuring multiple Fiber thread instances
-        concurrency_hint: 8             # Number of physical threads running Fiber Workers, it is recommended to configure it as the actual number of available cores (otherwise read system configuration)
-```
-
-For the detailed fiber runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
-
-### Get the proto file of the backend service by fiber synchronously
-
-Here our backend service is the HelloWorld service, so the proto IDL file we want to obtain is helloworld.proto. Because of the bazel build tool we use, there is no need to copy helloworld.proto to the local, we only need to add the relevant dependencies in the bazel target rule when using helloworld.proto.
-
-The code files service.h and service.cc depend on helloworld.proto, so we only need to rely on the target of helloworld.proto in the target build rule of service. For example: the service build target of ./server/BUILD is as follows:
-
-```shell
-cc_library(
-    name = "service",
-    srcs = ["service.cc"],
-    hdrs = ["service.h"],
-    deps = [
-        "@proto//:forward_proto",
-        "@trpc_cpp//examples/helloworld:helloworld_proto",
-        "@trpc_cpp//trpc/client:make_client_context",
-        "@trpc_cpp//trpc/client:trpc_client",
-        "@trpc_cpp//trpc/log:trpc_log",
-    ],
-)
-```
-
-### Create the ServiceProxy of the backend service by fiber synchronously
-
-Before creating the ServiceProxy of the backend service, you need to define the options for creating the ServiceProxy. Here we set it through configuration. In addition to the configuration method, the framework also supports setting through code, code + configuration, for details, see [Client Development Guide](client_guide.md).
-
-For example: The client-related ServiceProxy options in ./server/conf/trpc_cpp_fiber.yaml are configured as follows:
-
-```shell
-client:
-  service:
-    - name: trpc.test.helloworld.Greeter
-      target: 0.0.0.0:12345      
-      protocol: trpc
-      timeout: 1000
-      network: tcp
-      conn_type: long
-      is_conn_complex: true
-      selector_name: direct
-```
-
-Here in the Forward service, we use ip/port to access the HelloWorld service directly. The target is the ip/port of the HelloWorld service.
-
-After setting the options of the ServiceProxy, then creating and using the ServiceProxy to access the helloworld service.
-
-First, add a constructor to the ForwardServiceServiceImpl class in ./server/service.h, and define a GreeterServiceProxy type smart pointer member variable.
-
-```cpp
-...
-#include "examples/helloworld/helloworld.trpc.pb.h"
-...
-using GreeterProxyPtr = std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>;
-
-class ForwardServiceServiceImpl : public ::trpc::demo::forward::ForwardService {
- public:
-  ForwardServiceServiceImpl();
- ...
- private:
-  GreeterProxyPtr greeter_proxy_;
-};
-...
-```
-
-Then create GreeterServiceProxy in the ForwardServiceServiceImpl constructor of ./server/service.cc.
-
-```cpp
-...
-#include "trpc/client/make_client_context.h"
-#include "trpc/client/trpc_client.h"
-#include "trpc/log/trpc_log.h"
-...
-ForwardServiceServiceImpl::ForwardServiceServiceImpl() {
-  greeter_proxy_ =
-      ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>("trpc.test.helloworld.Greeter");
-}
-...
-```
-
-Create a GreeterServiceProxy smart pointer using the `GetProxy` interface of `::trpc::GetTrpcClient()`.
-
-#### Use ServiceProxy to call the backend service by fiber synchronously
-
-Aftercreating GreeterServiceProxy, then use GreeterServiceProxy in the Route method of ForwardServiceServiceImpl to call the HelloWorld service.
-
-```cpp
-...
-::trpc::Status ForwardServiceServiceImpl::Route(::trpc::ServerContextPtr context,
-                                                const ::trpc::demo::forward::ForwardRequest* request,
-                                                ::trpc::demo::forward::ForwardReply* reply) {
-  TRPC_FMT_INFO("request msg: {}, client ip: {}", request->msg(), context->GetIp());
-
-  auto client_context = ::trpc::MakeClientContext(context, greeter_proxy_);
-
-  ::trpc::test::helloworld::HelloRequest hello_request;
-  hello_request.set_msg(request->msg());
-
-  ::trpc::test::helloworld::HelloReply hello_reply;
-
-  // block current fiber, not block current fiber worker thread
-  ::trpc::Status status = greeter_proxy_->SayHello(client_context, hello_request, &hello_reply);
-
-  TRPC_FMT_INFO("status: {}, hello_reply: {}", status.ToString(), hello_reply.msg());
-
-  reply->set_msg(hello_reply.msg());
-
-  return status;
-}
-...
-```
-
-#### Run the test of fiber synchronously
-
-Before testing, first you need to confirm whether the ip/port used by the Forward service and Admin is the same as the ip/port used by the HelloWorld service, to avoid failure to run the service due to the same port.
-
-Then, compile and test the program.
-
-First, Run HelloWorld and execute the following commands in the framework directory. For details, please refer to [Quick start](quick_start.md).
-
-```shell
-./bazel-bin/examples/helloworld/helloworld_svr --config=./examples/helloworld/conf/trpc_cpp_fiber.yaml
-```
-
-Then open another terminal and execute `./run_server.sh` in the forward directory. If the execution is successful, you can see the following information.
-
-```shell
-Server InitializeRuntime use time:29(ms)
-```
-
-Then open another terminal and execute `./run_client.sh` in the forward directory. If the execution is successful, you can see the following information.
-
-```shell
-FLAGS_service_name: trpc.demo.forward.ForwardService
-FLAGS_client_config: client/conf/trpc_cpp_fiber.yaml
-get rsp success
-FLAGS_service_name: trpc.demo.forward.ForwardService
-FLAGS_client_config: client/conf/trpc_cpp_future.yaml
-get rsp success
-```
-
-If you only use fiber for programming, you can skip the following chapters.
-
-## Use future asynchronously call the backend service by fiber synchronously
-
-### configure future runtime
-
-When using future, you need to set the future-related runtime options in the framework configuration file. You can choose to merge or separate threadmodel runtime. Here we take the separated threadmodel runtime as an example.
-
-```shell
-global:
-  threadmodel:
-    default:
-      - instance_name: default_instance
-        io_handle_type: separate
-        io_thread_num: 2
-        handle_thread_num: 6
-```
-
-For the detailed separate or merge runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
-
-#### Get the proto file of the backend service by future asynchronously
-
-You can refer to the steps corresponding to fiber.
-
-#### Create the ServiceProxy of the backend service by future asynchronously
-
-You can refer to the steps corresponding to fiber.
-
-#### Use ServiceProxy to call the backend service by future asynchronously
-
-The future asynchronous calling code is as follows:
-
-```cpp
-::trpc::Status ForwardServiceServiceImpl::Route(::trpc::ServerContextPtr context,
-                                                const ::trpc::demo::forward::ForwardRequest* request,
-                                                ::trpc::demo::forward::ForwardReply* reply) {
-  TRPC_FMT_INFO("request msg: {}, client ip: {}", request->msg(), context->GetIp());
-
-  // use asynchronous response mode
-  context->SetResponse(false);
-
-  auto client_context = ::trpc::MakeClientContext(context, greeter_proxy_);
-
-  ::trpc::test::helloworld::HelloRequest hello_request;
-  hello_request.set_msg(request->msg());
-
-  ::trpc::test::helloworld::HelloReply route_reply;
-
-  greeter_proxy_->AsyncSayHello(client_context, hello_request)
-      .Then([context](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) {
-        ::trpc::Status status;
-        ::trpc::demo::forward::ForwardReply forward_reply;
-
-        if (fut.IsReady()) {
-          std::string msg = fut.GetValue0().msg();
-          forward_reply.set_msg(msg);
-          TRPC_FMT_INFO("Invoke success, hello_reply:{}", msg);
-        } else {
-          auto exception = fut.GetException();
-          status.SetErrorMessage(exception.what());
-          status.SetFrameworkRetCode(exception.GetExceptionCode());
-          TRPC_FMT_ERROR("Invoke failed, reason:{}", exception.what());
-          forward_reply.set_msg(exception.what());
-        }
-
-        context->SendUnaryResponse(status, forward_reply);
-        return ::trpc::MakeReadyFuture<>();
-      });
-
-  return ::trpc::kSuccStatus;
-}
-```
-
-#### Run the test of future asynchronously
-
-Just follow the operations in the fiber-related chapters above. The only difference is that you need to modify the `run_server.sh` content in the forward directory.
-
-Before modify
-
-```shell
-...
-bazel-bin/demo/forward/forward --config=demo/forward/conf/trpc_cpp_fiber.yaml
-...
-```
-
-After modify
-
-```shell
-bazel-bin/demo/forward/forward --config=demo/forward/conf/trpc_cpp.yaml
-```
-
-At this point, you have successfully used the framework fiber and future to access backend service.
+1. **configure fiber runtime**
+
+    When using fiber, you need to set the fiber-related runtime options in the framework configuration file. For example: Forward fiber-related global configuration of ./server/conf/trpc_cpp_fiber.yaml is as follows:
+
+   ```yaml
+   global:
+     threadmodel:
+       fiber:                              # Fiber threadmodel
+         - instance_name: fiber_instance   # Thread instance unique identifier, currently does not support configuring multiple Fiber thread instances
+           concurrency_hint: 8             # Number of physical threads running Fiber Workers, it is recommended to configure it as the actual number of available cores (otherwise read system configuration)
+   ```
+
+   For the detailed fiber runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
+
+2. **Get the proto file of the backend service**
+
+   Here our backend service is the HelloWorld service, so the proto IDL file we want to obtain is helloworld.proto. Because of the bazel build tool we use, there is no need to copy helloworld.proto to the local, we only need to add the relevant dependencies in the bazel target rule when using helloworld.proto.
+
+   The code files service.h and service.cc depend on helloworld.proto, so we only need to rely on the target of helloworld.proto in the target build rule of service. For example: the service build target of ./server/BUILD is as follows:
+
+   ```bzl
+   cc_library(
+       name = "service",
+       srcs = ["service.cc"],
+       hdrs = ["service.h"],
+       deps = [
+           "@proto//:forward_proto",
+           "@trpc_cpp//examples/helloworld:helloworld_proto",
+           "@trpc_cpp//trpc/client:make_client_context",
+           "@trpc_cpp//trpc/client:trpc_client",
+           "@trpc_cpp//trpc/log:trpc_log",
+       ],
+   )
+   ```
+
+3. **Create the ServiceProxy of the backend service**
+
+   Before creating the ServiceProxy of the backend service, you need to define the options for creating the ServiceProxy. Here we set it through configuration. In addition to the configuration method, the framework also supports setting through code, code + configuration, for details, see [Client Development Guide](client_guide.md).
+
+   For example: The client-related ServiceProxy options in ./server/conf/trpc_cpp_fiber.yaml are configured as follows:
+
+   ```yaml
+   client:
+     service:
+       - name: trpc.test.helloworld.Greeter
+         target: 0.0.0.0:12345      
+         protocol: trpc
+         timeout: 1000
+         network: tcp
+         conn_type: long
+         is_conn_complex: true
+         selector_name: direct
+   ```
+
+   Here in the Forward service, we use ip/port to access the HelloWorld service directly. The target is the ip/port of the HelloWorld service.
+
+   After setting the options of the ServiceProxy, then creating and using the ServiceProxy to access the helloworld service.
+
+   First, add a constructor to the ForwardServiceServiceImpl class in ./server/service.h, and define a GreeterServiceProxy type smart pointer member variable.
+
+   ```cpp
+   // ...
+   #include "examples/helloworld/helloworld.trpc.pb.h"
+   // ...
+   using GreeterProxyPtr = std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>;
+   
+   class ForwardServiceServiceImpl : public ::trpc::demo::forward::ForwardService {
+    public:
+     ForwardServiceServiceImpl();
+    // ...
+    private:
+     GreeterProxyPtr greeter_proxy_;
+   };
+   // ...
+   ```
+
+   Then create GreeterServiceProxy in the ForwardServiceServiceImpl constructor of ./server/service.cc.
+
+   ```cpp
+   // ...
+   #include "trpc/client/make_client_context.h"
+   #include "trpc/client/trpc_client.h"
+   #include "trpc/log/trpc_log.h"
+   ...
+   ForwardServiceServiceImpl::ForwardServiceServiceImpl() {
+     greeter_proxy_ =
+         ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>("trpc.test.helloworld.Greeter");
+   }
+   // ...
+   ```
+
+   Create a GreeterServiceProxy smart pointer using the `GetProxy` interface of `::trpc::GetTrpcClient()`.
+
+   - **Use ServiceProxy to call the backend service**
+
+      After creating GreeterServiceProxy, then use GreeterServiceProxy in the Route method of ForwardServiceServiceImpl to call the HelloWorld service.
+
+     ```cpp
+     ...
+     ::trpc::Status ForwardServiceServiceImpl::Route(::trpc::ServerContextPtr context,
+                                                     const ::trpc::demo::forward::ForwardRequest* request,
+                                                     ::trpc::demo::forward::ForwardReply* reply) {
+       TRPC_FMT_INFO("request msg: {}, client ip: {}", request->msg(), context->GetIp());
+   
+       auto client_context = ::trpc::MakeClientContext(context, greeter_proxy_);
+   
+       ::trpc::test::helloworld::HelloRequest hello_request;
+       hello_request.set_msg(request->msg());
+   
+       ::trpc::test::helloworld::HelloReply hello_reply;
+   
+       // block current fiber, not block current fiber worker thread
+       ::trpc::Status status = greeter_proxy_->SayHello(client_context, hello_request, &hello_reply);
+   
+       TRPC_FMT_INFO("status: {}, hello_reply: {}", status.ToString(), hello_reply.msg());
+   
+       reply->set_msg(hello_reply.msg());
+   
+       return status;
+     }
+     // ...
+     ```
+
+   - **Run the test**
+
+     Before testing, first you need to confirm whether the ip/port used by the Forward service and Admin is the same as the ip/port used by the HelloWorld service, to avoid failure to run the service due to the same port.
+
+     Then, compile and test the program.
+
+     First, Run HelloWorld and execute the following commands in the framework directory. For details, please refer to [Quick start](quick_start.md).
+
+     ```shell
+     ./bazel-bin/examples/helloworld/helloworld_svr --config=./examples/helloworld/conf/trpc_cpp_fiber.yaml
+     ```
+
+     Then open another terminal and execute `./run_server.sh` in the forward directory. If the execution is successful, you can see the following information.
+
+     ```txt
+     Server InitializeRuntime use time:29(ms)
+     ```
+
+     Then open another terminal and execute `./run_client.sh` in the forward directory. If the execution is successful, you can see the following information.
+
+     ```txt
+     FLAGS_service_name: trpc.demo.forward.ForwardService
+     FLAGS_client_config: client/conf/trpc_cpp_fiber.yaml
+     get rsp success
+     FLAGS_service_name: trpc.demo.forward.ForwardService
+     FLAGS_client_config: client/conf/trpc_cpp_future.yaml
+     get rsp success
+     ```
+
+     If you only use fiber for programming, you can skip the following chapters.
+
+## Use future asynchronously call the backend service
+
+1. **configure future runtime**
+
+   When using future, you need to set the future-related runtime options in the framework configuration file. You can choose to merge or separate threadmodel runtime. Here we take the separated threadmodel runtime as an example.
+
+   ```yaml
+   global:
+     threadmodel:
+       default:
+         - instance_name: default_instance
+           io_handle_type: separate
+           io_thread_num: 2
+           handle_thread_num: 6
+   ```
+
+   For the detailed separate or merge runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
+
+2. **Get the proto file of the backend service**
+
+    You can refer to the steps corresponding to fiber.
+
+3. **Create the ServiceProxy of the backend service**
+
+    You can refer to the steps corresponding to fiber.
+
+    - **Use ServiceProxy to call the backend service**
+
+       The future asynchronous calling code is as follows:
+
+       ```cpp
+       ::trpc::Status ForwardServiceServiceImpl::Route(::trpc::ServerContextPtr context,
+                                                       const ::trpc::demo::forward::ForwardRequest* request,
+                                                       ::trpc::demo::forward::ForwardReply* reply) {
+         TRPC_FMT_INFO("request msg: {}, client ip: {}", request->msg(), context->GetIp());
+       
+         // use asynchronous response mode
+         context->SetResponse(false);
+       
+         auto client_context = ::trpc::MakeClientContext(context, greeter_proxy_);
+       
+         ::trpc::test::helloworld::HelloRequest hello_request;
+         hello_request.set_msg(request->msg());
+       
+         ::trpc::test::helloworld::HelloReply route_reply;
+       
+         greeter_proxy_->AsyncSayHello(client_context, hello_request)
+             .Then([context](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) {
+               ::trpc::Status status;
+               ::trpc::demo::forward::ForwardReply forward_reply;
+       
+               if (fut.IsReady()) {
+                 std::string msg = fut.GetValue0().msg();
+                 forward_reply.set_msg(msg);
+                 TRPC_FMT_INFO("Invoke success, hello_reply:{}", msg);
+               } else {
+                 auto exception = fut.GetException();
+                 status.SetErrorMessage(exception.what());
+                 status.SetFrameworkRetCode(exception.GetExceptionCode());
+                 TRPC_FMT_ERROR("Invoke failed, reason:{}", exception.what());
+                 forward_reply.set_msg(exception.what());
+               }
+       
+               context->SendUnaryResponse(status, forward_reply);
+               return ::trpc::MakeReadyFuture<>();
+             });
+       
+         return ::trpc::kSuccStatus;
+       }
+       ```
+
+    - **Run the test of future asynchronously**
+
+      Just follow the operations in the fiber-related chapters above. The only difference is that you need to modify the `run_server.sh` content in the forward directory.
+
+      Before modify
+
+      ```shell
+      ...
+      bazel-bin/demo/forward/forward --config=demo/forward/conf/trpc_cpp_fiber.yaml
+      ...
+      ```
+
+      After modify
+
+      ```shell
+      bazel-bin/demo/forward/forward --config=demo/forward/conf/trpc_cpp.yaml
+      ```
+
+      At this point, you have successfully used the framework fiber and future to access backend service.
 
 # Next step
 

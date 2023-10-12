@@ -20,13 +20,13 @@ This article introduces how to access tRPC streaming services based on tRPC-Cpp.
 * How to use asynchronous interfaces to access streaming RPC services.
 * FAQ.
 
-The way to develop tRPC streaming services can refer to [trpc_streaming_service.md](./trpc_protocol_streaming_service.md).
+The way to develop tRPC streaming services can refer to [trpc_protocol_streaming_service.md](./trpc_protocol_streaming_service.md).
 
 # How to use synchronous interfaces to access streaming RPC services
 
 Example: [trpc_stream](../../examples/features/trpc_stream)
 
-The synchronous streaming interface is introduced in trpc_streaming_service.md. Here is a brief list for easy reference.
+The synchronous streaming interface is introduced in [trpc_protocol_streaming_service](trpc_protocol_streaming_service.md). Here is a brief list for easy reference.
 
 ```cpp
 // Synchronous stream reader.
@@ -85,77 +85,79 @@ Here is a brief example of how a client accesses a streaming RPC service using b
 * The client continuously reads response messages sent from the server until it reaches EOF.
 * After successfully reading EOF, the RPC call ends, and the client waits for the final result of the RPC call.
 
-```cpp
-bool CallBidiStreamSayHello(const StreamGreeterServiceProxyPtr& proxy, int request_count) {
-  auto context = ::trpc::MakeClientContext(proxy);
-  // Open a stream.
-  auto stream = proxy->BidiStreamSayHello(context);
-  ::trpc::Status status{0, 0, "OK"};
-  bool ok{true};
-  do {
-    // Check the stream is ok or not.
-    if (!stream.GetStatus().OK()) {
-      std::cout << "stream error:" << stream.GetStatus().ToString() << std::endl;
-      ok = false;
-      break;
-    }
+* Demo code
 
-    // Send the $request_count messages to the server. 
-    for (int i = 0; i < request_count; ++i) {
-      std::stringstream request_msg;
-      request_msg << "BidiStreamSayHello, " << (i + 1);
-      ::trpc::test::helloworld::HelloRequest request;
-      request.set_msg(request_msg.str());
-      // Write the streaming message.
-      status = stream.Write(request);
+  ```cpp
+  bool CallBidiStreamSayHello(const StreamGreeterServiceProxyPtr& proxy, int request_count) {
+    auto context = ::trpc::MakeClientContext(proxy);
+    // Open a stream.
+    auto stream = proxy->BidiStreamSayHello(context);
+    ::trpc::Status status{0, 0, "OK"};
+    bool ok{true};
+    do {
+      // Check the stream is ok or not.
+      if (!stream.GetStatus().OK()) {
+        std::cout << "stream error:" << stream.GetStatus().ToString() << std::endl;
+        ok = false;
+        break;
+      }
+  
+      // Send the $request_count messages to the server. 
+      for (int i = 0; i < request_count; ++i) {
+        std::stringstream request_msg;
+        request_msg << "BidiStreamSayHello, " << (i + 1);
+        ::trpc::test::helloworld::HelloRequest request;
+        request.set_msg(request_msg.str());
+        // Write the streaming message.
+        status = stream.Write(request);
+        if (status.OK()) {
+          continue;
+        }
+        break;
+      }
+  
+      if (!status.OK()) {
+        std::cerr << "write error: " << status.ToString() << std::endl;
+        ok = false;
+        break;
+      }
+  
+      // All streaming messages had been sent.
+      status = stream.WriteDone();
+      if (!status.OK()) {
+        std::cerr << "write done error: " << status.ToString() << std::endl;
+        ok = false;
+        break;
+      }
+  
+      ::trpc::test::helloworld::HelloReply reply;
+      // Read the streaming messages until the EOF received.
+      for (;;) {
+        status = stream.Read(&reply, 2000);
+        if (status.OK()) {
+          std::stringstream reply_msg;
+          reply_msg << "stream got reply:" << reply.msg();
+          std::cout << reply_msg.str() << std::endl;
+          continue;
+        }
+        if (status.StreamEof()) {
+          std::cout << "got EOF" << std::endl;
+          // Wait the final call result when EOF received.
+          status = stream.Finish();
+        }
+        break;
+      }
+  
       if (status.OK()) {
-        continue;
+        std::cout << "stream rpc succeed" << std::endl;
+      } else {
+        std::cerr << "stream rpc failed:" << status.ToString() << std::endl;
+        ok = false;
       }
-      break;
-    }
-
-    if (!status.OK()) {
-      std::cerr << "write error: " << status.ToString() << std::endl;
-      ok = false;
-      break;
-    }
-
-    // All streaming messages had been sent.
-    status = stream.WriteDone();
-    if (!status.OK()) {
-      std::cerr << "write done error: " << status.ToString() << std::endl;
-      ok = false;
-      break;
-    }
-
-    ::trpc::test::helloworld::HelloReply reply;
-    // Read the streaming messages until the EOF received.
-    for (;;) {
-      status = stream.Read(&reply, 2000);
-      if (status.OK()) {
-        std::stringstream reply_msg;
-        reply_msg << "stream got reply:" << reply.msg();
-        std::cout << reply_msg.str() << std::endl;
-        continue;
-      }
-      if (status.StreamEof()) {
-        std::cout << "got EOF" << std::endl;
-        // Wait the final call result when EOF received.
-        status = stream.Finish();
-      }
-      break;
-    }
-
-    if (status.OK()) {
-      std::cout << "stream rpc succeed" << std::endl;
-    } else {
-      std::cerr << "stream rpc failed:" << status.ToString() << std::endl;
-      ok = false;
-    }
-  } while (0);
-  return ok;
-}
-```
+    } while (0);
+    return ok;
+  }
+  ```
 
 # How to use asynchronous interfaces to access streaming RPC services
 
@@ -191,7 +193,7 @@ class AsyncReaderWriter final : public RefCounted<AsyncReaderWriter<R, W>> {
 
 Here we take [stream.proto](../../examples/features/trpc_stream/server/stream.proto) as an example to illustrate.
 
-The tRPC stub code generation tool will generate the following code.
+The tRPC-Cpp stub code generation tool will generate the following code.
 
 ```cpp
 class AsyncStreamGreeterServiceProxy : public ::trpc::RpcServiceProxy {
@@ -204,8 +206,6 @@ class AsyncStreamGreeterServiceProxy : public ::trpc::RpcServiceProxy {
   ::trpc::Future<::trpc::stream::AsyncReaderWriterPtr<::trpc::test::helloworld::HelloReply, ::trpc::test::helloworld::HelloRequest>> BidiStreamSayHello(const ::trpc::ClientContextPtr& context);
 };
 ```
-
-TODO: example code.
 
 # FAQ
 

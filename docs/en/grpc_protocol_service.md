@@ -56,103 +56,103 @@ are briefly outlined below based on the tRPC service development process:
 Here, the example of "helloworld" is used to illustrate.
 
 * Defining the interface using proto.
-
-gRPC generally uses ProtoBuffers to define the interface, and then generates corresponding stub code based on different
-programming languages. Here, we reuse the tRPC protocol code generation tool to generate the C++ stub code.
-
-We will use the helloworld.proto as an example.
-
-```protobuf
-syntax = "proto3";
-package trpc.test.helloworld;
-
-service Greeter {
-    rpc SayHello (HelloRequest) returns (HelloReply) {}
-}
-
-message HelloRequest {
-    string msg = 1;
-}
-
-message HelloReply {
-    string msg = 1;
-}
-```
-
-The content of bazel-BUILD is as follows:
-
-```bzl
-# @file: BUILD
-...
-load("@trpc_cpp//trpc:trpc.bzl", "trpc_proto_library")
-
-trpc_proto_library(
-    name = "helloworld_proto",
-    srcs = ["helloworld.proto"],
-    generate_mock_code = True,
-    use_trpc_plugin = True,
-)
-...
-```
+  
+  gRPC generally uses ProtoBuffers to define the interface, and then generates corresponding stub code based on different
+  programming languages. Here, we reuse the tRPC protocol code generation tool to generate the C++ stub code.
+  
+  We will use the helloworld.proto as an example.
+  
+  ```protobuf
+  syntax = "proto3";
+  package trpc.test.helloworld;
+  
+  service Greeter {
+      rpc SayHello (HelloRequest) returns (HelloReply) {}
+  }
+  
+  message HelloRequest {
+      string msg = 1;
+  }
+  
+  message HelloReply {
+      string msg = 1;
+  }
+  ```
+  
+  The content of bazel-BUILD is as follows:
+  
+  ```bzl
+  # @file: BUILD
+  ...
+  load("@trpc_cpp//trpc:trpc.bzl", "trpc_proto_library")
+  
+  trpc_proto_library(
+      name = "helloworld_proto",
+      srcs = ["helloworld.proto"],
+      generate_mock_code = True,
+      use_trpc_plugin = True,
+  )
+  ...
+  ```
 
 * Implementing the gRPC unary service.
 
-*Note: The process of generating a project through tRPC scaffold is omitted here.*
+  *Note: The process of generating a project through tRPC scaffold is omitted here.*
+  
+  ```cpp
+  // @file: greeter_service.h/cc
+  namespace helloworld {
+  
+  class GreeterServiceImpl : public ::trpc::test::helloworld::Greeter {
+   public:
+    ::trpc::Status SayHello(::trpc::ServerContextPtr context,
+                            const ::trpc::test::helloworld::HelloRequest* request,
+                            ::trpc::test::helloworld::HelloReply* reply) {
+      std::string response = "Hello, " + request->msg();
+      reply->set_msg(response);
+  
+      return ::trpc::kSuccStatus;
+    }
+  };
+  
+  }  // namespace helloworld 
+  ```
 
-```cpp
-// @file: greeter_service.h/cc
-namespace helloworld {
+* Setting the protocol configuration item to `grpc`.
 
-class GreeterServiceImpl : public ::trpc::test::helloworld::Greeter {
- public:
-  ::trpc::Status SayHello(::trpc::ServerContextPtr context,
-                          const ::trpc::test::helloworld::HelloRequest* request,
-                          ::trpc::test::helloworld::HelloReply* reply) {
-    std::string response = "Hello, " + request->msg();
-    reply->set_msg(response);
-
-    return ::trpc::kSuccStatus;
-  }
-};
-
-}  // namespace helloworld 
-```
-
-* Setting the protocol configuration item to "grpc".
-
-```yaml
-# tRPC service.
-...
-  service:
-    - name: trpc.test.helloworld.Greeter
-      protocol: trpc
-      network: tcp
-...
-
-# Change to gRPC service:
-... 
-  service:
-    - name: trpc.test.helloworld.Greeter
-      protocol: grpc
-      network: tcp
-...
-```
+  ```yaml
+  # tRPC service.
+  ...
+    service:
+      - name: trpc.test.helloworld.Greeter
+        protocol: trpc
+        network: tcp
+  ...
+  
+  # Change to gRPC service:
+  ... 
+    service:
+      - name: trpc.test.helloworld.Greeter
+        protocol: grpc
+        network: tcp
+  ...
+  ```
 
 * Registering service.
 
-```cpp
-int HelloworldServer::Initialize() {
-  const auto& config = ::trpc::TrpcConfig::GetInstance()->GetServerConfig();
-  // Set the service name, which must be the same as the value of the `/server/service/name` configuration item
-  // in the configuration file, otherwise the framework cannot receive requests normally.
-  std::string service_name = fmt::format("{}.{}.{}.{}", "trpc", config.app, config.server, "Greeter");
-  TRPC_FMT_INFO("service name:{}", service_name);
-
-  RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
-
-  return 0;
-}
-```
+  ```cpp
+  int HelloworldServer::Initialize() {
+    const auto& config = ::trpc::TrpcConfig::GetInstance()->GetServerConfig();
+    // Set the service name, which must be the same as the value of the `/server/service/name` configuration item
+    // in the configuration file, otherwise the framework cannot receive requests normally.
+    std::string service_name = fmt::format("{}.{}.{}.{}", "trpc", config.app, config.server, "Greeter");
+    TRPC_FMT_INFO("service name:{}", service_name);
+  
+    RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
+  
+    return 0;
+  }
+  ```
 
 # FAQ
 

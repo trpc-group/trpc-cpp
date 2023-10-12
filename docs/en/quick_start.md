@@ -86,7 +86,7 @@ Congratulations! You’ve just run a client-server application with tRPC-Cpp.
 
 Now let's see how to add a new RPC method to update the server program for the client to call.
 
-Currently, the service provided by our tRPC-Cpp is implemented using the protocol buffers IDL definition. Both the server and client stubs have a SayHello() RPC method, which obtains the HelloRequest parameter from the client and returns a HelloReply from the server, and the method's It is defined as follows:
+Currently, the service provided by our tRPC-Cpp is implemented using the Protobuf IDL definition. Both the server and client stubs have a SayHello() RPC method, which obtains the HelloRequest parameter from the client and returns a HelloReply from the server, and the method's It is defined as follows:
 
 ```protobuf
 syntax = "proto3";

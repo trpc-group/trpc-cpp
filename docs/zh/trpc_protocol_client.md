@@ -2,11 +2,11 @@
 
 # 前言
 
-本文档主要介绍如何使用 tRPC-Cpp 框架调用一个`tRPC协议`的服务。
+本文档主要介绍如何使用 tRPC-Cpp 框架调用一个 `tRPC协议` 的服务。
 
-## tRPC协议
+## tRPC 协议
 
-tRPC协议基于 ProtoBuf 实现，具备支持流式传输、连接复用、全链路超时、信息透传的能力。具体介绍可参考 [trpc 协议设计](https://github.com/trpc-group/trpc/blob/main/docs/cn/trpc_protocol_design.md)
+tRPC协议基于 Protobuf 实现，具备支持流式传输、连接复用、全链路超时、信息透传的能力。具体介绍可参考 [trpc 协议设计](https://github.com/trpc-group/trpc/blob/main/docs/cn/trpc_protocol_design.md)
 
 ## 使用场景
 
@@ -20,7 +20,7 @@ tRPC协议基于 ProtoBuf 实现，具备支持流式传输、连接复用、全
 
 ## 接口形式
 
-框架支持根据 ProtoBuf 生成桩代码，参考：[编译生成桩代码](./trpc_protocol_service.md#编译生成桩代码)；对于客户端而言，生成的代码如下：
+框架支持根据 Protobuf 生成桩代码，参考：[编译生成桩代码](./trpc_protocol_service.md#编译生成桩代码)；对于客户端而言，生成的代码如下：
 ![rpc_interface](../images/trpc_protocol_client-rpc_interface.png)
 可以看出生成了两种类`GreeterServiceProxy`和`AsyncGreeterServiceProxy`，其中`AsyncGreeterServiceProxy` 只有存在异步接口，而且该异步接口和`GreeterServiceProxy::AsyncSayHello`完全等价；而`GreeterServiceProxy`包含三种接口：
 
@@ -470,9 +470,9 @@ tRPC协议基于 ProtoBuf 实现，具备支持流式传输、连接复用、全
 
 有时为了保证可用性，需要同时访问两路服务，哪个先返回就取哪个。tRPC-Cpp框架的做法是当用户设置了使用`backup-request`后会根据设置同时选取指定数量的节点 ip（通常为2个），当第一个请求在`delay`时间内没有返回应答则向剩余的其他节点同时发送相同请求，然后取最早返回的一个。更多的介绍可以参考：[backup-request](./backup-request.md).
 
-## 支持请求传入 ProtoBuf 序列化后的非连续 Buffer
+## 支持请求传入 Protobuf 序列化后的非连续 Buffer
 
-目前有业务需要允许请求可以传入 ProtoBuf 序列化过的非连续 Buffer，此场景多见于需要复用某一个请求体，且需要多次调整请求体内容:为了避免请求体的重启拷贝，可以先将需要修改的 ProtoBuf 请求序列化并保存之后，再发起下游调用。
+目前有业务需要允许请求可以传入 Protobuf 序列化过的非连续 Buffer，此场景多见于需要复用某一个请求体，且需要多次调整请求体内容:为了避免请求体的重启拷贝，可以先将需要修改的 Protobuf 请求序列化并保存之后，再发起下游调用。
 注意：目前要求下游必须是trpc、http协议。目前有这样的扩展能力，处于性能考虑其他协议有需要时再支持。
 可以结合如下示例：
 
@@ -499,14 +499,14 @@ trpc::Status ForwardServiceImpl::SayHelloUseNoncontiguousBufferReq(
   std::vector<trpc::NoncontiguousBuffer> vec_req_buffer;
   vec_req_buffer.resize(exe_count);
 
-  // ProtoBuf data that needs to be reused.
+  // Protobuf data that needs to be reused.
   trpc::test::helloworld::HelloRequest reuse_request;
 
   for (size_t i = 0; i < exe_count; i++) {
     // Full request
     reuse_request.set_msg(" modify as you like,i:" + std::to_string(i));
 
-    // Call the ProtoBuf serialization tool to serialize.
+    // Call the Protobuf serialization tool to serialize.
     trpc::NoncontiguousBuffer req_buffer;
     bool encode_ret = pb_serialization->Serialize(
         trpc::serialization::kPbMessage,
@@ -530,7 +530,7 @@ trpc::Status ForwardServiceImpl::SayHelloUseNoncontiguousBufferReq(
       // Set func name
       client_context->SetFuncName("/trpc.test.helloworld.Greeter/SayHello");
 
-      // Directly invoke `PbSerializedReqUnaryInvoke` with the request type as a serialized trpc::NoncontiguousBuffer and the response type as a ProtoBuf.
+      // Directly invoke `PbSerializedReqUnaryInvoke` with the request type as a serialized trpc::NoncontiguousBuffer and the response type as a Protobuf.
       trpc::Status status =
           route_proxy_->PbSerializedReqUnaryInvoke<trpc::test::helloworld::HelloReply>(
               client_context, vec_req_buffer[i], &vec_final_reply[i]);

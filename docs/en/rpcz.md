@@ -129,7 +129,7 @@ void SetClientSampleFunction(const CustomerClientRpczSampleFunction& sample_func
   } while (0)
 ```
 
-### User-defined rpcz
+### User-defined rpcz interfaces
 
 Compared to the framework rpcz, user-defined rpcz provides a richer set of external interfaces, allowing users to have control over when to create spans, when to mark points, and when to submit spans.
 
@@ -413,7 +413,7 @@ curl http://127.0.0.1:21111/cmds/rpcz?span_id=11
 
 For the framework rpcz, taking the proxy scenario as an example, the output of the query is as follows,
 
-```txt
+```mermaid
 2023-09-05 17:04:10:695773   Received request(119) from trpc..(9.218.34.103:43376) protocal=trpc span_id=0
 2023-09-05 17:04:10:695957   184(us) enter recv queue
 2023-09-05 17:04:10:695992   35(us) leave recv queue

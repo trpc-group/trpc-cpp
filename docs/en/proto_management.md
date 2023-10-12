@@ -1,9 +1,8 @@
 [中文](../zh/proto_management.md)
 
-
 # Overview
 
-tRPC uses protocol buffers as the default interface definition language (IDL). When calling between services, the proto interface file is used as the external user interface of the service, and there should be a relatively unified management method.
+tRPC uses `Protobuf` as the default interface definition language (IDL). When calling between services, the proto interface file is used as the external user interface of the service, and there should be a relatively unified management method.
 
 Conventional practice: the proto file of each service is managed by itself. When the services need to communicate, copy a copy of the proto file, and then use the protoc tool to generate stub code for use. This approach results in multiple copies of the proto file for each service , the copies of different proto files are not updated in time, resulting in inconsistent upstream and downstream protocols, resulting in intercommunication problems.
 

@@ -1,8 +1,6 @@
 [English](../en/trpc_protocol_streaming_service.md)
 
-# tRPC 流式协议服务开发指南
-
-**主题：如何基于 tRPC-Cpp 开发 tRPC 流式服务**
+# 前言
 
 使用单次 RPC（简称 Unary RPC）时，客户端发送单个请求给服务端，并回复单个响应给客户端。
 可简单分为三步：
@@ -60,7 +58,7 @@ tRPC 协议的流式 RPC 分为三种类型：
 
 ## 流式协议和线程模型
 
-tRPC 流式服务支持两种线程模型：
+tRPC 协议的流式服务支持两种线程模型：
 
 * `fiber` 线程模型支持同步流式 RPC。
 * `merge` 线程模型支持异步流式 RPC。
@@ -83,48 +81,45 @@ tRPC 流式服务支持两种线程模型：
 ## 关于 RPC 方法命名
 
 * 一个名称只能定义一种 RPC 方法
+
   比如，不能使用 `SayHello` 同时定义客户端流式和服务端流式 RPC 方法以及单次 RPC 方法。如下将同一个方法名同时定义了三中 RPC
   方法：
 
-```protobuf
-// !!! 如下定义是错误的!!!
-
-// Unary RPC
-    rpc  SayHello (Request) returns (Reply) {}
-// Client Streaming RPC
-    rpc  SayHello (stream Request) returns (Reply)  {}
-// Server Streaming RPC
-    rpc  SayHello (Request) returns (stream Reply) {} 
-```
+   ```protobuf
+   // !!! 如下定义是错误的!!!
+   
+   // Unary RPC
+       rpc  SayHello (Request) returns (Reply) {}
+   // Client Streaming RPC
+       rpc  SayHello (stream Request) returns (Reply)  {}
+   // Server Streaming RPC
+       rpc  SayHello (Request) returns (stream Reply) {} 
+   ```
 
 * 单次 RPC 和流式 RPC 放在不同 Service 中
 
-尽管实现上不限制用户如何放置单次 RPC 和流式 RPC 的位置。
-但**`推荐`**把单次 RPC 和流式 RPC 分别放在不同的 `Service` 中，不要混合在一起，这样做会降低问题定位难度。
-比如，从网络收发包角度看，流式 RPC 中多个流会共享同一连接，流式 RPC 协议帧比单次RPC协议帧处理逻辑复杂，混在一起时，会增加问题排查难度。
+  尽管实现上不限制用户如何放置单次 RPC 和流式 RPC 的位置。但**`推荐`**把单次 RPC 和流式 RPC 分别放在不同的 `Service` 中，不要混合在一起，这样做会降低问题定位难度。比如，从网络收发包角度看，流式 RPC 中多个流会共享同一连接，流式 RPC 协议帧比单次RPC协议帧处理逻辑复杂，混在一起时，会增加问题排查难度。推荐做法如下：
 
-推荐做法如下：
-
-```protobuf
-// Service of unary RPC
-service Greeter {
-  rpc  SayHello (Request) returns (Reply) {}
-}
-
-// Service of streaming RPC
-service StreamGreeter {
-  // Client Streaming RPC
-  rpc  ClientStreamSayHello (stream Request) returns (Reply)  {}
-  // Server Streaming RPC
-  rpc  ServerStreamSayHello (Request) returns (stream Reply) {}
-}
-```
+  ```protobuf
+  // Service of unary RPC
+  service Greeter {
+    rpc  SayHello (Request) returns (Reply) {}
+  }
+  
+  // Service of streaming RPC
+  service StreamGreeter {
+    // Client Streaming RPC
+    rpc  ClientStreamSayHello (stream Request) returns (Reply)  {}
+    // Server Streaming RPC
+    rpc  ServerStreamSayHello (Request) returns (stream Reply) {}
+  }
+  ```
 
 # 如何开发同步流式 RPC 服务
 
 提示：同步流式 RPC 服务需要运行在 `fiber` 线程模型中。
 
-## 体验流式 RPC 服务
+## 体验同步流式 RPC 服务
 
 示例： [trpc_stream](../../examples/features/trpc_stream)
 
@@ -156,7 +151,7 @@ final result of streaming RPC calling: 1
 
 | 类/对象               | 接口名称                                  | 功能         | 参数                                                                                            | 返回值    |
 |--------------------|---------------------------------------|------------|-----------------------------------------------------------------------------------------------|--------|
-| StreamReader       | Status Read(R* msg, int timeout = -1) | 从流中读取消息    | msg 响应消息指针，读到消息后会更新到指针所指对象。 <br> timeout 等待超时，当没有消息就绪时，会阻塞等待。 <br> 取值：-1： 永久等待，>=0：等待超时，单位：毫秒 | Status | 
+| StreamReader       | Status Read(R* msg, int timeout = -1) | 从流中读取消息    | msg 响应消息指针，读到消息后会更新到指针所指对象。 <br> timeout 等待超时，当没有消息就绪时，会阻塞等待。 <br> 取值：-1： 永久等待，>=0：等待超时，单位：毫秒 | Status |
 | StreamReader       | Status Finish(void)                   | 等待RPC结束    | void                                                                                          | Status |
 | StreamReader       | Status GetStatus(void)                | 获取流状态      | void                                                                                          | Status |
 | StreamWriter       | Status Write(const W& msg)            | 向流中写入消息    | msg 待写入消息引用                                                                                   | Status |
@@ -210,13 +205,15 @@ final result of streaming RPC calling: 1
 * 实现 RPC 服务业务逻辑。
 * 在客户端调用 RPC 服务。
 
-搭建 tRPC 流式 RPC 服务的步骤和搭建单次 RPC 服务大体一致，下面我们就按照这种方式来搭建流式 RPC 服务。
-主要以 Client-Server场景、Client-Router-Server 场景举例说明。
+搭建 tRPC 流式 RPC 服务的步骤和搭建单次 RPC 服务大体一致，下面我们就按照这种方式来搭建流式 RPC 服务。主要
+以下两种场景：
+
+* Client-Server 场景
+* Client-Router-Server 场景，也即中转服务。
 
 ### Client-Server 场景
 
-下面以 SayHello 为例，在 Client-Server 场景下演示搭建流式 RPC 服务过程。
-两个模块如下：
+下面以 SayHello 为例，在 Client-Server 场景下演示搭建流式 RPC 服务过程。两个模块如下：
 
 * StreamClient：流式 RPC 客户端，发起流式 RPC 调用。
 * StreamServer：流式 RPC 服务端，提供流式 RPC 服务。
@@ -253,10 +250,10 @@ message HelloReply {
 
 #### 生成流式 RPC 服务代码
 
-tRPC 提供的代码生成工具会自动生成流式 RPC 服务代码，简单看一下代码片段，对流式 RPC 有个初步印象。
+tRPC-Cpp 框架提供的代码生成工具会自动生成流式 RPC 服务代码，简单看一下代码片段，对流式 RPC 有个初步印象。
 StreamServer 模块服务端代码片段如下：
 
-```
+```cpp
 // @file: bazel-bin/examples/features/trpc_stream/server/stream.trpc.pb.h
 ...
 class StreamGreeter: public ::trpc::RpcServiceImpl {
@@ -273,127 +270,129 @@ public:
 
 示例： [stream_service.cc](../../examples/features/trpc_stream/server/stream_server.cc)
 
-*客户端流式*
-StreamServer 模块中 ClientStreamSayHello 方法逻辑要点如下：
+* **客户端流式**
+  StreamServer 模块中 ClientStreamSayHello 方法逻辑要点如下：
 
-* 从流中持续读取请求消息，如果出错则停止读取，返回错误状态给客户端。
-* 读取到流 EOF 后，将设置响应消息，并设置 RPC 调用结果状态，此状态码会返回给客户端。
+  * 从流中持续读取请求消息，如果出错则停止读取，返回错误状态给客户端。
+  * 读取到流 EOF 后，将设置响应消息，并设置 RPC 调用结果状态，此状态码会返回给客户端。
 
-简单示例代码：
+  简单示例代码：
 
-```cpp
-// Client streaming RPC
-::trpc::Status StreamGreeterServiceImpl::ClientStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::test::helloworld::HelloReply* reply) {
-  ::trpc::Status status{};
-  uint32_t request_counter{0};
-  uint32_t request_bytes{0};
-  for (;;) {
-    ::trpc::test::helloworld::HelloRequest request{};
-    // 读取客户端发送的流消息
-    status = reader.Read(&request, 3000);
-    if (status.OK()) {
-      ++request_counter;
-      request_bytes += request.msg().size();
-      continue;
-    }
-    // 流结束
-    if (status.StreamEof()) {
-      std::stringstream reply_msg;
-      reply_msg << "server got EOF, reply to client, server got request"
-                << ", count:" << request_counter << ", received bytes:" << request_bytes;
-      reply->set_msg(reply_msg.str());
-      status = ::trpc::Status{0, 0, "OK"};
+  ```cpp
+  // Client streaming RPC
+  ::trpc::Status StreamGreeterServiceImpl::ClientStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::test::helloworld::HelloReply* reply) {
+    ::trpc::Status status{};
+    uint32_t request_counter{0};
+    uint32_t request_bytes{0};
+    for (;;) {
+      ::trpc::test::helloworld::HelloRequest request{};
+      // 读取客户端发送的流消息
+      status = reader.Read(&request, 3000);
+      if (status.OK()) {
+        ++request_counter;
+        request_bytes += request.msg().size();
+        continue;
+      }
+      // 流结束
+      if (status.StreamEof()) {
+        std::stringstream reply_msg;
+        reply_msg << "server got EOF, reply to client, server got request"
+                  << ", count:" << request_counter << ", received bytes:" << request_bytes;
+        reply->set_msg(reply_msg.str());
+        status = ::trpc::Status{0, 0, "OK"};
+        break;
+      }
       break;
     }
-    break;
+    return status;
   }
-  return status;
-}
-```
+  ```
 
-*服务端流式*
-StreamServer 模块 ServerStreamSayHello 逻辑要点如下：
+* **服务端流式**
 
-* 将客户端发来的请求消息，以流式方式写回给客户端。
-* 将RPC调用结果返回给客户端。
+  StreamServer 模块 ServerStreamSayHello 逻辑要点如下：
 
-简单示例代码：
+  * 将客户端发来的请求消息，以流式方式写回给客户端。
+  * 将RPC调用结果返回给客户端。
 
-```cpp
-// Server streaming RPC
-::trpc::Status StreamGreeterServiceImpl::ServerStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::test::helloworld::HelloRequest& request, 
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  ::trpc::Status status{};
-  // 一个简单例子：尝试给客户端发送 10 条响应消息
-  int request_count = 10;
-  for (int i = 0; i < request_count; ++i) {
-    std::stringstream reply_msg;
-    ::trpc::test::helloworld::HelloReply reply{};
-    reply.set_msg(reply_msg.str());
-    // 写入发送给客户端的流消息
-    status = writer->Write(reply);
-    if (status.OK()) {
-      continue;
-    }
-    break;
-  }
-  return status;
-}
-```
-
-*双向流式*
-StreamServer模块 BidiStreamSayHello 逻辑要点如下：
-
-* 从客户端侧持续读入请求消息，并立即发给给客户端。
-* 如果读取到 EOF，则额外发送一个请求消息统计信息给客户端。
-* 将 RPC 调用结果返回给客户端。
-
-简单示例代码：
-
-```cpp
-// Bidirectional streaming RPC.
-::trpc::Status StreamGreeterServiceImpl::BidiStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  std::vector<std::string> msg_list{};
-  ::trpc::Status status{};
-  uint32_t request_counter{0};
-  uint32_t request_bytes{0};
-  for (;;) {
-    ::trpc::test::helloworld::HelloRequest request{};
-    // 读取客户端发送的流消息
-    status = reader.Read(&request, 3000);
-    if (status.OK()) {
-      ++request_counter;
-      request_bytes += request.msg().size();
+  简单示例代码：
+  
+  ```cpp
+  // Server streaming RPC
+  ::trpc::Status StreamGreeterServiceImpl::ServerStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::test::helloworld::HelloRequest& request, 
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    ::trpc::Status status{};
+    // 一个简单例子：尝试给客户端发送 10 条响应消息
+    int request_count = 10;
+    for (int i = 0; i < request_count; ++i) {
       std::stringstream reply_msg;
-      reply_msg << " reply:" << request_counter << ", received bytes:" << request_bytes;
-      ::trpc::test::helloworld::HelloReply reply;
+      ::trpc::test::helloworld::HelloReply reply{};
       reply.set_msg(reply_msg.str());
       // 写入发送给客户端的流消息
-      writer->Write(reply);
-      continue;
-    }
-    // 流结束
-    if (status.StreamEof()) {
-      std::stringstream reply_msg;
-      reply_msg << "server got EOF, reply to client, server got request"
-                << ", count:" << request_counter << ", received bytes:" << request_bytes;
-      ::trpc::test::helloworld::HelloReply reply;
-      reply.set_msg(reply_msg.str());
       status = writer->Write(reply);
+      if (status.OK()) {
+        continue;
+      }
+      break;
     }
-    break;
+    return status;
   }
-  return status;
-}
-```
+  ```
+
+* **双向流式**
+
+  StreamServer模块 BidiStreamSayHello 逻辑要点如下：
+
+  * 从客户端侧持续读入请求消息，并立即发给给客户端。
+  * 如果读取到 EOF，则额外发送一个请求消息统计信息给客户端。
+  * 将 RPC 调用结果返回给客户端。
+
+  简单示例代码：
+
+  ```cpp
+  // Bidirectional streaming RPC.
+  ::trpc::Status StreamGreeterServiceImpl::BidiStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    std::vector<std::string> msg_list{};
+    ::trpc::Status status{};
+    uint32_t request_counter{0};
+    uint32_t request_bytes{0};
+    for (;;) {
+      ::trpc::test::helloworld::HelloRequest request{};
+      // 读取客户端发送的流消息
+      status = reader.Read(&request, 3000);
+      if (status.OK()) {
+        ++request_counter;
+        request_bytes += request.msg().size();
+        std::stringstream reply_msg;
+        reply_msg << " reply:" << request_counter << ", received bytes:" << request_bytes;
+        ::trpc::test::helloworld::HelloReply reply;
+        reply.set_msg(reply_msg.str());
+        // 写入发送给客户端的流消息
+        writer->Write(reply);
+        continue;
+      }
+      // 流结束
+      if (status.StreamEof()) {
+        std::stringstream reply_msg;
+        reply_msg << "server got EOF, reply to client, server got request"
+                  << ", count:" << request_counter << ", received bytes:" << request_bytes;
+        ::trpc::test::helloworld::HelloReply reply;
+        reply.set_msg(reply_msg.str());
+        status = writer->Write(reply);
+      }
+      break;
+    }
+    return status;
+  }
+  ```
 
 ### Client-Router-Server 场景
 
@@ -404,7 +403,7 @@ StreamServer模块 BidiStreamSayHello 逻辑要点如下：
 * StreamServer：流式 RPC 服务端，提供流式 RPC 服务（沿用 Client-Server 场景中的 StreamServer）。
 * StreamForwardServer：接收来自 StreamClient 的请求并转发给 StreamServer，然后将 StreamServer 的响应转回给 StreamClient。
 
-#### 定义流式 RPC 接口
+#### 定义中转服务的流式 RPC 接口
 
 StreamForwardServer 模块流式 RPC 协议文件：stream_forward.proto。
 
@@ -428,11 +427,11 @@ service StreamForward {
 }
 ```
 
-#### 生成流式 RPC 服务代码
+#### 生成中转服务的流式 RPC 服务代码
 
 StreamForwardServer 模块服务端代码片段如下：
 
-```
+```cpp
 // @file: bazel-bin/examples/features/trpc_stream/forward/proxy/stream_forward.trpc.pb.h
 ...
 class StreamForward: public ::trpc::RpcServiceImpl {
@@ -445,176 +444,179 @@ public:
 ...
 ```
 
-#### 实现流式 RPC 服务业务逻辑
+#### 实现中转服务的流式 RPC 服务业务逻辑
 
 示例： [stream_forward_service.cc](../../examples/features/trpc_stream_forward/proxy/stream_forward_service.cc)
 
-*客户端流式*
-StreamForwardServer 中 ClientStreamSayHello 逻辑要点如下：
+* **客户端流式**
 
-* 调用 StreamServer 的 ClientStreamSayHello 方法，获取到客户端流读取器。
-* 从客户端持续读取请求消息，并发送给 StreamServer，过程如果有错误则停止读取/写入。
-* 如果从客户端流中读取到 EOF，则等待 StreamServer 返回 RPC 方法调用结果并返回给客户端。
-
-```cpp
-// Client streaming RPC.
-::trpc::Status StreamForwardImpl::ClientStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::test::helloworld::HelloReply* reply) {
-  ::trpc::Status status{};
-  const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
-  auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
-  do {
-    // 打开 StreamGreeter 流
-    auto stream = stream_greeter_proxy->ClientStreamSayHello(client_context, reply);
-    status = stream.GetStatus();
-    if (!status.OK()) {
-      break;
-    }
-
-    for (;;) {
-      ::trpc::test::helloworld::HelloRequest request;
-      // 读取客户端发送的流消息，并尝试发送给 StreamGreeter
-      status = reader.Read(&request);
-      if (status.OK()) {
-        status = stream.Write(request);
+  StreamForwardServer 中 ClientStreamSayHello 逻辑要点如下：
+  
+  * 调用 StreamServer 的 ClientStreamSayHello 方法，获取到客户端流读取器。
+  * 从客户端持续读取请求消息，并发送给 StreamServer，过程如果有错误则停止读取/写入。
+  * 如果从客户端流中读取到 EOF，则等待 StreamServer 返回 RPC 方法调用结果并返回给客户端。
+  
+  ```cpp
+  // Client streaming RPC.
+  ::trpc::Status StreamForwardImpl::ClientStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::test::helloworld::HelloReply* reply) {
+    ::trpc::Status status{};
+    const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
+    auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
+    do {
+      // 打开 StreamGreeter 流
+      auto stream = stream_greeter_proxy->ClientStreamSayHello(client_context, reply);
+      status = stream.GetStatus();
+      if (!status.OK()) {
+        break;
+      }
+  
+      for (;;) {
+        ::trpc::test::helloworld::HelloRequest request;
+        // 读取客户端发送的流消息，并尝试发送给 StreamGreeter
+        status = reader.Read(&request);
         if (status.OK()) {
-          continue;
-        }
-      }
-      // 流结束
-      if (status.StreamEof()) {
-        status = stream.WriteDone();
-        if (status.OK()) {
-          status = stream.Finish();
-        }
-      }
-      break;
-    }
-  } while (0);
-  TRPC_FMT_INFO("final status: {}", status.ToString());
-  return status;
-}
-```
-
-*服务端流式*
-StreamRouter 模块 ServerStreamSayHello 逻辑要点：
-
-* 调用 StreamServer 模块 ServerStreamSayHello 方法，获取流读取器。
-* 从 StreamServer 持续读入响应消息，并发送给客户端，过程如果有错误则停止读取/写入。
-* 如果从流中读取到EOF，则等待 StreamServer 返回 RPC 方法调用结果并返回给客户端。
-
-```cpp
-// Server streaming RPC.
-::trpc::Status StreamForwardImpl::ServerStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::test::helloworld::HelloRequest& request,  // NO LINT
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  ::trpc::Status status{};
-  const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
-  auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
-  do {
-    // 打开 StreamGreeter 流
-    auto stream = stream_greeter_proxy->ServerStreamSayHello(client_context, request);
-    status = stream.GetStatus();
-    if (!status.OK()) {
-      break;
-    }
-
-    for (;;) {
-      ::trpc::test::helloworld::HelloReply reply;
-     // 读取 StreamGreeter 回复的流消息，并尝试发送给客户端
-      status = stream.Read(&reply);
-      if (status.OK()) {
-        status = writer->Write(reply);
-        if (status.OK()) {
-          continue;
-        }
-      }
-      // 流结束
-      if (status.StreamEof()) {
-        status = stream.Finish();
-      }
-      break;
-    }
-  } while (0);
-  TRPC_FMT_INFO("final status: {}", status.ToString());
-  return status;
-}
-```
-
-*双向流式*
-StreamForwardServer 模 BidiStreamSayHello 逻辑要点：
-
-* 调用 StreamServer 模块 BidiStreamSayHello 方法，获取流读取/写入器。
-* 从客户端持续读入请求消息，并发送给 StreamServer，过程如果有错误则停止读取/写入。
-* 如果从流中读取到 EOF，则通知 StreamServer 请求写入结束。
-* 从 StreamServer 持续读取响应消息，并发送给客户端。
-* 如果从流中读取到 EOF，则等待 RPC 调用结果，并返回给客户端。
-
-```cpp
-// Bidirectional streaming RPC.
-::trpc::Status StreamForwardImpl::BidiStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
-    ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
-  ::trpc::Status status{};
-  const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
-  auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
-  do {
-    // 打开 StreamGreeter 流
-    auto stream = stream_greeter_proxy->BidiStreamSayHello(client_context);
-    status = stream.GetStatus();
-    if (!status.OK()) {
-      break;
-    }
-
-    for (;;) {
-      ::trpc::test::helloworld::HelloRequest request;
-     // 读取客户端发送的流消息，并尝试发送给 StreamGreeter
-      status = reader.Read(&request);
-      if (status.OK()) {
-        status = stream.Write(request);
-        if (status.OK()) {
-          continue;
-        }
-      }
-      // 客户端流结束
-      if (status.StreamEof()) {
-        status = stream.WriteDone();
-        if (!status.OK()) {
-          break;
-        }
-        for (;;) {
-          ::trpc::test::helloworld::HelloReply reply;
-          // 读取 StreamGreeter 回复的流消息，并尝试发送给客户端
-          status = stream.Read(&reply);
+          status = stream.Write(request);
           if (status.OK()) {
-            status = writer->Write(reply);
-            if (status.OK()) {
-              continue;
-            }
+            continue;
           }
-          if (status.StreamEof()) {
+        }
+        // 流结束
+        if (status.StreamEof()) {
+          status = stream.WriteDone();
+          if (status.OK()) {
             status = stream.Finish();
           }
-          break;
         }
+        break;
       }
-      break;
-    }
-  } while (0);
-  TRPC_FMT_INFO("final status: {}", status.ToString());
-  return status;
-}
-```
+    } while (0);
+    TRPC_FMT_INFO("final status: {}", status.ToString());
+    return status;
+  }
+  ```
+
+* **服务端流式**
+
+  StreamRouter 模块 ServerStreamSayHello 逻辑要点：
+  
+  * 调用 StreamServer 模块 ServerStreamSayHello 方法，获取流读取器。
+  * 从 StreamServer 持续读入响应消息，并发送给客户端，过程如果有错误则停止读取/写入。
+  * 如果从流中读取到EOF，则等待 StreamServer 返回 RPC 方法调用结果并返回给客户端。
+  
+  ```cpp
+  // Server streaming RPC.
+  ::trpc::Status StreamForwardImpl::ServerStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::test::helloworld::HelloRequest& request,  // NO LINT
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    ::trpc::Status status{};
+    const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
+    auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
+    do {
+      // 打开 StreamGreeter 流
+      auto stream = stream_greeter_proxy->ServerStreamSayHello(client_context, request);
+      status = stream.GetStatus();
+      if (!status.OK()) {
+        break;
+      }
+  
+      for (;;) {
+        ::trpc::test::helloworld::HelloReply reply;
+       // 读取 StreamGreeter 回复的流消息，并尝试发送给客户端
+        status = stream.Read(&reply);
+        if (status.OK()) {
+          status = writer->Write(reply);
+          if (status.OK()) {
+            continue;
+          }
+        }
+        // 流结束
+        if (status.StreamEof()) {
+          status = stream.Finish();
+        }
+        break;
+      }
+    } while (0);
+    TRPC_FMT_INFO("final status: {}", status.ToString());
+    return status;
+  }
+  ```
+  
+* **双向流式**
+
+  StreamForwardServer 模 BidiStreamSayHello 逻辑要点：
+  
+  * 调用 StreamServer 模块 BidiStreamSayHello 方法，获取流读取/写入器。
+  * 从客户端持续读入请求消息，并发送给 StreamServer，过程如果有错误则停止读取/写入。
+  * 如果从流中读取到 EOF，则通知 StreamServer 请求写入结束。
+  * 从 StreamServer 持续读取响应消息，并发送给客户端。
+  * 如果从流中读取到 EOF，则等待 RPC 调用结果，并返回给客户端。
+  
+  ```cpp
+  // Bidirectional streaming RPC.
+  ::trpc::Status StreamForwardImpl::BidiStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::StreamReader<::trpc::test::helloworld::HelloRequest>& reader,
+      ::trpc::stream::StreamWriter<::trpc::test::helloworld::HelloReply>* writer) {
+    ::trpc::Status status{};
+    const StreamGreeterServiceProxyPtr& stream_greeter_proxy = GetStreamGreeterServiceProxyPtr();
+    auto client_context = ::trpc::MakeClientContext(context, stream_greeter_proxy);
+    do {
+      // 打开 StreamGreeter 流
+      auto stream = stream_greeter_proxy->BidiStreamSayHello(client_context);
+      status = stream.GetStatus();
+      if (!status.OK()) {
+        break;
+      }
+  
+      for (;;) {
+        ::trpc::test::helloworld::HelloRequest request;
+       // 读取客户端发送的流消息，并尝试发送给 StreamGreeter
+        status = reader.Read(&request);
+        if (status.OK()) {
+          status = stream.Write(request);
+          if (status.OK()) {
+            continue;
+          }
+        }
+        // 客户端流结束
+        if (status.StreamEof()) {
+          status = stream.WriteDone();
+          if (!status.OK()) {
+            break;
+          }
+          for (;;) {
+            ::trpc::test::helloworld::HelloReply reply;
+            // 读取 StreamGreeter 回复的流消息，并尝试发送给客户端
+            status = stream.Read(&reply);
+            if (status.OK()) {
+              status = writer->Write(reply);
+              if (status.OK()) {
+                continue;
+              }
+            }
+            if (status.StreamEof()) {
+              status = stream.Finish();
+            }
+            break;
+          }
+        }
+        break;
+      }
+    } while (0);
+    TRPC_FMT_INFO("final status: {}", status.ToString());
+    return status;
+  }
+  ```
 
 # 如何开发异步流式 RPC 服务
 
 提示：异步流式 RPC 服务需要运行在 `merge` 线程模型中。
 
-## 体验流式 RPC 服务
+## 体验异步流式 RPC 服务
 
 示例： [trpc_async_stream](../../examples/features/trpc_async_stream)
 
@@ -667,11 +669,11 @@ class AsyncStreamGreeter : public RpcServiceImpl {
 
 | 类/对象              | 接口名称                                                                   | 功能       | 参数                       | 返回值                                                   |
 |-------------------|------------------------------------------------------------------------|----------|--------------------------|-------------------------------------------------------|
-| AsyncReader       | Future&lt;std::optional&lt;R>> Read(std::chrono::milliseconds timeout) | 从流中读取消息  | timeout 等待超时，单位：毫秒，默认不超时 | Future<std::optional<R>>, std::optional<R> 为空表示对端 EOF |
+| AsyncReader       | Future&lt;std::optional&lt;R>> Read(std::chrono::milliseconds timeout) | 从流中读取消息  | timeout 等待超时，单位：毫秒，默认不超时 | Future<std::optional&lt;R>>, std::optional&lt;R> 为空表示对端 EOF |
 | AsyncReader       | Future<> Finish()                                                      | RPC 调用结束 | void                     | Future<>                                              |
 | AsyncWriter       | Future<> Write(const W& msg)                                           | 写入消息到流中  | msg 待写入的流消息              | Future<>                                              |
 | AsyncWriter       | Future<> Finish()                                                      | RPC 调用结束 | void                     | Future<>                                              |
-| AsyncReaderWriter | Future&lt;std::optional&lt;R>> Read(std::chrono::milliseconds timeout) | 从流中读取消息  | timeout 等待超时，单位：毫秒，默认不超时 | Future<std::optional<R>>, std::optional<R> 为空表示对端 EOF |
+| AsyncReaderWriter | Future&lt;std::optional&lt;R>> Read(std::chrono::milliseconds timeout) | 从流中读取消息  | timeout 等待超时，单位：毫秒，默认不超时 | Future<std::optional&lt;R>>, std::optional&lt;R> 为空表示对端 EOF |
 | AsyncReaderWriter | Future<> Write(const W& msg)                                           | 写入消息到流中  | msg 待写入的流消息              | Future<>                                              |
 | AsyncReaderWriter | Future<> Finish()                                                      | RPC 调用结束 | void                     | Future<>                                              |
 
@@ -685,9 +687,8 @@ class AsyncStreamGreeter : public RpcServiceImpl {
   Write 串行调用。
 * 流的建立：当用户得到一个流的异步读器或写器时，意味着流已经协商建立完成了（tRPC 会自动打开流）。
 * 流的关闭：
-    - 对于客户端，调用 Finish 将主动关闭流，并在双方协商关闭后就绪（目前只会Ready，即使流错误也不会Failed）。用户可选择调用（建议客户端主动调用）。
-    - 对于服务端，在用户服务函数（如用户实现的AsyncStreamGreeter服务函数）返回的 Future 就绪后，tRPC 会自动关闭流；调用
-      Finish 则不会发起操作，只会在双方协商关闭后就绪（目前只会 Ready，即使流错误也不会 Failed）。用户可选择调用。
+  * 对于客户端，调用 Finish 将主动关闭流，并在双方协商关闭后就绪（目前只会Ready，即使流错误也不会Failed）。用户可选择调用（建议客户端主动调用）。
+  * 对于服务端，在用户服务函数（如用户实现的AsyncStreamGreeter服务函数）返回的 Future 就绪后，tRPC 会自动关闭流；调用 Finish 则不会发起操作，只会在双方协商关闭后就绪（目前只会 Ready，即使流错误也不会 Failed）。用户可选择调用。
 * 当前流式 RPC 的接口均不支持 PB Arena 能力。
 
 ### Future 工具接口
@@ -712,124 +713,124 @@ Future<size_t, FutureValueType> WhenAny(InputIterator first, InputIterator last)
 Future<size_t, FutureValueType> WhenAnyWithoutException(InputIterator first, InputIterator last);
 ```
 
-## 实现流式 RPC 服务业务逻辑
+## 实现异步流式 RPC 服务业务逻辑
 
 示例 [stream_service.cc](../../examples/features/trpc_async_stream/server/stream_service.cc)
 
-*客户端流式*
+* **客户端流式**
 
-```cpp
-// Client streaming RPC.
-::trpc::Future<::trpc::test::helloworld::HelloReply> AsyncStreamGreeterServiceImpl::ClientStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::AsyncReaderPtr<::trpc::test::helloworld::HelloRequest>& reader) {
-  struct State {
-    std::size_t request_counter{0};
-    std::size_t request_bytes{0};
-  };
-  auto state = std::make_shared<State>();
-
-  return ::trpc::DoUntil([state, reader]() {
-           // 循环顺序读取流消息
-           return reader->Read(3000ms).Then(
-               [state, reader](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
-                 if (req) {
-                   ++state->request_counter;
-                   state->request_bytes += req.value().msg().size();
-                   // 循环：继续读取下一个流消息
-                   return ::trpc::MakeReadyFuture<bool>(true);
-                 } else {
-                   // 流结束 EOF
-                   // 循环：结束读取
-                   return ::trpc::MakeReadyFuture<bool>(false);
-                 }
-               });
-         })
-      .Then([state]() {
-        auto msg =
-            ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
-        ::trpc::test::helloworld::HelloReply reply;
-        reply.set_msg(std::move(msg));
-        return ::trpc::MakeReadyFuture<::trpc::test::helloworld::HelloReply>(std::move(reply));
-      });
-}
-```
-
-*服务端流式*
-
-```cpp
-// Server streaming RPC.
-::trpc::Future<> AsyncStreamGreeterServiceImpl::ServerStreamSayHello(
-    const ::trpc::ServerContextPtr& context, ::trpc::test::helloworld::HelloRequest&& request,
-    const ::trpc::stream::AsyncWriterPtr<::trpc::test::helloworld::HelloReply>& writer) {
-  // 尝试发送 10 个流消息给客户端
-  return ::trpc::DoFor(10,
-                       [writer, request = std::move(request)](std::size_t i) {
-                         auto msg = ::trpc::util::FormatString("{}#{}", request.msg(), i + 1);
-                         ::trpc::test::helloworld::HelloReply reply;
-                         reply.set_msg(std::move(msg));
-                         return writer->Write(std::move(reply));
-                       })
-      .Then([]() {
-        // Trigger a read timeout(>3000ms) for client to show its usage
-        return ::trpc::AsyncTimer(false).After(3050 /*ms*/);
-      });
-}
-```
-
-*双端流式*
-
-```cpp
-// Bidirectional streaming RPC.
-::trpc::Future<> AsyncStreamGreeterServiceImpl::BidiStreamSayHello(
-    const ::trpc::ServerContextPtr& context,
-    const ::trpc::stream::AsyncReaderWriterPtr<::trpc::test::helloworld::HelloRequest,
-                                               ::trpc::test::helloworld::HelloReply>& rw) {
-  struct State {
-    std::size_t request_counter{0};
-    std::size_t request_bytes{0};
-  };
-  auto state = std::make_shared<State>();
-
+  ```cpp
+  // Client streaming RPC.
+  ::trpc::Future<::trpc::test::helloworld::HelloReply> AsyncStreamGreeterServiceImpl::ClientStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::AsyncReaderPtr<::trpc::test::helloworld::HelloRequest>& reader) {
+    struct State {
+      std::size_t request_counter{0};
+      std::size_t request_bytes{0};
+    };
+    auto state = std::make_shared<State>();
   
-  return ::trpc::DoUntil([state, rw]() {
-   // 循环顺序读取流消息，并尝试回复给客户端
-    return rw->Read(3000ms).Then([state, rw](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
-      if (req) {
-        ++state->request_counter;
-        state->request_bytes += req.value().msg().size();
-        auto msg =
-            ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
-        ::trpc::test::helloworld::HelloReply reply;
-        reply.set_msg(std::move(msg));
-        return rw->Write(std::move(reply)).Then([]() { return ::trpc::MakeReadyFuture<bool>(true); });
-      } else {
-        // 流结束 EOF
-        // 循环：结束读取
-        return ::trpc::MakeReadyFuture<bool>(false);
-      }
+    return ::trpc::DoUntil([state, reader]() {
+             // 循环顺序读取流消息
+             return reader->Read(3000ms).Then(
+                 [state, reader](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
+                   if (req) {
+                     ++state->request_counter;
+                     state->request_bytes += req.value().msg().size();
+                     // 循环：继续读取下一个流消息
+                     return ::trpc::MakeReadyFuture<bool>(true);
+                   } else {
+                     // 流结束 EOF
+                     // 循环：结束读取
+                     return ::trpc::MakeReadyFuture<bool>(false);
+                   }
+                 });
+           })
+        .Then([state]() {
+          auto msg =
+              ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
+          ::trpc::test::helloworld::HelloReply reply;
+          reply.set_msg(std::move(msg));
+          return ::trpc::MakeReadyFuture<::trpc::test::helloworld::HelloReply>(std::move(reply));
+        });
+  }
+  ```
+
+* **服务端流式**
+
+  ```cpp
+  // Server streaming RPC.
+  ::trpc::Future<> AsyncStreamGreeterServiceImpl::ServerStreamSayHello(
+      const ::trpc::ServerContextPtr& context, ::trpc::test::helloworld::HelloRequest&& request,
+      const ::trpc::stream::AsyncWriterPtr<::trpc::test::helloworld::HelloReply>& writer) {
+    // 尝试发送 10 个流消息给客户端
+    return ::trpc::DoFor(10,
+                         [writer, request = std::move(request)](std::size_t i) {
+                           auto msg = ::trpc::util::FormatString("{}#{}", request.msg(), i + 1);
+                           ::trpc::test::helloworld::HelloReply reply;
+                           reply.set_msg(std::move(msg));
+                           return writer->Write(std::move(reply));
+                         })
+        .Then([]() {
+          // Trigger a read timeout(>3000ms) for client to show its usage
+          return ::trpc::AsyncTimer(false).After(3050 /*ms*/);
+        });
+  }
+  ```
+
+* **双端流式**
+  
+  ```cpp
+  // Bidirectional streaming RPC.
+  ::trpc::Future<> AsyncStreamGreeterServiceImpl::BidiStreamSayHello(
+      const ::trpc::ServerContextPtr& context,
+      const ::trpc::stream::AsyncReaderWriterPtr<::trpc::test::helloworld::HelloRequest,
+                                                 ::trpc::test::helloworld::HelloReply>& rw) {
+    struct State {
+      std::size_t request_counter{0};
+      std::size_t request_bytes{0};
+    };
+    auto state = std::make_shared<State>();
+  
+    
+    return ::trpc::DoUntil([state, rw]() {
+     // 循环顺序读取流消息，并尝试回复给客户端
+      return rw->Read(3000ms).Then([state, rw](std::optional<::trpc::test::helloworld::HelloRequest>&& req) {
+        if (req) {
+          ++state->request_counter;
+          state->request_bytes += req.value().msg().size();
+          auto msg =
+              ::trpc::util::FormatString("get {} requests, {} bytes", state->request_counter, state->request_bytes);
+          ::trpc::test::helloworld::HelloReply reply;
+          reply.set_msg(std::move(msg));
+          return rw->Write(std::move(reply)).Then([]() { return ::trpc::MakeReadyFuture<bool>(true); });
+        } else {
+          // 流结束 EOF
+          // 循环：结束读取
+          return ::trpc::MakeReadyFuture<bool>(false);
+        }
+      });
     });
-  });
-}
-```
+  }
+  ```
 
 # FAQ
 
-## 1 tRPC 流式和 gRPC 流式的区别是什么？
+## tRPC 流式和 gRPC 流式的区别是什么？
 
 tRPC 流式是基于 tcp 协议的 RPC 协议，而 gRPC 是基于 http2 的通用 7 层协议。
 从实现复杂度上说，HTTP/2.0 比 tRPC 复杂，作为一个标准协议，需要考虑和遵循的细节较多。
 从功能的角度上说，二者都可以进行流式传输，服务端和客户端可以进行交互式响应，tRPC 更多是基于 RPC 来考虑。
 
-## 2 为什么同步流式接口中，服务端没有调用 Finish/WriteDone 接口
+## 为什么同步流式接口中，服务端没有调用 Finish/WriteDone 接口
 
 服务端也能调用 Finish/WriteDone，只是什么也不执行。那怎么在服务端停止接收或者发送呢？
 如果服务端想停止接收/发送，直接 return 即可，代表流的结束。
 
-## 3 为什么异步流式接口中，没有 WriteDone？
+## 为什么异步流式接口中，没有 WriteDone？
 
 在异步流式接口中，客户端在调用读写器的 Finish 接口时，即是通知了对端数据已写完（相当于WriteDone）。
 
-## 4 异步流式仅能在 `merge` 线程模型运行吗？
+## 异步流式仅能在 `merge` 线程模型运行吗？
 
 是的，其他线程模型还未支持。
