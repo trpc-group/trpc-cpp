@@ -2,6 +2,8 @@
 
 # tRPC-Cpp
 
+[![Coverage](https://codecov.io/gh/trpc-group/trpc-cpp/branch/main/graph/badge.svg)](https://app.codecov.io/gh/trpc-group/trpc-cpp/tree/main)
+
 tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则。
 
 ## 整体架构
