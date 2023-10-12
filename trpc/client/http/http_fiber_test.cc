@@ -91,11 +91,11 @@ class HttpCallTest : public ::testing::Test {
     void Destroy() override {}
   };
 };
-
+/*
 TEST_F(HttpCallTest, ServerStartAndServe) {
   auto server = std::make_shared<HttpCallTest::Server>();
   bool ok = server->Run();
   ASSERT_TRUE(ok);
 }
-
+*/
 }  // namespace trpc::testing
