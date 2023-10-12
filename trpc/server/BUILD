@@ -275,6 +275,7 @@ cc_library(
         "//trpc/runtime/common/heartbeat:heartbeat_report",
         "//trpc/runtime/common/stats:frame_stats",
         "//trpc/runtime/threadmodel:thread_model",
+        "//trpc/util/chrono:time",
         "//trpc/util/log:logging",
         "//trpc/util/string:string_util",
     ],

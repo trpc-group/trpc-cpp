@@ -85,7 +85,7 @@ server:
   admin_port: 7897                                                
   admin_ip: 0.0.0.0                                   
   admin_idle_time: 60000                                          #admin_idle_time
-  enable_self_register: false                                     #self_register
+  stop_max_wait_time: 3000                                        #set max wait timeout(ms) when stop incase cannot stop
   service:
     - name: trpc.test.helloworld.Greeter                          
       protocol: trpc                                               
@@ -109,10 +109,6 @@ server:
       send_queue_timeout: 3000                                    #Used in Fiber scenarios, It represents the timeout duration for the IO send queue when sending network data.
       threadmodel_instance_name: default_instance 
       accept_thread_num: 1 
-      service_limiter: default(100000)                            #Service-level flow control, format: name (limit per minute).
-      func_limiter:                                               #Interface-level flow control
-        - name: SayHello  
-          limiter: default(100000) 
       stream_max_window_size: 65535                               #The default window value is 65535. 0 represents disabling flow control. Additionally, if set to a value less than 65535, it will not take effect.
       stream_read_timeout: 32000                                  #stream_read_timeout
       filter:                                                     #The filter list at the service level, only effective for the current service.

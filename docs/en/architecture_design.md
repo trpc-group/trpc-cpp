@@ -93,8 +93,8 @@ The request processing generally includes the following processes:
 
 The service exit process generally includes the following processes:
 
-1. Stop the monitoring and reading events of the server network connection;
-2. Wait for all requests received by the server to be processed;
+1. Wait for all requests received by the server to be processed(To avoid being unable to exit due to waiting, the default maximum waiting time is set to 5 seconds.It can be configured through server::stop_max_wait_time);
+2. Stop the monitoring and reading events of the server network connection;
 3. Close the server network connection;
 4. Call the `Destroy` method of the `TrpcApp` business subclass to stop the dynamic resources created by the business (for example: started threads);
 5. Stop the dynamic resources created by the plugins (for example: threads started inside the plugins);
