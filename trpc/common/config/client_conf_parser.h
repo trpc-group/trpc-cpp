@@ -69,6 +69,8 @@ struct convert<trpc::ServiceProxyConfig> {
       node["redis"] = proxy_config.redis_conf;
     }
 
+    node["fiber_connpool_shards"] = proxy_config.fiber_connpool_shards;
+
     return node;
   }
 
@@ -128,6 +130,10 @@ struct convert<trpc::ServiceProxyConfig> {
     if (node["redis"]) {
       proxy_config.redis_conf = node["redis"].as<trpc::RedisClientConf>();
       proxy_config.redis_conf.enable = true;
+    }
+
+    if (node["fiber_connpool_shards"]) {
+      proxy_config.fiber_connpool_shards = node["fiber_connpool_shards"].as<uint32_t>();
     }
 
     return true;

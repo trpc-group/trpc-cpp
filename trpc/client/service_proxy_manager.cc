@@ -51,6 +51,7 @@ void ServiceProxyManager::SetOptionFromConfig(const ServiceProxyConfig& proxy_co
   option->ssl_config = proxy_conf.ssl_config;
   option->support_pipeline = proxy_conf.support_pipeline;
   option->fiber_pipeline_connector_queue_size = proxy_conf.fiber_pipeline_connector_queue_size;
+  option->fiber_connpool_shards = proxy_conf.fiber_connpool_shards;
 
   option->service_filter_configs = proxy_conf.service_filter_configs;
 

@@ -22,19 +22,16 @@
 
 namespace trpc {
 
-constexpr static int kConnPoolShards = 4;
-
 FiberTcpConnPoolConnectorGroup::FiberTcpConnPoolConnectorGroup(const FiberConnectorGroup::Options& options)
     : options_(options) {
-  conn_shards_ = std::make_unique<Shard[]>(kConnPoolShards);
-  max_conn_per_shard_ = options_.trans_info->max_conn_num / kConnPoolShards;
-  max_conn_per_shard_ = std::ceil(options_.trans_info->max_conn_num / kConnPoolShards);
+  conn_shards_ = std::make_unique<Shard[]>(options_.trans_info->fiber_connpool_shards);
+  max_conn_per_shard_ = std::ceil(options_.trans_info->max_conn_num / options_.trans_info->fiber_connpool_shards);
 }
 
 FiberTcpConnPoolConnectorGroup::~FiberTcpConnPoolConnectorGroup() {}
 
 void FiberTcpConnPoolConnectorGroup::Stop() {
-  for (int i = 0; i != kConnPoolShards; ++i) {
+  for (uint32_t i = 0; i != options_.trans_info->fiber_connpool_shards; ++i) {
     auto&& shard = conn_shards_[i];
 
     std::list<RefPtr<FiberTcpConnPoolConnector>> tcp_conns;
@@ -51,7 +48,7 @@ void FiberTcpConnPoolConnectorGroup::Stop() {
 }
 
 void FiberTcpConnPoolConnectorGroup::Destroy() {
-  for (int i = 0; i != kConnPoolShards; ++i) {
+  for (uint32_t i = 0; i != options_.trans_info->fiber_connpool_shards; ++i) {
     auto&& shard = conn_shards_[i];
 
     std::list<RefPtr<FiberTcpConnPoolConnector>> tcp_conns;
@@ -184,7 +181,7 @@ stream::StreamReaderWriterProviderPtr FiberTcpConnPoolConnectorGroup::CreateStre
 
     if (reason == 0 && connector->IsHealthy()) {
       uint32_t shard_id = (connector->GetConnId() >> 32);
-      auto& shard = conn_shards_[shard_id % kConnPoolShards];
+      auto& shard = conn_shards_[shard_id % options_.trans_info->fiber_connpool_shards];
 
       std::scoped_lock _(shard.lock);
       if ((shard.tcp_conns.size() <= max_conn_per_shard_) &&
@@ -221,7 +218,7 @@ RefPtr<FiberTcpConnPoolConnector> FiberTcpConnPoolConnectorGroup::GetOrCreate() 
   int retry_num = 3;
 
   while (retry_num > 0) {
-    auto& shard = conn_shards_[shard_id % kConnPoolShards];
+    auto& shard = conn_shards_[shard_id % options_.trans_info->fiber_connpool_shards];
 
     {
       std::scoped_lock _(shard.lock);
@@ -268,7 +265,7 @@ void FiberTcpConnPoolConnectorGroup::Reclaim(int ret, RefPtr<FiberTcpConnPoolCon
 
   if (ret == 0) {
     uint32_t shard_id = (connector->GetConnId() >> 32);
-    auto& shard = conn_shards_[shard_id % kConnPoolShards];
+    auto& shard = conn_shards_[shard_id % options_.trans_info->fiber_connpool_shards];
 
     std::scoped_lock _(shard.lock);
     if ((shard.tcp_conns.size() <= max_conn_per_shard_) &&

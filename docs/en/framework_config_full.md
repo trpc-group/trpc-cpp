@@ -145,6 +145,7 @@ client:
       disable_servicerouter: false                                #Whether to disable service rule-route
       support_pipeline: false                                     #Whether support connection pipeline.Connection pipeline means that you can multi-send and multi-recv in ordered on one connection
       fiber_pipeline_connector_queue_size:                        #The queue size of FiberPipelineConnector
+      fiber_connpool_shards: 1                                    #The number of shard groups for the idle queue under the Fiber connection pool. A larger value will result in a higher allocation of connections, leading to better parallelism and improved performance. However, it will also result in more connections being created. If you are sensitive to the number of created connections, you may consider reducing this value, such as setting it to 1
       connect_timeout: 0                                          #The timeout(ms) of check connection establishment
       filter:                                                     #only effective for the current service.
         - xxx

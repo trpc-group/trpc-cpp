@@ -136,6 +136,13 @@ struct TransInfo {
 
   /// User-defined transInfo data,such as RedisClientConf
   std::any user_data;
+
+  /// The number of FiberConnectionPool shard groups for the idle queue.
+  /// A larger value of this parameter will result in a higher allocation of connections, leading to better parallelism
+  /// and improved performance. However, it will also result in more connections being created
+  /// If you are sensitive to the number of created connections, you may consider reducing this value, such as setting
+  /// it to 1
+  uint32_t fiber_connpool_shards = 4;
 };
 
 }  // namespace trpc
