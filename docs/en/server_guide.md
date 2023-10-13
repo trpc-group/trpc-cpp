@@ -221,7 +221,7 @@ See [Service Development for gRPC Protocol Type](./grpc_protocol_service.md).
 
 ## Error Code
 
-See [Error code of framework]().
+See [Error code of framework](./trpc_status_code.md).
 
 ## Advanced Usage
 

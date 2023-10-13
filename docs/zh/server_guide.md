@@ -230,7 +230,7 @@ tRPC-Cpp 是多线程的框架，只支持一种 fork 用法：fork with exec，
 
 ## 错误码
 
-详见[框架错误码]()说明
+详见[框架错误码](./trpc_status_code.md)说明
 
 ## 高级功能
 
