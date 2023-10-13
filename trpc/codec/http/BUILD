@@ -6,6 +6,11 @@ cc_library(
     name = "http_client_codec",
     srcs = ["http_client_codec.cc"],
     hdrs = ["http_client_codec.h"],
+    defines = [
+    ] + select({
+        "//trpc:trpc_enable_http_transinfo_base64": ["TRPC_ENABLE_HTTP_TRANSINFO_BASE64"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":http_client_proto_checker_impl",
         ":http_protocol",
@@ -14,6 +19,7 @@ cc_library(
         "//trpc/common:status",
         "//trpc/serialization:serialization_factory",
         "//trpc/util:ref_ptr",
+        "//trpc/util/http:base64",
         "//trpc/util/http:request",
         "//trpc/util/http:response",
     ],
@@ -22,6 +28,11 @@ cc_library(
 cc_test(
     name = "http_client_codec_test",
     srcs = ["http_client_codec_test.cc"],
+    defines = [
+    ] + select({
+        "//trpc:trpc_enable_http_transinfo_base64": ["TRPC_ENABLE_HTTP_TRANSINFO_BASE64"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":http_client_codec",
         "//trpc/compressor/testing:compressor_testing",
@@ -89,6 +100,11 @@ cc_library(
     name = "http_server_codec",
     srcs = ["http_server_codec.cc"],
     hdrs = ["http_server_codec.h"],
+    defines = [
+    ] + select({
+        "//trpc:trpc_enable_http_transinfo_base64": ["TRPC_ENABLE_HTTP_TRANSINFO_BASE64"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":http_protocol",
         ":http_server_proto_checker_impl",
@@ -96,6 +112,7 @@ cc_library(
         "//trpc/runtime/iomodel/reactor/common:connection",
         "//trpc/server:server_context",
         "//trpc/util/buffer:noncontiguous_buffer",
+        "//trpc/util/http:base64",
         "//trpc/util/http:request",
         "//trpc/util/http:response",
     ],
@@ -104,6 +121,11 @@ cc_library(
 cc_test(
     name = "http_server_codec_test",
     srcs = ["http_server_codec_test.cc"],
+    defines = [
+    ] + select({
+        "//trpc:trpc_enable_http_transinfo_base64": ["TRPC_ENABLE_HTTP_TRANSINFO_BASE64"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":http_server_codec",
         "@com_google_googletest//:gtest",

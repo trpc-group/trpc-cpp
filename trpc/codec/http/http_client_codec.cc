@@ -21,10 +21,33 @@
 #include "trpc/common/status.h"
 #include "trpc/compressor/trpc_compressor.h"
 #include "trpc/serialization/serialization_factory.h"
+#include "trpc/util/http/base64.h"
 #include "trpc/util/http/request.h"
 #include "trpc/util/http/response.h"
 
 namespace trpc {
+
+namespace {
+
+void SetTrpcTransInfo(const ClientContextPtr& ctx, trpc::http::RequestPtr& req) {
+  if (!ctx->GetPbReqTransInfo().empty()) {
+    rapidjson::StringBuffer str_buf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
+    writer.StartObject();
+    for (const auto& [name, value] : ctx->GetPbReqTransInfo()) {
+      writer.Key(name.c_str());
+#ifdef TRPC_ENABLE_HTTP_TRANSINFO_BASE64
+      writer.String(http::Base64Encode(std::begin(value), std::end(value)).c_str());
+#else
+      writer.String(value.c_str());
+#endif
+    }
+    writer.EndObject();
+    req->AddHeader("trpc-trans-info", str_buf.GetString());
+  }
+}
+
+}  // namespace
 
 int HttpClientCodec::ZeroCopyCheck(const ConnectionPtr& conn, NoncontiguousBuffer& in, std::deque<std::any>& out) {
   return HttpZeroCopyCheckResponse(conn, in, out);
@@ -102,9 +125,10 @@ bool HttpClientCodec::FillRequest(const ClientContextPtr& ctx, const ProtocolPtr
     req->SetMethodType(http::OperationType::POST);
     req->SetVersion("1.1");
     req->SetUrl(ctx->GetFuncName());
-    for (const auto& kv : ctx->GetHttpHeaders()) {
-      req->AddHeader(kv.first, kv.second);
-    }
+
+    // set trpc-trans-info
+    SetTrpcTransInfo(ctx, req);
+
     switch (ctx->GetReqEncodeType()) {
       case serialization::kPbType:
         req->SetHeaderIfNotPresent("Content-Type", "application/pb");

@@ -662,6 +662,18 @@ tRPC 提供一套 HTTP 流式读取/写入数据分片的接口，可以分片�
   # ...
   ```
 
+## 透传信息处理
+
+对于HTTP RPC 服务，框架在编解码时会对透传信息进行如下处理：
+* 解码：框架在收到请求包时，会从HTTP头部中取出名称为`“trpc-trans-info”`的数据，将其内容按JSON格式进行解析，然后将解析到的键值对作为请求的透传信息。用户可以通过`“ServerContext::GetPbReqTransInfo”`接口获取。
+* 编码：框架在进行回包响应时，会将用户通过`“ServerContext::AddRspTransInfo”`接口设置的透传信息，转换成一个名称为
+`“trpc-trans-info”`，值为JSON串的HTTP头部。
+
+注意框架默认不会对透传信息中的值进行base64编解码，如果有需要，可以通过添加`“trpc_enable_http_transinfo_base64”`编译选项来开启：
+```
+build --define trpc_enable_http_transinfo_base64=true
+```
+
 # FAQ
 
 ## 如果匹配所有路径需要怎么写路由规则？

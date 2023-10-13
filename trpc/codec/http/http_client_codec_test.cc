@@ -139,6 +139,8 @@ TEST_F(HttpClientCodecTest, FillRequestAsPB) {
   ClientContextPtr context = MakeRefCounted<ClientContext>();
   context->SetRequest(req_protocol);
   context->SetReqEncodeType(serialization::kPbType);
+  std::string test_k = "k", test_v = "v";
+  context->AddReqTransInfo(test_k, test_v);
 
   test::helloworld::HelloRequest hello_req;
   hello_req.set_msg("hello");
@@ -151,6 +153,11 @@ TEST_F(HttpClientCodecTest, FillRequestAsPB) {
   ASSERT_EQ(req_ptr->request->GetHeader("Content-Length"), std::to_string(hello_req.ByteSizeLong()));
   ASSERT_TRUE(req_ptr->request->HasHeader("Content-Type"));
   ASSERT_EQ(req_ptr->request->GetHeader("Content-Type"), "application/pb");
+#ifdef TRPC_ENABLE_HTTP_TRANSINFO_BASE64
+  ASSERT_EQ(req_ptr->request->GetHeader("trpc-trans-info"), "{\"k\":\"dg==\"}");
+#else
+  ASSERT_EQ(req_ptr->request->GetHeader("trpc-trans-info"), "{\"k\":\"v\"}");
+#endif
 }
 
 TEST_F(HttpClientCodecTest, FillRequestAsJson) {
