@@ -2,6 +2,11 @@ English | [中文](README.zh_CN.md)
 
 # tRPC-Cpp
 
+[![API](https://img.shields.io/badge/api-latest-green)]()
+[![Docs](https://img.shields.io/badge/docs-latest-green)]()
+[![LICENSE](https://img.shields.io/badge/license-Apache--2.0-green.svg)](https://github.com/trpc-group/trpc-cpp/blob/main/LICENSE)
+[![Releases](https://img.shields.io/github/release/trpc-group/trpc-cpp.svg?style=flat-square)](https://github.com/trpc-group/trpc-cpp/releases)
+[![Build Status](https://github.com/trpc-group/trpc-cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/trpc-group/trpc-cpp/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/trpc-group/trpc-cpp/branch/main/graph/badge.svg)](https://app.codecov.io/gh/trpc-group/trpc-cpp/tree/main)
 
 tRPC-Cpp is the cpp version of tRPC, it follows the overall design principles of tRPC.
