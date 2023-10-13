@@ -1,4 +1,5 @@
 English | [中文](CODE_OF_CONDUCT.zh_CN.md)
+
 # Community Code of Conduct
 
 Welcome to our open source project!
@@ -9,6 +10,7 @@ To ensure a positive experience in our project, we have established the followin
 ## Our Pledge
 
 As participants, contributors, and maintainers of our community, we pledge to:
+
 - Treat everyone with openness, inclusivity, and collaboration;
 - Respect individuals with different backgrounds and viewpoints, regardless of gender, sexual orientation, disability, race, ethnicity, religion, age, or any other factor;
 - Focus on contributing and improving the project, rather than attacking or criticizing individuals;
@@ -18,6 +20,7 @@ As participants, contributors, and maintainers of our community, we pledge to:
 ## Our standards
 
 Our community members should adhere to the following standards:
+
 - Respect the opinions, viewpoints, and experiences of others;
 - Avoid using insulting, discriminatory, or harmful language;
 - Do not harass, intimidate, or threaten others;
@@ -29,11 +32,11 @@ Our community members should adhere to the following standards:
 
 Project maintainers have a responsibility to create a friendly, respectful, and inclusive environment for our community members.
 They should:
+
 - Clearly and publicly explain the community guidelines;
 - Handle reports of guideline violations and resolve disputes appropriately;
 - Protect the privacy and security of all community members;
 - Maintain a fair, transparent, and responsible attitude.
-
 
 ## Scope
 
@@ -43,6 +46,7 @@ Violations of the code of conduct will be dealt with, including but not limited 
 ## Implementation guidelines
 
 If you encounter behavior that violates this code of conduct, you can:
+
 - Communicate privately with the relevant person to try to resolve the issue;
 - Report the violation to the project maintainers(maintainer mailing list), who will take necessary action based on the situation;
 - If you are not satisfied with the way the maintainers handle the situation, you can seek help from higher-level organizations or institutions.

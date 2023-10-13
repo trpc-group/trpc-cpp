@@ -26,31 +26,31 @@ tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则�
 
 ## 特点
 
-* Runtime
-  * 线程模型: 支持 `fiber(m:n coroutine)` and `thread(io/handle merge or separate)`
-  * io模型: 支持 `reactor(for network)` and `async-io(for disk)`
-* 服务端
-  * 网络传输: 支持 `tcp/udp/ssl/unix domain socket`
-  * 开发方式: 支持 `rpc/streaming-rpc/non-rpc`
-* 客户端
-  * 网络传输: 支持 `tcp/udp/ssl`
-  * 连接方式: 支持 `长连接(连接复用/连接池/pipeline）/短连接`
-  * 调用方式: 支持 `rpc/streaming-rpc/non-rpc/one-way`
-* 插件
-  * 协议: 支持 `trpc/http(s/2.0)/grpc/...`
-  * 序列化/反序列化: 支持 [pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/serialization.md)
-  * 解压缩: 支持 [gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/compression.md)
-  * 名字服务: 支持 [polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)
-  * 配置中心: 支持 [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)
-  * 远程日志: 支持 [cls](https://github.com/trpc-ecosystem/cpp-logging-cls)
-  * 监控系统: 支持 [prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/prometheus_metrics.md)
-  * 调用链系统: 支持 [jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)
-  * 可观测系统: 支持 [opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)
-* 工具
-  * 支持: [admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/rpcz.md)
-  * [proto IDL依赖管理](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/proto_management.md)
-* 组件
-  * [redis](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/redis_client_guide.md)
+- Runtime
+  - 线程模型: 支持 `fiber(m:n coroutine)` and `thread(io/handle merge or separate)`
+  - io模型: 支持 `reactor(for network)` and `async-io(for disk)`
+- 服务端
+  - 网络传输: 支持 `tcp/udp/ssl/unix domain socket`
+  - 开发方式: 支持 `rpc/streaming-rpc/non-rpc`
+- 客户端
+  - 网络传输: 支持 `tcp/udp/ssl`
+  - 连接方式: 支持 `长连接(连接复用/连接池/pipeline）/短连接`
+  - 调用方式: 支持 `rpc/streaming-rpc/non-rpc/one-way`
+- 插件
+  - 协议: 支持 `trpc/http(s/2.0)/grpc/...`
+  - 序列化/反序列化: 支持 [pb/flatbuffers/json/noop(text and binary)](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/serialization.md)
+  - 解压缩: 支持 [gzip/zlib/snappy/lz4](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/compression.md)
+  - 名字服务: 支持 [polarismesh](https://github.com/trpc-ecosystem/cpp-naming-polarismesh)
+  - 配置中心: 支持 [etcd](https://github.com/trpc-ecosystem/cpp-config-etcd)
+  - 远程日志: 支持 [cls](https://github.com/trpc-ecosystem/cpp-logging-cls)
+  - 监控系统: 支持 [prometheus](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/prometheus_metrics.md)
+  - 调用链系统: 支持 [jaeger](https://github.com/trpc-ecosystem/cpp-tracing-jaeger)
+  - 可观测系统: 支持 [opentelemetry](https://github.com/trpc-ecosystem/cpp-telemetry-opentelemetry)
+- 工具
+  - 支持: [admin](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/admin_service.md)/[tvar](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/tvar.md)/[rpcz](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/rpcz.md)
+  - [proto IDL依赖管理](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/proto_management.md)
+- 组件
+  - [redis](https://github.com/trpc-group/trpc-cpp/blob/main/docs/zh/redis_client_guide.md)
 
 ## 如何使用
 
@@ -59,8 +59,8 @@ tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则�
 - [编译安装](docs/zh/setup_env.md)
 - [快速开始](docs/zh/quick_start.md)
 - [基本教程](docs/zh/basic_tutorial.md)
-- [用户指南](docs/README.md)
-- [api接口]()
+- [用户指南](docs/README.zh_CN.md)
+- [API 接口]()
 
 ### 示例代码
 

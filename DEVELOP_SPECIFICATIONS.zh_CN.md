@@ -3,12 +3,15 @@
 # 研发规范
 
 ## 代码规范
+
 总体上遵循[Google C++代码规范](https://google.github.io/styleguide/cppguide.html)，下面对一些差异和注意事项等进行说明。
 
 ### 版权声明
+
 所有的代码头文件及源文件都需要放置版本声明，具体见[版权声明](CONTRIBUTING.zh_CN.md#版权声明)。
 
 ### 代码行长度
+
 框架使用的最大代码行长度为 120 characters。
 
 ### 注释
@@ -24,35 +27,38 @@
 一些典型场景的注释示例如下：
 
 - 函数
-```
-/// @brief Check if an address is an IPv4 address.
-/// @param addr Ip address.
-/// @return Return true if addr is a ipv4 address, otherwise return false.
-bool IsIpv4(const std::string& addr);
-```
 
+  ```cpp
+  /// @brief Check if an address is an IPv4 address.
+  /// @param addr Ip address.
+  /// @return Return true if addr is a ipv4 address, otherwise return false.
+  bool IsIpv4(const std::string& addr);
+  ```
+  
 - 结构体和类成员
-```
-/// @brief Location of a point.
-struct Point {
-  /// X-coordinate value
-  float x = 0.0;
-  /// Y-coordinate value
-  float y = 0.0;
-  /// Z-coordinate value
-  float z = 0.0;
-};
-```
+
+  ```cpp
+  /// @brief Location of a point.
+  struct Point {
+    /// X-coordinate value
+    float x = 0.0;
+    /// Y-coordinate value
+    float y = 0.0;
+    /// Z-coordinate value
+    float z = 0.0;
+  };
+  ```
 
 - Global变量
 
-```
-/// Max number of token.
-const int kMaxTokenNum = 10; 
-```
+  ```cpp
+  /// Max number of token.
+  const int kMaxTokenNum = 10; 
+  ```
 
 常用的一些doxygen注释命令：
-```
+
+```cpp
 @brief 函数或者类的简述
 @param[in|out] arg 参数描述
 @tparam[in|out] arg 模板参数描述
@@ -64,24 +70,28 @@ const int kMaxTokenNum = 10;
 @see 指明一些关联的类、接口说明文档，同man中的see also
 @private 表示评论块记录的成员是私有的，在EXTRACT_PRIVATE=NO的情况下doxygen生产文档的时候不会包含评论块
 ```
+
 更多的命令说明请参考[Special Commands](https://www.doxygen.nl/manual/commands.html)
 
 补充说明：
+
 1. 位于对外API头文件中，但不需要对外暴露的struct/class、全局函数及类public函数等，建议使用`/// @private`标识来将其排除在doxygen文档外。
 2. 如果接口已弃用，除了增加deprecated编译attribute外，建议在文档注释中也增加对应的说明，如 `/// @brief Deprecated: use xxx() instead. 接口描述`，以便在API说明中能直接看出其为deprecated。
 
 #### 不需要文档化的注释
+
 范围：不提供给用户使用的API, 如仅用于框架内部使用的类及接口、所有类的private方法及成员、对某段代码的解释等。
 
 注释风格：使用c++语言的"//"或者"/**/"注释即可。
 
-## Commit规范
+## Commit 规范
 
 请参考[编写良好的提交消息](CONTRIBUTING.zh_CN.md#编写良好的提交消息)。
 
 ## 版本规范
 
 ### 版本号规范
+
 框架发布版本时，其版本号遵循[SemVer](https://semver.org/)规范。
 
 发布的版本号由"MAJOR[主版本号].MINOR[次版本号].PATCH[修订版本号]"组成：
@@ -91,6 +101,7 @@ const int kMaxTokenNum = 10;
 3. 修订版本号：当做了向下兼容的问题修正
 
 ### 版本维护
+
 随着框架的不断迭代，框架的版本号会越来越多，为了方便版本管理和代码维护，框架版本的维护方式如下：
 
 对于主版本号：维护最新的2个的主版本号，主版本号不再迭代变更后，往后继续维护1年，只做其最新次版本号的bug修复。
@@ -102,4 +113,4 @@ const int kMaxTokenNum = 10;
 
 ## 安全规范
 
-请参考[Tencent/C,C++安全指南](https://github.com/Tencent/secguide/blob/main/C,C++%E5%AE%89%E5%85%A8%E6%8C%87%E5%8D%97.md)。
+请参考：[Tencent/C,C++安全指南](https://github.com/Tencent/secguide/blob/main/C,C++%E5%AE%89%E5%85%A8%E6%8C%87%E5%8D%97.md)。
