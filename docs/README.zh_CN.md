@@ -31,7 +31,7 @@
   * Fiber
     * [深入理解Fiber](./zh/fiber.md)
     * [Fiber用户开发指南](./zh/fiber_user_guide.md)
-    * [Fiber常见问题](./zh/fiber_faq.md)
+    * [Fiber常见问题](./zh/faq/fiber_problem.md)
   * [Future/Promise](./zh/future_promise_guide.md)
   * [插件](./zh/plugin_management.md)
     * 协议插件
@@ -70,4 +70,4 @@
     * [tvar](./zh/tvar.md)
     * [admin](./zh/admin_service.md)
     * [runtime info]()
-* Faqs
+* [Faqs](./zh/faq.md)

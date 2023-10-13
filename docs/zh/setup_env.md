@@ -198,4 +198,4 @@ build --cxxopt="--std=c++17"
 
 也推荐在 `.bazelrc` 文件中加上，这样即可默认生效。
 
-更多涉及编译的可以参考[bazel编译](./bazel_faq.md)、[cmake编译](./cmake_faq.md)
+更多涉及编译的问题可以参考 [bazel cmake faq](../zh/faq/bazel_and_cmake_problem.md)。
