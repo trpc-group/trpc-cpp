@@ -62,18 +62,22 @@ timeval GetNowAsTimeVal();
 class TimeProvider {
  public:
   /// @brief Get the number of seconds from the Epoch to now.
+  /// @private
   [[deprecated("Use trpc::time::GetNowAsTimeT() instead")]]
   static time_t GetNow();
 
   /// @brief Get the number of milliseconds from system boot to now.
+  /// @private
   [[deprecated("Use trpc::time::GetMilliSeconds() instead")]]
   static uint64_t GetNowMs();
 
   /// @brief Get the number of microseconds from system boot to now.
+  /// @private
   [[deprecated("Use trpc::time::GetMicroSeconds() instead")]]
   static uint64_t GetNowUs();
 
   /// @brief Get the milliseconds from epoch and store in tv.
+  /// @private
   [[deprecated("Use trpc::time::GetNowAsTimeVal() instead")]]
   static void GetNow(timeval* tv);
 };

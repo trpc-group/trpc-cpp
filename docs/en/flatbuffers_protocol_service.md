@@ -30,7 +30,7 @@ rpc_service FbGreeter {
 }
 ```
 
-The field definitions used in this fbs file are relatively simple and commonly used. If you want to learn more about field definitions in flatbuffers, you can refer to the documentation [flatbuffers官网](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html)。
+The field definitions used in this fbs file are relatively simple and commonly used. If you want to learn more about field definitions in flatbuffers, you can refer to the documentation [flatbuffers](https://google.github.io/flatbuffers/flatbuffers_guide_writing_schema.html)。
 
 ## Defining a dependent fbs file - forward.fbs
 
@@ -318,7 +318,7 @@ target_link_libraries(demoserver trpc)
 
 ```
 
-生成的`greeter_generated.h`, `greeter.trpc.fb.cc` and `greeter.trpc.fb.h` can be found in the `server` directory of the current project. The generation of these files has been described earlier and will not be repeated here.
+The generated files of `greeter_generated.h`, `greeter.trpc.fb.cc` and `greeter.trpc.fb.h` can be found in the `server` directory of the current project. The generation of these files has been described earlier and will not be repeated here.
 
 # Building server-side code based on stub code
 
@@ -453,8 +453,6 @@ Since the generated stub code is already capable of recognizing the service data
 Check if the corresponding BUILD file includes the dependency **"@trpc_cpp//trpc/util/flatbuffers:trpc_fbs"**.
 
 ## Q2: If a core dump occurs during the request/reply process, how can it be resolved?
-
-flatbuffers通过**flatbuffers::trpc::MessageBuilder**构建数据过程中默认大小是1024字节，如果用户构建的数据过大，需要在定义flatbuffers::trpc::MessageBuilder对象的时候指定大小，例如：**flatbuffers::trpc::MessageBuilder mb(new_size)**,这个`new_size`就是指定能构建数据的最大字节。
 
 During the process of building data using **flatbuffers::trpc::MessageBuilder** in FlatBuffers, the default size is 1024 bytes. If the data being built by the user exceeds this default size, it is necessary to specify the size when defining the **flatbuffers::trpc::MessageBuilder object**. For example, **flatbuffers::trpc::MessageBuilder mb(new_size)**, where `new_size` specifies the maximum number of bytes that can be used to build the data.
 

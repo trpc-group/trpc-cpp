@@ -57,10 +57,6 @@ The framework takes inspiration from Java's Aspect-Oriented Programming (AOP) pa
     It provides the ability for flow controlling and overload protecting. For more details, please refer to the **documentation of customizing Flow-Control & Overload-Protect plugin**.
   * [overload_control_concurrency_limiter](./overload_control_concurrency_limiter.md)
 
-* Auth
-
-    It provides the capability for service authentication. For more details, please refer to the [documentation of customizing Auth plugin]().
-
 ## Other features
 
 * Serialization

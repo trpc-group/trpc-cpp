@@ -19,6 +19,7 @@
 
 namespace trpc::memory_pool::disabled {
 
+/// @private
 namespace detail {
 
 /// @brief Memory blocks that store data in the memory pool.
@@ -29,12 +30,31 @@ struct alignas(64) Block {
 
 }  // namespace detail
 
+/// @brief Data statistics for the creation and release of the disabled memory pool.
+/// @private For internal use purpose only.
+struct alignas(64) Statistics {
+  std::atomic<std::uint32_t> total_allocs_num{0};        ///< Total number of Block objects allocated.
+  std::atomic<std::uint32_t> total_frees_num{0};         ///< Number of times the tls releases Block objects.
+};
+
 /// @brief Allocate a Block object for storing data
 /// @return Block pointer
+/// @private For internal use purpose only.
 detail::Block* Allocate() noexcept;
 
 /// @brief Freeing a memory block.
 /// @param block Block pointer
+/// @private For internal use purpose only.
 void Deallocate(detail::Block* block) noexcept;
+
+
+/// @brief Getting the statistics of the memory.
+/// @return Statistics
+/// @private For internal use purpose only.
+Statistics& GetStatistics() noexcept;
+
+/// @brief Print memory allocation/release information.
+/// @private For internal use purpose only.
+void PrintStatistics() noexcept;
 
 }  // namespace trpc::memory_pool::disabled

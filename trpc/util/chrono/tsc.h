@@ -36,6 +36,7 @@
 
 namespace trpc {
 
+/// @private
 namespace detail {
 
 extern const std::chrono::nanoseconds kNanosecondsPerUnit;

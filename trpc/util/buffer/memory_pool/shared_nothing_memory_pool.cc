@@ -14,6 +14,7 @@
 #include "trpc/util/buffer/memory_pool/shared_nothing_memory_pool.h"
 
 #include <assert.h>
+#include <thread>
 
 #include "trpc/util/log/logging.h"
 
@@ -358,9 +359,21 @@ void Deallocate(detail::Block* block) {
   }
 }
 
-Statistics& GetTlsStatistics() {
+Statistics& GetTlsStatistics() noexcept {
   thread_local Statistics statistics;
   return statistics;
+}
+
+void PrintTlsStatistics() noexcept {
+  Statistics& stat = GetTlsStatistics();
+  auto tid = std::this_thread::get_id();
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} total_allocs_num: {} ", tid, stat.total_allocs_num);
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} total_frees_num: {} ", tid, stat.total_frees_num);
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} allocs_from_system: {} ", tid, stat.allocs_from_system);
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} frees_to_system: {} ", tid, stat.frees_to_system);
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} cross_cpu_frees_num: {} ", tid, stat.cross_cpu_frees_num);
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} foreign_frees_num: {} ", tid, stat.foreign_frees_num);
+  TRPC_FMT_INFO("shared nothing mem pool, tid: {} block_chunks_alloc_num: {} ", tid, stat.block_chunks_alloc_num);
 }
 
 }  // namespace trpc::memory_pool::shared_nothing

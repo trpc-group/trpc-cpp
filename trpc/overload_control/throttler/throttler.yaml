@@ -14,7 +14,7 @@ global:
 client:
   service:
     - name: trpc.test.helloworld.Greeter
-      target: 9.146.137.171:32345
+      target: 127.0.0.1:32345
       protocol: trpc #Service application layer protocol, for example: trpc, http.
       network: tcp #Network listening type: for example: TCP, UDP.
       conn_type: long #conn type, long/short

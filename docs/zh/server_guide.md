@@ -222,11 +222,11 @@ tRPC-Cpp 是多线程的框架，只支持一种 fork 用法：fork with exec，
 
 ## 常见协议类型的服务开发
 
-[开发tRPC协议服务](trpc_protocol_service.md)
+[开发tRPC协议服务](./trpc_protocol_service.md)
 
-[开发HTTP协议服务](http_protocol_service.md)
+[开发HTTP协议服务](./http_protocol_service.md)
 
-[开发grpc协议服务](grpc_protocol_service.md)
+[开发grpc协议服务](./grpc_protocol_service.md)
 
 ## 错误码
 
@@ -245,10 +245,6 @@ tRPC-Cpp 是多线程的框架，只支持一种 fork 用法：fork with exec，
 ### 透明代理
 
 详见[透明代理](transparent_service.md)
-
-### 定时器
-
-详见[定时器]()
 
 ### 流控和过载保护
 

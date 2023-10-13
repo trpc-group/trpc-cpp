@@ -387,13 +387,13 @@ void LocalMemPool::Deallocate(Block* block) noexcept {
 
 void LocalMemPool::PrintStatistics() {
   auto tid = std::this_thread::get_id();
-  TRPC_FMT_INFO("tid: {} total_allocs_num: {} ", tid, stat_.total_allocs_num);
-  TRPC_FMT_INFO("tid: {} total_frees_num: {} ", tid, stat_.total_frees_num);
-  TRPC_FMT_INFO("tid: {} allocs_from_tls_free_list: {} ", tid, stat_.allocs_from_tls_free_list);
-  TRPC_FMT_INFO("tid: {} allocs_from_tls_blocks: {} ", tid, stat_.allocs_from_tls_blocks);
-  TRPC_FMT_INFO("tid: {} frees_to_tls_free_list: {} ", tid, stat_.frees_to_tls_free_list);
-  TRPC_FMT_INFO("tid: {} allocs_from_system: {} ", tid, stat_.allocs_from_system);
-  TRPC_FMT_INFO("tid: {} frees_to_system: {} ", tid, stat_.frees_to_system);
+  TRPC_FMT_INFO("global mem pool, tid: {} total_allocs_num: {} ", tid, stat_.total_allocs_num);
+  TRPC_FMT_INFO("global mem pool, tid: {} total_frees_num: {} ", tid, stat_.total_frees_num);
+  TRPC_FMT_INFO("global mem pool, tid: {} allocs_from_tls_free_list: {} ", tid, stat_.allocs_from_tls_free_list);
+  TRPC_FMT_INFO("global mem pool, tid: {} allocs_from_tls_blocks: {} ", tid, stat_.allocs_from_tls_blocks);
+  TRPC_FMT_INFO("global mem pool, tid: {} frees_to_tls_free_list: {} ", tid, stat_.frees_to_tls_free_list);
+  TRPC_FMT_INFO("global mem pool, tid: {} allocs_from_system: {} ", tid, stat_.allocs_from_system);
+  TRPC_FMT_INFO("global mem pool, tid: {} frees_to_system: {} ", tid, stat_.frees_to_system);
 }
 
 LocalMemPool* GetLocalPoolSlow() noexcept {
@@ -421,9 +421,9 @@ detail::Block* Allocate() noexcept { return detail::GetLocalPool()->Allocate(); 
 
 void Deallocate(detail::Block* block) noexcept { detail::GetLocalPool()->Deallocate(block); }
 
-const Statistics& GetTlsStatistics() { return detail::GetLocalPool()->GetStatistics(); }
+const Statistics& GetTlsStatistics() noexcept { return detail::GetLocalPool()->GetStatistics(); }
 
-void PrintTlsStatistics() { detail::GetLocalPool()->PrintStatistics(); }
+void PrintTlsStatistics() noexcept { detail::GetLocalPool()->PrintStatistics(); }
 
 int PrewarmMemPool(uint32_t block_num) {
   int prewarm_num = 0;

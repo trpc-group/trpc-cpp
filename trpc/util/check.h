@@ -102,6 +102,7 @@
 // @sa: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89640,
 #define TRPC_INTERNAL_DETAIL_LOGGING_ATTRIBUTE_NOINLINE_COLD __attribute__((noinline, cold))
 
+/// @private
 namespace trpc::detail::log {
 
 // Marked as noexcept. Throwing in formatting log is likely a programming

@@ -36,12 +36,15 @@ namespace memory_pool {
 ///       ensure that all memory blocks belonging to the business thread are released when it exits.
 #if defined(TRPC_DISABLED_MEM_POOL)
 using MemBlock = disabled::detail::Block;
+using MemStatistics = disabled::Statistics;
 #elif defined(TRPC_SHARED_NOTHING_MEM_POOL)
 // Using shared nothing type
 using MemBlock = shared_nothing::detail::Block;
+using MemStatistics = shared_nothing::Statistics;
 #else
 // Using a global type.
 using MemBlock = global::detail::Block;
+using MemStatistics = global::Statistics;
 #endif
 
 /// @brief Allocate a MemBlock object to store data.
@@ -51,6 +54,13 @@ MemBlock* Allocate();
 /// @brief Freeing a memory block.
 /// @param block MemBlock pointer
 void Deallocate(MemBlock* block);
+
+/// @brief Getting the statistics of the memory pool for the current thread.
+/// @return Statistics
+const MemStatistics& GetMemStatistics() noexcept;
+
+/// @brief Print memory allocation/release information for the current thread's memory pool.
+void PrintMemStatistics() noexcept;
 
 }  // namespace memory_pool
 
@@ -63,6 +73,7 @@ RefPtr<memory_pool::MemBlock> MakeBlockRef(memory_pool::MemBlock* ptr);
 ///         in data.
 std::size_t GetBlockMaxAvailableSize();
 
+/// @private
 template <>
 struct RefTraits<memory_pool::MemBlock> {
   static void Reference(memory_pool::MemBlock* rc) { rc->ref_count.fetch_add(1, std::memory_order_relaxed); }

@@ -225,6 +225,7 @@ class alignas(max_align_v) Function<R(Args...)> {
 };
 
 // Deduction guides.
+/// @private
 namespace details {
 
 template <class TSignature>

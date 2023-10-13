@@ -17,6 +17,7 @@
 
 #include "fmt/core.h"
 #include "fmt/format.h"
+#include "fmt/std.h"
 
 #include "trpc/util/log/log.h"
 

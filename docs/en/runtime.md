@@ -1,4 +1,4 @@
-[中文版](../zh/runtime.md)
+[中文](../zh/runtime.md)
 
 # Overview
 

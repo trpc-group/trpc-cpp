@@ -23,6 +23,7 @@ TEST(DisabledMemoryPool, Normal) {
   auto* ptr = Allocate();
   ASSERT_TRUE(ptr != nullptr);
   Deallocate(ptr);
+  PrintStatistics();
 }
 }  // namespace testing
 

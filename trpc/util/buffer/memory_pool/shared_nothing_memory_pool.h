@@ -148,6 +148,7 @@ SharedNothingMemPoolImp* GetSharedNothingPool(uint32_t cpu_id);
 }  // namespace detail
 
 /// @brief Data statistics for the creation and release of the SharedNothingMemPoolImp memory pool.
+/// @private For internal use purpose only.
 struct alignas(64) Statistics {
   size_t total_allocs_num{0};        ///< Total number of Block objects allocated by the current thread.
   size_t total_frees_num{0};         ///< Number of times the tls releases Block objects.
@@ -160,14 +161,21 @@ struct alignas(64) Statistics {
 
 /// @brief Allocating memory blocks for a Block.
 /// @return Block pointer
+/// @private For internal use purpose only.
 detail::Block* Allocate();
 
 /// @brief Freeing memory for a Block.
 /// @param block Block pointer
+/// @private For internal use purpose only.
 void Deallocate(detail::Block* block);
 
 /// @brief Getting the statistics of the memory pool for the current thread.
 /// @return Statistics
-Statistics& GetTlsStatistics();
+/// @private For internal use purpose only.
+Statistics& GetTlsStatistics() noexcept;
+
+/// @brief Print memory allocation/release information for the current thread's memory pool.
+/// @private For internal use purpose only.
+void PrintTlsStatistics() noexcept;
 
 }  // namespace trpc::memory_pool::shared_nothing

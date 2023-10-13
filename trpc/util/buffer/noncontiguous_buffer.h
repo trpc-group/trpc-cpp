@@ -39,6 +39,7 @@
 
 namespace trpc {
 
+/// @private
 namespace detail {
 
 // The following source codes are from flare.
@@ -670,7 +671,7 @@ class NoncontiguousBufferBuilder {
   RefPtr<memory_pool::MemBlock> current_;
 };
 
-// The following are helper functions that should not be used directly by the user.
+/// @private The following are helper functions that should not be used directly by the user.
 namespace detail {
 
 // Copy the contents from the NoncontiguousBuffer object to the specified address.

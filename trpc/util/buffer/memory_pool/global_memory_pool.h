@@ -19,9 +19,11 @@
 
 namespace trpc::memory_pool::global {
 
+/// @private
 namespace detail {
 
 /// @brief Memory blocks that store data in a memory pool.
+/// @private For internal use purpose only.
 struct alignas(64) Block {
   Block* next{nullptr};  ///< Pointer to the next Block object, used for allocation and deallocation, for easy access.
   std::atomic<std::uint32_t> ref_count{1};  ///< Reference count, used for smart pointer usage.
@@ -44,18 +46,22 @@ struct alignas(64) Statistics {
 
 /// @brief Allocate a Block object for storing data.
 /// @return Block pointer.
+/// @private For internal use purpose only.
 detail::Block* Allocate() noexcept;
 
 /// @brief Freeing a memory block.
 /// @param block Block pointer.
+/// @private For internal use purpose only.
 void Deallocate(detail::Block* block) noexcept;
 
 /// @brief Retrieve memory allocation/release information for the current thread's memory pool.
 /// @return `Statistics` object
-const Statistics& GetTlsStatistics();
+/// @private For internal use purpose only.
+const Statistics& GetTlsStatistics() noexcept;
 
 /// @brief Print memory allocation/release information for the current thread's memory pool.
-void PrintTlsStatistics();
+/// @private For internal use purpose only.
+void PrintTlsStatistics() noexcept;
 
 /// @brief Pre-allocate a certain number of Block objects.
 /// @param block_num Pre-allocate the number of Block objects.

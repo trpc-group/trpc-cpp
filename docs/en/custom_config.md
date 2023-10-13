@@ -244,7 +244,7 @@ After creating the custom `Codec` plugin, plugin developers need to provide an i
 # User Usage of Custom Plugins
 
 After developing and registering custom data source `Provider` plugins and encoder/decoder `Codec` plugins, users need to call the corresponding Init() function to complete the plugin registration after the framework initialization is complete. Users can specify the use of custom plugins when calling the `trpc::config::Load` function.
-|参数名称 |类型 |描述 |
+|Parameter |Type |Description |
 |:--|
 |path |std::string |The path of the configuration file in the data source. |
 |WithCodec |LoadOptions |The decoder used. Users need to specify the decoder name through the trpc::config::WithCodec function, such as "custom_codec". |

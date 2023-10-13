@@ -169,7 +169,7 @@ reference.
 template <typename R>
 class AsyncReader final : public RefCounted<AsyncReader<R>> {
  public:
-  Future<std::optional<R>> Read(std::chrono::milliseconds timeout = std::chrono::milliseconds::max());  // 返回 std::optional<R> 为空表示 EOF
+  Future<std::optional<R>> Read(std::chrono::milliseconds timeout = std::chrono::milliseconds::max());  // Returning std::optional<R> as empty indicates EOF (End of File).
   Future<> Finish();
 };
 
@@ -185,7 +185,7 @@ class AsyncWriter : public RefCounted<AsyncWriter<W>> {
 template <typename R, typename W>
 class AsyncReaderWriter final : public RefCounted<AsyncReaderWriter<R, W>> {
  public:
-  Future<std::optional<R>> Read(std::chrono::milliseconds timeout = std::chrono::milliseconds::max());  // 返回 std::optional<R> 为空表示 EOF
+  Future<std::optional<R>> Read(std::chrono::milliseconds timeout = std::chrono::milliseconds::max());  // Returning std::optional<R> as empty indicates EOF (End of File).
   Future<> Write(const W& msg);
   Future<> Finish();
 };
