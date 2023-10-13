@@ -470,6 +470,7 @@ TransInfo ServiceProxy::ProxyOptionToTransInfo() {
   trans_info.support_pipeline = option_->support_pipeline;
   trans_info.fiber_pipeline_connector_queue_size = option_->fiber_pipeline_connector_queue_size;
   trans_info.protocol = option_->codec_name;
+  trans_info.fiber_connpool_shards = option_->fiber_connpool_shards;
 
   // set the callback function
   trans_info.conn_close_function = option_->proxy_callback.conn_close_function;

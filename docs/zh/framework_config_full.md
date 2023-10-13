@@ -149,6 +149,7 @@ client:
       disable_servicerouter: false                                #是否禁用服务规则路由，默认不禁用
       support_pipeline: false                                     #是否启用pipeline，默认关闭，当前仅针对redis协议有效。调用redis-server时建议开启，可以获得更好的性能。
       fiber_pipeline_connector_queue_size:                        #FiberPipelineConnector队列大小，如果内存占用加大可以减小此配置
+      fiber_connpool_shards: 1                                    #Fiber链接池下空闲队列分片组个数,值越大分配的链接会偏多，带来更好的并行度会提升性能，但是会带来更多的链接;如果对创建连接数较为敏感可以考虑调小此值，如为1
       connect_timeout: 0                                          #是否开启connect连接超时检测，默认不开启(为0表示不启用)。当前仅支持IO/Handle分离及合并模式
       filter:                                                     #service级别的filter列表，只针对当前service生效
         - xxx                                                     #具体的filter名称

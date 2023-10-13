@@ -197,6 +197,13 @@ struct ServiceProxyOption {
   /// The size of the sliding window for flow control, in bytes. The default value is 65535, and a value of 0 means that
   /// flow control is disabled. Currently, flow control is effective for tRPC streaming.
   uint32_t stream_max_window_size{kDefaultStreamMaxWindowSize};
+
+  /// The number of FiberConnectionPool shard groups for the idle queue.
+  /// A larger value of this parameter will result in a higher allocation of connections, leading to better parallelism
+  /// and improved performance. However, it will also result in more connections being created
+  /// If you are sensitive to the number of created connections, you may consider reducing this value, such as setting
+  /// it to 1
+  uint32_t fiber_connpool_shards = 4;
 };
 
 }  // namespace trpc
