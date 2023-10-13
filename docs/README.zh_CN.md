@@ -28,6 +28,8 @@
     * [访问grpc协议服务](./zh/grpc_protocol_client.md)
     * [访问flatbuffers协议服务](./zh/flatbuffers_protocol_client.md)
     * [访问redis协议服务](./zh/redis_client_guide.md)
+  * 接口返回码
+    * [tRPC 框架错误码](./zh/trpc_status_code.md)
   * Fiber
     * [深入理解Fiber](./zh/fiber.md)
     * [Fiber用户开发指南](./zh/fiber_user_guide.md)

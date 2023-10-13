@@ -248,7 +248,6 @@ enum TrpcCompressType {
   TRPC_LZ4_BLOCK_COMPRESS = 7;
 }
 
-// 框架层接口调用的返回码定义
 // The return code definition of the framework layer interface call
 enum TrpcRetCode {
   // success

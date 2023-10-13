@@ -29,6 +29,8 @@ English | [中文](README.zh_CN.md)
     * [access grpc stream service](./en/grpc_protocol_streaming_service.md)
     * [access flatbuffers service](./en/flatbuffers_protocol_client.md)
     * [access redis service](./en/redis_client_guide.md)
+  * Status Code
+    * [trpc_status_code](./en/trpc_status_code.md)
   * Fiber
     * [deep in fiber](./en/fiber.md)
     * [fiber user guide](./en/fiber_user_guide.md)
