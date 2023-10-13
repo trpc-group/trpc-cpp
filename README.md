@@ -57,9 +57,10 @@ more details：[architecture design](docs/en/architecture_design.md)
 ### Docs
 
 - [compile & install](docs/en/setup_env.md)
-- [quick_start](docs/en/quick_start.md)
-- [basic_tutorial](docs/en/basic_tutorial.md)
-- [user_guide](docs/README.md)
+- [quick start](docs/en/quick_start.md)
+- [basic tutorial](docs/en/basic_tutorial.md)
+- [user guide](docs/README.md)
+- [api reference](https://trpc-group.github.io/trpc-cpp.github.io/)
 
 ### Examples
 
