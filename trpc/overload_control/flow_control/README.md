@@ -2,7 +2,7 @@
 
 ## Configured through the framework
 
-~~~yaml
+```yaml
 server:
   service: #Business service, can have multiple.
     - name: trpc.test.helloworld.Greeter #Service name, needs to be filled in according to the format, the first field is default to trpc, the second and third fields are the app and server configurations above, and the fourth field is the user-defined service_name.
@@ -12,20 +12,20 @@ server:
           limiter: default(100000) #Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
         - name: Route #Method name
           limiter: default(100000) #Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-~~~
+```
 
 Currently supported flow control limiter names are: `default`, `seconds`, `smooth`
 
-## Interface traffic restriction.
+## Interface traffic restriction
 
 Business users need to register flow control limiters for the interfaces that require traffic control.
 
-~~~cpp
+```cpp
 trpc::FlowControllerPtr say_hello_controller(new trpc::SmoothLimter(10000, 100));
 trpc::FlowControllerFactory::GetInstance()->Register(
     "/trpc.test.helloworld.Greeter/SayHello", 
     say_hello_controller);
-~~~
+```
 
 Then limit the service to a maximum of 10,000 requests per second for this interface on a single machine.
 
@@ -33,20 +33,20 @@ Then limit the service to a maximum of 10,000 requests per second for this inter
 
 Business users register service traffic flow control limiters, and the name of the service traffic flow control limiter is the service name, such as: `trpc.test.helloworld.Greeter`
 
-~~~cpp
+```cpp
 trpc::FlowControllerPtr service_controller(new trpc::SmoothLimter(200000, 100));
 trpc::FlowControllerFactory::GetInstance()->Register(
     "trpc.test.helloworld.Greeter", 
     service_controller);
-~~~
+```
 
 Then limit the service to a maximum of 200,000 requests per second for this interface on a single machine.
 
-# Trigger conditions.
+## Trigger conditions
 
 First, check the service traffic restriction. If the service traffic restriction is exceeded, return a flow control error. Then check the interface traffic restriction. If the limit is exceeded, return a flow control error.
 
-# Implementation principle.
+## Implementation principle
 
 1. Traffic control is to limit the total number of requests that can be accepted per second.
 

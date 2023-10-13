@@ -25,6 +25,7 @@ Whether you already know what contribution to make, or you are searching for an 
 Issues are triaged to categorize them and manage the workflow.
 
 Most issues will be marked with one of the following workflow labels:
+
 - **NeedsInvestigation**: The issue is not fully understood and requires analysis to understand the root cause.
 - **NeedsDecision**: The issue is relatively well understood, but the tRPC-Cpp team hasn't yet decided the best way to address it.
   It would be better to wait for a decision before writing code.
@@ -39,7 +40,8 @@ This process gives everyone a chance to validate the design, helps prevent dupli
 It also checks that the design is sound before code is written; the code review tool is not the place for high-level discussions.
 
 When opening an issue, make sure to answer these five questions:
-1. What version of tRPC-Cpp are you using ?
+
+1. What version of tRPC-Cpp are you using?
 2. What operating system and compiler are you using?
 3. What did you do?
 4. What did you expect to see?
@@ -52,6 +54,7 @@ For change proposals, see Proposing Changes To [tRPC-Proposals](to-do).
 Follow the [GitHub flow](https://docs.github.com/en/get-started/quickstart/github-flow) to [create a GitHub pull request](https://docs.github.com/en/get-started/quickstart/github-flow#create-a-pull-request).
 
 Some things to keep in mind:
+
 - Ensure that your code conforms to the project's code specifications.
   This includes but is not limited to code style, comment specifications, etc. This helps us to maintain the cleanliness and consistency of the project.
 - Before submitting a PR, please make sure that you have tested your code locally(`bazel test //trpc/...`).
@@ -68,17 +71,15 @@ Commit messages in tRPC-Cpp follow a specific set of conventions, which we discu
 
 Here is an example of a good one:
 
-
 > math: improve Sin, Cos and Tan precision for very large arguments
 >
 > The existing implementation has poor numerical properties for
 > large arguments, so use the McGillicutty algorithm to improve
 > accuracy above 1e10.
 >
-> The algorithm is described at https://wikipedia.org/wiki/McGillicutty_Algorithm
+> The algorithm is described at <https://wikipedia.org/wiki/McGillicutty_Algorithm>
 >
 > Fixes #159
-
 
 #### First line
 
@@ -100,7 +101,6 @@ Add any relevant information, such as benchmark data if the change affects perfo
 
 The special notation "Fixes #12345" associates the change with issue 12345 in the tRPC-Cpp issue tracker.
 When this change is eventually applied, the issue tracker will automatically mark the issue as fixed.
-
 
 ## Miscellaneous topics
 

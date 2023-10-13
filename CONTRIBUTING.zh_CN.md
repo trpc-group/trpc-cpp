@@ -25,6 +25,7 @@
 issue 会被分类以管理工作流程。
 
 大多数 issue 都会被标记为以下工作流标签之一：
+
 - **NeedsInvestigation**：issue 尚未完全理解，需要分析以了解根本原因。
 - **NeedsDecision**：issue 相对已经理解得很好，但tRPC-Cpp团队尚未决定解决 issue 的最佳方法。
   在编写代码之前最好等待决策。
@@ -39,6 +40,7 @@ issue 会被分类以管理工作流程。
 在编写代码之前，还可以检查设计是否合理；代码审查工具并非用于高层次的讨论。
 
 在提交 issue 时，请确保回答以下五个问题：
+
 1. 您正在使用哪个版本的tRPC-Cpp？
 2. 您正在使用哪个操作系统和编译器？
 3. 您做了什么？
@@ -69,7 +71,7 @@ tRPC-Cpp 中的提交消息遵循一套特定的约定，我们将在本节中�
 >
 > The existing implementation has poor numerical properties for large arguments, so use the McGillicutty algorithm to improve accuracy above 1e10.
 >
-> The algorithm is described at https://wikipedia.org/wiki/McGillicutty_Algorithm
+> The algorithm is described at <https://wikipedia.org/wiki/McGillicutty_Algorithm>
 >
 > Fixes #159
 
@@ -101,6 +103,7 @@ tRPC-Cpp 代码仓库中的文件不列出作者姓名，以避免混乱并避�
 而您的名字将出现在变更日志中。
 
 您贡献的新文件应使用标准版权声明：
+
 ```cpp
 //
 //

@@ -28,55 +28,58 @@ Examples of typical annotation scenarios:
 
 - Functions
 
-```
-/// @brief Check if an address is an IPv4 address.
-/// @param addr Ip address.
-/// @return Return true if addr is a ipv4 address, otherwise return false.
-bool IsIpv4(const std::string& addr);
-```
+  ```cpp
+  /// @brief Check if an address is an IPv4 address.
+  /// @param addr Ip address.
+  /// @return Return true if addr is a ipv4 address, otherwise return false.
+  bool IsIpv4(const std::string& addr);
+  ```
 
 - Structs and class members
 
-```
-/// @brief Location of a point.
-struct Point {
-  /// X-coordinate value
-  float x = 0.0;
-  /// Y-coordinate value
-  float y = 0.0;
-  /// Z-coordinate value
-  float z = 0.0;
-};
-```
+  ```cpp
+  /// @brief Location of a point.
+  struct Point {
+    /// X-coordinate value
+    float x = 0.0;
+    /// Y-coordinate value
+    float y = 0.0;
+    /// Z-coordinate value
+    float z = 0.0;
+  };
+  ```
 
 - Global variable
 
-```
-/// Max number of token.
-const int kMaxTokenNum = 10; 
-```
+  ```cpp
+  /// Max number of token.
+  const int kMaxTokenNum = 10; 
+  ```
+  
+ Some common doxygen annotation commands are listed as following:
 
-Some common doxygen annotation commands are listed as following:
+ ```cpp
+ @brief Function or class summary
+ @param[in|out] arg Parameter description
+ @tparam[in|out] arg Template parameter description
+ @return [Return type (e.g., bool, int)] Explanation
+ @note Notes
+ @code(Must be ended with @endcode)
+ Example code (no indentation required)
+ @endcode
+ @see Indicates some related class or interface documentation, similar to 'see also' in man pages
+ @private Indicates that the member documented by the comment block is private.
+ ```
 
-```
-@brief Function or class summary
-@param[in|out] arg Parameter description
-@tparam[in|out] arg Template parameter description
-@return [Return type (e.g., bool, int)] Explanation
-@note Notes
-@code(Must be ended with @endcode)
-Example code (no indentation required)
-@endcode
-@see Indicates some related class or interface documentation, similar to 'see also' in man pages
-@private Indicates that the member documented by the comment block is private.
-```
-See [Special Commands](https://www.doxygen.nl/manual/commands.html) for more annotation commands.
+ See [Special Commands](https://www.doxygen.nl/manual/commands.html) for more annotation commands.
 
-Additional Notes：
-1. If there are struct/class, global functions, or public functions of a class in the external API header file that do not need to be exposed externally, it is recommended to use the `/// @private` tag to exclude them from the doxygen documentation.
-2. If the interface has been deprecated, in addition to adding the deprecated compilation attribute, it is recommended to add corresponding instructions in the documentation comments, such as `/// @brief Deprecated: use xxx() instead. Interface description` so that it can be displayed directly in the API document that it's deprecated.
+ Additional Notes：
+
+ 1. If there are struct/class, global functions, or public functions of a class in the external API header file that do not need to be exposed externally, it is recommended to use the `/// @private` tag to exclude them from the doxygen documentation.
+ 2. If the interface has been deprecated, in addition to adding the deprecated compilation attribute, it is recommended to add corresponding instructions in the documentation comments, such as `/// @brief Deprecated: use xxx() instead. Interface description` so that it can be displayed directly in the API document that it's deprecated.
 
 #### Non-documentation comments
+
 Scope: APIs not provided for user access, such as classes and interfaces that only used internally by the framework, private methods and members of all classes, explanations for a specific code segment, etc.
 
 Commenting style: Use "//" or "/**/" comments in the C++ language.
