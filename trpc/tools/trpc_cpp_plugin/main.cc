@@ -21,6 +21,7 @@
 #include "google/protobuf/compiler/plugin.h"
 #include "google/protobuf/compiler/plugin.pb.h"
 #include "google/protobuf/descriptor.h"
+#include "google/protobuf/port_def.inc"
 
 #include "trpc/tools/comm/utils.h"
 
@@ -38,6 +39,10 @@ class TrpcCppGenerator final : public google::protobuf::compiler::CodeGenerator 
   ~TrpcCppGenerator() override = default;
   bool Generate(const google::protobuf::FileDescriptor* file, const std::string& parameter,
                 google::protobuf::compiler::GeneratorContext* context, std::string* error) const override;
+
+#if PROTOBUF_VERSION >= 3015000
+  uint64_t GetSupportedFeatures() const override { return FEATURE_PROTO3_OPTIONAL; }
+#endif
 
  private:
   static bool CheckFile(const google::protobuf::FileDescriptor* file, std::string* error);
