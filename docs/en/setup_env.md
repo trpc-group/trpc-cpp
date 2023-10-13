@@ -187,4 +187,4 @@ build --cxxopt="--std=c++17"
 
 It is also recommended to add it to the .bazelrc file so that it can take effect by default
 
-See more about [compile use bazel](./bazel_faq.md)、[compile use cmake](./cmake_faq.md)
+See more about [bazel cmake faq](../zh/faq/bazel_and_cmake_problem.md).

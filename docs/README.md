@@ -71,4 +71,4 @@ English | [中文](README.zh_CN.md)
     * [tvar](./en/tvar.md)
     * [admin](./en/admin_service.md)
     * [runtime info]()
-* Faqs
+* [Faqs](./zh/faq.md)

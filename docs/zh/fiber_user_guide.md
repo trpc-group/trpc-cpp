@@ -342,6 +342,5 @@ trpc::StartFiberDetached([&] {
 
 ```
 
-# FAQ
-
-查阅[Fiber FAQ](./fiber_faq.md)
+# 4 FAQ
+查阅[Fiber FAQ](./faq/fiber_problem.md)

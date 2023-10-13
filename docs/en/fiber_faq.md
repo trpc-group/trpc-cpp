@@ -1,4 +1,4 @@
-[中文](../zh/fiber_faq.md)
+[中文](../zh/faq/fiber_problem.md)
 
 # Overview
 
