@@ -14,6 +14,7 @@
 #include "test/end2end/unary/http/https_server.h"
 
 #include "test/end2end/common/test_common_service.h"
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/http/http_rpc.trpc.pb.h"
 #include "trpc/common/trpc_app.h"
 #include "trpc/util/http/function_handlers.h"
@@ -76,8 +77,6 @@ int HttpsServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void HttpsServer::Destroy() { __gcov_flush(); }
+void HttpsServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

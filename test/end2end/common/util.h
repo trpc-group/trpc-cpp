@@ -71,4 +71,8 @@ bool CheckJsonKV(const ::rapidjson::Document& data, const char* key, const char*
 /// @return json-format string.
 std::string ConstructJsonStr(const std::map<std::string, std::string>& data);
 
+/// @brief Call __gcov_flush or __gcov_dump according to gcc version.
+/// @note For compatible.
+void GcovFlush();
+
 }  // namespace trpc::testing

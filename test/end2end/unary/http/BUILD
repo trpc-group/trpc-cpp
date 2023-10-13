@@ -105,6 +105,7 @@ cc_library(
     deps = [
         ":http_rpc_proto",
         "//test/end2end/common:test_signaller",
+        "//test/end2end/common:util",
         "@trpc_cpp//trpc/common:trpc_app",
     ],
 )
@@ -191,6 +192,7 @@ cc_library(
         "//test/end2end/common:test_common_proto",
         "//test/end2end/common:test_common_service",
         "//test/end2end/common:test_signaller",
+        "//test/end2end/common:util",
         "//trpc/common:trpc_app",
         "//trpc/util/http:function_handlers",
         "//trpc/util/http:routes",

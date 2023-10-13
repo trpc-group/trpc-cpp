@@ -13,6 +13,7 @@
 
 #include "test/end2end/unary/tvar/tvar_server.h"
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/tvar/tvar.trpc.pb.h"
 #include "trpc/tvar/tvar.h"
 
@@ -437,8 +438,6 @@ int TvarServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void TvarServer::Destroy() { __gcov_flush(); }
+void TvarServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

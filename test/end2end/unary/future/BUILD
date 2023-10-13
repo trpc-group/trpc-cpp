@@ -17,6 +17,7 @@ cc_library(
     deps = [
         ":future_proto",
         "@trpc_cpp//test/end2end/common:test_signaller",
+        "@trpc_cpp//test/end2end/common:util",
         "@trpc_cpp//trpc/common:trpc_app",
     ],
 )

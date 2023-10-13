@@ -17,6 +17,7 @@ cc_library(
     deps = [
         ":fiber_proto",
         "//test/end2end/common:test_signaller",
+        "//test/end2end/common:util",
         "//trpc/common:trpc_app",
         "//trpc/coroutine:async",
         "//trpc/coroutine:fiber_seqlock",

@@ -17,6 +17,7 @@
 #include <chrono>
 #include <thread>
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/rpcz/real_server.trpc.pb.h"
 #include "test/end2end/unary/rpcz/rpcz.trpc.pb.h"
 #include "trpc/rpcz/trpc_rpcz.h"
@@ -257,9 +258,7 @@ int RpczServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void RpczServer::Destroy() { __gcov_flush(); }
+void RpczServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing
 #endif

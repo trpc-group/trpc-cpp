@@ -6,6 +6,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/trpc/common_funcs.h"
 #include "test/end2end/unary/trpc/trpc_server_transport_test_inc.h"
 #include "test/end2end/unary/trpc/trpc_test.trpc.fb.h"
@@ -481,8 +482,6 @@ int TrpcTestServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void TrpcTestServer::Destroy() { __gcov_flush(); }
+void TrpcTestServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

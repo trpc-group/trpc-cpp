@@ -27,7 +27,7 @@ namespace testing {
 TEST(MemoryPool, AllocateAndDeallocateTest) {
   MemBlock* block = Allocate();
   ASSERT_TRUE(block != nullptr);
-  const MemStatistics& stat = GetMemStatistics();
+  GetMemStatistics();
   Deallocate(block);
   PrintMemStatistics();
 }

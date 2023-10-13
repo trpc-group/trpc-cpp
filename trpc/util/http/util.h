@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cctype>
+#include <cstdint>
 #include <optional>
 #include <string>
 

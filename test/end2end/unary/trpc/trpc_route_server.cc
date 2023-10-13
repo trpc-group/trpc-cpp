@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/trpc/common_funcs.h"
 #include "test/end2end/unary/trpc/trpc_test.trpc.pb.h"
 #include "trpc/coroutine/fiber.h"
@@ -227,8 +228,6 @@ int RouteTestServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void RouteTestServer::Destroy() { __gcov_flush(); }
+void RouteTestServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing
