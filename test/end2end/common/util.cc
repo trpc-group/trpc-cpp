@@ -144,4 +144,18 @@ std::string ConstructJsonStr(const std::map<std::string, std::string>& data) {
   return buffer.GetString();
 }
 
+#if __GNUC__ >= 11
+  extern "C" void __gcov_dump();
+#else
+  extern "C" void __gcov_flush();
+#endif
+
+void GcovFlush() {
+#if __GNUC__ >= 11
+  __gcov_dump();
+#else
+  __gcov_flush();
+#endif
+}
+
 }  // namespace trpc::testing

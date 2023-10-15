@@ -3,6 +3,7 @@
 
 #include "test/end2end/stream/trpc/async_stream_server.h"
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/stream/trpc/stream.trpc.pb.h"
 #include "trpc/common/async_timer.h"
 #include "trpc/common/future/future_utility.h"
@@ -400,8 +401,6 @@ int AsyncStreamServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void AsyncStreamServer::Destroy() { __gcov_flush(); }
+void AsyncStreamServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

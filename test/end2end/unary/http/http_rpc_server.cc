@@ -13,6 +13,7 @@
 
 #include "test/end2end/unary/http/http_rpc_server.h"
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/http/http_rpc.trpc.pb.h"
 
 namespace trpc::testing {
@@ -60,8 +61,6 @@ int HttpRpcServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void HttpRpcServer::Destroy() { __gcov_flush(); }
+void HttpRpcServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

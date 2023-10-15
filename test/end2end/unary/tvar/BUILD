@@ -17,6 +17,7 @@ cc_library(
     deps = [
         ":tvar_proto",
         "@trpc_cpp//test/end2end/common:test_signaller",
+        "@trpc_cpp//test/end2end/common:util",
         "@trpc_cpp//trpc/common:trpc_app",
         "@trpc_cpp//trpc/tvar",
     ],

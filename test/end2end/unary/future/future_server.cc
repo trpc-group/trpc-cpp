@@ -16,6 +16,7 @@
 #include <chrono>
 #include <thread>
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/future/future.trpc.pb.h"
 
 namespace trpc::testing {
@@ -58,8 +59,6 @@ int FutureServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void FutureServer::Destroy() { __gcov_flush(); }
+void FutureServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

@@ -26,8 +26,6 @@ int RedisServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void RedisServer::Destroy() { __gcov_flush(); }
+void RedisServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

@@ -49,6 +49,7 @@ cc_library(
         ":real_server_proto",
         ":rpcz_proto",
         "@trpc_cpp//test/end2end/common:test_signaller",
+        "@trpc_cpp//test/end2end/common:util",
         "@trpc_cpp//trpc/common:trpc_app",
         "@trpc_cpp//trpc/rpcz:trpc_rpcz",
         "@trpc_cpp//trpc/runtime",

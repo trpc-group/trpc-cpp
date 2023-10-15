@@ -26,6 +26,7 @@
 #include "trpc/coroutine/future.h"
 #include "trpc/runtime/fiber_runtime.h"
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/unary/fiber/fiber.trpc.pb.h"
 #include "test/end2end/unary/fiber/fiber_server.h"
 
@@ -875,8 +876,6 @@ int FiberServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void FiberServer::Destroy() { __gcov_flush(); }
+void FiberServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

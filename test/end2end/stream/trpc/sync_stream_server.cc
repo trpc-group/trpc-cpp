@@ -13,6 +13,7 @@
 
 #include "test/end2end/stream/trpc/sync_stream_server.h"
 
+#include "test/end2end/common/util.h"
 #include "test/end2end/stream/trpc/stream.trpc.pb.h"
 #include "trpc/coroutine/fiber.h"
 #include "trpc/util/time.h"
@@ -395,8 +396,6 @@ int SyncStreamServer::Initialize() {
   return 0;
 }
 
-extern "C" void __gcov_flush();
-
-void SyncStreamServer::Destroy() { __gcov_flush(); }
+void SyncStreamServer::Destroy() { GcovFlush(); }
 
 }  // namespace trpc::testing

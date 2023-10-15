@@ -15,6 +15,7 @@
 
 #include <sched.h>
 
+#include <cstdint>
 #include <string>
 
 #include "trpc/util/function.h"
