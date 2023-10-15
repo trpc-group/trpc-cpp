@@ -3,6 +3,8 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: '0 17 * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +18,7 @@ jobs:
     - name: Test
       run: |
            ./clean.sh
-           bazel coverage //trpc/... --coverage_report_generator="@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main" --combined_report=lcov --nocache_test_results
+           bazel coverage //trpc/... --test_output=all --coverage_report_generator="@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main" --combined_report=lcov --nocache_test_results
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       env:
