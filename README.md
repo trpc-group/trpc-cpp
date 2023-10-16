@@ -75,3 +75,7 @@ more details：[architecture design](docs/en/architecture_design.md)
 ## How to contribute
 
 If you're interested in contributing, please take a look at the [CONTRIBUTING](CONTRIBUTING.md) and check the [unassigned issues](https://github.com/trpc-group/trpc-cpp/issues) in the repository. Claim a task and let's contribute together to tRPC-Cpp.
+
+## Feedback
+
+Report bugs, ask questions or give suggestions by [Issues](https://github.com/trpc-group/trpc-cpp/issues)
