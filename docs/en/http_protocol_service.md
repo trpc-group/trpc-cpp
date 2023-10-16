@@ -694,6 +694,17 @@ the service initialization phase.
   # ...
   ```
 
+## Processing transparent information
+
+For HTTP RPC services, the framework will perform the following processing on transparent information during encoding and decoding.
+* Decode: When receiving a request packet, the framework extracts the data named `trpc-trans-info` from the HTTP headers, parses its content in JSON format, and uses the parsed key-value pairs as transparent information for the request. Users can retrieve it using the `ServerContext::GetPbReqTransInfo` interface.
+* Encode: When responding with a reply packet, the framework converts the transparent information set by the user through the `ServerContext::AddReqTransInfo` interface into an HTTP header named `trpc-trans-info` with a value of a JSON string.
+
+Note that by default, the framework does not perform base64 encoding/decoding on the values of transparent information. If needed, you can enable it by adding the compilation option `trpc_enable_http_transinfo_base64`.
+```
+build --define trpc_enable_http_transinfo_base64=true
+```
+
 # FAQ
 
 ## How to write routing rules to match all paths?

@@ -102,3 +102,9 @@ config_setting(
     name = "trpc_include_overload_control",
     values = {"define": "trpc_include_overload_control=true"},
 )
+
+# Whether to automatically perform base64 encoding on trans_info in trpc-over-http. Default close.
+config_setting(
+    name = "trpc_enable_http_transinfo_base64",
+    values = {"define": "trpc_enable_http_transinfo_base64=true"},
+)

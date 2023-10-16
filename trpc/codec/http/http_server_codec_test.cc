@@ -42,7 +42,11 @@ void FillHttpRequest(http::RequestPtr& r) {
   r->SetHeader("trpc-message-type", std::to_string(TrpcMessageType::TRPC_DEFAULT));
   r->SetHeader("Content-Type", "application/json");
   // Add: trpc-trans-info: json
+#ifdef TRPC_ENABLE_HTTP_TRANSINFO_BASE64
+  r->SetHeader("trpc-trans-info", "{\"trpc-dyeing-key\": \"MTIz\",\"trpc-client-ip\": \"MC4wLjAuMA==\"}");
+#else
   r->SetHeader("trpc-trans-info", "{\"trpc-dyeing-key\": \"123\",\"trpc-client-ip\": \"0.0.0.0\"}");
+#endif
   r->SetContent("{\"msg\": \"helloworld\"}");
 }
 
@@ -157,6 +161,7 @@ TEST_F(TrpcOverHttpServerCodecTest, Encode) {
   ServerContextPtr context = MakeRefCounted<ServerContext>();
   context->SetRequestMsg(codec_.CreateRequestObject());
   context->SetResponseMsg(codec_.CreateResponseObject());
+  context->AddRspTransInfo("trpc-dyeing-key", "123");
 
   http::RequestPtr r = std::make_shared<http::Request>();
   FillHttpRequest(r);
@@ -180,6 +185,11 @@ TEST_F(TrpcOverHttpServerCodecTest, Encode) {
       "trpc-call-type: 0\r\n"
       "trpc-error-msg: \r\n"
       "trpc-request-id: 1\r\n"
+#ifdef TRPC_ENABLE_HTTP_TRANSINFO_BASE64
+      "trpc-trans-info: {\"trpc-dyeing-key\":\"MTIz\"}\r\n"
+#else
+      "trpc-trans-info: {\"trpc-dyeing-key\":\"123\"}\r\n"
+#endif
       "trpc-message-type: 0\r\n"
       "\r\n";
   ASSERT_EQ(expect_out, FlattenSlow(out)) << "xxx compress type:" << context->GetReqCompressType();

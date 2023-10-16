@@ -13,7 +13,12 @@
 
 #include "trpc/codec/http/http_server_codec.h"
 
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+
 #include "trpc/codec/http/http_proto_checker.h"
+#include "trpc/util/http/base64.h"
 #include "trpc/util/http/request.h"
 #include "trpc/util/http/response.h"
 #include "trpc/util/string_helper.h"
@@ -76,6 +81,52 @@ bool SerializationTypeToContentType(uint32_t serialization_type, std::string* co
   if (iter == types.end()) return false;
   *content_type = iter->second;
   return true;
+}
+
+void ParseTrpcTransInfo(std::string& value, HttpRequestProtocol* req) {
+  rapidjson::Document document;
+  document.Parse(value.c_str());
+  if (document.IsObject()) {
+    for (auto& mem : document.GetObject()) {
+      std::string key = mem.name.GetString();
+      if (document[key].IsString()) {
+#ifdef TRPC_ENABLE_HTTP_TRANSINFO_BASE64
+        std::string ori_value = mem.value.GetString();
+        std::string decoded = http::Base64Decode(std::begin(ori_value), std::end(ori_value));
+        if (decoded.empty()) {
+          req->SetKVInfo(key, ori_value);
+          TRPC_LOG_TRACE("trpc transinfo key:" << key << ",value:" << ori_value);
+        } else {
+          req->SetKVInfo(key, decoded);
+          TRPC_LOG_TRACE("trpc transinfo key:" << key << ",value:" << decoded);
+        }
+#else
+        req->SetKVInfo(key, mem.value.GetString());
+        TRPC_LOG_TRACE("trpc transinfo key:" << key << ",value:" << mem.value.GetString());
+#endif
+      }
+    }
+  } else {
+    TRPC_LOG_ERROR("HTTP Header[trpc-trans-info] value need to be json format");
+  }
+}
+
+void SetTrpcTransInfo(const ServerContextPtr& ctx, HttpResponseProtocol* rsp) {
+  if (!ctx->GetPbRspTransInfo().empty()) {
+    rapidjson::StringBuffer str_buf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
+    writer.StartObject();
+    for (const auto& [name, value] : ctx->GetPbRspTransInfo()) {
+      writer.Key(name.c_str());
+#ifdef TRPC_ENABLE_HTTP_TRANSINFO_BASE64
+      writer.String(http::Base64Encode(std::begin(value), std::end(value)).c_str());
+#else
+      writer.String(value.c_str());
+#endif
+    }
+    writer.EndObject();
+    rsp->response.AddHeader("trpc-trans-info", str_buf.GetString());
+  }
 }
 }  // namespace
 
@@ -177,19 +228,7 @@ bool TrpcOverHttpServerCodec::ZeroCopyDecode(const ServerContextPtr& ctx, std::a
     // Key-value pairs for trpc-over-http
     value = http_req->GetHeader("trpc-trans-info");
     if (!value.empty()) {
-      rapidjson::Document document;
-      document.Parse(value.c_str());
-      if (document.IsObject()) {
-        for (auto& mem : document.GetObject()) {
-          std::string key = mem.name.GetString();
-          if (document[key].IsString()) {
-            http_req_msg->SetKVInfo(key, mem.value.GetString());
-            TRPC_LOG_TRACE("trpc transinfo key:" << key << ",value:" << mem.value.GetString());
-          }
-        }
-      } else {
-        TRPC_LOG_ERROR("HTTP Header[trpc-trans-info] value need to be json format");
-      }
+      ParseTrpcTransInfo(value, http_req_msg);
     }
     http_req_msg->request = std::move(http_req);
   } catch (const std::exception& ex) {
@@ -232,6 +271,9 @@ bool TrpcOverHttpServerCodec::ZeroCopyEncode(const ServerContextPtr& ctx, Protoc
         http_rsp_msg->response.SetHeader(http::kHeaderContentEncoding,
                                          http::CompressTypeToString(ctx->GetRspCompressType()));
       }
+
+      // Set trans info into header
+      SetTrpcTransInfo(ctx, http_rsp_msg);
     }
 
     int http_status;
