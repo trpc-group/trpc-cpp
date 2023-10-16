@@ -2,14 +2,14 @@
 
 # 前言
 
-tRPC-Cpp框架应用于高并发的场景中，需要进行过载保护 ，以防业务程序出现不可预期的错误；虽然框架已经实现基于服务和方法的流控插件进行限流，但是该插件是运行在请求入队之后，不能及早进行过载保护； 本文主要介绍了一种基于并发请求量的过载保护插件，该插件运行在请求入队之前，实现策略简单易懂。
+tRPC-Cpp 框架应用于高并发的场景中，需要进行过载保护 ，以防业务程序出现不可预期的错误；虽然框架已经实现基于服务和方法的流控插件进行限流，但是该插件是运行在请求入队之后，不能及早进行过载保护； 本文主要介绍了一种基于并发请求量的过载保护插件，该插件运行在请求入队之前，实现策略简单易懂。
 
 # 原理
 
 ## 基于并发请求的过载保护原理图
 
 ![concurrency_limiter](../images/concurrency_limiter.png)
-图中核心点就是`ConcurrencyLimiter` ，它的主要作用是获取框架当前的并发请求数（`concurrency_reqs`）与用户配置的最大并发数（`max_concurrency`）进行比较来判断是否拒绝当前接收的新请求（`curr_req`），逻辑很简单。
+图中核心点就是 `ConcurrencyLimiter` ，它的主要作用是获取框架当前的并发请求数（`concurrency_reqs`）与用户配置的最大并发数（`max_concurrency`）进行比较来判断是否拒绝当前接收的新请求（`curr_req`），逻辑很简单。
 
 ## 实现代码
 
@@ -40,7 +40,7 @@ build --define trpc_include_overload_control=true
 
 ## 配置文件
 
-并发请求过滤器配置，详细配置参考：[concurrency_overload_ctrl.yaml](../../trpc/overload_control/concurrency_limiter/concurrency_overload_ctrl.yaml)
+并发请求过滤器配置如下（详细配置参考：[concurrency_overload_ctrl.yaml](../../trpc/overload_control/concurrency_limiter/concurrency_overload_ctrl.yaml)）：
 
 ```yaml
 #Server configuration
@@ -75,13 +75,15 @@ plugins:
 - concurrency_limiter：并发请求过载保护器的名称
 - max_concurrency：为用户配置的最大并发请求数，当当前并发请求大于等于该值的时候，会拦截请求
 - is_report：是否上报监控数据到监控插件，**注意，该配置必须与监控插件一起使用(例如配置：plugins->metrics->prometheus，则会上报到 prometheus 上)，如果没有配置监控插件，该选项无意义**，被监控数据有：
-  `max_concurrency`: 上报配置的最大并发请求数，用于检查配置是否和程序运行的一致
-  `current_concurrency`: 当前并发请求数
-  `/{callee_name}/{method}`: 监控名称格式，由被调服务(callee_name)和方法名(method)组成，例如：`/trpc.test.helloworld.Greeter/SayHello`。
+  - `max_concurrency`: 上报配置的最大并发请求数，属于固定值，用于检查配置的最大请求并发数是否在程序中生效
+  - `current_concurrency`: 上报当前并发请求数，属于动态值
+  - `/{callee_name}/{method}`: 上报监控的 RPC 方法名，属于固定值；由被调服务(callee_name)和方法名(method)组成，例如：`/trpc.test.helloworld.Greeter/SayHello`。
+  - `Pass`：单个请求的通过状态，0：拦截；1：通过
+  - `Limited`：单个请求的拦截状态，1：拦截；0：通过。与上面的 `Pass` 监控属性是相反的
 
 # FAQ
 
-## Q1：按照配置配置后，并发过载保护器为什么依旧不生效？
+## 按照配置配置后，并发过载保护器为什么依旧不生效？
 
 根据并发过载保护过滤器的实现原理，是根据当前并发请求与最大并发请求进行比较，其中当前并发请求数是根据服务端上下文的构造函数和析构函数进行增减的，如下（参考：[server_context](../../trpc/server/server_context.cc)）：
 

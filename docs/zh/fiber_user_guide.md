@@ -3,13 +3,13 @@
 
 # 前言
 
-本文从开发者角度介绍如何使用Fiber，包括配置、常用类及接口、常见问题等几部分。关于Fiber原理可以阅读[Fiber](./fiber.md)。
+本文从开发者角度介绍如何使用 Fiber，包括配置、常用类及接口、常见问题等几部分。关于 Fiber 原理可以阅读[Fiber](./fiber.md)。
 
 # 配置
 
-目前Fiber的功能需要在Fiber执行环境中运行，有Fiber执行环境第一步就需要正确的Fiber配置，这里只展示Fiber部分的配置。
+目前Fiber的功能需要在Fiber执行环境中运行，有Fiber执行环境第一步就需要正确的 Fiber 配置，这里只展示Fiber部分的配置。
 
-为简化使用，开发者只需要填写一些必填的配置项就即可，以下是精简Fiber配置:
+为简化使用，开发者只需要填写一些必填的配置项就即可，以下是精简 Fiber 配置:
 
 ```yaml
 global:
@@ -20,9 +20,9 @@ global:
 xxx
 ```
 
-其中推荐手动填入concurrency_hint配置项，避免出现因读取系统配置而导致的问题。
+其中推荐手动填入 `concurrency_hint` 配置项，避免出现因读取系统配置而导致的问题。
 
-除了精简版配置，还可以自定义高阶配置项，以下是完整Fiber配置:
+除了精简版配置，还可以自定义高阶配置项，以下是完整 Fiber 配置:
 
 ```yaml
 global:
@@ -84,7 +84,7 @@ global:
   });
   ```
   
-  也可以指定Fiber::Attributes，如指定Fiber在某个调度组中运行：
+  也可以指定 Fiber::Attributes，如指定 Fiber 在某个调度组中运行：
   
   ```cpp
   trpc::Fiber::Attributes attr;
@@ -162,7 +162,7 @@ latch.wait();
 
 ## 共享数据读优先
 
-用于 Fiber 之间共享数据读优先读写锁:FiberSharedMutex，示例如:
+用于 Fiber 之间共享数据读优先读写锁: FiberSharedMutex，示例如:
 
 ```cpp
 trpc::FiberSharedMutex rwlock_;
@@ -248,7 +248,7 @@ void Update(const std::string& key, const std::string& value){
   
 ## 定时任务
 
-有需要再Fiber中执行定时任务的需求，目前提供以下几种方式：
+有需要在 Fiber 中执行定时任务的需求，目前提供以下几种方式：
 
 1. SetFiberTimer 创建并启用 KillFiberTimer 手动释放:
 
@@ -342,5 +342,6 @@ trpc::StartFiberDetached([&] {
 
 ```
 
-# 4 FAQ
+# FAQ
+
 查阅[Fiber FAQ](./faq/fiber_problem.md)
