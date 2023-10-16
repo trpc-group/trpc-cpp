@@ -2,8 +2,8 @@ English | [中文](README.zh_CN.md)
 
 # tRPC-Cpp
 
-[![API](https://img.shields.io/badge/api-latest-green)]()
-[![Docs](https://img.shields.io/badge/docs-latest-green)]()
+[![API](https://img.shields.io/badge/api-latest-green)](https://trpc-group.github.io/trpc-cpp.github.io)
+[![Docs](https://img.shields.io/badge/docs-latest-green)](https://trpc.group/docs/languages/cpp/)
 [![LICENSE](https://img.shields.io/badge/license-Apache--2.0-green.svg)](https://github.com/trpc-group/trpc-cpp/blob/main/LICENSE)
 [![Releases](https://img.shields.io/github/release/trpc-group/trpc-cpp.svg?style=flat-square)](https://github.com/trpc-group/trpc-cpp/releases)
 [![Build Status](https://github.com/trpc-group/trpc-cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/trpc-group/trpc-cpp/actions/workflows/ci.yml)
