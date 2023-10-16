@@ -198,6 +198,16 @@ void SetSpecifiedOption(const ServiceProxyOption* option_ptr, const std::shared_
   SetOutputByValidInput<bool>(support_pipeline, option->support_pipeline);
 
   SetOutputByValidInput(option_ptr->service_filter_configs, option->service_filter_configs);
+
+  auto stream_max_window_size = GetValidInput<uint32_t>(option_ptr->stream_max_window_size, 65535);
+  SetOutputByValidInput<uint32_t>(stream_max_window_size, option->stream_max_window_size);
+
+  auto fiber_pipeline_connector_queue_size =
+      GetValidInput<uint32_t>(option_ptr->fiber_pipeline_connector_queue_size, 16 * 1024);
+  SetOutputByValidInput<uint32_t>(fiber_pipeline_connector_queue_size, option->fiber_pipeline_connector_queue_size);
+
+  auto fiber_connpool_shards = GetValidInput<uint32_t>(option_ptr->fiber_connpool_shards, 4);
+  SetOutputByValidInput<uint32_t>(fiber_connpool_shards, option->fiber_connpool_shards);
 }
 
 }  // namespace detail
