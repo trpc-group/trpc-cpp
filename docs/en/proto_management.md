@@ -8,18 +8,67 @@ Conventional practice: the proto file of each service is managed by itself. When
 
 Therefore, the proto file dependency management method recommended by tRPC-Cpp here is: for the service provider, put the proto files that need to be externally placed in a unified remote repositories (for example: use github repositories or internal private repositories); for service consumer, The consumer only needs to automatically pull the dependent proto files based on the bazel build tool and generate stub code.
 
+For convenience, tRPC-Cpp defines a bazel rule named [trpc_proto_library](./bazel_or_cmake.md#trpc_proto_library) to manage proto files with complex dependency. We suggest you read it before continue.
+
 # How to automatically pull remote proto files based on bazel
 
 Step 1: Pull the proto file of the dependent service
 
-Before pulling, you need to ensure that the proto file of the dependent service is already in a remote repositories. It is recommended to put the external proto file of the service in the same remote repositories, although you can also obtain the dependency by directly pulling the code repositories of the service proto file, but many unnecessary code files other than proto will be pulled here.
+For example, you have cread a github repo `your_group/proto`. A bazel rule inner may be like:
 
-Then, in the WORKSPACE file of this project, add the target rules for pulling the remote repositories, as follows:
+```python
+# project: remote_proto
+# file: test/BUILD
+load("@trpc_cpp//trpc:trpc.bzl', 'trpc_proto_library")
+trpc_proto_library(
+    name = "helloworld_proto",
+    srcs = ["helloworld.proto"], # test/helloworld.proto
+    use_trpc_plugin = True,
+    rootpath = "@trpc_cpp",
+)
+```
+
+At WORKSPACE file, you can add below rules to import remote repo `your_group/proto` into your `local_project`:
+
+```python
+# project: local_project
+# file: WORKSPACE
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+git_repository(
+    name = "remote_proto_repo",
+    branch = "main",
+    remote = "https://github.com/your_group/proto.git",
+)
+```
 
 Step 2: Add the proto target to the user's target dependencies
 
-Here we mainly use the trpc_proto_library rules that is encapsulated by the framework to achieve dependency management between proto targets.
+First add below bazel rule in `local_project` to import trpc stub code so that you can invoke HelloWorld service.
 
-For example: the proto file of this service imports the proto files of other services, you can refer to the following method:
+```python
+# project: local_project
+# file: service/BUILD
+cc_library(
+    name = "local_service",
+    hdrs = ["local_service.h"],
+    srcs = ["local_service.cc"],
+    deps = [
+      "@remote_proto_repo//test:helloworld_proto", # 添加此依赖
+    ]
+)
+```
 
-For example: a code file of this service needs to call other services, you can refer to the following method:
+Step 3: Invoke RPC remote interface
+
+Now, you can do RPC calls to remote service via using ServiceProxy as below:
+
+```c++
+// project: local_project
+// file: service/local_service.cc
+
+#include "test/helloworld.trpc.pb.h"
+
+// HelloWorldServiceProxy type got from file "test/helloworld.trpc.pb.h"
+auto proxy = ::trpc::GetTrpcClient()->GetProxy<HelloWorldServiceProxy>("client->service->name defined in yaml file");
+proxy->SayHello(req, rsp);
+```
