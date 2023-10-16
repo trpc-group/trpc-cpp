@@ -75,3 +75,7 @@ tRPC-Cpp是tRPC开发框架的cpp语言版本，整体遵循tRPC的设计原则�
 ## 如何贡献
 
 如果您有兴趣进行贡献，请查阅[贡献指南](CONTRIBUTING.zh_CN.md)并检查 [issues](https://github.com/trpc-group/trpc-cpp/issues) 中未分配的问题。认领一个任务，让我们一起为 tRPC-Cpp 做出贡献。
+
+## 建议反馈
+
+* bug、疑惑、修改建议都欢迎提在[Issues](https://github.com/trpc-group/trpc-cpp/issues)中.
