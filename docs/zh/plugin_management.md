@@ -55,7 +55,8 @@ tRPC-Cpp 框架基于接口编程的思想，把框架功能抽象成一系列�
 * 流控和过载保护插件
 
     提供了流量控制和过载保护的能力。详细介绍请参考
-  * [开发自定义流控和过载保护插件文档](./overload_control_concurrency_limiter)。
+  * [基于并发请求的过载保护插件](./overload_control_concurrency_limiter)。
+  * [基于并发 Fiber 个数的过载保护插件](./overload_control_filter_limiter)。
 
 ## 其他特性
 

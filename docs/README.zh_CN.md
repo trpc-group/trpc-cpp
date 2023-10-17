@@ -41,7 +41,8 @@
     * 拦截器
       * [开发自定义拦截器](./zh/filter.md)
     * 流控和过载保护
-      * [基于并发请求的过载保护](./zh/overload_control_concurrency_limiter.md)
+      * [基于并发请求的过载保护插件](./zh/overload_control_concurrency_limiter.md)
+      * [基于并发 Fiber 个数的过载保护插件](./zh/overload_control_filter_limiter.md)
     * Naming插件
       * [开发自定义naming插件](./zh/custom_naming.md)
       * [mesh-polaris](https://github.com/trpc-ecosystem/cpp-naming-polarismesh/blob/main/README.zh_CN.md)
