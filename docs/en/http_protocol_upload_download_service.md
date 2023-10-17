@@ -2,8 +2,6 @@
 
 # Overview
 
-Topic: How to develop an HTTP file upload-download service based on tRPC-Cpp.
-
 In HTTP services, there are scenarios where large files need to be read or sent. Reading the entire file into memory is
 inefficient and puts a lot of pressure on the memory, making it difficult to upload large files. tRPC-Cpp provides a set
 of HTTP streaming read and write data chunking interfaces, which can receive and send large files in chunks.

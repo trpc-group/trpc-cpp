@@ -5,13 +5,13 @@
 tRPC-Cpp 提供一套 HTTP 流式读取、写入数据分片的接口，可以分片接收、发送大文件。
 本文介绍如何基于 tRPC-Cpp （下面简称 tRPC）访问 HTTP 文件上传-下载服务，开发者可以了解到如下内容：
 
-* 如何使用同步流式接口访问文件上传-下载服务。
+* 如何使用同步流式接口访问文件上传-下载服务
   * 编程接口。
   * 访问上传-下载服务。
-* 如何使用异步流式接口访问文件上传-下载服务。
+* 如何使用异步流式接口访问文件上传-下载服务
   * 编程接口。
   * 代码示例。
-* FAQ。
+* FAQ
 
 # 如何使用同步流式接口访问文件上传-下载服务
 
@@ -81,7 +81,7 @@ tRPC-Cpp 提供一套 HTTP 流式读取、写入数据分片的接口，可以�
 
 示例： [upload_client.cc](../../examples/features/http_upload_download/client/upload_client.cc)
 
-基本的数据上传过程需要经过如下几个步骤：设置长度形式/chunked 形式，发送请求头，读取响应头，写数据，完成写。
+基本的数据上传过程需要经过如下几个步骤：设置长度形式/chunked 形式，发送请求头，写数据，完成写，读取响应头。
 
 * **设置长度形式/chunked 形式**
 
@@ -91,10 +91,6 @@ tRPC-Cpp 提供一套 HTTP 流式读取、写入数据分片的接口，可以�
 
   客户端不需要用户进行发送请求头的动作，tRPC 也没有提供该方法。用户在获得 stream 时 tRPC 已经将请求头发送出去。
 
-* **读取响应头**
-
-  如果 ReadHeaders 接口执行成功，说明正常接收到服务端的响应头，从 http_code 参数能拿到 HTTP 状态码（200，404等），这些常量在 tRPC-Cpp 中也有定义，比如下面例子中的 ResponseStatus::kOk。从 http_header 参数能获取响应头。
-
 * **写数据**
 
   通过 Write 接口，用户可以不断地向服务端发送数据分片。如果用户使用的是 chunked 形式，用户也不需要对传输数据做 chunked 编码，tRPC 会自动处理。如果用户使用的是长度形式，一旦用户发送的数据超过了设置的长度，Write 接口会报 kStreamStatusClientWriteContentLengthError 错误。
@@ -102,6 +98,9 @@ tRPC-Cpp 提供一套 HTTP 流式读取、写入数据分片的接口，可以�
 * **完成写**
 
   通过 WriteDone 接口，用户告知读写器数据全部发送完毕。如果用户使用的是 chunked 形式，框架会向服务端发送chunked结束标志；如果用户使用的是长度形式，框架会检查用户已发送的数据长度和设置的长度是否一致，不一致会报 kStreamStatusClientWriteContentLengthError 错误。一旦调用 WriteDone 接口后，用户不应该再尝试使用 Write 接口。
+* **读取响应头**
+
+  如果 ReadHeaders 接口执行成功，说明正常接收到服务端的响应头，从 http_code 参数能拿到 HTTP 状态码（200，404等），这些常量在 tRPC-Cpp 中也有定义，比如下面例子中的 ResponseStatus::kOk。从 http_header 参数能获取响应头。
 
 * 简单的示例代码：
 

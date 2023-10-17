@@ -7,7 +7,7 @@ tRPC-Cpp 默认支持 tRPC 协议，同时也支持 HTTP 协议。
 RPC 服务。
 这可以使一个 RPC 服务同时支持 tRPC 和 HTTP 协议，当前支持通过 HTTP 客户端访问 tRPC 服务。
 
-本文介绍如何基于 tRPC-Cpp （下面简称 tRPC）访问 HTTP 服务，开发可以了解到如下内容：
+本文介绍如何基于 tRPC-Cpp （下面简称 tRPC）访问 HTTP 服务，开发者可以了解到如下内容：
 
 * 访问 HTTP 标准服务
   * 快速上手：使用一个 HTTP Client 访问 HTTP 服务。
@@ -228,7 +228,7 @@ tRPC-Cpp 侧暂未实现 HTTP CONNECT 相关逻辑。
 
 tRPC 当前支持 `HTTP/1.1` 和 `HTTP 1.0`， 默认使用 `HTTP/1.1`。暂未支持 `HTTP/2.0`，在准备中。
 
-如果使用使用 1.0 ，可以使用如下方法设置。
+如果使用 1.0 ，可以使用如下方法设置。
 
 ```cpp
 request.SetVersion("1.0");
@@ -481,7 +481,7 @@ curl -H 'trpc-trans-info: {"k1": "v1", "k2": "v2" }'  -T xx.seriealized.pb $url
 如果只需要获取 2xx 的状态码，可直接使用返回为 `HttpResponse*` 的接口。
 如果需要获取非 2xx 的状态码，请 override `CheckHttpResponse(...)` 方法。
 
-## 配置文件中的 `target` 配置项是否支持 `域名:Port` 格式？
+## 配置文件中的 `target` 配置项是否支持 `domain:port` 格式？
 
 支持的，需要：
 

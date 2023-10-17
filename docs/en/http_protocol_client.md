@@ -62,7 +62,7 @@ Next, let's take a look at the steps to access an HTTP service.
 
 ### Basic steps to access an HTTP service
 
-1. Get the `HttpServiceProxyPtr` object `proxy`: use `GetClient()->GetProxy<HttpServiceProxy>(...)`.
+1. Get the `HttpServiceProxyPtr` object `proxy`: use `GetTrpcClient()->GetProxy<HttpServiceProxy>(...)`.
 2. Create the `ClientContextPtr` object `context`: use `MakeClientContext(proxy)`.
 3. Call the expected API to access and check the return code, such as `GetString` or `PostString` (we can choose to use
    synchronous or asynchronous interfaces based on your business scenario).
@@ -84,7 +84,7 @@ Example: [http_client.cc](../../examples/features/http/client/client.cc)
     auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::http::HttpServiceProxy>(servie_name, option);
     ```
   
-    > There are two ways to create an `HttpServiceProxyPtr`:
+    > There are three ways to create an `HttpServiceProxyPtr`:
     >
     > -1- Set the `ServiceProxyOption` object.
     >
@@ -142,11 +142,11 @@ Note: The Get2 below is just an interface name and does not use the HTTP2 protoc
 
 | Class/Object     | Interface Name                                                                                           | Functionality                                              | Parameters                                                                               | Return Value                   | Remarks                |
 |------------------|----------------------------------------------------------------------------------------------------------|------------------------------------------------------------|------------------------------------------------------------------------------------------|--------------------------------|------------------------|
-| HttpServiceProxy | Status Get(const ClientContextPtr&amp; context, const std::string&amp; url, rapidjson::Document* json)   | Obtains a JSON response message using GET                  | client context<br> url resource location <br> json stores the response message   | Status                         | Synchronous interface  |
-| HttpServiceProxy | Status GetString(const ClientContextPtr&amp; context, const std::string&amp; url, std::string* rspStr)   | Obtains a string response message using GET                | client context<br> url resource location <br> rspStr stores the response message | Status                         | Synchronous interface  |
-| HttpServiceProxy | Status Get2(const ClientContextPtr&amp; context, const std::string&amp; url, HttpResponse* rsp)          | Obtains an HTTP response using GET                         | client context<br> url resource location <br> rsp stores the HTTP response       | Status                         | Synchronous interface  |
-| HttpServiceProxy | Future&lt;rapidjson::Document> AsyncGet(const ClientContextPtr&amp; context, const std::string&amp; url) | Obtains a JSON response message using GET asynchronously   | client context<br> url resource location                                         | Future&lt;rapidjson::Document> | Asynchronous interface |
-| HttpServiceProxy | Future&lt;std::string> AsyncGetString(const ClientContextPtr&amp; context, const std::string&amp; url)   | Obtains a string response message using GET asynchronously | client context<br> url resource location                                         | Future&lt;std::string>         | Asynchronous interface |
+| HttpServiceProxy | Status Get(const ClientContextPtr&amp; context, const std::string&amp; url, rapidjson::Document* json)   | Obtains a JSON response message using GET                  | context client context<br> url resource location <br> json stores the response message   | Status                         | Synchronous interface  |
+| HttpServiceProxy | Status GetString(const ClientContextPtr&amp; context, const std::string&amp; url, std::string* rspStr)   | Obtains a string response message using GET                | context client context<br> url resource location <br> rspStr stores the response message | Status                         | Synchronous interface  |
+| HttpServiceProxy | Status Get2(const ClientContextPtr&amp; context, const std::string&amp; url, HttpResponse* rsp)          | Obtains an HTTP response using GET                         | context client context<br> url resource location <br> rsp stores the HTTP response       | Status                         | Synchronous interface  |
+| HttpServiceProxy | Future&lt;rapidjson::Document> AsyncGet(const ClientContextPtr&amp; context, const std::string&amp; url) | Obtains a JSON response message using GET asynchronously   | context client context<br> url resource location                                         | Future&lt;rapidjson::Document> | Asynchronous interface |
+| HttpServiceProxy | Future&lt;std::string> AsyncGetString(const ClientContextPtr&amp; context, const std::string&amp; url)   | Obtains a string response message using GET asynchronously | context client context<br> url resource location                                         | Future&lt;std::string>         | Asynchronous interface |
 | HttpServiceProxy | Future&lt;HttpResponse> AsyncGet2(const ClientContextPtr&amp; context, const std::string&amp; url)          | Obtains an HTTP response using GET asynchronously          | context client context<br> url resource location                                         | Future&lt;HttpResponse>        | Asynchronous interface |
 
 Translation:
@@ -507,7 +507,7 @@ be transmitted correctly.
 If you only need to get the status code of 2xx, you can use the interface that returns `HttpResponse*`.
 If you need to get the status code of non-2xx, please override the `CheckHttpResponse(...)` method.
 
-## Does the `target` configuration item in the configuration file support the `domain:Port` format?
+## Does the `target` configuration item in the configuration file support the `domain:port` format?
 
 Yes, it is supported. You need to:
 
