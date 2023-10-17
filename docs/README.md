@@ -4,6 +4,7 @@ English | [中文](README.zh_CN.md)
 * [Quick Start](./en/quick_start.md)
 * [Basic Tutorial](./en/basic_tutorial.md)
 * [Architecture Design](./en/architecture_design.md)
+* [Performance testing](./en/benchmark.md)
 * User Guide:
   * [Compile & Install](./en/setup_env.md)
   * [Proto Management](./en/proto_management.md)

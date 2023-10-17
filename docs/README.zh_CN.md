@@ -4,6 +4,7 @@
 * [快速入门](./zh/quick_start.md)
 * [基础教程](./zh/basic_tutorial.md)
 * [架构设计](./zh/architecture_design.md)
+* [性能测试](./zh/benchmark.md)
 * 用户指南:
   * [环境搭建](./zh/setup_env.md)
   * [Proto文件依赖管理](./zh/proto_management.md)
