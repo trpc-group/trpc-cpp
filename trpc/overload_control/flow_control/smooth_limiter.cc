@@ -55,6 +55,7 @@ bool SmoothLimiter::CheckLimit(const ServerContextPtr& context) {
     infos.tags["active_sum"] = active_sum;
     infos.tags["hit_num"] = hit_num;
     infos.tags["max_qps"] = limit_;
+    infos.tags["window_size"] = window_size_;
     infos.tags[kOverloadctrlPass] = (ret ? 0 : 1);
     infos.tags[kOverloadctrlLimited] = (ret ? 1 : 0);
     Report::GetInstance()->ReportOverloadInfo(infos);

@@ -57,6 +57,7 @@ bool SecondsLimiter::CheckLimit(const ServerContextPtr& context) {
     infos.report_name = context->GetFuncName();
     infos.tags["current_qps"] = result + 1;
     infos.tags["max_qps"] = limit_;
+    infos.tags["window_size"] = window_size_;
     infos.tags[kOverloadctrlPass] = (ret ? 0 : 1);
     infos.tags[kOverloadctrlLimited] = (ret ? 1 : 0);
     Report::GetInstance()->ReportOverloadInfo(infos);

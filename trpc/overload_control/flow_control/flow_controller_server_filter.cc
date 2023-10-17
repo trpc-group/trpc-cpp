@@ -35,15 +35,15 @@ int FlowControlServerFilter::Init() {
 
 std::vector<FilterPoint> FlowControlServerFilter::GetFilterPoint() {
   return {
-      FilterPoint::SERVER_POST_RECV_MSG,
-      // This tracking point is not used, but tracking points must be paired, so it is added here.
-      FilterPoint::SERVER_PRE_SEND_MSG,
+      FilterPoint::SERVER_PRE_SCHED_RECV_MSG,
+      // This tracking point is not being used, but tracking points must be paired, so it is added here.
+      FilterPoint::SERVER_POST_SCHED_RECV_MSG,
   };
 }
 
 void FlowControlServerFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
   switch (point) {
-    case FilterPoint::SERVER_POST_RECV_MSG: {
+    case FilterPoint::SERVER_PRE_SCHED_RECV_MSG: {
       OnRequest(status, context);
       break;
     }
