@@ -39,7 +39,7 @@ build --define trpc_include_overload_control=true
 
 ## Configuration file
 
-Concurrent request filter configuration. For detailed configuration reference, please refer to the [concurrency_overload_ctrl.yaml](../../trpc/overload_control/concurrency_limiter/concurrency_overload_ctrl.yaml)
+The configuration for the concurrent request filter is as follows(For detailed configuration reference, please refer to the [concurrency_overload_ctrl.yaml](../../trpc/overload_control/concurrency_limiter/concurrency_overload_ctrl.yaml)):
 
 ```yaml
 #Server configuration
@@ -74,9 +74,11 @@ The key points of the configuration are as follows：
 - concurrency_limiter: Name of the concurrent request overload protection filter
 - max_concurrency: Maximum concurrent requests configured for the user. When the current concurrent requests are greater than or equal to this value, the requests will be intercepted.
 - is_report: Whether to report monitoring data to the monitoring plugin. **Note that this configuration must be used together with a monitoring plugin (for example, configuring plugins->metrics->prometheus will report to Prometheus). If no monitoring plugin is configured, this option is meaningless**. The monitored data includes:
-  `max_concurrency`: Reported maximum concurrent request number in the configuration, used to check if the configuration is consistent with the program's execution.
-  `current_concurrency`: Current concurrent request number
-  `/{callee_name}/{method}`: Monitoring name format, composed of the callee service (`callee_name`) and method name (`method`), such as: `/trpc.test.helloworld.Greeter/SayHello`.
+  - `max_concurrency`: The maximum concurrent request number for reporting configuration is a fixed value used to check if the maximum request concurrency limit set in the program is effective.
+  - `current_concurrency`: The current concurrent request number for reporting is a dynamic value that represents the number of requests being processed concurrently at a given moment.
+  - `/{callee_name}/{method}`: The monitored RPC method name for reporting is a fixed value and is composed of the callee service name (callee_name) and the method name (method). For example: `/trpc.test.helloworld.Greeter/SayHello`.
+  - `Pass`：The pass status for an individual request: 0 means intercepted, and 1 means passed.
+  - `Limited`：The interception status for an individual request: 1 means intercepted, and 0 means passed. It is the opposite of the `Pass` monitoring attribute mentioned above.
 
 # FAQ
 

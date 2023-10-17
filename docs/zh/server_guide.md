@@ -248,4 +248,5 @@ tRPC-Cpp 是多线程的框架，只支持一种 fork 用法：fork with exec，
 
 ### 流控和过载保护
 
-* [基于并发请求的过载保护](./overload_control_concurrency_limiter.md)
+* [基于并发请求的过载保护插件](./overload_control_concurrency_limiter.md)
+* [基于并发 Fiber 个数的过载保护插件](./overload_control_filter_limiter)
