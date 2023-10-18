@@ -22,7 +22,7 @@ transfer `Transfer-Encoding: chunked`.
 
 *Note: The synchronous streaming interface needs to run in the `fiber` coroutine environment.*
 
-## Programming interfaces synchronous streaming
+## Programming interfaces about synchronous streaming
 
 ### Client stream reader writer by synchronous
 
@@ -91,7 +91,7 @@ Taking the Read interface as an example, tRPC provides two types of specific int
 Example: [upload_client.cc](../../examples/features/http_upload_download/client/upload_client.cc)
 
 The basic data uploading process involves the following steps: setting the length form/chunked form, sending the request
-header, reading the response header, writing data, and completing the write.
+header, writing data, completing the write, and reading the response header.
 
 * **Setting the length form/chunked form**
 
@@ -101,10 +101,6 @@ header, reading the response header, writing data, and completing the write.
 
   The client does not need to send the request header. tRPC does not provide this method. When the stream is obtained, tRPC-Cpp has already sent the request header.
 
-* **Reading the response header**
-
-  If the ReadHeaders interface is executed successfully, it means that the response header from the server has been received. The HTTP status code (200, 404, etc.) can be obtained from the http_code parameter. These constants are also defined in tRPC, such as ResponseStatus::kOk. The response header can be obtained from the http_header parameter.
-
 * **Writing data**
 
   The user can continuously send data fragments to the server through the Write interface. If the user is using chunked form, there is no need to encode the transmitted data with chunked. tRPC will handle it automatically. If the user is using length form, the Write interface will report the kStreamStatusClientWriteContentLengthError error if the data sent by the user exceeds the set length.
@@ -112,6 +108,10 @@ header, reading the response header, writing data, and completing the write.
 * **Completing the write**
 
   The user informs the reader/writer that all data has been sent through the WriteDone interface. If the user is using chunked form, the framework will send the chunked end flag to the server. If the user is using length form, the framework will check whether the length of the data sent by the user is consistent with the set length. If they are inconsistent, the kStreamStatusClientWriteContentLengthError error will be reported. Once the WriteDone interface is called, the user should not try to use the Write interface again.
+ 
+* **Reading the response header**
+
+  If the ReadHeaders interface is executed successfully, it means that the response header from the server has been received. The HTTP status code (200, 404, etc.) can be obtained from the http_code parameter. These constants are also defined in tRPC, such as ResponseStatus::kOk. The response header can be obtained from the http_header parameter.
 
 * Example code
 
@@ -293,10 +293,10 @@ Call `GetAsyncStreamReaderWriter` of `HttpStreamProxy` to obtain the stream read
   | Future&lt;NoncontiguousBuffer> ReadAtMost(uint64_t len, int timeout = max)  | Can be called in both length mode and chunk mode, and gets up to len length of data. </br>If the size of the data received from the network is smaller than len, return data of size. </br>If the size of the data received from the network is larger than len, return data of length len. </br>If the buffer is empty, it means EOF.</br>Scenario 1: Used in memory-limited situations, limiting the maximum read length each time.</br>Scenario 2: In relay mode, it can obtain data in a timely manner and send it downstream. | len in bytes, timeout (ms) |
   | Future&lt;NoncontiguousBuffer> ReadExactly(uint64_t len, int timeout = max) | Can be called in both length mode and chunk mode, and gets fixed length data of len. If EOF is read, it returns as much data as there is in the network. </br>If the size of the buffer read is smaller than len, it means EOF.</br>Special scenario 1: The requested data is compressed in fixed size and needs to be read in fixed size for decompression. | len in bytes, timeout (ms) |
   
-  * Client-side interfaces for writing complete requests and reading complete responses:
+* Client-side interfaces for writing complete requests and reading complete responses:
   
-    | Interface Signature                                                                                     | Function                                    | Parameters                                         |
-    |---------------------------------------------------------------------------------------------------------|---------------------------------------------|----------------------------------------------------|
-    | Future<> WriteFullRequest(HttpClientAsyncStreamWriterPtr rw, HttpRequest&& req)                         | Writes the complete request to the stream   | rw: Client-side stream reader/writer, timeout (ms) |
-    | Future&lt;HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderWriterPtr rw, int timeout = max) | Reads the complete response from the stream | rw: Client-side stream reader/writer, timeout (ms) |
+  | Interface Signature                                                                                     | Function                                    | Parameters                                         |
+  |---------------------------------------------------------------------------------------------------------|---------------------------------------------|----------------------------------------------------|
+  | Future<> WriteFullRequest(HttpClientAsyncStreamWriterPtr rw, HttpRequest&& req)                         | Writes the complete request to the stream   | rw: Client-side stream reader/writer, timeout (ms) |
+  | Future&lt;HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderWriterPtr rw, int timeout = max) | Reads the complete response from the stream | rw: Client-side stream reader/writer, timeout (ms) |
   
