@@ -3,8 +3,7 @@
 # Overview
 
 Currently, tRPC-Cpp supports two types of HTTP services: HTTP Standard Service and HTTP RPC Service (these names are
-used to
-differentiate between the two services).
+used to differentiate between the two services).
 
 > HTTP standard service: It is a regular HTTP service that does not use proto files to define the service interface.
 > Users need to write their own code to define the service interface and register URL routes.
@@ -160,7 +159,7 @@ Basic steps:
    After the application is started, we can access it through the following URLs.
 
    ```bash
-   # GET /foo HTTP1.1
+   # GET /foo HTTP/1.1
    # e.g: curl http://$ip:$port/foo 
    $ hello world!
    ```
@@ -474,7 +473,7 @@ class ApiUserHandler : public ::trpc::http::HttpHandler {
 
 #### Register `HttpController`
 
-Using the `HTTP_HANDLER` macro, users can easily register `Controller`-like interfaces to the route:
+Using the `TPRC_HTTP_HANDLER` macro, users can easily register `Controller`-like interfaces to the route:
 
 Note: `Controller` does not inherit the `HttpHandler` class, but only has the same interface signature.
 

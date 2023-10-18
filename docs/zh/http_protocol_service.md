@@ -10,7 +10,7 @@
 本文介绍如何基于 tRPC-Cpp （下面简称 tRPC）开发 [HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol)
 服务，开发者可以了解到如下内容：
 
-* 如何开发 HTTP 标准服务。
+* 如何开发 HTTP 标准服务
   * 快速上手：快速搭建一个 HTTP 服务。
   * 功能特性一览：RESTful；HTTPS。
   * 基础用法：获取请求、响应常用接口；配置请求路由规则。
@@ -110,7 +110,7 @@ class FooHandler : public ::trpc::http::HttpHandler {
 接口签名大致如下：
 
 ```cpp
-class trpc::http::HttpHandler {
+class HttpHandler {
  public:
   virtual ::trpc::Status Head(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp);
   virtual ::trpc::Status Get(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req, ::trpc::http::Response* rsp); 
@@ -155,7 +155,7 @@ class HttpdServer : public ::trpc::TrpcApp {
 应用程序启动后，可以通过如下如下 URL 访问。
 
 ```bash
-# GET /foo HTTP1.1
+# GET /foo HTTP/1.1
 # e.g: curl http://$ip:$port/foo 
 $ hello world!
 ```
@@ -523,7 +523,7 @@ HTTPS 是 HTTP over SSL 的简称，可以通过如下方式开启 SSL。
   | ciphers          | 加密套件     | 不限                                      | null              | `required` | 在启用 SSL 时，如果不正确设置，服务会启动失败   |
   | enable           | 是否启用SSL  | {true, false}                           | false             | optional   | 建议在配置项明确指定，明确意图             |
   | mutual_auth      | 是否启用双向认证 | {true, false}                           | false             | optional   | -                           |
-  | ca_cert_path     | CA证书路径   | 不限，xx/path/to/ca.pem                    | null              | optional   | 双向认证是开启有效                   |
+  | ca_cert_path     | CA证书路径   | 不限，xx/path/to/ca.pem                    | null              | optional   | 双向认证时开启有效                   |
   | protocols        | SSL协议版本  | {SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2} | TLSv1.1 + TLSv1.2 | optional   | -                           |
   
   举个例子：

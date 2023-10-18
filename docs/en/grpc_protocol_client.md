@@ -27,7 +27,7 @@ accessing a tRPC service:
 
 ## Call process
 
-* Get the `XxServiceProxyPtr` object `proxy`: use the `GetClient()->GetProxy<XxServiceProxy>(...)`.
+* Get the `XxServiceProxyPtr` object `proxy`: use the `GetTrpcClient()->GetProxy<XxServiceProxy>(...)`.
 
   ```cpp
   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>("xx_service_name")
@@ -84,9 +84,8 @@ Use the synchronous or asynchronous interface corresponding to the selected runt
       ::trpc::test::helloworld::HelloRequest req;
       req.set_msg("future");
       bool succ = true;
-      ::trpc::Latch latch(1);
-      proxy->AsyncSayHello(client_ctx, req)
-          .Then([&latch, &succ](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) {
+      auto fut = proxy->AsyncSayHello(client_ctx, req)
+          .Then([&succ](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) {
             if (fut.IsReady()) {
               auto rsp = fut.GetValue0();
               std::cout << "get rsp msg: " << rsp.msg() << std::endl;
@@ -95,10 +94,8 @@ Use the synchronous or asynchronous interface corresponding to the selected runt
               succ = false;
               std::cerr << "get rpc error: " << exception.what() << std::endl;
             }
-            latch.count_down();
             return ::trpc::MakeReadyFuture<>();
           });
-      latch.wait();
       return succ ? 0 : -1;
     }
     ```
