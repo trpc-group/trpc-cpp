@@ -40,7 +40,7 @@ The implementation of framework core mainly includes the following modules:
 - client: provides a concurrent and safe general-purpose client implementation, which is mainly responsible for operations related to rpc calls, service discovery, load balancing, circuit breaker, encoding and decoding, and custom filter. All parts support plugin extensions;
 - codec: provides codec-related interfaces, allowing the framework to expand multi protocols, serialization methods, data compression methods, etc.;
 - transport: provides the ability of network transmission, supports transmission methods such as tcp/udp/ssl/unix-socket;
-- runtime: provides the implementation of the framework runtime environment, encapsulates the thread model and io model, supports m:n coroutine (fiber) model, io and handle separation, and model thread model;
+- runtime: provides the implementation of the framework runtime environment, encapsulates the thread model and io model, supports m:n coroutine (fiber) model, io and handle separated and merged thread model;
 - filter: provides the definition of a custom filter, implements the extension capability, such as tracing, metrics, logreplay, etc.;
 
 The service governance plugin implementation mainly includes the following modules:
@@ -80,22 +80,22 @@ The request processing generally includes the following processes:
 1. The server transport calls the Acceptor to wait for the client to establish a connection;
 2. The client initiates a connection establishment request, and the server transport Accept returns a tcp connection;
 3. The server transport determines to dispatch the connection according to the current runtime environment (whether it is fiber runtime);
-     1. If it is a fiber runtime, then select a fiber scheduling group, which will be processed by the Fiber Reactor on the specific fiber scheduling group;
-     2. If not, then select an io thread to be handled by the Reactor of the specific io thread;
-4. Start the logic of receiving packets. The server transport reads the request continuously according to the codec protocol, compression method, and serialization method. Each request will create a msg, which includes the ServerContext of the request, and requests the msg to be handed over to the upper service deal with;
+     1. If it is a fiber runtime, then select a fiber scheduling group, of which the Fiber Reactor will processes the connection;
+     2. If not, then select an io thread, of which the Reactor will processes the connection;
+4. Start the logic of receiving packets. The server transport reads the request continuously according to the codec protocol, compression method, and serialization method. A msg including the ServerContext of the request will be created for each request, then handle the msg over to upper service for further processing;
 5. The service will find the corresponding registered processing function according to the rpc name of the msg, and call the corresponding processing function;
-6. Before calling the corresponding processing function, the filterchain must be executed first, and the end of the filterchain execution is the processing function of the rpc we registered;
-7. Serialize, compress, encode and decode the result of the response, and then return the packet to the client. The return method is divided into synchronous and asynchronous;
-     1. The synchronization method is that after the rpc processing function is executed, the result is directly processed and returned to the client, the default method;
-     2. The asynchronous method is that after the rpc processing function is executed, the package is not returned to the client, but the business itself is asynchronously processed, and the package can be returned by actively calling the framework's return package;
+6. Before calling the corresponding processing function, the filterchain must be executed first, and behind the filterchain execution is the processing function of the rpc we registered;
+7. Serialize, compress and encode the result of the response, and then return the packet to the client. The return method is divided into synchronous and asynchronous;
+     1. The synchronization method is that after the rpc processing function is executed, the result is directly processed and returned to the client, this is the default method;
+     2. The asynchronous method is that after the rpc processing function is executed, the package is not returned to the client, but returned by users by actively calling the framework's interface after asynchronous business logic;
 
 ### Exit
 
 The service exit process generally includes the following processes:
 
 1. Wait for all requests received by the server to be processed(To avoid being unable to exit due to waiting, the default maximum waiting time is set to 5 seconds.It can be configured through server::stop_max_wait_time);
-2. Stop the monitoring and reading events of the server network connection;
-3. Close the server network connection;
+2. Stop the listening and reading events of the server network connection;
+3. Close the server network connections;
 4. Call the `Destroy` method of the `TrpcApp` business subclass to stop the dynamic resources created by the business (for example: started threads);
 5. Stop the dynamic resources created by the plugins (for example: threads started inside the plugins);
 6. Stop the framework runtime environment runtime;
@@ -142,5 +142,4 @@ The workflow of the interceptor filter is as follows:
 
 ![fitler](../images/filter.png)
 
-The ultimate purpose of the interceptor is to allow business logic and framework
-Decoupling and allowing cohesive development of each. You can add or replace different plugin implementations through configuration without modifying the source code.
+The ultimate purpose of the interceptor is to allow business logic and framework decoupled and allow cohesive development of each. You can add or replace different plugin implementations through configuration without modifying the source code.

@@ -286,7 +286,7 @@ client:
 
 By the configuration, `Forward` service will use target(ip:port) to access the `HelloWorld` service.
 
-After setting the options of the ServiceProxy, then creating and using the ServiceProxy to access the helloworld service.
+After setting the options of the ServiceProxy, then create and use the ServiceProxy to access the helloworld service.
 
 First, add a constructor to the ForwardServiceServiceImpl class in file `./server/service.h`, and define a GreeterServiceProxy type smart pointer member variable.
 
@@ -400,7 +400,7 @@ global:
         handle_thread_num: 6
 ```
 
-You can choose to merge or separate threadmodel runtime. Here we take the separated threadmodel runtime as an example.
+You can choose to merge or separate threadmodel runtime. Here we take the separate threadmodel runtime as an example.
 
 For detailed separate or merge runtime configuration, please refer to [Framework Configuration](framework_config_full.md).
 
