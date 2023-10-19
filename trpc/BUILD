@@ -108,3 +108,9 @@ config_setting(
     name = "trpc_enable_http_transinfo_base64",
     values = {"define": "trpc_enable_http_transinfo_base64=true"},
 )
+
+# Enable debug fibers using gdb. Default close.
+config_setting(
+    name = "trpc_enable_gdb_debug_fiber",
+    values = {"define": "trpc_enable_gdb_debug_fiber=true"},
+)

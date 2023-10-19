@@ -23,9 +23,14 @@ cc_library(
     name = "stack_allocator_impl",
     srcs = ["stack_allocator_impl.cc"],
     hdrs = ["stack_allocator_impl.h"],
+    defines = [] + select({
+        "//trpc:trpc_enable_gdb_debug_fiber": ["TRPC_ENABLE_GDB_DEBUG_FIBER"],
+        "//conditions:default": [],
+    }),
     deps = [
         ":assembly",
         "//trpc/util:check",
+        "//trpc/util:deferred",
         "//trpc/util:likely",
         "//trpc/util/internal:never_destroyed",
     ],

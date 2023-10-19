@@ -342,6 +342,10 @@ trpc::StartFiberDetached([&] {
 
 ```
 
+# Debugging fibers using gdb
+
+See [gdb_plugin](../../trpc/tools/gdb_plugin/)
+
 # FAQ
 
 See more [Fiber FAQ](./fiber_faq.md)
