@@ -36,6 +36,9 @@ void SetFiberStackEnableGuardPage(bool flag);
 /// @brief Set the number of pooled memory stacks allocated through mmap used by fibers
 void SetFiberPoolNumByMmap(uint32_t fiber_pool_num_by_mmap);
 
+/// @brief Enable debug fiber using gdb
+void SetEnableGdbDebug(bool flag);
+
 /// @brief Pre-allocate a certain number of fiber memory stacks
 /// @return The number of successfully warmed up fiber memory blocks
 int PrewarmFiberPool(uint32_t fiber_num);

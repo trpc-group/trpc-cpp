@@ -86,6 +86,7 @@ void FiberThreadModel::Start() noexcept {
   fiber::detail::SetFiberStackSize(options_.stack_size);
   fiber::detail::SetFiberPoolNumByMmap(options_.pool_num_by_mmap);
   fiber::detail::SetFiberStackEnableGuardPage(options_.stack_enable_guard_page);
+  fiber::detail::SetEnableGdbDebug(options_.enable_gdb_debug);
 
   InitializeConcurrency();
   InitializeNumaAwareness();

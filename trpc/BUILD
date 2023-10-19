@@ -108,3 +108,4 @@ config_setting(
     name = "trpc_enable_http_transinfo_base64",
     values = {"define": "trpc_enable_http_transinfo_base64=true"},
 )
+

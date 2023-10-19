@@ -84,6 +84,9 @@ struct FiberThreadModelInstanceConfig {
   /// @brief Stack overflow protect
   bool fiber_stack_enable_guard_page{true};
 
+  /// @brief Enable debug fiber using gdb
+  bool enable_gdb_debug = false;
+
   void Display() const;
 };
 

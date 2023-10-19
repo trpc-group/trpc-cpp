@@ -342,6 +342,10 @@ trpc::StartFiberDetached([&] {
 
 ```
 
+# 使用gdb调试fiber
+
+查阅[gdb_plugin](../../trpc/tools/gdb_plugin/)
+
 # FAQ
 
 查阅[Fiber FAQ](./faq/fiber_problem.md)

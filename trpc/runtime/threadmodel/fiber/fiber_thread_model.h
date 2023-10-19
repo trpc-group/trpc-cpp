@@ -82,6 +82,9 @@ class FiberThreadModel final : public ThreadModel {
     /// Does the thread name displayed in the top command use the original process name, default is set by the
     /// framework.
     bool disable_process_name{true};
+
+    /// Enable debug fiber using gdb
+    bool enable_gdb_debug{false};
   };
 
   // `SchedulingGroup` and its workers (both fiber worker and timer worker).

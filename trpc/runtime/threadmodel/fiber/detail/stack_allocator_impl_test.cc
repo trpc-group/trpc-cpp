@@ -93,6 +93,7 @@ TEST(StackAllocatorImpl, InSameThreadBySystem) {
   SetFiberStackSize(fiber_stack_size);
   SetFiberStackEnableGuardPage(true);
   SetFiberPoolNumByMmap(30 * 1024);
+  SetEnableGdbDebug(true);
 
   uint32_t alloc_fiber_num = 65536;
   std::vector<FiberAllocResut> alloc_results;

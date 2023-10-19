@@ -26,6 +26,7 @@ cc_library(
     deps = [
         ":assembly",
         "//trpc/util:check",
+        "//trpc/util:deferred",
         "//trpc/util:likely",
         "//trpc/util/internal:never_destroyed",
     ],
