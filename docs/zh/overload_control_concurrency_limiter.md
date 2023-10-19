@@ -75,8 +75,8 @@ plugins:
 - concurrency_limiter：并发请求过载保护器的名称
 - max_concurrency：为用户配置的最大并发请求数，当当前并发请求大于等于该值的时候，会拦截请求
 - is_report：是否上报监控数据到监控插件，**注意，该配置必须与监控插件一起使用(例如配置：plugins->metrics->prometheus，则会上报到 prometheus 上)，如果没有配置监控插件，该选项无意义**，被监控数据有：
-  - `max_concurrency`: 上报配置的最大并发请求数，属于固定值，用于检查配置的最大请求并发数是否在程序中生效
-  - `current_concurrency`: 上报当前并发请求数，属于动态值
+  - `max_concurrency`：上报配置的最大并发请求数，属于固定值，用于检查配置的最大请求并发数是否在程序中生效
+  - `current_concurrency`：上报当前并发请求数，属于动态值
   - `/{callee_name}/{method}`: 上报监控的 RPC 方法名，属于固定值；由被调服务(callee_name)和方法名(method)组成，例如：`/trpc.test.helloworld.Greeter/SayHello`。
   - `Pass`：单个请求的通过状态，0：拦截；1：通过
   - `Limited`：单个请求的拦截状态，1：拦截；0：通过。与上面的 `Pass` 监控属性是相反的

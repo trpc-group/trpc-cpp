@@ -240,4 +240,5 @@ See [Transparent proxy](transparent_service.md).
 ### Flow-Control & Overload-Protect
 
 * See [Concurrent requests limiter](./overload_control_concurrency_limiter.md)
-* See [Concurrent fibers limiter](./overload_control_filter_limiter.md)
+* See [Concurrent fibers limiter](./overload_control_fiber_limiter.md)
+* See [Flow control limiter plugin](./overload_control_flow_limiter.md)

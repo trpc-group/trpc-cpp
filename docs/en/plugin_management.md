@@ -56,7 +56,8 @@ The framework takes inspiration from Java's Aspect-Oriented Programming (AOP) pa
 
     It provides the ability for flow controlling and overload protecting. For more details, please refer to the **documentation of customizing Flow-Control & Overload-Protect plugin**.
   * [Concurrent requests limiter](./overload_control_concurrency_limiter.md)
-  * [Concurrent fibers limiter](./overload_control_filter_limiter.md)
+  * [Concurrent fibers limiter](./overload_control_fiber_limiter.md)
+  * [Flow control limiter plugin](./overload_control_flow_limiter.md)
 
 ## Other features
 
