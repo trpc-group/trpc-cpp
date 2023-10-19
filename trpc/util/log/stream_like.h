@@ -28,7 +28,10 @@
   do {                                                                                                  \
     const auto& __TRPC_CPP_STREAM_LOGGER_INSTANCE__ = ::trpc::LogFactory::GetInstance()->Get();         \
     if (__TRPC_CPP_STREAM_LOGGER_INSTANCE__) {                                                          \
-      if (__TRPC_CPP_STREAM_LOGGER_INSTANCE__->ShouldLog(instance, level)) {                            \
+      bool should_log = (instance == ::trpc::log::kTrpcLogCacheStringDefault) ?                         \
+                        __TRPC_CPP_STREAM_LOGGER_INSTANCE__->ShouldLog(level) :                         \
+                        __TRPC_CPP_STREAM_LOGGER_INSTANCE__->ShouldLog(instance, level);                \
+      if (should_log) {                                                                                 \
         TRPC_LOG_TRY {                                                                                  \
           STREAM_APPENDER(msg);                                                                         \
           __TRPC_CPP_STREAM_LOGGER_INSTANCE__->LogIt(instance, level, __FILE__, __LINE__, __FUNCTION__, \
@@ -47,12 +50,14 @@
     }                                                                                                   \
   } while (0)
 
-/// @brief stream-like log macros
 #define TRPC_STREAM_EX(instance, level, context, msg)                                                       \
   do {                                                                                                      \
     const auto& __TRPC_CPP_STREAM_LOGGER_INSTANCE__ = ::trpc::LogFactory::GetInstance()->Get();             \
     if (__TRPC_CPP_STREAM_LOGGER_INSTANCE__) {                                                              \
-      if (__TRPC_CPP_STREAM_LOGGER_INSTANCE__->ShouldLog(instance, level)) {                                \
+      bool should_log = (instance == ::trpc::log::kTrpcLogCacheStringDefault) ?                             \
+                        __TRPC_CPP_STREAM_LOGGER_INSTANCE__->ShouldLog(level) :                             \
+                        __TRPC_CPP_STREAM_LOGGER_INSTANCE__->ShouldLog(instance, level);                    \
+      if (should_log) {                                                                                     \
         TRPC_LOG_TRY {                                                                                      \
           STREAM_APPENDER(msg);                                                                             \
           __TRPC_CPP_STREAM_LOGGER_INSTANCE__->LogIt(instance, level, __FILE__, __LINE__, __FUNCTION__,     \

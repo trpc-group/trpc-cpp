@@ -17,8 +17,6 @@
 
 #include "fmt/printf.h"
 
-//#include "trpc/client/client_context.h"
-//#include "trpc/server/server_context.h"
 #include "trpc/util/log/log.h"
 
 /// @brief printf-like log macros
@@ -26,7 +24,10 @@
   do {                                                                                                            \
     const auto& __TRPC_PRINTF_LIKE_INSTANCE__ = ::trpc::LogFactory::GetInstance()->Get();                         \
     if (__TRPC_PRINTF_LIKE_INSTANCE__) {                                                                          \
-      if (__TRPC_PRINTF_LIKE_INSTANCE__->ShouldLog(instance, level)) {                                            \
+      bool should_log = (instance == ::trpc::log::kTrpcLogCacheStringDefault) ?                                   \
+                        __TRPC_PRINTF_LIKE_INSTANCE__->ShouldLog(level) :                                         \
+                        __TRPC_PRINTF_LIKE_INSTANCE__->ShouldLog(instance, level);                                \
+      if (should_log) {                                                                                           \
         TRPC_LOG_TRY {                                                                                            \
           std::string __TRPC_PRINTF_LIKE_MSG__ = ::trpc::Log::LogSprintf(formats, ##args);                        \
           __TRPC_PRINTF_LIKE_INSTANCE__->LogIt(instance, level, __FILE__, __LINE__, __FUNCTION__,                 \
@@ -55,7 +56,10 @@
   do {                                                                                                    \
     const auto& p = ::trpc::LogFactory::GetInstance()->Get();                                             \
     if (p) {                                                                                              \
-      if (p->ShouldLog(instance, level)) {                                                                \
+      bool should_log = (instance == ::trpc::log::kTrpcLogCacheStringDefault) ?                           \
+                        p->ShouldLog(level) :                                                             \
+                        p->ShouldLog(instance, level);                                                    \
+      if (should_log) {                                                                                   \
         TRPC_LOG_TRY {                                                                                    \
           auto& filter_data = context->GetAllFilterData();                                                \
           std::string trpc_printf_like_msg = fmt::sprintf(formats, ##args);                               \

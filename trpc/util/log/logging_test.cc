@@ -33,7 +33,6 @@ class LoggingTest : public ::testing::Test {
   void SetUp() override {
     ASSERT_TRUE(ConfigHelper::GetInstance()->Init("trpc/util/log/testing/trpc_log_test.yaml"));
     ASSERT_TRUE(trpc::log::Init());
-
     auto log = LogFactory::GetInstance()->Get();
     ASSERT_NE(log, nullptr);
 
