@@ -197,9 +197,8 @@ class HttpWriteStream {
 
   enum HttpWriterState {
     kInitial = 0,
-    kContinueWritten = 1 << 0,
-    kHeaderWritten = 1 << 1,
-    kWriteDone = 1 << 2,
+    kHeaderWritten = 1 << 0,
+    kWriteDone = 1 << 1,
   };
 
   uint32_t state_{kInitial};

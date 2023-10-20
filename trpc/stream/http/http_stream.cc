@@ -82,14 +82,11 @@ Status HttpReadStream::AppendToRequest(size_t max_body_size) {
 Status HttpWriteStream::WriteHeader() {
   if (!(state_ & kHeaderWritten)) {
     NoncontiguousBufferBuilder builder;
-    if (response_->GetStatus() == http::Response::StatusCode::kContinue &&
-        !(state_ & kContinueWritten)) {  // response 100 Continue
+    if (response_->GetStatus() < http::Response::StatusCode::kOk) {  // 1xx informational response
       response_->ResponseFirstLine(builder);
       builder.Append(http::kEmptyLine);
-      return ContextStatusToStreamStatus(context_->SendResponse(builder.DestructiveGet()), [&] {
-        state_ |= kContinueWritten;
-        response_->SetStatus(http::HttpResponse::StatusCode::kOk);
-      });
+      return ContextStatusToStreamStatus(context_->SendResponse(builder.DestructiveGet()),
+                                         [&] { response_->SetStatus(http::HttpResponse::StatusCode::kOk); });
     } else {
       const std::string& content_length = response_->GetHeader(http::kHeaderContentLength);
       content_length_ = content_length.empty() ? kChunked : http::ParseContentLength(content_length).value_or(0);
