@@ -46,7 +46,7 @@ void HttpService::HandleTransportMessage(STransportReqMsg* recv, STransportRspMs
     } else {
       HandleError(context, req, rsp, status);
     }
-  } else {  // Streaming handler.
+  } else {  // stream handler
     rsp.EnableStream(context.get());
     Handle(uri_path, handler, context, req, rsp, send);
     rsp.GetStream().Close();
