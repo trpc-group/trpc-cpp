@@ -39,16 +39,14 @@ void HttpService::HandleTransportMessage(STransportReqMsg* recv, STransportRspMs
   std::string uri_path = trpc::http::NormalizeUrl(req->GetRouteUrlView());
 
   http::HandlerBase* handler = routes_.GetHandler(uri_path, req);
-  if (!handler) {  // 404 Not Found.
-    Handle(uri_path, handler, context, req, rsp, send);
-  } else if (!handler->IsStream()) {  // Non-streaming handler.
+  if (!handler || !handler->IsStream()) {  // path not found or non-stream handler
     Status status = req_stream.AppendToRequest(req->GetMaxBodySize());
     if (status.OK()) {
       Handle(uri_path, handler, context, req, rsp, send);
     } else {
       HandleError(context, req, rsp, status);
     }
-  } else {  // Streaming handler.
+  } else {  // stream handler
     rsp.EnableStream(context.get());
     Handle(uri_path, handler, context, req, rsp, send);
     rsp.GetStream().Close();
