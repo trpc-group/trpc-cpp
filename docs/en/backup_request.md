@@ -2,7 +2,7 @@
 
 # Overview
 
-Sometimes, to ensure availability or reduce tail latency, it is necessary to simultaneously access two services and take the response from whichever arrives first. There are generally two approaches to implementing this functionality:
+Sometimes, to ensure availability or reduce tail latency, it is necessary to simultaneously access two services and take the response from whichever arrives first. There are generally two approaches to implement this functionality:
 
 1. Concurrently send two requests and take the result from the one that returns first.
 2. Set a reasonable resend time. If a request times out or fails

@@ -2,7 +2,7 @@
 
 # Overview
 
-The tRPC-Cpp comes with a built-in management service based on the HTTP protocol, providing a set of operational management interfaces for users to view and modify the status of the service. Users can invoke these management commands through a web browser or by constructing HTTP requests manually.
+The tRPC-Cpp comes with a built-in management service based on HTTP protocol, providing a set of operation and management interfaces for users to view and modify the status of services. Users can invoke these management commands through a web browser or by constructing HTTP requests manually.
 
 This document introduces the usage of the management service, where developers can learn the following topics:
 
@@ -34,13 +34,13 @@ server:
 
 The framework provides a set of built-in management commands that allow users to conveniently view and modify the service status.
 
-## The way to access
+## The ways to access
 
 The framework's built-in management commands can be invoked in two ways.
 
-### Access via a web browser
+### Access via web browser
 
-Users can enter `http://admin_ip:admin_port` in a web browser to access the web homepage of the tRPC-Cpp management service. From there, you can click on the corresponding links for each module to perform operations.
+Users can enter `http://admin_ip:admin_port` in a web browser to access the web homepage of the tRPC-Cpp management service. From there, users can click on the corresponding links for each module to perform operations.
 
 ![main page](../images/admin_main_page.png)
 
@@ -53,9 +53,9 @@ The functionality of each module on the homepage is described as follows.
 | heap | View the memory usage. |
 | logs | View and modify the log level of the framework. |
 | stats | View the server-side statistics such as connection count, request count, latency information, etc. |
-| sysvars | View the system resource information, such as CPU configuration, load, IO, and memory usage of current process, etc. |
+| sysvars | View the system resource information, such as CPU configuration, load, IO and memory usage of current process, etc. |
 
-### Invoke by constructing HTTP requests manually
+### Access via constructing HTTP requests manually
 
 Users can construct HTTP requests manually to invoke the management commands provided by the framework, for example, by using the curl tool. The list of available management commands for invocation is as follows.
 
@@ -277,7 +277,7 @@ The statistical variables currently provided by the framework are as follows.
 
 #### The way to enable
 
-**By default, tRPC-Cpp does not allow CPU and memory usage information to be collected through management commands. If you need to collect related information, you need to add the "TRPC_ENABLE_PROFILER" macro definition and link "tcmalloc_and_profiler" when compiling the program.**
+**By default, tRPC-Cpp does not allow CPU and memory usage information to be collected through management commands. If related information needs to be collected, users need to add the "TRPC_ENABLE_PROFILER" macro definition and link "tcmalloc_and_profiler" when compiling the program.**
 
 Below, we will introduce the ways to enable this feature in Bazel and CMake, respectively.
 
@@ -298,14 +298,14 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
 
     Using this compilation option will automatically define the "TRPC_ENABLE_PROFILER" macro, but users need to manually link "libtcmalloc_and_profiler".
 
-    For example, if the user's "libtcmalloc_and_profiler.so" is located in the "/user-path/lib" directory, you can add the compilation option in the .bazelrc file like this:
+    For example, if the user's "libtcmalloc_and_profiler.so" is located in the "/user-path/lib" directory, add the compilation option in the .bazelrc file like this:
 
     ```sh
     # In the .bazelrc file
     build --define trpc_enable_profiler_v2=true
     ```
 
-    And Then link the "libtcmalloc_and_profiler" in the BUILD file of the server:
+    And then link the "libtcmalloc_and_profiler" in the BUILD file of the server:
 
     ```bzl
     cc_binary(
@@ -320,14 +320,14 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
 
 3. Define the "TRPC_ENABLE_PROFILER" macro and link "tcmalloc_and_profiler" manually.
 
-    For example, you can add the compilation macro in the .bazelrc file like this:
+    For example, add the compilation macro in the .bazelrc file like this:
 
     ```sh
     # In the .bazelrc file
     build --copt='-DTRPC_ENABLE_PROFILER'
     ```
 
-    And Then link the "libtcmalloc_and_profiler" in the BUILD file of the server:
+    And then link the "libtcmalloc_and_profiler" in the BUILD file of the server:
 
     ```bzl
     cc_binary(
@@ -342,7 +342,7 @@ Below, we will introduce the ways to enable this feature in Bazel and CMake, res
 
 ##### CMake
 
-You need to define "TRPC_ENABLE_PROFILER" and link "tcmalloc_and_profiler" in the CMakeLists.txt file.
+Users need to define "TRPC_ENABLE_PROFILER" and link "tcmalloc_and_profiler" in the CMakeLists.txt file.
 
 ```cmake
 # define "TRPC_ENABLE_PROFILER"
@@ -464,7 +464,7 @@ $ curl http://admin_ip:admin_port/client_detach -X POST -d 'service_name=trpc.ap
 
 # Custom management commands
 
-The tRPC-Cpp allows users to customize and register management commands to perform additional management operations as needed by the user. For specific usage examples, please refer to the [admin example](../../examples/features/admin/proxy/).
+The tRPC-Cpp allows users to customize and register management commands to perform additional management operations as needed. For specific usage examples, please refer to the [admin example](../../examples/features/admin/proxy/).
 
 Usage:
 
@@ -494,7 +494,7 @@ Usage:
     You can choose to override the `CommandHandle` interface or the `Handle` interface to implement the control logic.
 
     * CommandHandle: It can conveniently return data in JSON format, suitable for commands accessed through the command line.
-    * Handle: It allows flexible control over the format of the returned results, for example, returning data in HTML format.
+    * Handle: It allows flexible control over the format of the returned results, for example, return data in HTML format.
 
     Example:
 
