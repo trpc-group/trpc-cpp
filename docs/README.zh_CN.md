@@ -55,6 +55,7 @@
       * [开发自定义metrics插件](./zh/custom_metrics.md)
       * [prometheus](./zh/prometheus_metrics.md)
     * Logging插件
+      * [本地日志工具](./zh/local_logging.md)
       * [开发自定义logging插件](./zh/custom_logging.md)
       * [cls](https://github.com/trpc-ecosystem/cpp-logging-cls/blob/main/README.zh_CN.md)
     * Tracing插件

@@ -83,6 +83,11 @@ class Log : public RefCounted<Log> {
   /// @private For internal use purpose only.
   virtual bool ShouldLog(const char* instance_name, Level level) const = 0;
 
+  /// @brief Determine whether the log level of the tRPC-Cpp framework instance meets the requirements for printing this log.
+  /// @param  level         Log instance level
+  /// @return true/false
+  virtual bool ShouldLog(Level level) const = 0;
+
   /// @brief  Output log to a sink instance.
   /// @param  instance_name Log instance name
   /// @param  level         Log instance level

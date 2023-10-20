@@ -26,7 +26,10 @@
   do {                                                                                            \
     const auto& __TRPC_PYTHON_LIKE_INSTANCE__ = ::trpc::LogFactory::GetInstance()->Get();         \
     if (__TRPC_PYTHON_LIKE_INSTANCE__) {                                                          \
-      if (__TRPC_PYTHON_LIKE_INSTANCE__->ShouldLog(instance, level)) {                            \
+      bool should_log = (instance == ::trpc::log::kTrpcLogCacheStringDefault) ?                   \
+                        __TRPC_PYTHON_LIKE_INSTANCE__->ShouldLog(level) :                         \
+                        __TRPC_PYTHON_LIKE_INSTANCE__->ShouldLog(instance, level);                \
+      if (should_log) {                                                                           \
         TRPC_LOG_TRY {                                                                            \
           __TRPC_PYTHON_LIKE_INSTANCE__->LogIt(instance, level, __FILE__, __LINE__, __FUNCTION__, \
                                                ::trpc::Log::LogFormat(formats, ##args));          \
@@ -53,7 +56,10 @@
   do {                                                                                                            \
     const auto& p = ::trpc::LogFactory::GetInstance()->Get();                                                     \
     if (p) {                                                                                                      \
-      if (p->ShouldLog(instance, level)) {                                                                        \
+      bool should_log = (instance == ::trpc::log::kTrpcLogCacheStringDefault) ?                                   \
+                        p->ShouldLog(level) :                                                                     \
+                        p->ShouldLog(instance, level);                                                            \
+      if (should_log) {                                                                                           \
         TRPC_LOG_TRY {                                                                                            \
           auto& filter_data = context->GetAllFilterData();                                                        \
           p->LogIt(instance, level, __FILE__, __LINE__, __FUNCTION__, fmt::format(formats, ##args), filter_data); \

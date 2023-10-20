@@ -56,6 +56,7 @@ English | [中文](README.zh_CN.md)
       * [custom metrics plugin](./en/custom_metrics.md)
       * [prometheus](./en/prometheus_metrics.md)
     * Logging
+      * [local logging tools](./en/local_logging.md)
       * [custom logging plugin](./en/custom_logging.md)
       * [cls](https://github.com/trpc-ecosystem/cpp-logging-cls/blob/main/README.md)
     * Tracing

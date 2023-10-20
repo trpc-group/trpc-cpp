@@ -53,6 +53,17 @@ bool DefaultLog::ShouldLog(const char* instance_name, Level level) const {
   return level >= instance.config.min_level;
 }
 
+bool DefaultLog::ShouldLog(Level level) const {
+  if (!inited_) {
+    std::cerr << "DefaultLog not inited" << std::endl;
+    return false;
+  }
+  if (!inited_trpc_logger_instance_) {
+    return false;
+  }
+  return level >= trpc_logger_instance_.config.min_level;
+}
+
 void DefaultLog::LogIt(const char* instance_name, Level level, const char* filename_in, int line_in,
                        const char* funcname_in, std::string_view msg,
                        const std::unordered_map<uint32_t, std::any>& filter_data) const {
@@ -60,19 +71,30 @@ void DefaultLog::LogIt(const char* instance_name, Level level, const char* filen
     std::cerr << "DefaultLog not inited" << std::endl;
     return;
   }
-  auto iter = instances_.find(instance_name);
-  if (iter == instances_.end()) {
-    std::cerr << "DefaultLog instance" << instance_name << " does not exit" << std::endl;
-    return;
-  }
-  const auto& instance = iter->second;
 
-  if (instance.logger) {
-    instance.logger->log(spdlog::source_loc{filename_in, line_in, funcname_in}, SpdLevel(level), msg);
+  const DefaultLog::Logger* instance = nullptr;
+  // It is preferred if it is the output of the tRPC-Cpp framework log
+  if (instance_name == kTrpcLogCacheStringDefault) {
+    if (inited_trpc_logger_instance_ == false) {
+      std::cerr << "DefaultLog instance:" << kTrpcLogCacheStringDefault << "does not exit" << std::endl;
+      return ;
+    }
+    instance = &trpc_logger_instance_;
+  } else {
+    auto iter = instances_.find(instance_name);
+    if (iter == instances_.end()) {
+      std::cerr << "DefaultLog instance: " << instance_name << " does not exit" << std::endl;
+      return;
+    }
+    instance = &iter->second;
+  }
+
+  if (instance->logger) {
+    instance->logger->log(spdlog::source_loc{filename_in, line_in, funcname_in}, SpdLevel(level), msg);
   }
 
   // Output to a remote plugin (if available)
-  for (const auto& sink : instance.raw_sinks) {
+  for (const auto& sink : instance->raw_sinks) {
     sink->Log(level, filename_in, line_in, funcname_in, msg, filter_data);
   }
 }
@@ -177,6 +199,11 @@ LoggingPtr& DefaultLog::GetRawSink(const char* raw_sink_name, const char* logger
 }
 
 void DefaultLog::RegisterInstance(const char* instance_name, DefaultLog::Logger logger) {
+  // The tRPC-Cpp framework logging instance has been configured
+  if (instance_name == kTrpcLogCacheStringDefault) {
+    trpc_logger_instance_ = logger;
+    inited_trpc_logger_instance_ = true;
+  }
   instances_[instance_name] = std::move(logger);
 }
 
