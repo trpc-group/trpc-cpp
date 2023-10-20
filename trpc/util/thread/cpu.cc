@@ -267,7 +267,7 @@ std::size_t GetNumberOfProcessorsConfigured() {
 
 bool IsInaccessibleProcessorPresent() { return inaccessible_cpus_present; }
 
-bool IsProcessorAccessible(unsigned cpu) { return node_of_cpus[cpu] != -1; }
+bool IsProcessorAccessible(unsigned cpu) { return cpu < node_of_cpus.size() && node_of_cpus[cpu] != -1; }
 
 std::optional<std::vector<unsigned>> TryParseProcesserList(const std::string& s) {
   std::vector<unsigned> result;
