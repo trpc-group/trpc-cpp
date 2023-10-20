@@ -25,7 +25,7 @@ You can use it:
 
     Conventional framework performance test data is only performance data in relatively simple scenarios, and does not represent good performance in real and different business scenarios. Considering that Tencent has many different business scenarios, the requirements for framework performance are also different, for example:
 
-  - business accesses gateway scenarios: the feature is that the business logic is light, hign qps, large number of connections (long/short connections), heavy network io operations, and asynchronous programming is often used for programming;
+  - business accesses gateway scenarios: the feature is that the business logic is light, high qps, large number of connections (long/short connections), heavy network io operations, and asynchronous programming is often used for programming;
   - recommendation/search scenarios: the feature is that the business logic is heavy, the qps is not large, each request needs to be calculated in parallel, pay attention to the long tail delay, and the programming often use synchronous programming;
   - game business scenarios: the feature is that logic very complex and  has stateful, large qps, single-threaded programming, and use synchronous programming;
   - storage scenarios:  the feature is that the business logic is light, large qps, low latency requirement, heavy network io and disk io operations, and asynchronous programming is often used for programming;

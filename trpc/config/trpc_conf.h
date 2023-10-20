@@ -37,8 +37,8 @@ void Destroy();
 
 /// Example usage:
 /// @code{.cpp}
-/// auto db_cfg = trpc::config::Load("test.yaml", trpc::config::WithCodec("yaml"),
-/// trpc::config::WithProvider("rainbow1")); std::string username = db_cfg.GetString("username", "trpc-db1");
+/// auto db_cfg = trpc::config::Load("test.yaml", trpc::config::WithCodec("yaml");
+/// trpc::config::WithProvider("my_provider1")); std::string username = db_cfg.GetString("username", "trpc-db1");
 /// std::string password = db_cfg.GetString("password", "123456");
 /// @endcode
 template <typename... Args>

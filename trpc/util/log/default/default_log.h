@@ -76,6 +76,11 @@ class DefaultLog : public Log {
   /// @return true/false
   bool ShouldLog(const char* instance_name, Level level) const override;
 
+  /// @brief Determine whether the log level of the tRPC-Cpp framework instance meets the requirements for printing this log.
+  /// @param  level         Log instance level
+  /// @return true/false
+  bool ShouldLog(Level level) const override;
+
   /// @brief  Output log to a sink instance.
   void LogIt(const char* instance_name, Level level, const char* filename_in, int line_in, const char* funcname_in,
              std::string_view msg, const std::unordered_map<uint32_t, std::any>& filter_data = {}) const override;
@@ -108,6 +113,11 @@ class DefaultLog : public Log {
     // Add the new sink to the logger's sinks
     instance.logger->sinks().push_back(sink->SpdSink());
 
+    // The tRPC-Cpp framework logging instance has been configured
+    if (!strcmp(logger_name, "default")) {
+      inited_trpc_logger_instance_ = true;
+      trpc_logger_instance_ = instance;
+    }
     return true;
   }
 
@@ -147,6 +157,13 @@ class DefaultLog : public Log {
 
   // Initialization flags
   bool inited_{false};
+
+  // Whether the tRPC-Cpp framework logging instance is configured
+  // If false, all framework logging will be logged to the console
+  bool inited_trpc_logger_instance_{false};
+
+  // tRPC-Cpp framework logger instance
+  DefaultLog::Logger trpc_logger_instance_;
 
   // Collection of log instances
   std::unordered_map<std::string, Logger> instances_;

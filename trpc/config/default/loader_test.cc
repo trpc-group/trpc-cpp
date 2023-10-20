@@ -1,3 +1,16 @@
+//
+//
+// Tencent is pleased to support the open source community by making tRPC available.
+//
+// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// All rights reserved.
+//
+// If you have downloaded a copy of the tRPC source code from Tencent,
+// please note that tRPC source code is licensed under the  Apache 2.0 License,
+// A copy of the Apache 2.0 License is included in this file.
+//
+//
+
 #include "trpc/config/default/loader.h"
 
 #include "gtest/gtest.h"
@@ -56,22 +69,23 @@ TEST_F(TestLoader, LoadSuccessful) {
 TEST_F(TestLoader, LoadUnsuccessful) {
   std::string invalid_configuration_path = "path/to/your/invalid/configuration/file";
 
-  EXPECT_DEATH(config::DefaultConfigPtr cfg = config::detail::Load(
-                   invalid_configuration_path,
-                   {config::WithCodec("UnknownCodecPlugin"), config::WithProvider("UnknownProviderPlugin")}),
-               "assertion failed: codec != nullptr && \"Codec not found!\"");
+  // Both codec and provider are not registered
+  EXPECT_DEATH(config::detail::Load(invalid_configuration_path,
+                                    {config::WithCodec("UnknownCodecPlugin"),
+                                     config::WithProvider("UnknownProviderPlugin")}),
+               "Codec not found!");
 
   // codec is correct, but provider is not registered
-  EXPECT_DEATH(config::DefaultConfigPtr cfg = config::detail::Load(
-                   invalid_configuration_path,
-                   {config::WithCodec("TestCodecPlugin"), config::WithProvider("UnknownProviderPlugin")}),
-               "assertion failed: provider != nullptr && \"Provider not found!\"");
+  EXPECT_DEATH(config::detail::Load(invalid_configuration_path,
+                                    {config::WithCodec("TestCodecPlugin"),
+                                     config::WithProvider("UnknownProviderPlugin")}),
+               "Provider not found!");
 
-  // codec is correct, but provider is not registered
-  EXPECT_DEATH(config::DefaultConfigPtr cfg = config::detail::Load(
-                   invalid_configuration_path,
-                   {config::WithCodec("UnknownCodecPlugin"), config::WithProvider("TestProviderPlugin")}),
-               "assertion failed: codec != nullptr && \"Codec not found!\"");
+  // codec is not registered, but provider is correct
+  EXPECT_DEATH(config::detail::Load(invalid_configuration_path,
+                                    {config::WithCodec("UnknownCodecPlugin"),
+                                     config::WithProvider("TestProviderPlugin")}),
+               "Codec not found!");
 }
 
 }  // namespace trpc::testing

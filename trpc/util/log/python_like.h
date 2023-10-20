@@ -21,6 +21,30 @@
 
 #include "trpc/util/log/log.h"
 
+/// @brief python-like style log macros for  tRPC-Cpp framework log
+#define TRPC_FMT_DEFAULT(instance, level, formats, args...)                                       \
+  do {                                                                                            \
+    const auto& __TRPC_PYTHON_LIKE_INSTANCE__ = ::trpc::LogFactory::GetInstance()->Get();         \
+    if (__TRPC_PYTHON_LIKE_INSTANCE__) {                                                          \
+      if (__TRPC_PYTHON_LIKE_INSTANCE__->ShouldLog(level)) {                                      \
+        TRPC_LOG_TRY {                                                                            \
+          __TRPC_PYTHON_LIKE_INSTANCE__->LogIt(instance, level, __FILE__, __LINE__, __FUNCTION__, \
+                                               ::trpc::Log::LogFormat(formats, ##args));          \
+        }                                                                                         \
+        TRPC_LOG_CATCH(instance)                                                                  \
+      }                                                                                           \
+    } else {                                                                                      \
+      if (::trpc::Log::ShouldNoLog(instance, level)) {                                            \
+        TRPC_LOG_TRY {                                                                            \
+          ::trpc::Log::NoLog(instance, level, __FILE__, __LINE__, __FUNCTION__,                   \
+                             ::trpc::Log::LogFormat(formats, ##args));                            \
+        }                                                                                         \
+        TRPC_LOG_CATCH(instance)                                                                  \
+      }                                                                                           \
+    }                                                                                             \
+  } while (0)
+
+
 /// @brief python-like style log macros
 #define TRPC_FMT(instance, level, formats, args...)                                               \
   do {                                                                                            \

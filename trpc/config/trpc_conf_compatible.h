@@ -30,9 +30,9 @@ namespace trpc::config {
 /// This method is provided for compatibility with the legacy framework configuration loading method,
 /// but is not recommended for use.
 /// Usage: first get the configuration content, then use the specific interface to parse it:
-/// For example, auto yaml_result = trpc::config::Loadconfig<YAML::Node>(rainbow, myconf.conf);
+/// For example, auto yaml_result = trpc::config::LoadConfig<YAML::Node>(my_provider, myconf.conf);
 /// @brief Fetches the configuration from the configuration center.
-/// @param plugin_name (old)The name of the configuration plugin, like rainbow.
+/// @param plugin_name (old)The name of the configuration plugin.
 /// @param config_name (old)The name of the configuration file to be loaded.
 /// @param params Any type of expandable parameters.
 /// @return Returns the configuration in the format of the template type T, such as Json::Value or std::map.

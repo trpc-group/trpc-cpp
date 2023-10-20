@@ -136,3 +136,13 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "config_test",
+    srcs = ["config_test.cc"],
+    deps = [
+        "//trpc/config/testing:mock_config",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

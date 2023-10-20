@@ -28,7 +28,7 @@ class TrpcConf {
  public:
   /// @brief Loads the text configuration of a file type
   /// @param plugin_name The name of the configuration plugin
-  /// @param config_name The name of the configuration file, "group" for rainbow and the configuration name for tconf
+  /// @param config_name The Group name
   /// @param result The loaded text configuration content
   /// @param params The configuration request information
   /// @return bool true: if the configuration is loaded successfully
@@ -54,7 +54,7 @@ class TrpcConf {
 
   /// @brief Loads all key-value pairs of a kv type configuration
   /// @param plugin_name The name of the configuration plugin
-  /// @param config_name The name of the kv configuration file, "group" for rainbow and the configuration name for tconf
+  /// @param config_name The Group name
   /// @param result The loaded key-value pairs content
   /// @param params The configuration request information
   /// @return bool true: if the configuration is loaded successfully
@@ -79,7 +79,7 @@ class TrpcConf {
 
   /// @brief Loads a single key-value pair of a kv type configuration
   /// @param plugin_name The name of the configuration plugin
-  /// @param config_name The name of the kv configuration file, "group" for rainbow and the configuration name for tconf
+  /// @param config_name The Group name
   /// @param key The name of the key to be loaded
   /// @param result The loaded value of the specified key
   /// @param params The configuration request information
