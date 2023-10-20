@@ -90,7 +90,7 @@ void FiberThreadModel::Start() noexcept {
   InitializeConcurrency();
   InitializeNumaAwareness();
 
-  bool is_scheduling_group_size_setted = options_.scheduling_group_size != 0;
+  bool is_scheduling_group_size_set = options_.scheduling_group_size != 0;
   InitializeSchedulingGroupSize();
 
   // If CPU migration is explicit disallowed, we need to make sure there are
@@ -107,7 +107,7 @@ void FiberThreadModel::Start() noexcept {
   if (options_.numa_aware) {
     StartWorkersNuma();
   } else {
-    StartWorkersUma(is_scheduling_group_size_setted);
+    StartWorkersUma(is_scheduling_group_size_set);
   }
 
   // Fill `flatten_scheduling_groups_`.
@@ -268,9 +268,9 @@ void FiberThreadModel::InitializeForeignSchedulingGroups(
   }
 }
 
-void FiberThreadModel::StartWorkersUma(bool is_scheduling_group_size_setted) {
+void FiberThreadModel::StartWorkersUma(bool is_scheduling_group_size_set) {
   std::uint64_t groups = 1;
-  if (is_scheduling_group_size_setted) {
+  if (is_scheduling_group_size_set) {
     groups = options_.concurrency_hint < options_.scheduling_group_size
                  ? 1
                  : DivideRoundUp(options_.concurrency_hint, options_.scheduling_group_size);
