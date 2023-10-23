@@ -29,7 +29,7 @@ StreamReaderWriterProviderPtr HttpServerAsyncStreamHandler::CreateStream(StreamO
     return nullptr;
   }
 
-  ServerContextPtr& context = std::any_cast<ServerContextPtr&>(options.context.context);
+  ServerContextPtr context = std::any_cast<ServerContextPtr>(options.context.context);
   options.connection_id = GetMutableStreamOptions()->connection_id;
   stream_ = MakeRefCounted<HttpServerAsyncStream>(std::move(options));
   context->SetStreamReaderWriterProvider(stream_);
