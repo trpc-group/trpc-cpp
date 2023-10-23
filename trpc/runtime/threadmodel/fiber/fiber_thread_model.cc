@@ -32,6 +32,8 @@ namespace trpc::fiber {
 
 namespace {
 
+const std::vector<unsigned> kNoAffinity;
+
 std::uint64_t DivideRoundUp(std::uint64_t divisor, std::uint64_t dividend) {
   return divisor / dividend + (divisor % dividend != 0);
 }
@@ -88,7 +90,7 @@ void FiberThreadModel::Start() noexcept {
   InitializeConcurrency();
   InitializeNumaAwareness();
 
-  bool is_scheduling_group_size_setted = options_.scheduling_group_size != 0;
+  bool is_scheduling_group_size_set = options_.scheduling_group_size != 0;
   InitializeSchedulingGroupSize();
 
   // If CPU migration is explicit disallowed, we need to make sure there are
@@ -105,7 +107,7 @@ void FiberThreadModel::Start() noexcept {
   if (options_.numa_aware) {
     StartWorkersNuma();
   } else {
-    StartWorkersUma(is_scheduling_group_size_setted);
+    StartWorkersUma(is_scheduling_group_size_set);
   }
 
   // Fill `flatten_scheduling_groups_`.
@@ -266,28 +268,33 @@ void FiberThreadModel::InitializeForeignSchedulingGroups(
   }
 }
 
-void FiberThreadModel::StartWorkersUma(bool is_scheduling_group_size_setted) {
+void FiberThreadModel::StartWorkersUma(bool is_scheduling_group_size_set) {
   std::uint64_t groups = 1;
-  if (is_scheduling_group_size_setted) {
+  if (is_scheduling_group_size_set) {
     groups = options_.concurrency_hint < options_.scheduling_group_size
-                    ? 1
-                    : DivideRoundUp(options_.concurrency_hint, options_.scheduling_group_size);
+                 ? 1
+                 : DivideRoundUp(options_.concurrency_hint, options_.scheduling_group_size);
   }
   TRPC_FMT_DEBUG("Starting {} worker threads per group, for a total of {} groups.", options_.scheduling_group_size,
                  groups);
   TRPC_FMT_WARN_IF(options_.worker_disallow_cpu_migration && GetFiberWorkerAccessibleNodes().size() > 1,
                    "CPU migration of fiber worker is disallowed, and we're trying to start "
                    "in UMA way on NUMA architecture. Performance will likely degrade.");
+  const auto& cpus = GetFiberWorkerAccessibleCPUs();
+  TRPC_FMT_WARN_IF(options_.worker_disallow_cpu_migration && cpus.size() < GetNumberOfProcessorsAvailable(),
+                   "CPU migration of fiber worker is disallowed, and we're trying to start "
+                   "with CPU {} in the system. Enable migration if affinity is not desired.",
+                   StringifyCPUs(cpus));
 
   for (std::size_t index = 0; index != groups; ++index) {
     if (!options_.worker_disallow_cpu_migration) {
-      scheduling_groups_[0].push_back(CreateFullyFledgedSchedulingGroup(0, index, GetFiberWorkerAccessibleCPUs()));
+      scheduling_groups_[0].push_back(CreateFullyFledgedSchedulingGroup(
+          0, index, cpus.size() < GetNumberOfProcessorsAvailable() ? cpus : kNoAffinity));
     } else {
       // Each group of processors is dedicated to a scheduling group.
       //
       // Later when we start the fiber workers, we'll instruct them to set their
       // affinity to their dedicated processors.
-      auto&& cpus = GetFiberWorkerAccessibleCPUs();
       TRPC_CHECK_LE((index + 1) * options_.scheduling_group_size, cpus.size());
       scheduling_groups_[0].push_back(
           CreateFullyFledgedSchedulingGroup(0, index,
@@ -383,16 +390,17 @@ std::vector<unsigned> FiberThreadModel::GetFiberWorkerAccessibleCPUsImpl() {
   }
 
   auto affinity = GetCurrentThreadAffinity();
-  if (affinity.size() && affinity.size() != GetNumberOfProcessorsConfigured()) {
-    return affinity;
+  if (affinity.empty()) {
+    affinity.resize(GetNumberOfProcessorsConfigured());
+    std::iota(affinity.begin(), affinity.end(), 0);
   }
 
   std::vector<unsigned> result;
-  for (std::size_t i = 0; i != GetNumberOfProcessorsConfigured(); ++i) {
-    if (IsProcessorAccessible(i)) {
-      result.push_back(i);
-    } else {  // Containerized environment otherwise?
-      TRPC_FMT_DEBUG("Processor #{} is not accessible to us, ignored.", i);
+  for (unsigned cpu : affinity) {
+    if (IsProcessorAccessible(cpu)) {
+      result.push_back(cpu);
+    } else {  // containerized environment?
+      TRPC_FMT_DEBUG("Processor #{} is not accessible to us, ignored.", cpu);
     }
   }
   return result;

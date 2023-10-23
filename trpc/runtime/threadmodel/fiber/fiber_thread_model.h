@@ -139,7 +139,7 @@ class FiberThreadModel final : public ThreadModel {
   void InitializeConcurrency();
   void InitializeNumaAwareness();
   void InitializeSchedulingGroupSize();
-  void StartWorkersUma(bool is_scheduling_group_size_setted);
+  void StartWorkersUma(bool is_scheduling_group_size_set);
   void StartWorkersNuma();
   bool IsNumaAwareQualified();
   const std::vector<numa::Node>& GetFiberWorkerAccessibleNodes();
