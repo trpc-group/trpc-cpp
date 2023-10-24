@@ -82,6 +82,72 @@ Since the FetchContent feature of CMake is required for fetching third-party dep
     ./run_examples_cmake.sh
     ```
 
+3. **How to use tRPC-Cpp**
+
+a. (Recommend) Use as external source code
+
+We recommend this as it can easily switch tRPC-Cpp version to the lastest and the libs framework depends on can also be imported via a simple SDK target named `trpc`.
+
+For example, you can import in CMakeLists.txt in this way:
+
+```shell
+# Fetch tRPC-Cpp and add as library
+include(FetchContent)
+FetchContent_Declare(
+    trpc-cpp
+    GIT_REPOSITORY    https://git.woa.com/trpc-cpp/open-source/trpc-cpp.git
+    GIT_TAG           recommanded_always_use_latest_tag
+    SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/cmake_third_party/trpc-cpp
+)
+FetchContent_MakeAvailable(trpc-cpp)
+
+# Set path of stub code genretated tool(PROTOBUF_PROTOC_EXECUTABLE/TRPC_TO_CPP_PLUGIN will be filled after you import tRPC-Cpp)
+set(PB_PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
+set(TRPC_CPP_PLUGIN ${TRPC_TO_CPP_PLUGIN})
+
+# link lib trpc to your target
+target_link_libraries(your_cmake_target trpc)
+```
+
+b.  Use via make install
+
+Execute below commands, install tRPC-Cpp to your machine first:
+
+```shell
+# You can install the lastest verion by: git checkout tags/vx.x.x
+git clone https://github.com/trpc-group/trpc-cpp.git
+cd trpc-cpp
+mkdir build && cd build
+
+# By default, tRPC-Cpp will build as static lib. If you need dynamic lib, add cmake option: -DTRPC_BUILD_SHARED=ON
+cmake ..
+make -j8
+make install # install at /usr/local/trpc-cpp/trpc
+```
+
+Then, import trpc lib in your CMakeLists.txt as below:
+
+```shell
+# set install path of tRPC-Cpp
+set(TRPC_INSTALL_PATH /usr/local/trpc-cpp/trpc)
+
+# Load hearders and libs
+include(${TRPC_INSTALL_PATH}/cmake/config/trpc_config.cmake)
+include_directories(${INCLUDE_INSTALL_PATHS})
+link_directories(${LIBRARY_INSTALL_PATHS})
+
+# Set path of stub code genretated tool
+include(${TRPC_INSTALL_PATH}/cmake/tools/trpc_utils.cmake)
+set(PB_PROTOC ${TRPC_INSTALL_PATH}/bin/protoc)
+set(TRPC_CPP_PLUGIN ${TRPC_INSTALL_PATH}/bin/trpc_cpp_plugin)
+
+# add trpc and it's dependent libs
+set(LIBRARY trpc ${LIBS_BASIC})
+
+# link lib trpc to your target
+target_link_libraries(your_cmake_target trpc)
+```
+
 ## Ubuntu
 
 It recommend using **Ubuntu version 20.04 LTS or above** for compiling and running tRPC-Cpp.
@@ -144,6 +210,10 @@ Since the FetchContent feature of CMake is required for fetching third-party dep
    # Compile and run the examples provided by the framework using Cmake
    ./run_examples_cmake.sh
    ```
+
+3. **How to use tRPC-Cpp**
+
+Same as CentOS section
 
 # FAQ
 

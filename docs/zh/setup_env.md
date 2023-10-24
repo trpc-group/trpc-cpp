@@ -85,6 +85,72 @@ bazel 推荐使用 3.5.1及以后版本。
    ./run_examples_cmake.sh
    ```
 
+3. **如何引入tRPC-Cpp**
+
+a. （推荐）以外部库形式源码引入
+
+推荐使用这种方式，因为能很方便切换框架的版本，同时，框架相关依赖可随构建的SDK目标引入。
+
+参考如下示例，在您项目的 CMakeLists.txt 以外部库源码方式引入：
+
+```shell
+# 拉取并以库的形式添加tRPC-Cpp
+include(FetchContent)
+FetchContent_Declare(
+    trpc-cpp
+    GIT_REPOSITORY    https://git.woa.com/trpc-cpp/open-source/trpc-cpp.git
+    GIT_TAG           recommanded_always_use_latest_tag
+    SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/cmake_third_party/trpc-cpp
+)
+FetchContent_MakeAvailable(trpc-cpp)
+
+# 设置proto文件桩代码生成工具的路径(PROTOBUF_PROTOC_EXECUTABLE/TRPC_TO_CPP_PLUGIN将会在tRPC-Cpp被引入后自动填充)
+set(PB_PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
+set(TRPC_CPP_PLUGIN ${TRPC_TO_CPP_PLUGIN})
+
+# 在您的构建目标里link trpc库
+target_link_libraries(your_cmake_target trpc)
+```
+
+b. 通过make install引入
+
+参考如下命令，先安装trpc到系统里:
+
+```shell
+# 可checkout切换到最新的版本
+git clone https://github.com/trpc-group/trpc-cpp.git
+cd trpc-cpp
+mkdir build && cd build
+
+# 默认编译静态库，可以通过cmake选项编译动态库: -DTRPC_BUILD_SHARED=ON
+cmake ..
+make -j8
+make install
+```
+
+然后，参考如下步骤，在您项目的 CMakeLists.txt 里，引入trpc库：
+
+```shell
+# 设置tRPC-Cpp的安装位置
+set(TRPC_INSTALL_PATH /usr/local/trpc-cpp/trpc)
+
+# 加载tRPC-Cpp头文件及库路径
+include(${TRPC_INSTALL_PATH}/cmake/config/trpc_config.cmake)
+include_directories(${INCLUDE_INSTALL_PATHS})
+link_directories(${LIBRARY_INSTALL_PATHS})
+
+# 设置proto文件桩代码生成工具的路径 - 具体使用方式见相关章节
+include(${TRPC_INSTALL_PATH}/cmake/tools/trpc_utils.cmake)
+set(PB_PROTOC ${TRPC_INSTALL_PATH}/bin/protoc)
+set(TRPC_CPP_PLUGIN ${TRPC_INSTALL_PATH}/bin/trpc_cpp_plugin)
+
+# 添加trpc库及其依赖的三方
+set(LIBRARY trpc ${LIBS_BASIC})
+
+# 在您的构建目标里link trpc库
+target_link_libraries(your_cmake_target trpc)
+```
+
 ## Ubuntu
 
 推荐**Ubuntu 版本在 20.04 LTS 及以上版本**。
@@ -154,6 +220,11 @@ bazel 推荐使用3.5.1及以后版本。
    # 用cmake编译并运行框架提供的example示例
    ./run_examples_cmake.sh
    ```
+
+3. **安装及使用**
+
+同CentOS 部分。
+
 
 # FAQ
 
