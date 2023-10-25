@@ -43,6 +43,7 @@ struct convert<trpc::FiberThreadModelInstanceConfig> {
     node["fiber_pool_num_by_mmap"] = config.fiber_pool_num_by_mmap;
     node["fiber_stack_enable_guard_page"] = config.fiber_stack_enable_guard_page;
     node["fiber_scheduling_name"] = config.fiber_scheduling_name;
+    node["enable_gdb_debug"] = config.enable_gdb_debug;
 
     return node;
   }
@@ -110,6 +111,10 @@ struct convert<trpc::FiberThreadModelInstanceConfig> {
 
     if (config.fiber_scheduling_name.empty()) {
       config.fiber_scheduling_name = "v1";
+    }
+
+    if (node["enable_gdb_debug"]) {
+      config.enable_gdb_debug = node["enable_gdb_debug"].as<bool>();
     }
 
     return true;

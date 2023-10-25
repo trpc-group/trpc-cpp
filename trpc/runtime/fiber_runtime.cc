@@ -105,6 +105,7 @@ void StartRuntime() {
     options.pool_num_by_mmap = conf.fiber_pool_num_by_mmap;
     options.stack_enable_guard_page = conf.fiber_stack_enable_guard_page;
     options.disable_process_name = global_config.thread_disable_process_name;
+    options.enable_gdb_debug = conf.enable_gdb_debug;
   } else {
     options.group_name = "fiber_instance";
   }

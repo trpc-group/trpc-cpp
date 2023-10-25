@@ -65,6 +65,7 @@ void FiberThreadModelInstanceConfig::Display() const {
   TRPC_LOG_DEBUG("fiber_pool_num_by_mmap:" << fiber_pool_num_by_mmap);
   TRPC_LOG_DEBUG("fiber_stack_enable_guard_page:" << fiber_stack_enable_guard_page);
   TRPC_LOG_DEBUG("fiber_scheduling_name:" << fiber_scheduling_name);
+  TRPC_LOG_DEBUG("enable_gdb_debug:" << enable_gdb_debug);
 
   TRPC_LOG_DEBUG("================================");
 }

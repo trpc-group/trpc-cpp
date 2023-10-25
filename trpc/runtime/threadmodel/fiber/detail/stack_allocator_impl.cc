@@ -9,6 +9,11 @@
 // please note that tRPC source code is licensed under the  Apache 2.0 License,
 // A copy of the Apache 2.0 License is included in this file.
 //
+// tRPC is licensed under the Apache 2.0 License, and includes source codes from
+// the following components:
+// 1. flare
+// Copyright (C) 2020 THL A29 Limited, a Tencent company. All rights reserved.
+// flare is licensed under the BSD 3-Clause License.
 //
 
 #include "trpc/runtime/threadmodel/fiber/detail/stack_allocator_impl.h"
@@ -22,6 +27,7 @@
 
 #include "trpc/runtime/threadmodel/fiber/detail/assembly.h"
 #include "trpc/util/check.h"
+#include "trpc/util/deferred.h"
 #include "trpc/util/internal/never_destroyed.h"
 #include "trpc/util/likely.h"
 
@@ -31,12 +37,122 @@ static bool fiber_use_mmap = true;
 static uint32_t fiber_stack_size = 131072;
 static bool fiber_stack_enable_guard_page = true;
 static uint32_t max_fiber_num_by_mmap = 30 * 1024;
+static bool enable_gdb_debug = false;
+
+const uint32_t kPageSize = getpagesize();
+
+// The following source codes are from flare.
+// Copied and modified from
+// https://github.com/Tencent/flare/blob/master/flare/fiber/detail/stack_allocator.cc
+
+// All stacks (whether system stack or user stack) are registered here. This is
+// necessary for our GDB plugin to find all the stacks.
+//
+// Only _actual_ stack allocation / deallocation needs to touch this. For
+// allocations / deallocations covered by our object pool, they're irrelevant
+// here.
+//
+// Registration / deregistration can be slow. But that's okay as it's already
+// slow enough to _actually_ creating / destroying stacks. These operations
+// incur heavy VMA operations.
+struct StackRegistry {
+  // Listed as public as they're our "public" interfaces to GDB plugin.
+  //
+  // Code in this TU should use methods below instead of touching these fields.
+  void** stacks = nullptr;  // Leaked on exit. Doesn't matter.
+  std::size_t used = 0;
+  std::size_t capacity = 0;
+
+  // Register a newly-allocated stack.
+  //
+  // `ptr` should point to stack bottom (i.e. one byte past the stack region).
+  // That's where our fiber control block (GDB plugin need it) resides.
+  void RegisterStack(void* ptr) {
+    std::scoped_lock _(lock_);  // It's slow, so be it.
+    ++used;
+    auto slot = UnsafeFindSlotOf(nullptr);
+    if (slot) {
+      *slot = ptr;
+      return;
+    }
+
+    UnsafeResizeRegistry();
+    *UnsafeFindSlotOf(nullptr) = ptr;  // Must succeed this time.
+  }
+
+  // Deregister a going-to-be-freed stack. `ptr` points to stack bottom.
+  void DeregisterStack(void* ptr) {
+    std::scoped_lock _(lock_);
+
+    trpc::ScopedDeferred __([&] {
+      // If `stacks` is too large we should consider shrinking it.
+      if (capacity > 1024 && capacity / 2 > used) {
+        UnsafeShrinkRegistry();
+      }
+    });
+
+    --used;
+    if (auto p = UnsafeFindSlotOf(ptr)) {
+      *p = nullptr;
+      return;
+    }
+    TRPC_UNREACHABLE();
+  }
+
+ private:
+  void** UnsafeFindSlotOf(void* ptr) {
+    for (std::size_t i = 0; i != capacity; ++i) {
+      if (stacks[i] == ptr) {
+        return &stacks[i];
+      }
+    }
+    return nullptr;
+  }
+
+  void UnsafeShrinkRegistry() {
+    auto new_capacity = capacity / 2;
+    TRPC_CHECK(new_capacity);
+    auto new_stacks = new void*[new_capacity];
+    std::size_t copied = 0;
+
+    memset(new_stacks, 0, new_capacity * sizeof(void*));
+    for (std::size_t i = 0; i != capacity; ++i) {
+      if (stacks[i]) {
+        new_stacks[copied++] = stacks[i];
+      }
+    }
+
+    TRPC_CHECK_EQ(copied, used);
+    TRPC_CHECK_LE(copied, new_capacity);
+    capacity = new_capacity;
+    delete[] std::exchange(stacks, new_stacks);
+  }
+
+  void UnsafeResizeRegistry() {
+    if (capacity == 0) {  // We haven't been initialized yet.
+      capacity = 8;
+      stacks = new void*[capacity];
+      memset(stacks, 0, sizeof(void*) * capacity);
+    } else {
+      auto new_capacity = capacity * 2;
+      auto new_stacks = new void*[new_capacity];
+      memset(new_stacks, 0, new_capacity * sizeof(void*));
+      memcpy(new_stacks, stacks, capacity * sizeof(void*));
+      capacity = new_capacity;
+      delete[] std::exchange(stacks, new_stacks);
+    }
+  }
+
+ private:
+  std::mutex lock_;
+} stack_registry;  // Using global variable here. This makes looking up this
+                   // variable easy in GDB plugin.
+
+// End of source codes that are from flare.
 
 void SetFiberPoolCreateWay(bool use_mmap) {
   fiber_use_mmap = use_mmap;
 }
-
-const uint32_t kPageSize = getpagesize();
 
 void SetFiberStackSize(uint32_t stack_size) {
   bool ok = (stack_size >= kPageSize) && ((stack_size & (kPageSize - 1)) == 0);
@@ -56,6 +172,10 @@ void SetFiberStackEnableGuardPage(bool flag) {
 
 void SetFiberPoolNumByMmap(uint32_t fiber_pool_num_by_mmap) {
   max_fiber_num_by_mmap = fiber_pool_num_by_mmap;
+}
+
+void SetEnableGdbDebug(bool flag) {
+  enable_gdb_debug = flag;
 }
 
 // We always align stack top to 1M boundary. This helps our GDB plugin to find
@@ -141,10 +261,23 @@ void* AlignedMmap() {
   }
   auto stack = reinterpret_cast<char*>(p) + GetBias();
   InitializeFiberStackMagic(stack + fiber_stack_size - kPageSize);
+
+  if (enable_gdb_debug) {
+    auto stack_bottom = stack + fiber_stack_size;
+    // Register the stack.
+    stack_registry.RegisterStack(stack_bottom);
+  }
+
   return reinterpret_cast<void*>(stack);
 }
 
 void AlignedMunmap(void* ptr) {
+  if (enable_gdb_debug) {
+    // Remove the stack from our registry.
+    auto stack_bottom = reinterpret_cast<char*>(ptr) + fiber_stack_size;
+    stack_registry.DeregisterStack(stack_bottom);
+  }
+
   TRPC_PCHECK(munmap(reinterpret_cast<char*>(ptr) - GetBias(), GetAllocationsize()) == 0);
 }
 
@@ -155,10 +288,23 @@ void* AlignedMalloc() {
   }
   auto stack = reinterpret_cast<char*>(p);
   InitializeFiberStackMagic(stack + fiber_stack_size - kPageSize);
+
+  if (enable_gdb_debug) {
+    auto stack_bottom = stack + fiber_stack_size;
+    // Register the stack.
+    stack_registry.RegisterStack(stack_bottom);
+  }
+
   return reinterpret_cast<void*>(stack);
 }
 
 void AlignedFree(void* aligned_mem) {
+  if (enable_gdb_debug) {
+    // Remove the stack from our registry.
+    auto stack_bottom = reinterpret_cast<char*>(aligned_mem) + fiber_stack_size;
+    stack_registry.DeregisterStack(stack_bottom);
+  }
+
   return free(aligned_mem);
 }
 
