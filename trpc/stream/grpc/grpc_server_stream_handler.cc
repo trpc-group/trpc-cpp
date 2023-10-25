@@ -269,7 +269,7 @@ StreamReaderWriterProviderPtr FiberGrpcServerStreamHandler::CreateStream(StreamO
       TRPC_LOG_ERROR("stream " << stream_id << " already exists.");
       return nullptr;
     }
-    ServerContextPtr& context = std::any_cast<ServerContextPtr&>(options.context.context);
+    ServerContextPtr context = std::any_cast<ServerContextPtr>(options.context.context);
     auto stream = MakeRefCounted<GrpcServerStream>(std::move(options), session_.get(), &session_mutex_, &session_cv_);
     // Set the stream for the context so that it can be obtained in stream_rpc_method_handler.
     context->SetStreamReaderWriterProvider(stream);

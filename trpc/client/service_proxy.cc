@@ -692,6 +692,10 @@ stream::StreamReaderWriterProviderPtr ServiceProxy::SelectStreamProvider(const C
   TRPC_ASSERT(codec_->Name() == "trpc" || codec_->Name() == "http");
   TRPC_ASSERT(thread_model_ != nullptr);
 
+  if (context->GetResponse() == nullptr) {
+    context->SetResponse(codec_->CreateResponsePtr());
+  }
+
   FillClientContext(context);
 
   // Get one address of peer server

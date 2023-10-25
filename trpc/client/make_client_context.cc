@@ -21,10 +21,6 @@
 #include "trpc/util/hash_util.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/time.h"
-// #ifdef TRPC_BUILD_INCLUDE_RPCZ
-// #include "trpc/rpcz/filter/rpcz_filter_index.h"
-// #include "trpc/rpcz/span.h"
-// #endif
 
 namespace trpc {
 
@@ -73,39 +69,6 @@ void ConstructClientContext(const ServerContextPtr& ctx, bool with_trans_info, C
 
 void RegisterMakeClientContextCallback(MakeClientContextCallback&& callback) {
   callbacks.emplace_back(std::move(callback));
-}
-
-ClientContextPtr MakeClientContext(const ServerContextPtr& ctx) {
-  ClientContextPtr client_ctx = MakeRefCounted<ClientContext>();
-
-  const auto& trans_info = ctx->GetPbReqTransInfo();
-  if (trans_info.size() > 0) {
-    client_ctx->SetReqTransInfo(trans_info.begin(), trans_info.end());
-  }
-
-  client_ctx->SetMessageType(ctx->GetMessageType());
-  client_ctx->SetCallerName(ctx->GetCalleeName());
-  client_ctx->SetCallerFuncName(ctx->GetFuncName());
-
-  RunMakeClientContextCallbacks(ctx, client_ctx);
-
-  // Calculate the remaining timeout and set it to the client context.
-  int64_t nowms = static_cast<int64_t>(trpc::time::GetMilliSeconds());
-  int64_t cost_time = nowms - ctx->GetRecvTimestamp();
-  int64_t left_time = static_cast<int64_t>(ctx->GetTimeout()) - cost_time;
-  if (left_time < 0) {
-    left_time = 0;
-  }
-
-  client_ctx->SetTimeout(left_time);
-
-  if (ctx->IsUseFullLinkTimeout()) {
-    client_ctx->SetFullLinkTimeout(left_time);
-  } else {
-    client_ctx->SetTimeout(left_time);
-  }
-
-  return client_ctx;
 }
 
 ClientContextPtr MakeClientContext(const ServiceProxyPtr& proxy) {

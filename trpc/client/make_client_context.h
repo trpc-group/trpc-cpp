@@ -68,12 +68,4 @@ void BackFillServerTransInfo(const ClientContextPtr& client_context, const Serve
 using MakeClientContextCallback = std::function<void(const ServerContextPtr&, ClientContextPtr&)>;
 void RegisterMakeClientContextCallback(MakeClientContextCallback&& callback);
 
-/// @brief Create client context based on server context
-/// @param ctx server context
-/// @return client context
-/// @deprecated Use MakeClientContext(const ServerContextPtr& ctx, const ServiceProxyPtr& proxy) instead.
-/// @private
-[[deprecated("use the interface with params as 'ctx' and 'proxy' ")]]
-ClientContextPtr MakeClientContext(const ServerContextPtr& ctx);
-
 }  // namespace trpc

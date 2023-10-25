@@ -118,6 +118,8 @@ RetCode TrpcServerStream::HandleInit(StreamRecvMessage&& msg) {
   context->SetCallerName(request_metadata.caller());
   context->SetFuncName(request_metadata.func());
   context->SetReqEncodeType(init_frame.stream_init_metadata.content_type());
+  context->GetMutablePbReqTransInfo()->insert(request_metadata.trans_info().begin(),
+                                              request_metadata.trans_info().end());
 
   std::string var_path = "trpc/stream_rpc/server" + request_metadata.func();
   auto stream_var = StreamVarHelper::GetInstance()->GetOrCreateStreamVar(var_path);
@@ -272,6 +274,11 @@ RetCode TrpcServerStream::SendClose(StreamSendMessage&& msg) {
     return RetCode::kError;
   }
 
+  const auto& context = std::any_cast<const ServerContextPtr&>(GetMutableStreamOptions()->context.context);
+
+  auto& close_meta = std::any_cast<TrpcStreamCloseMeta&>(msg.metadata);
+  close_meta.mutable_trans_info()->insert(context->GetPbRspTransInfo().begin(), context->GetPbRspTransInfo().end());
+
   RetCode ret = TrpcStream::SendClose(std::move(msg));
   if (TRPC_UNLIKELY(ret != RetCode::kSuccess)) {
     return ret;
@@ -281,7 +288,6 @@ RetCode TrpcServerStream::SendClose(StreamSendMessage&& msg) {
 
   Stop();
 
-  const auto& context = std::any_cast<const ServerContextPtr&>(GetMutableStreamOptions()->context.context);
   RunMessageFilter(FilterPoint::SERVER_PRE_SEND_MSG, context);
 
   TRPC_FMT_DEBUG("server stream, send close end, stream id: {}", GetId());

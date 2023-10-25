@@ -35,7 +35,7 @@ StreamReaderWriterProviderPtr TrpcServerStreamHandler::CreateStream(StreamOption
   // Since IsNewStream has previously determined that the stream does not exist, it is likely that it still does not
   // exist, so create the stream first.
   options.connection_id = options_.connection_id;
-  ServerContextPtr& context = std::any_cast<ServerContextPtr&>(options.context.context);
+  ServerContextPtr context = std::any_cast<ServerContextPtr>(options.context.context);
   auto stream = MakeRefCounted<TrpcServerStream>(std::move(options));
   context->SetStreamReaderWriterProvider(stream);
 
