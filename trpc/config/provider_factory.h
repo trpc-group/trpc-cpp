@@ -41,7 +41,6 @@ class ProviderFactory {
   bool Register(config::ProviderPtr provider) {
     TRPC_ASSERT(provider != nullptr);
     config_providers_[provider->Name()] = std::move(provider);
-
     return true;
   }
 

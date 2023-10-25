@@ -22,7 +22,7 @@
 namespace trpc {
 
 /// @brief The tRPC Config plugin abstract interface definition class, targeting plugin developers.
-/// @note This class is reserved for 1.0 compatibility, and new data sources (rainbow, etcd, local cache)
+/// @note This class is reserved for 1.0 compatibility, and new data sources
 ///       should inherit provider_base.h directly.
 class Config : public Plugin {
  public:
@@ -31,15 +31,15 @@ class Config : public Plugin {
   ~Config() override = default;
 
   /// @brief Pulls file configuration.
-  /// @param config_name - For tconf, pass in the configuration file name; for rainbow, pass in the group_name.
+  /// @param config_name - The Group name.
   /// @param config - The content of the obtained configuration.
-  /// @param params - For tconf, this parameter is not required; for rainbow, pass in the file name.
+  /// @param params - File name.
   /// @return - true: Loading successful.
   ///           false: Loading failed.
   virtual bool PullFileConfig(const std::string& config_name, std::string* config, const std::any& params) = 0;
 
   /// @brief Pulls a single key-value configuration.
-  /// @param config_name - The filename of the KV configuration to be loaded, for rainbow pass in the group.
+  /// @param config_name - The filename of the KV configuration to be loaded, means group.
   /// @param key - Input key.
   /// @param config - Obtains the value corresponding to the key.
   /// @return - true: Loading successful.
@@ -48,7 +48,7 @@ class Config : public Plugin {
                             const std::any& params) = 0;
 
   /// @brief Pulls multiple key-value configurations.
-  /// @param config_name - The filename of the KV configuration to be loaded, for rainbow pass in the group.
+  /// @param config_name - The filename of the KV configuration to be loaded, means group.
   /// @param config - Obtains key-value pairs.
   /// @return - true: Loading successful.
   ///           false: Loading failed.

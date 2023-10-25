@@ -78,18 +78,18 @@ ProviderPtr GetProvider(const std::string& instance_name) {
 }  // namespace detail
 
 LoadOptions WithCodec(const std::string& name) {
-  return LoadOptions([name = std::move(name)](DefaultConfigPtr& config) {
+  return LoadOptions([name](DefaultConfigPtr& config) {
     config::CodecPtr codec = CodecFactory::GetInstance()->Get(name);
     TRPC_ASSERT(codec != nullptr && "Codec not found!");
-    (*config).SetCodec(codec);
+    config->SetCodec(codec);
   });
 }
 
 LoadOptions WithProvider(const std::string& name) {
-  return LoadOptions([name = std::move(name)](DefaultConfigPtr& config) {
+  return LoadOptions([name](DefaultConfigPtr& config) {
     config::ProviderPtr provider = ProviderFactory::GetInstance()->Get(name);
     TRPC_ASSERT(provider != nullptr && "Provider not found!");
-    (*config).SetProvider(provider);
+    config->SetProvider(provider);
   });
 }
 

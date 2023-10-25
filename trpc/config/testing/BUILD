@@ -12,6 +12,14 @@ exports_files([
 ])
 
 cc_library(
+    name = "mock_config",
+    hdrs = ["mock_config.h"],
+    deps = [
+        "//trpc/config:config",
+    ],
+)
+
+cc_library(
     name = "config_plugin_testing",
     hdrs = ["config_plugin_testing.h"],
     deps = [
