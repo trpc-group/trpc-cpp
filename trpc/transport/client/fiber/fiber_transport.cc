@@ -44,12 +44,17 @@ void FiberTransport::Destroy() {
 
 int FiberTransport::SendRecv(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_msg) {
   if (IsRunningInFiberWorker()) {
-    FiberConnectorGroup* connector_group = connector_group_manager_->Get(req_msg->context->GetNodeAddr());
-    TRPC_ASSERT(connector_group && "connector_group can not be nullptr");
-
     if (!req_msg->context->IsBackupRequest()) {
-      return connector_group->SendRecv(req_msg, rsp_msg);
+      FiberConnectorGroup* connector_group = connector_group_manager_->Get(req_msg->context->GetNodeAddr());
+      if (connector_group != nullptr) {
+        return connector_group->SendRecv(req_msg, rsp_msg);
+      }
+
+      TRPC_FMT_ERROR("Can't get connector group of {}:{}", req_msg->context->GetNodeAddr().ip,
+                                                           req_msg->context->GetNodeAddr().port);
+      return TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR;
     }
+
     return SendRecvForBackupRequest(req_msg, rsp_msg);
   }
 
@@ -89,9 +94,6 @@ int FiberTransport::SendRecvForBackupRequest(CTransportReqMsg* req_msg, CTranspo
   NoncontiguousBuffer buff_back(req_msg->send_data);
 
   for (int i = 0; i < 2; ++i) {
-    FiberConnectorGroup* connector_group = connector_group_manager_->Get(backup_info->backup_addrs[i].addr);
-    TRPC_ASSERT(connector_group && "connector_group can not be nullptr");
-
     auto cb = [&ret_code, i, backup_info, sync_retry](int err_code, std::string&& err_msg) {
       if (sync_retry->IsFinished()) {
         return;
@@ -110,7 +112,14 @@ int FiberTransport::SendRecvForBackupRequest(CTransportReqMsg* req_msg, CTranspo
       }
     };
 
-    connector_group->SendRecvForBackupRequest(req_msg, rsp_msg, std::move(cb));
+    auto& addr = backup_info->backup_addrs[i].addr;
+    FiberConnectorGroup* connector_group = connector_group_manager_->Get(addr);
+    if (connector_group != nullptr) {
+      connector_group->SendRecvForBackupRequest(req_msg, rsp_msg, std::move(cb));
+    } else {
+      TRPC_FMT_ERROR("Can't get connector group of {}:{}", addr.ip, addr.port);
+      cb(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR, "connector_group is nullptr");
+    }
 
     if (i == 0) {
       if (ret_code != TrpcRetCode::TRPC_CLIENT_CONNECT_ERR) {
@@ -132,11 +141,16 @@ int FiberTransport::SendRecvForBackupRequest(CTransportReqMsg* req_msg, CTranspo
 
 Future<CTransportRspMsg> FiberTransport::AsyncSendRecv(CTransportReqMsg* req_msg) {
   if (IsRunningInFiberWorker()) {
-    FiberConnectorGroup* connector_group = connector_group_manager_->Get(req_msg->context->GetNodeAddr());
-    TRPC_ASSERT(connector_group && "connector_group can not be nullptr");
-
     if (!req_msg->context->IsBackupRequest()) {
-      return connector_group->AsyncSendRecv(req_msg);
+      FiberConnectorGroup* connector_group = connector_group_manager_->Get(req_msg->context->GetNodeAddr());
+      if (connector_group != nullptr) {
+        return connector_group->AsyncSendRecv(req_msg);
+      }
+
+      TRPC_FMT_ERROR("Can't get connector group of {}:{}", req_msg->context->GetNodeAddr().ip,
+                                                           req_msg->context->GetNodeAddr().port);
+      return MakeExceptionFuture<CTransportRspMsg>(
+          CommonException("not found connector group.", TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR));
     }
 
     return MakeExceptionFuture<CTransportRspMsg>(
@@ -174,9 +188,13 @@ int FiberTransport::SendOnly(CTransportReqMsg* req_msg) {
 
   if (IsRunningInFiberWorker()) {
     FiberConnectorGroup* connector_group = connector_group_manager_->Get(req_msg->context->GetNodeAddr());
-    TRPC_ASSERT(connector_group && "connector_group can not be nullptr");
-
-    ret = connector_group->SendOnly(req_msg);
+    if (connector_group != nullptr) {
+      ret = connector_group->SendOnly(req_msg);
+    } else {
+      TRPC_FMT_ERROR("Can't get connector group of {}:{}", req_msg->context->GetNodeAddr().ip,
+                                                           req_msg->context->GetNodeAddr().port);
+      ret = TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR;
+    }
 
     object_pool::Delete(req_msg);
   } else {
@@ -206,9 +224,12 @@ int FiberTransport::SendOnlyFromOutSide(CTransportReqMsg* req_msg) {
 stream::StreamReaderWriterProviderPtr FiberTransport::CreateStream(const NodeAddr& addr,
                                                                    stream::StreamOptions&& stream_options) {
   FiberConnectorGroup* connector_group = connector_group_manager_->Get(addr);
-  TRPC_ASSERT(connector_group && "connector_group can not be nullptr");
+  if (connector_group) {
+    return connector_group->CreateStream(std::move(stream_options));
+  }
 
-  return connector_group->CreateStream(std::move(stream_options));
+  TRPC_FMT_ERROR("Can't get connector group of {}:{}", addr.ip, addr.port);
+  return nullptr;
 }
 
 }  // namespace trpc
