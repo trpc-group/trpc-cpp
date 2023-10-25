@@ -493,9 +493,9 @@ int TcpConnection::ReadIoData(NoncontiguousBuffer& buff) {
           continue;
         }
         ret = n;
-        TRPC_LOG_ERROR("TcpConnection::ReadIoData fd:" << socket_.GetFd() << ", ip:" << GetPeerIp()
-                                                       << ", port:" << GetPeerPort() << ", is_client:" << IsClient()
-                                                       << ", errno:" << errno << ", read failed and connection close.");
+        TRPC_LOG_WARN("TcpConnection::ReadIoData fd:" << socket_.GetFd() << ", ip:" << GetPeerIp()
+                                                      << ", port:" << GetPeerPort() << ", is_client:" << IsClient()
+                                                      << ", errno:" << errno << ", read failed and connection close.");
         HandleClose(true);
       }
       break;

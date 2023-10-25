@@ -26,10 +26,15 @@
 #include "trpc/coroutine/fiber.h"
 #include "trpc/coroutine/future.h"
 #include "trpc/future/future.h"
+#include "trpc/stream/stream_handler.h"
 #include "trpc/transport/client/fiber/testing/fake_server.h"
 #include "trpc/transport/client/fiber/testing/thread_model_op.h"
 
 namespace trpc::tesing {
+
+int SendRecvAfterStop(std::unique_ptr<FiberTransport>& transport);
+int SendOnlyAfterStop(std::unique_ptr<FiberTransport>& transport);
+stream::StreamReaderWriterProviderPtr CreateStreamAfterStop(std::unique_ptr<FiberTransport>& transport);
 
 class FiberTransportFixture : public ::testing::Test {
  public:
@@ -94,6 +99,9 @@ class FiberTransportFixture : public ::testing::Test {
     std::cout << "TearDownTestCase tcp_pipeline_transport destroy" << std::endl;
 
     tcp_pool_transport->Stop();
+    ASSERT_EQ(SendRecvAfterStop(tcp_pool_transport), TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR);
+    ASSERT_EQ(SendOnlyAfterStop(tcp_pool_transport), TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR);
+    ASSERT_EQ(CreateStreamAfterStop(tcp_pool_transport), nullptr);
     tcp_pool_transport->Destroy();
     tcp_pool_transport.reset();
 
@@ -106,6 +114,10 @@ class FiberTransportFixture : public ::testing::Test {
     std::cout << "TearDownTestCase tcp_short_transport destroy" << std::endl;
 
     tcp_complex_transport->Stop();
+
+    ASSERT_EQ(SendRecvAfterStop(tcp_complex_transport), TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR);
+    ASSERT_EQ(SendOnlyAfterStop(tcp_complex_transport), TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR);
+    ASSERT_EQ(CreateStreamAfterStop(tcp_complex_transport), nullptr);
     tcp_complex_transport->Destroy();
     tcp_complex_transport.reset();
 
@@ -141,6 +153,56 @@ std::unique_ptr<FiberTransport> FiberTransportFixture::tcp_pipeline_transport = 
 std::unique_ptr<FiberTransport> FiberTransportFixture::udp_complex_transport = nullptr;
 std::unique_ptr<FiberTransport> FiberTransportFixture::udp_pool_transport = nullptr;
 std::atomic<int> FiberTransportFixture::id_gen = 1;
+
+int SendRecvAfterStop(std::unique_ptr<FiberTransport>& transport) {
+  uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
+  ClientContextPtr context = trpc::testing::MakeTestClientContext(seq_id, 1000,
+      FiberTransportFixture::fake_server->GetServerAddr());
+
+  trpc::CTransportReqMsg req_msg;
+  req_msg.context = context;
+
+  trpc::testing::TestProtocol out;
+  out.req_id_ = seq_id;
+  out.body_ = "hello";
+
+  trpc::NoncontiguousBuffer buff;
+  out.ZeroCopyEncode(buff);
+
+  req_msg.send_data = std::move(buff);
+
+  trpc::CTransportRspMsg rsp_msg;
+
+  return transport->SendRecv(&req_msg, &rsp_msg);
+}
+
+int SendOnlyAfterStop(std::unique_ptr<FiberTransport>& transport) {
+  uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
+  ClientContextPtr context = trpc::testing::MakeTestClientContext(seq_id, 1000,
+      FiberTransportFixture::fake_server->GetServerAddr());
+  auto* msg = trpc::object_pool::New<CTransportReqMsg>();
+  trpc::CTransportReqMsg& req_msg = *msg;
+  req_msg.context = context;
+
+  trpc::testing::TestProtocol out;
+  out.req_id_ = seq_id;
+  out.body_ = "oneway";
+
+  trpc::NoncontiguousBuffer buff;
+  out.ZeroCopyEncode(buff);
+
+  req_msg.send_data = std::move(buff);
+
+  return transport->SendOnly(msg);
+}
+
+stream::StreamReaderWriterProviderPtr CreateStreamAfterStop(std::unique_ptr<FiberTransport>& transport) {
+  NodeAddr addr;
+  addr.ip = FiberTransportFixture::fake_server->GetServerAddr().Ip();
+  addr.port = FiberTransportFixture::fake_server->GetServerAddr().Port();
+  stream::StreamOptions stream_options;
+  return transport->CreateStream(addr, std::move(stream_options));
+}
 
 void SendRecv(std::unique_ptr<FiberTransport>& transport) {
   uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
@@ -586,7 +648,7 @@ void SendOnlyWhenEndpointError(std::unique_ptr<FiberTransport>& transport) {
   ASSERT_TRUE(ret == 0);
 }
 
-// Test the case of sending and receiving packets on the fiber worker thread 
+// Test the case of sending and receiving packets on the fiber worker thread
 // with incorrect ip/port under different connection modes of transport
 TEST_F(FiberTransportFixture, testSendOnly_endpoint_error) {
   std::cout << "tcp_complex_transport" << std::endl;
@@ -614,7 +676,7 @@ void BackupRequest(std::unique_ptr<FiberTransport>& transport) {
   uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
   ClientContextPtr context = trpc::testing::MakeTestClientContext(seq_id, 1000,
       FiberTransportFixture::fake_server->GetServerAddr());
-  
+
   std::vector<NodeAddr> backup_addrs;
   backup_addrs.push_back(FiberTransportFixture::fake_server->GetServerNodeAddr());
   backup_addrs.push_back(FiberTransportFixture::fake_backup_server->GetServerNodeAddr());
@@ -666,7 +728,7 @@ void BackupRequestWhenBothReturn(std::unique_ptr<FiberTransport>& transport) {
   uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
   ClientContextPtr context = trpc::testing::MakeTestClientContext(seq_id, 1000,
       FiberTransportFixture::fake_server->GetServerAddr());
-  
+
   std::vector<NodeAddr> backup_addrs;
   backup_addrs.push_back(FiberTransportFixture::fake_server->GetServerNodeAddr());
   backup_addrs.push_back(FiberTransportFixture::fake_backup_server->GetServerNodeAddr());
@@ -722,7 +784,7 @@ void BackupRequestWhenFirstFailed(std::unique_ptr<FiberTransport>& transport) {
   uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
   ClientContextPtr context = trpc::testing::MakeTestClientContext(seq_id, 1000,
       FiberTransportFixture::fake_server->GetServerAddr());
-  
+
   std::vector<NodeAddr> backup_addrs;
 
   trpc::NodeAddr addr;
@@ -781,7 +843,7 @@ void BackupRequestWhenBothFailed(std::unique_ptr<FiberTransport>& transport) {
   uint32_t seq_id = FiberTransportFixture::id_gen.fetch_add(1);
   ClientContextPtr context = trpc::testing::MakeTestClientContext(seq_id, 1000,
       FiberTransportFixture::fake_server->GetServerAddr());
-  
+
   std::vector<NodeAddr> backup_addrs;
 
   trpc::NodeAddr addr1;
@@ -835,6 +897,14 @@ TEST_F(FiberTransportFixture, testBackupRequest_both_fail) {
   std::cout << "tcp_pipeline_transport" << std::endl;
 
   BackupRequestWhenBothFailed(tcp_pipeline_transport);
+}
+
+TEST_F(FiberTransportFixture, testGetConnectorGroupReturnNull) {
+  trpc::FiberTransport::Options tcp_complex_opt;
+  tcp_complex_opt.thread_model = trpc::fiber::GetFiberThreadModel();
+  tcp_complex_opt.trans_info = MakeTransInfo(true);
+  auto transport = std::make_unique<trpc::FiberTransport>();
+  tcp_complex_transport->Init(std::move(tcp_complex_opt));
 }
 
 }  // namespace trpc::tesing

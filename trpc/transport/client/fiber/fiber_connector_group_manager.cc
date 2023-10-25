@@ -27,33 +27,31 @@
 namespace trpc {
 
 FiberConnectorGroupManager::FiberConnectorGroupManager(TransInfo&& trans_info) : trans_info_(std::move(trans_info)) {
-  tcp_impl_.store(std::make_unique<TcpImpl>().release());
   udp_impl_.store(std::make_unique<UdpImpl>().release());
 
-  fiber_transport_state_.store(ClientTransportState::kInitialized, std::memory_order_release);
+  fiber_transport_state_.store(ClientTransportState::kInitialized);
 }
 
 FiberConnectorGroupManager::~FiberConnectorGroupManager() { Stop(); }
 
 void FiberConnectorGroupManager::Stop() {
-  std::scoped_lock _(mutex_);
-
-  if (fiber_transport_state_.load(std::memory_order_acquire) != ClientTransportState::kInitialized) {
+  ClientTransportState old_value = ClientTransportState::kInitialized;
+  ClientTransportState new_value = ClientTransportState::kStopped;
+  if (!fiber_transport_state_.compare_exchange_strong(old_value, new_value)) {
     return;
   }
 
   {
-    Hazptr hazptr;
-    auto tcp_impl = hazptr.Keep(&tcp_impl_);
-    if (tcp_impl) {
-      for (auto&& [name, group] : tcp_impl->tcp_connector_groups) {
-        (void)name;
-        group->Stop();
-      }
-    }
+    std::unique_lock lock(tcp_mutex_);
+    tcp_connector_groups_.swap(tcp_connector_groups_to_destroy_);
+  }
+
+  for (auto& group : tcp_connector_groups_to_destroy_) {
+    group.second->Stop();
   }
 
   {
+    std::scoped_lock _(udp_mutex_);
     Hazptr hazptr;
     auto udp_impl = hazptr.Keep(&udp_impl_);
     if (udp_impl) {
@@ -66,47 +64,45 @@ void FiberConnectorGroupManager::Stop() {
       }
     }
   }
-
-  fiber_transport_state_.store(ClientTransportState::kStopped, std::memory_order_release);
 }
 
 void FiberConnectorGroupManager::Destroy() {
-  std::scoped_lock _(mutex_);
-
-  if (fiber_transport_state_.load(std::memory_order_acquire) != ClientTransportState::kStopped) {
+  ClientTransportState old_value = ClientTransportState::kStopped;
+  ClientTransportState new_value = ClientTransportState::kDestroyed;
+  if (!fiber_transport_state_.compare_exchange_strong(old_value, new_value)) {
     return;
   }
 
-  auto tcp_impl = tcp_impl_.exchange(nullptr, std::memory_order_relaxed);
-  if (tcp_impl) {
-    for (auto&& [name, group] : tcp_impl->tcp_connector_groups) {
-      (void)name;
-      group->Destroy();
-      delete group;
-      group = nullptr;
-    }
-
-    tcp_impl->tcp_connector_groups.clear();
-    tcp_impl->Retire();
+  std::unordered_map<std::string, FiberConnectorGroup*> tmp_tcp;
+  {
+    std::unique_lock lock(tcp_mutex_);
+    tcp_connector_groups_to_destroy_.swap(tmp_tcp);
   }
 
-  auto udp_impl = udp_impl_.exchange(nullptr, std::memory_order_relaxed);
-  if (udp_impl) {
-    if (udp_impl->udp_connector_groups[0] != nullptr) {
-      udp_impl->udp_connector_groups[0]->Destroy();
-      delete udp_impl->udp_connector_groups[0];
-      udp_impl->udp_connector_groups[0] = nullptr;
-    }
-
-    if (udp_impl->udp_connector_groups[1] != nullptr) {
-      udp_impl->udp_connector_groups[1]->Destroy();
-      delete udp_impl->udp_connector_groups[1];
-      udp_impl->udp_connector_groups[1] = nullptr;
-    }
-    udp_impl->Retire();
+  for (auto& group : tmp_tcp) {
+    group.second->Destroy();
+    delete group.second;
+    group.second = nullptr;
   }
 
-  fiber_transport_state_.store(ClientTransportState::kDestroyed, std::memory_order_release);
+  {
+    std::scoped_lock _(udp_mutex_);
+    auto udp_impl = udp_impl_.exchange(nullptr, std::memory_order_relaxed);
+    if (udp_impl) {
+      if (udp_impl->udp_connector_groups[0] != nullptr) {
+        udp_impl->udp_connector_groups[0]->Destroy();
+        delete udp_impl->udp_connector_groups[0];
+        udp_impl->udp_connector_groups[0] = nullptr;
+      }
+
+      if (udp_impl->udp_connector_groups[1] != nullptr) {
+        udp_impl->udp_connector_groups[1]->Destroy();
+        delete udp_impl->udp_connector_groups[1];
+        udp_impl->udp_connector_groups[1] = nullptr;
+      }
+      udp_impl->Retire();
+    }
+  }
 }
 
 FiberConnectorGroup* FiberConnectorGroupManager::Get(const NodeAddr& node_addr) {
@@ -123,40 +119,29 @@ FiberConnectorGroup* FiberConnectorGroupManager::GetFromTcpGroup(const NodeAddr&
   snprintf(const_cast<char*>(endpoint.c_str()), len, "%s:%d", node_addr.ip.c_str(), node_addr.port);
 
   {
-    Hazptr hazptr;
-    auto ptr = hazptr.Keep(&tcp_impl_);
-    auto it = ptr->tcp_connector_groups.find(endpoint);
-    if (it != ptr->tcp_connector_groups.end()) {
+    std::shared_lock lock(tcp_mutex_);
+    auto it = tcp_connector_groups_.find(endpoint);
+    if (it != tcp_connector_groups_.end()) {
       return it->second;
     }
   }
 
-  FiberConnectorGroup* pool{nullptr};
-
-  {
-    auto new_tcp_impl = std::make_unique<TcpImpl>();
-
-    std::scoped_lock _(mutex_);
-
-    {
-      Hazptr hazptr;
-      auto ptr = hazptr.Keep(&tcp_impl_);
-      auto it = ptr->tcp_connector_groups.find(endpoint);
-      if (it != ptr->tcp_connector_groups.end()) {
-        return it->second;
-      } else {
-        new_tcp_impl->tcp_connector_groups = ptr->tcp_connector_groups;
-      }
-    }
-
-    pool = CreateTcpConnectorGroup(node_addr);
-
-    new_tcp_impl->tcp_connector_groups.emplace(std::move(endpoint), pool);
-
-    tcp_impl_.exchange(new_tcp_impl.release(), std::memory_order_acq_rel)->Retire();
+  if (TRPC_UNLIKELY(fiber_transport_state_.load(std::memory_order_relaxed) != ClientTransportState::kInitialized)) {
+    return nullptr;
   }
 
-  return pool;
+  {
+    std::unique_lock lock(tcp_mutex_);
+    auto it = tcp_connector_groups_.find(endpoint);
+    if (it != tcp_connector_groups_.end()) {
+      return it->second;
+    }
+
+    FiberConnectorGroup* pool = CreateTcpConnectorGroup(node_addr);
+    tcp_connector_groups_.emplace(std::move(endpoint), pool);
+
+    return pool;
+  }
 }
 
 FiberConnectorGroup* FiberConnectorGroupManager::GetFromUdpGroup(const NodeAddr& node_addr) {
@@ -176,7 +161,7 @@ FiberConnectorGroup* FiberConnectorGroupManager::GetFromUdpGroup(const NodeAddr&
   {
     auto new_udp_impl = std::make_unique<UdpImpl>();
 
-    std::scoped_lock _(mutex_);
+    std::scoped_lock _(udp_mutex_);
     {
       Hazptr hazptr;
       auto old_udp_impl = hazptr.Keep(&udp_impl_);
