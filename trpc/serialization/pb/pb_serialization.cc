@@ -64,7 +64,7 @@ bool PbSerialization::Deserialize(NoncontiguousBuffer* in, DataType out_type, vo
   google::protobuf::Message* pb = static_cast<google::protobuf::Message*>(out);
   NoncontiguousBufferInputStream nbis(in);
 
-  if (TRPC_UNLIKELY(!pb->ParseFromZeroCopyStream(&nbis))) {
+  if (TRPC_UNLIKELY(!pb->ParsePartialFromZeroCopyStream(&nbis))) {
     TRPC_LOG_ERROR("pb deserialize failed");
     return false;
   }
