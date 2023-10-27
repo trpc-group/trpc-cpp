@@ -197,7 +197,6 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  ::trpc::log::Init();
   // If the business code is running in trpc pure client mode,
   // the business code needs to be running in the `RunInTrpcRuntime` function
   return ::trpc::RunInTrpcRuntime([]() { return http::demo::Run(); });

@@ -196,11 +196,16 @@ constexpr char kTrpcLogCacheStringDefault[] = "default";
   TRPC_PRT_IF_EX(context, instance, condition, ::trpc::Log::critical, format, ##args)
 
 /// @brief Log will be output to the "default" logger instance provided by the framework "default" plugin.
-#define TRPC_PRT_TRACE(format, args...) TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::trace, format, ##args)
-#define TRPC_PRT_DEBUG(format, args...) TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::debug, format, ##args)
-#define TRPC_PRT_INFO(format, args...) TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::info, format, ##args)
-#define TRPC_PRT_WARN(format, args...) TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::warn, format, ##args)
-#define TRPC_PRT_ERROR(format, args...) TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::error, format, ##args)
+#define TRPC_PRT_TRACE(format, args...) \
+  TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::trace, format, ##args)
+#define TRPC_PRT_DEBUG(format, args...) \
+  TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::debug, format, ##args)
+#define TRPC_PRT_INFO(format, args...) \
+  TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::info, format, ##args)
+#define TRPC_PRT_WARN(format, args...) \
+  TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::warn, format, ##args)
+#define TRPC_PRT_ERROR(format, args...) \
+  TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::error, format, ##args)
 #define TRPC_PRT_CRITICAL(format, args...) \
   TRPC_PRT_DEFAULT(::trpc::log::kTrpcLogCacheStringDefault, ::trpc::Log::critical, format, ##args)
 
@@ -247,7 +252,8 @@ constexpr char kTrpcLogCacheStringDefault[] = "default";
 #define TRPC_LOGGER_INFO_IF(instance, condition, msg) TRPC_LOG_MSG_IF(::trpc::Log::info, instance, condition, msg)
 #define TRPC_LOGGER_WARN_IF(instance, condition, msg) TRPC_LOG_MSG_IF(::trpc::Log::warn, instance, condition, msg)
 #define TRPC_LOGGER_ERROR_IF(instance, condition, msg) TRPC_LOG_MSG_IF(::trpc::Log::error, instance, condition, msg)
-#define TRPC_LOGGER_CRITICAL_IF(instance, condition, msg) TRPC_LOG_MSG_IF(::trpc::Log::critical, instance, condition, msg)
+#define TRPC_LOGGER_CRITICAL_IF(instance, condition, msg) \
+  TRPC_LOG_MSG_IF(::trpc::Log::critical, instance, condition, msg)
 
 /// @brief logger instances can be specified to customize the log output.
 /// @note  Use case: Separate business logs from framework logs,
