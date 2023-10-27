@@ -37,7 +37,8 @@ enum class ObjectPoolType {
   kGlobal
 };
 
-/// @brief The internal encapsulated implementation of object_pool. Do not use the interfaces of this namespace directly.
+/// @brief The internal encapsulated implementation of object_pool. Do not use the interfaces of this namespace
+///        directly.
 /// @private For internal use purpose only.
 namespace detail {
 
