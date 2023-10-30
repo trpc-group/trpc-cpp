@@ -782,6 +782,10 @@ class cmdgen {
 
   std::string lpop(const std::string& key) { return BinaryCmdPacket(__func__, key); }
 
+  // Starting with Redis version 6.2.0: Added the count argument.
+  // More about https://redis.io/commands/lpop/
+  std::string lpop(const std::string& key, int count) { return TernaryCmdPacket(__func__, key, std::to_string(count)); }
+
   std::string lpush(const std::string& key, const std::vector<std::string>& elements) {
     return TernaryCmdPacket(__func__, key, elements);
   }
