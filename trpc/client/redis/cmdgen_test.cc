@@ -402,6 +402,7 @@ TEST(CmdgenTest, lists) {
       trpc::redis::cmdgen{}.linsert("mykey1", "mykey2", "mykey3", "mykey4"));
   EXPECT_EQ("*2\r\n$4\r\nllen\r\n$6\r\nmykey1\r\n", trpc::redis::cmdgen{}.llen("mykey1"));
   EXPECT_EQ("*2\r\n$4\r\nlpop\r\n$6\r\nmykey1\r\n", trpc::redis::cmdgen{}.lpop("mykey1"));
+  EXPECT_EQ("*3\r\n$4\r\nlpop\r\n$6\r\nmykey1\r\n$2\r\n10\r\n", trpc::redis::cmdgen{}.lpop("mykey1", 10));
   EXPECT_EQ("*5\r\n$5\r\nlpush\r\n$6\r\nmykey1\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n",
             trpc::redis::cmdgen{}.lpush("mykey1", keys));
   EXPECT_EQ("*5\r\n$6\r\nlpushx\r\n$6\r\nmykey1\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n",
