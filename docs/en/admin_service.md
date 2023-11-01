@@ -528,7 +528,8 @@ Usage:
       /// @param type operation type
       /// @param url path
       /// @param handler admin handler
-      void RegisterCmd(trpc::http::OperationType type, const std::string& url, trpc::AdminHandlerBase* handler);
+      void RegisterCmd(trpc::http::OperationType type, const std::string& url,
+                       const std::shared_ptr<trpc::AdminHandlerBase>& handler);
     };
     ```
 
@@ -539,7 +540,7 @@ Usage:
     public:
       // Register the commands during business initialization.
       int Initialize() override {
-        RegisterCmd(::trpc::http::OperationType::GET, "/myhandler", new MyAdminHandler);
+        RegisterCmd(::trpc::http::OperationType::GET, "/myhandler", std::make_shared<MyAdminHandler>());
       }
     };
     ```

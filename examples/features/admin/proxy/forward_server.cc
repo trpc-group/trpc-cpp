@@ -66,8 +66,8 @@ class ForwardServer : public ::trpc::TrpcApp {
  public:
   int Initialize() override {
     // register your own admin handler
-    RegisterCmd(::trpc::http::OperationType::GET, "/cmds/myhandler1", new MyAdminHandler1);
-    RegisterCmd(::trpc::http::OperationType::GET, "/cmds/myhandler2", new MyAdminHandler2);
+    RegisterCmd(::trpc::http::OperationType::GET, "/cmds/myhandler1", std::make_shared<MyAdminHandler1>());
+    RegisterCmd(::trpc::http::OperationType::GET, "/cmds/myhandler2", std::make_shared<MyAdminHandler2>());
 
     // load custom config
     CustomConfig custom_config;

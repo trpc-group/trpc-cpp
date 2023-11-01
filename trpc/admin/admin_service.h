@@ -34,7 +34,10 @@ class AdminService : public HttpService {
   static bool BuildServiceAdapterOption(ServiceAdapterOption& option);
 
   /// @brief Sets request route for admin commands.
+  /// @note User need to manually manage the handler object, handler is not freed in AdminService destructor
   void RegisterCmd(http::OperationType type, const std::string url, AdminHandlerBase* handler);
+
+  /// @brief Sets request route for admin commands.
   void RegisterCmd(http::OperationType type, const std::string& path,
                    const std::shared_ptr<http::HandlerBase>& handler);
 

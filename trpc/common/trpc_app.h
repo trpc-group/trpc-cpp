@@ -24,11 +24,11 @@
 #include "trpc/common/trpc_version.h"
 #include "trpc/config/trpc_conf.h"
 #include "trpc/server/trpc_server.h"
-#include "trpc/util/log/logging.h"
 #include "trpc/util/http/common.h"
+#include "trpc/util/log/logging.h"
 
 /// @mainpage tRPC-Cpp API
-/// 
+///
 
 /// @brief Primary namespace of tRPC-Cpp.
 namespace trpc {
@@ -112,17 +112,26 @@ class TrpcApp {
   /// @return true: success; false: failed
   bool StopService(const std::string& service_name, bool clean_conn = false);
 
+  /// @brief Deprecated: use "RegisterCmd(trpc::http::OperationType type, const std::string& url,
+  ///                                     const std::shared_ptr<trpc::AdminHandlerBase>& handler)" instead.
+  /// @param type operation type
+  /// @param url path
+  /// @param handler admin handler
+  /// @note User need to manually manage the handler object, handler is not freed by framework
+  [[deprecated("use shared_ptr interface for automatic object lifetime management")]]
+  void RegisterCmd(trpc::http::OperationType type, const std::string& url, trpc::AdminHandlerBase* handler);
+
   /// @brief Register custom admin command
   /// @param type operation type
   /// @param url path
   /// @param handler admin handler
-  void RegisterCmd(trpc::http::OperationType type, const std::string& url, trpc::AdminHandlerBase* handler);
+  void RegisterCmd(trpc::http::OperationType type, const std::string& url,
+                   const std::shared_ptr<trpc::AdminHandlerBase>& handler);
 
   /// @brief Register configuration update callback function
   /// @param name configuration item
   /// @param cb callback
-  void RegisterConfigUpdateNotifier(const std::string& name,
-                                    const std::function<void(const YAML::Node&)>& cb);
+  void RegisterConfigUpdateNotifier(const std::string& name, const std::function<void(const YAML::Node&)>& cb);
 
  protected:
   // Parsing framework configuration files

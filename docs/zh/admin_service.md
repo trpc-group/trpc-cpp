@@ -529,7 +529,8 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
       /// @param type operation type
       /// @param url path
       /// @param handler admin handler
-      void RegisterCmd(trpc::http::OperationType type, const std::string& url, trpc::AdminHandlerBase* handler);
+      void RegisterCmd(trpc::http::OperationType type, const std::string& url,
+                       const std::shared_ptr<trpc::AdminHandlerBase>& handler);
     };
     ```
 
@@ -540,7 +541,7 @@ tRPC-Cpp允许用户自定义并注册管理命令，完成用户需要的其他
     public:
       // 在业务初始化时进行注册
       int Initialize() override {
-        RegisterCmd(::trpc::http::OperationType::GET, "/myhandler", new MyAdminHandler);
+        RegisterCmd(::trpc::http::OperationType::GET, "/myhandler", std::make_shared<MyAdminHandler>());
       }
     };
     ```
