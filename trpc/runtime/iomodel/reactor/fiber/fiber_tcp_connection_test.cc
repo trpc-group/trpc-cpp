@@ -113,6 +113,25 @@ class FiberTcpConnectionTestImpl {
     acceptor_->SetAcceptHandleFunction(std::move(accept_handler));
     std::cout << "fiber acceptor listen" << std::endl;
     acceptor_->Listen();
+
+    bad_tcp_accept_addr_ = NetworkAddress("0.0.0.0", 50000, NetworkAddress::IpType::kIpV4);
+    tcp_fail_acceptor_ = MakeRefCounted<FiberAcceptor>(reactor_, bad_tcp_accept_addr_);
+    trpc::AcceptConnectionFunction tcp_fail_accept_handler = [this](AcceptConnectionInfo& connection_info) {
+      return false;
+    };
+    tcp_fail_acceptor_->SetAcceptHandleFunction(std::move(tcp_fail_accept_handler));
+    std::cout << "tcp_fail_acceptor_ listen" << std::endl;
+    tcp_fail_acceptor_->Listen();
+
+    char path[] = "fiber_uds_accpet_fail_test.socket";
+    UnixAddress fiber_uds_accpet_addr = UnixAddress(path);
+    uds_fail_acceptor_ = MakeRefCounted<FiberAcceptor>(reactor_, fiber_uds_accpet_addr);
+    trpc::AcceptConnectionFunction uds_fail_accept_handler = [this](AcceptConnectionInfo& connection_info) {
+      return false;
+    };
+    uds_fail_acceptor_->SetAcceptHandleFunction(std::move(uds_fail_accept_handler));
+    std::cout << "uds_fail_acceptor_ listen" << std::endl;
+    uds_fail_acceptor_->Listen();
   }
 
   void TearDown() {
@@ -125,6 +144,12 @@ class FiberTcpConnectionTestImpl {
 
     acceptor_->Stop();
     acceptor_->Join();
+
+    tcp_fail_acceptor_->Stop();
+    tcp_fail_acceptor_->Join();
+
+    uds_fail_acceptor_->Stop();
+    uds_fail_acceptor_->Join();
   }
 
   template <class IoHandlerType>
@@ -168,6 +193,9 @@ class FiberTcpConnectionTestImpl {
   RefPtr<FiberTcpConnection> server_conn_{nullptr};
   std::atomic<std::size_t> server_received_{0};
   std::atomic<std::size_t> client_received_{0};
+  NetworkAddress bad_tcp_accept_addr_;
+  RefPtr<FiberAcceptor> tcp_fail_acceptor_{nullptr};
+  RefPtr<FiberAcceptor> uds_fail_acceptor_{nullptr};
 };
 
 class FiberTcpConnectionTest : public ::testing::Test {
@@ -225,6 +253,24 @@ TEST_F(FiberTcpConnectionTest, WriteEmpty) {
   msg.buffer = {};
 
   EXPECT_EQ(0, client_conn->Send(std::move(msg)));
+}
+
+TEST_F(FiberTcpConnectionTest, TcpAcceptFail) {
+  std::unique_ptr<Socket> socket = std::make_unique<Socket>(Socket::CreateTcpSocket(false));
+  NetworkAddress bad_tcp_accept_addr = NetworkAddress("0.0.0.0", 50000, NetworkAddress::IpType::kIpV4);
+  int succ = socket->Connect(bad_tcp_accept_addr);
+  EXPECT_EQ(succ, 0);
+}
+
+TEST_F(FiberTcpConnectionTest, UdsAcceptFail) {
+  char path[] = "fiber_uds_accpet_fail_test.socket";
+  UnixAddress fiber_uds_accpet_addr = UnixAddress(path);
+
+  std::unique_ptr<Socket> socket = std::make_unique<Socket>(Socket::CreateUnixSocket());
+
+  int succ = socket->Connect(fiber_uds_accpet_addr);
+
+  EXPECT_EQ(succ, 0);
 }
 
 class WriteErrorIoHandler : public DefaultIoHandler {

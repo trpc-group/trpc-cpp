@@ -115,4 +115,55 @@ TEST_F(TcpAcceptorTest, All) {
   ASSERT_EQ(ret, 1);
 }
 
+TEST_F(TcpAcceptorTest, TcpAcceptorFail) {
+  Latch l(1);
+  std::thread t1([this, &l]() {
+    l.count_down();
+    this->reactor_->Run();
+  });
+
+  l.wait();
+
+  int ret = 0;
+
+  Latch accept_latch(1);
+  auto&& accept_handler = [&ret, &accept_latch](const AcceptConnectionInfo& connection_info) {
+    ret = 1;
+    accept_latch.count_down();
+    return false;
+  };
+
+  // EnableListen fail
+  // Invalid IP "1.1.1.1" may bind socket fail
+  NetworkAddress bad_addr = NetworkAddress("1.1.1.1", 10000, NetworkAddress::IpType::kIpV4);
+  RefPtr<TcpAcceptor> fail_acceptor = MakeRefCounted<TcpAcceptor>(reactor_.get(), bad_addr);
+  bool listen_fail = fail_acceptor->EnableListen();
+  EXPECT_EQ(listen_fail, false);
+
+  NetworkAddress addr = NetworkAddress(trpc::util::GenRandomAvailablePort(), false, NetworkAddress::IpType::kIpV4);
+
+  RefPtr<TcpAcceptor> acceptor = MakeRefCounted<TcpAcceptor>(reactor_.get(), addr);
+  acceptor->SetAcceptHandleFunction(std::move(accept_handler));
+  acceptor->SetAcceptSetSocketOptFunction([](Socket& socket) { return; });
+  acceptor->EnableListen();
+
+  std::unique_ptr<Socket> socket = std::make_unique<Socket>(Socket::CreateTcpSocket(false));
+
+  int succ = socket->Connect(addr);
+
+  EXPECT_EQ(succ, 0);
+
+  accept_latch.wait();
+
+  socket->Close();
+
+  acceptor->DisableListen();
+
+  reactor_->Stop();
+
+  t1.join();
+
+  EXPECT_EQ(ret, 1);
+}
+
 }  // namespace trpc::testing
