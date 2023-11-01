@@ -54,9 +54,7 @@ int TrpcApp::Main(int argc, char* argv[]) {
   return 0;
 }
 
-void TrpcApp::Wait() {
-  DestroyRuntime();
-}
+void TrpcApp::Wait() { DestroyRuntime(); }
 
 void TrpcApp::Terminate() { terminate_.store(true, std::memory_order_release); }
 
@@ -220,8 +218,16 @@ void TrpcApp::RegisterCmd(trpc::http::OperationType type, const std::string& url
   admin_service->RegisterCmd(type, url, handler);
 }
 
-void TrpcApp::RegisterConfigUpdateNotifier(const std::string &notify_name,
-                                           const std::function<void(const YAML::Node &)>& notify_cb) {
+void TrpcApp::RegisterCmd(trpc::http::OperationType type, const std::string& url,
+                          const std::shared_ptr<trpc::AdminHandlerBase>& handler) {
+  auto admin_service = server_->GetAdminService();
+  TRPC_ASSERT(admin_service != nullptr);
+
+  admin_service->RegisterCmd(type, url, handler);
+}
+
+void TrpcApp::RegisterConfigUpdateNotifier(const std::string& notify_name,
+                                           const std::function<void(const YAML::Node&)>& notify_cb) {
   ConfigHelper::GetInstance()->RegisterConfigUpdateNotifier(notify_name, notify_cb);
 }
 
