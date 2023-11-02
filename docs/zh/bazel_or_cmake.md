@@ -267,7 +267,7 @@ trpc_proto_library(
 include(FetchContent)
 FetchContent_Declare(
     trpc-cpp
-    GIT_REPOSITORY    https://git.woa.com/trpc-cpp/open-source/trpc-cpp.git
+    GIT_REPOSITORY    https://github.com/trpc-group/trpc-cpp.git
     GIT_TAG           recommanded_always_use_latest_tag
     SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/cmake_third_party/trpc-cpp
 )
