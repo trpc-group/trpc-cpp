@@ -112,7 +112,7 @@ TEST(DomainUtilTest, Ipv6NormalTest) {
 TEST(DomainUtilTest, InnerDomainTest) {
   std::vector<std::string> addrs;
 
-  std::string domain = "git.woa.com";
+  std::string domain = "github.com";
   trpc::util::GetAddrFromDomain(domain, addrs);
   EXPECT_TRUE(addrs.size() > 0);
 }
