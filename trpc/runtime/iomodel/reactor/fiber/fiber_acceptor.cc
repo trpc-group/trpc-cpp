@@ -122,7 +122,8 @@ FiberConnection::EventAction FiberAcceptor::OnTcpReadable() {
         info.conn_info.remote_addr = std::move(peer_addr);
 
         if (!accept_handler_(info)) {
-          ::close(conn_fd);
+          // Do not close socket when accept_handler fail(accept_handler will close), or may double-close socket
+          TRPC_LOG_ERROR("FiberAcceptor::OnTcpReadable accept handler return false");
         }
       } else {
         TRPC_LOG_ERROR("FiberAcceptor::OnTcpReadable accept handler empty.");
@@ -162,7 +163,8 @@ FiberConnection::EventAction FiberAcceptor::OnUdsReadable() {
         info.conn_info.is_net = false;
 
         if (!accept_handler_(info)) {
-          ::close(conn_fd);
+          // Do not close socket when accept_handler fail(accept_handler will close), or may double-close socket
+          TRPC_LOG_ERROR("FiberAcceptor::OnUdsReadable accept handler return false");
         }
       } else {
         TRPC_LOG_ERROR("FiberAcceptor::OnUdsReadable accept handler empty.");

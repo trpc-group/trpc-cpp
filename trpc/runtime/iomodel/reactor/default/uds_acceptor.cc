@@ -105,7 +105,8 @@ int UdsAcceptor::HandleReadEvent() {
         info.conn_info.is_net = false;
 
         if (!accept_handler(info)) {
-          close(conn_fd);
+          // Do not close socket when accept_handler fail(accept_handler will close), or may double-close socket
+          TRPC_LOG_ERROR("unix accept handler return false");
         }
       } else {
         TRPC_ASSERT("unix accept handler empty");

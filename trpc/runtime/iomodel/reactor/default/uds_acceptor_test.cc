@@ -97,6 +97,57 @@ TEST_F(UdsAcceptorTest, UdsAcceptorOk) {
   ASSERT_EQ(ret, 1);
 }
 
+TEST_F(UdsAcceptorTest, UdsAcceptorFail) {
+  Latch l(1);
+  std::thread t1([this, &l]() {
+    l.count_down();
+    this->reactor_->Run();
+  });
+
+  l.wait();
+
+  int ret = 0;
+  char path[] = "uds_accpetor_test.socket";
+  UnixAddress addr = UnixAddress(path);
+
+  Latch accept_latch(1);
+  auto&& accept_handler = [&ret, &accept_latch](const AcceptConnectionInfo& connection_info) {
+    ret = 1;
+    accept_latch.count_down();
+    return false;
+  };
+
+  sockaddr_un bad_socket;
+  UnixAddress bad_addr = UnixAddress(&bad_socket);
+  RefPtr<UdsAcceptor> fail_acceptor = MakeRefCounted<UdsAcceptor>(reactor_.get(), bad_addr);
+  bool listen_fail = fail_acceptor->EnableListen();
+  EXPECT_EQ(listen_fail, false);
+
+  RefPtr<UdsAcceptor> acceptor = MakeRefCounted<UdsAcceptor>(reactor_.get(), addr);
+  acceptor->SetAcceptHandleFunction(std::move(accept_handler));
+  auto func = [](Socket& s) {};
+  acceptor->SetAcceptSetSocketOptFunction(func);
+  acceptor->EnableListen();
+
+  std::unique_ptr<Socket> socket = std::make_unique<Socket>(Socket::CreateUnixSocket());
+
+  int succ = socket->Connect(addr);
+
+  EXPECT_EQ(succ, 0);
+
+  accept_latch.wait();
+
+  socket->Close();
+
+  acceptor->DisableListen();
+
+  reactor_->Stop();
+
+  t1.join();
+
+  EXPECT_EQ(ret, 1);
+}
+
 }  // namespace testing
 
 }  // namespace trpc

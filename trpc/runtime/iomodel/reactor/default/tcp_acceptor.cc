@@ -111,7 +111,8 @@ int TcpAcceptor::HandleReadEvent() {
         info.conn_info.remote_addr = std::move(peer_addr);
 
         if (!accept_handler(info)) {
-          close(conn_fd);
+          // Do not close socket when accept_handler fail(accept_handler will close), or may double-close socket
+          TRPC_LOG_ERROR("tcp accept handler return false");
         }
       } else {
         TRPC_ASSERT("tcp accept handler empty");
