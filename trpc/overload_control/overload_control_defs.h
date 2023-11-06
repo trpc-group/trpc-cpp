@@ -56,10 +56,10 @@ constexpr char kOverloadctrlPriority[] = "overloadctrl_priority";
 constexpr char kHighPercentileName[] = "high_percentile";
 
 /// @brief Maximum scheduling delay strategy.
-constexpr char kExpectedMaxScheduleDelay[] = "expected_max_schedule_delay";
+constexpr char kExpectedMaxScheduleDelay[] = "max_schedule_delay";
 
 /// @brief Maximum request delay strategy.
-constexpr char kExpectedMaxRequestDelay[] = "expected_max_request_latency";
+constexpr char kExpectedMaxRequestDelay[] = "max_request_latency";
 
 /// @brief Name of monitoring dimensions for high percentile.
 constexpr char kOverloadctrlHighPercentile[] = "overloadctrl_high_percentile";

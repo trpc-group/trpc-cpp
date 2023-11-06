@@ -96,7 +96,7 @@ void PriorityAdapter::OnError() { priority_->OnError(); }
 void PriorityAdapter::OnWindowExpires() {
   auto& histogram = histograms_[histogram_index_];
 
-  // If the total number of samples in the histogram is not enough, abandon the update of the priority threshold and 
+  // If the total number of samples in the histogram is not enough, abandon the update of the priority threshold and
   // increase the next window cycle.
   if (histogram.Total() < options_.max_priority * kMaxPriorityFactor) {
     auto current_window_interval = window_.GetInterval();
@@ -162,7 +162,7 @@ void PriorityAdapter::OnWindowExpires() {
 }
 
 PriorityAdapter::Result PriorityAdapter::ApplyRequest(int32_t priority) {
-  // Perform fuzzy processing on integer priority to obtain a floating-point priority. The specific implementation is 
+  // Perform fuzzy processing on integer priority to obtain a floating-point priority. The specific implementation is
   // to add a random fuzzy value in the range of [0, 1).
   double fuzzy_priority = priority + ::trpc::Random<double>(kMinFuzzyPriority, kMaxFuzzyPriority);
 
@@ -195,16 +195,6 @@ PriorityAdapter::Result PriorityAdapter::ApplyRequest(int32_t priority) {
 void PriorityAdapter::Sample(int32_t priority) {
   for (auto& histogram : histograms_) {
     histogram.Sample(priority);
-  }
-}
-
-std::string PriorityAdapter::ConvertResultToString(const Result& result) {
-  if (result == Result::kOK) {
-    return "Ok";
-  } else if (result == Result::kLimitedByLower) {
-    return "LimitedByLower";
-  } else {
-    return "LimitedByOverload";
   }
 }
 

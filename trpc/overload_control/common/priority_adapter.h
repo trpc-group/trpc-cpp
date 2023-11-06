@@ -68,11 +68,6 @@ class PriorityAdapter {
   /// @brief Update algorithm data when an error occurs during request processing.
   void OnError();
 
-  /// @brief Convert the result to a string for reporting purposes.
-  /// @param result Result type, execution result.
-  /// @return The string of result
-  std::string ConvertResultToString(const Result& result);
-
  private:
   // Request application based on priority.
   Result ApplyRequest(int32_t priority);
