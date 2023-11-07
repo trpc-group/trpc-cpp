@@ -7,7 +7,7 @@ global:
     default:
       # Merge model
       - instance_name: default_instance
-        io_handle_type: merge
+        io_handle_type: separate
         io_thread_num: 1 #Number of network I/O threads.
 #Server configuration
 server:

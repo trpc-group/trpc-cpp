@@ -156,13 +156,12 @@ void HighPercentilePriorityImpl::OnWindowExpires() {
     for (uint32_t i = 0; i < strategies_.size(); i++) {
       double expected = strategies_[i]->GetExpected();
       double measured = measureds[i];
-      curr_infos.tags[fmt::format("expected_{}", strategies_[i]->Name())] = expected;
-      curr_infos.tags[fmt::format("measured_{}", strategies_[i]->Name())] = measured;
-      curr_infos.tags[fmt::format("quotient_{}", strategies_[i]->Name())] = measured / expected;
+      curr_infos.tags[fmt::format("{}/expected", strategies_[i]->Name())] = expected;
+      curr_infos.tags[fmt::format("{}/measured", strategies_[i]->Name())] = measured;
+      curr_infos.tags[fmt::format("{}/quotient", strategies_[i]->Name())] = measured / expected;
     }
 
-    auto result = std::max_element(measureds.begin(), measureds.end());
-    curr_infos.tags["max_quotient"] = *result;
+    curr_infos.tags["max_measured"] = std::max_element(measureds.begin(), measureds.end());
     curr_infos.tags["max_concurrency"] = max_concurrency_;
     curr_infos.tags["cur_concurrency"] = cur_concurrency_;
 
