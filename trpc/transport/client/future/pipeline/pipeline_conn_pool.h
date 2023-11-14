@@ -113,20 +113,17 @@ uint64_t PipelineConnPool<T>::GenAvailConnectorId() {
 
 template <typename T>
 T* PipelineConnPool<T>::GetConnector(uint64_t conn_id) {
-  TRPC_ASSERT(conn_id < max_conn_num_);
   return connectors_[conn_id].get();
 }
 
 template <typename T>
 bool PipelineConnPool<T>::AddConnector(uint64_t conn_id, std::unique_ptr<T>&& conn) {
-  TRPC_ASSERT(conn_id < max_conn_num_);
   connectors_[conn_id] = std::move(conn);
   return true;
 }
 
 template <typename T>
 std::unique_ptr<T> PipelineConnPool<T>::GetAndDelConnector(uint64_t conn_id) {
-  TRPC_ASSERT(conn_id < max_conn_num_);
   auto connector = std::move(connectors_[conn_id]);
   return connector;
 }

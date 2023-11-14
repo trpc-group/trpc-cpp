@@ -27,8 +27,6 @@ FutureConnComplexMessageTimeoutHandler::FutureConnComplexMessageTimeoutHandler(
   // Init timeout handler.
   timeout_handle_function_ = [this](const internal::TimingWheelTimeoutQueue::DataIterator& iter) {
     CTransportReqMsg* msg = this->timeout_queue_.GetAndPop(iter);
-    TRPC_ASSERT(msg->context);
-    TRPC_ASSERT(msg->extend_info);
 
     /// @note backup_promise not empty, means a lot.
     ///       1. Current request is the original one.
@@ -44,10 +42,12 @@ FutureConnComplexMessageTimeoutHandler::FutureConnComplexMessageTimeoutHandler(
 
       // Put original request back into timeout queue, timeout minus delay.
       BackupRequestRetryInfo* retry_info_ptr = msg->context->GetBackupRequestRetryInfo();
-      TRPC_ASSERT(retry_info_ptr);
       TRPC_ASSERT(msg->context->GetTimeout() > retry_info_ptr->delay);
       msg->context->SetTimeout(msg->context->GetTimeout() - retry_info_ptr->delay);
-      TRPC_ASSERT(this->Push(msg) == PushResult::kOk);
+
+      if (this->Push(msg) != PushResult::kOk) {
+        TRPC_FMT_ERROR("push failure when resend.");
+      }
       return;
     }
 

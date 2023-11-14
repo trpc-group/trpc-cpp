@@ -58,8 +58,6 @@ void TcpConnection::Established() {
 }
 
 bool TcpConnection::DoConnect() {
-  TRPC_ASSERT(GetConnectionState() == ConnectionState::kUnconnected);
-
   SetDoConnectTimestamp(trpc::time::GetMilliSeconds());
 
   TRPC_ASSERT(GetIoHandler());

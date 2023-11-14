@@ -26,8 +26,6 @@ FuturePipelineMessageTimeoutHandler::FuturePipelineMessageTimeoutHandler(
     : rsp_dispatch_function_(rsp_dispatch_function) {
   timeout_handle_function_ = [this] (const internal::TimingWheelTimeoutQueue::DataIterator& iter) {
     CTransportReqMsg* msg = this->send_queue_.GetAndPop(iter);
-    TRPC_ASSERT(msg->context);
-    TRPC_ASSERT(msg->extend_info);
     if (msg->extend_info->backup_promise) {
       TRPC_FMT_WARN("request to {}:{}  failed, resend to another channel", msg->context->GetIp(),
                      msg->context->GetPort());
@@ -35,7 +33,6 @@ FuturePipelineMessageTimeoutHandler::FuturePipelineMessageTimeoutHandler(
       future::NotifyBackupRequestResend(std::move(ex), msg->extend_info->backup_promise);
 
       BackupRequestRetryInfo* retry_info_ptr = msg->context->GetBackupRequestRetryInfo();
-      TRPC_ASSERT(retry_info_ptr);
       TRPC_ASSERT(msg->context->GetTimeout() > retry_info_ptr->delay);
       msg->context->SetTimeout(msg->context->GetTimeout() - retry_info_ptr->delay);
       this->PushToSendQueue(msg);
@@ -67,11 +64,9 @@ bool FuturePipelineMessageTimeoutHandler::PushToSendQueue(CTransportReqMsg* req_
     return false;
   }
 
-  TRPC_ASSERT(req_msg->extend_info);
   int64_t timeout = req_msg->context->GetTimeout();
   if (req_msg->extend_info->backup_promise) {
     BackupRequestRetryInfo* retry_info_ptr = req_msg->context->GetBackupRequestRetryInfo();
-    TRPC_ASSERT(retry_info_ptr);
     timeout = retry_info_ptr->delay;
   }
   timeout += trpc::time::GetMilliSeconds();

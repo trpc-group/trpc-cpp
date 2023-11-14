@@ -64,8 +64,6 @@ void DispatchResponse(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_msg,
   task->task_type = runtime::kResponseMsg;
   task->param = req_msg;
   task->handler = [&run_client_filters_function, req_msg, rsp_msg]() mutable {
-    TRPC_ASSERT(req_msg->extend_info);
-
     // For rpcz.
     if (run_client_filters_function) {
       run_client_filters_function(FilterPoint::CLIENT_POST_SCHED_RECV_MSG, req_msg);
@@ -95,7 +93,6 @@ void DispatchException(CTransportReqMsg* req_msg, int ret, std::string&& err_msg
   task->task_type = runtime::kResponseMsg;
   task->param = req_msg;
   task->handler = [req_msg, ret, msg = std::move(err_msg)]() mutable {
-    TRPC_ASSERT(req_msg->extend_info);
     auto* backup_promise = req_msg->extend_info->backup_promise;
     Exception ex(CommonException(msg.c_str(), ret));
     req_msg->extend_info->promise.SetException(ex);
@@ -127,7 +124,6 @@ void NotifyBackupRequestResend(Exception&& ex, void*& promise) {
 
 int SendTcpMsg(CTransportReqMsg* req_msg, Connection* conn, bool is_oneway) {
   IoMessage message;
-  TRPC_ASSERT(req_msg);
   message.buffer = std::move(req_msg->send_data);
   message.seq_id = req_msg->context->GetRequestId();
   message.is_oneway = is_oneway;
@@ -149,7 +145,6 @@ int SendTcpMsg(CTransportReqMsg* req_msg, Connection* conn, bool is_oneway) {
 
 int SendUdpMsg(CTransportReqMsg* req_msg, Connection* conn) {
   IoMessage message;
-  TRPC_ASSERT(req_msg);
   message.ip = req_msg->context->GetIp();
   message.port = req_msg->context->GetPort();
   message.buffer = std::move(req_msg->send_data);

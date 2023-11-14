@@ -22,6 +22,7 @@
 #include "trpc/runtime/separate_runtime.h"
 #include "trpc/runtime/threadmodel/common/worker_thread.h"
 #include "trpc/transport/client/fixed_connector_id.h"
+#include "trpc/transport/client/future/common/utils.h"
 #include "trpc/transport/client/future/future_connector_group.h"
 #include "trpc/transport/client/retry_info_def.h"
 #include "trpc/util/likely.h"
@@ -81,7 +82,6 @@ int FutureTransport::SendRecv(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_m
   });
 
   fut = future::BlockingGet(std::move(fut));
-  TRPC_ASSERT(fut.IsReady() || fut.IsFailed());
   if (fut.IsReady()) {
     rsp_msg->msg = std::move(fut.GetValue0().msg);
     return TrpcRetCode::TRPC_INVOKE_SUCCESS;
@@ -216,6 +216,10 @@ stream::StreamReaderWriterProviderPtr FutureTransport::CreateStream(const NodeAd
     group = reinterpret_cast<FutureConnectorGroup*>(ptr->connector_group);
   } else {
     group = adapter->GetConnectorGroup(addr);
+    if (!group) {
+      TRPC_FMT_ERROR("can't get connector group of {}:{}", addr.ip, addr.port);
+      return nullptr;
+    }
   }
 
   return group->CreateStream(std::move(stream_options));
@@ -249,7 +253,6 @@ uint16_t FutureTransport::SelectTransportAdapter() {
   uint16_t dst_thread_model = options_.thread_model->GroupId();
   if (current_thread->Role() != kHandle && dst_thread_model == current_thread->GroupId()) {
     index = GetLogicId(current_thread);
-    TRPC_ASSERT(index < adapters_.size());
   } else {
     index = SelectIOThread();
   }
@@ -268,7 +271,6 @@ uint16_t FutureTransport::SelectTransportAdapter(CTransportReqMsg* msg) {
   uint16_t dst_thread_model = options_.thread_model->GroupId();
   if (current_thread->Role() != kHandle && dst_thread_model == current_thread->GroupId()) {
     index = GetLogicId(current_thread);
-    TRPC_ASSERT(index < adapters_.size());
   } else {
     index = SelectIOThread(msg);
   }
@@ -279,7 +281,6 @@ uint16_t FutureTransport::SelectTransportAdapter(CTransportReqMsg* msg) {
 }
 
 uint16_t FutureTransport::SelectTransportAdapter(CTransportReqMsg* msg, uint16_t index) {
-  TRPC_ASSERT(msg->extend_info);
   auto* current_thread = WorkerThread::GetCurrentWorkerThread();
   if (!current_thread) {
     msg->extend_info->dispatch_info.src_thread_id = -1;
@@ -322,7 +323,6 @@ std::vector<Future<CTransportRspMsg>> FutureTransport::SendBackupRequest(ClientC
                                                                          uint16_t id, bool is_blocking_invoke,
                                                                          NoncontiguousBuffer&& send_data) {
   auto* retry_info = msg_context->GetBackupRequestRetryInfo();
-  TRPC_ASSERT(retry_info);
   retry_info->resend_count++;
   int backup_addr_size = retry_info->backup_addrs.size();
   std::vector<Future<CTransportRspMsg>> vecs;
@@ -366,9 +366,6 @@ std::vector<Future<CTransportRspMsg>> FutureTransport::SendBackupRequest(ClientC
 }
 
 Future<CTransportRspMsg> FutureTransport::AsyncSendRecvImpl(CTransportReqMsg* msg, uint16_t id) {
-  TRPC_ASSERT(msg->context);
-  TRPC_ASSERT(msg->extend_info);
-
   auto fut = msg->extend_info->promise.GetFuture();
   bool ret = SendRequest(msg, id, TrpcCallType::TRPC_UNARY_CALL);
   if (ret) return fut;
@@ -380,8 +377,6 @@ Future<CTransportRspMsg> FutureTransport::AsyncSendRecvImpl(CTransportReqMsg* ms
 Future<CTransportRspMsg> FutureTransport::AsyncSendRecvForBackupRequest(CTransportReqMsg* msg) {
   Promise<CTransportRspMsg> final_promise;
   auto fut = final_promise.GetFuture();
-
-  TRPC_ASSERT(msg->extend_info);
   auto fut_first = msg->extend_info->promise.GetFuture();
   auto res_fut_first = fut_first.Then([msg](Future<CTransportRspMsg>&& fut) mutable {
     trpc::object_pool::Delete(msg);
@@ -416,9 +411,8 @@ Future<CTransportRspMsg> FutureTransport::AsyncSendRecvForBackupRequest(CTranspo
           // Set value or exception.
           if (fut.IsReady()) {
             auto* retry_info = msg_context->GetBackupRequestRetryInfo();
-            TRPC_ASSERT(retry_info);
-
             auto result = fut.GetValue();
+
             if (first_failed) {
               retry_info->succ_rsp_node_index = 1;
             } else if (retry_info->succ_rsp_node_index == 0) {
@@ -457,21 +451,36 @@ MsgTask* FutureTransport::CreateTransportRequestTask(CTransportReqMsg* msg,
   MsgTask* task = object_pool::New<MsgTask>();
   task->task_type = runtime::kRequestMsg;
   task->handler = [this, msg, id, call_type]() mutable {
-    TRPC_FMT_TRACE("call send func");
     if (options_.trans_info.run_client_filters_function) {
       options_.trans_info.run_client_filters_function(FilterPoint::CLIENT_POST_SCHED_SEND_MSG, msg);
     }
 
     switch (call_type) {
       case TrpcCallType::TRPC_UNARY_CALL:
-        adapters_[id]->GetConnectorGroup(msg->context->GetNodeAddr())->SendReqMsg(msg);
+        {
+          FutureConnectorGroup* connector_group = adapters_[id]->GetConnectorGroup(msg->context->GetNodeAddr());
+          if (connector_group) {
+            connector_group->SendReqMsg(msg);
+          } else {
+            std::string error_msg = "connector group resource allocate failure";
+            future::DispatchException(msg, TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR, std::move(error_msg),
+                                options_.trans_info.rsp_dispatch_function);
+          }
+        }
         break;
       case TrpcCallType::TRPC_ONEWAY_CALL:
-        adapters_[id]->GetConnectorGroup(msg->context->GetNodeAddr())->SendOnly(msg);
-        trpc::object_pool::Delete(msg);
+        {
+          FutureConnectorGroup* connector_group = adapters_[id]->GetConnectorGroup(msg->context->GetNodeAddr());
+          if (connector_group) {
+            connector_group->SendOnly(msg);
+          } else {
+            TRPC_FMT_ERROR("GetConnectorGroup failed, target: {}", msg->context->GetIp());
+          }
+          trpc::object_pool::Delete(msg);
+        }
         break;
       default:
-        TRPC_ASSERT(0 && "no support yet");
+        TRPC_ASSERT(false && "no support yet");
         break;
     }
   };
@@ -504,7 +513,7 @@ MsgTask* FutureTransport::CreateFixedConnectorRequestTask(CTransportReqMsg* msg,
         trpc::object_pool::Delete(msg);
         break;
       default:
-        TRPC_ASSERT(0 && "no support yet");
+        TRPC_ASSERT(false && "no support yet");
         break;
     }
   };
@@ -518,8 +527,12 @@ MsgTask* FutureTransport::CreateAllocateTask(const NodeAddr& node_addr, uint16_t
   MsgTask* task = object_pool::New<MsgTask>();
   task->task_type = runtime::kRequestMsg;
   auto& trans_adapter = adapters_[index];
-  task->handler = [&trans_adapter, promise = std::move(promise) , &node_addr]() mutable {
-    trans_adapter->GetOrCreateConnector(node_addr, promise);
+  task->handler = [&trans_adapter, promise = std::move(promise), node_addr]() mutable {
+    bool ret = trans_adapter->GetOrCreateConnector(node_addr, promise);
+    if (!ret) {
+      std::string err = "create or get connector failed";
+      promise.SetException(CommonException(err.c_str(), TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR));
+    }
   };
 
   task->dst_thread_key = index;

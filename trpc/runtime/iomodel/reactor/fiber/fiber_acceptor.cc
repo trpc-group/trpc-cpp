@@ -28,10 +28,6 @@ FiberAcceptor::FiberAcceptor(Reactor* reactor, const NetworkAddress& tcp_addr)
       is_net_(true),
       tcp_addr_(tcp_addr),
       idle_fd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) {
-  TRPC_ASSERT(socket_.IsValid());
-  TRPC_ASSERT(idle_fd_ > 0);
-
-  SetFd(socket_.GetFd());
 }
 
 FiberAcceptor::FiberAcceptor(Reactor* reactor, const UnixAddress& unix_addr)
@@ -40,15 +36,14 @@ FiberAcceptor::FiberAcceptor(Reactor* reactor, const UnixAddress& unix_addr)
       is_net_(false),
       unix_addr_(unix_addr),
       idle_fd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) {
-  TRPC_ASSERT(socket_.IsValid());
-  TRPC_ASSERT(idle_fd_ > 0);
-
-  SetFd(socket_.GetFd());
 }
 
 FiberAcceptor::~FiberAcceptor() {
   socket_.Close();
-  ::close(idle_fd_);
+
+  if (idle_fd_ >= 0) {
+    ::close(idle_fd_);
+  }
 
   if (GetInitializationState() != InitializationState::kInitializedSuccess) {
     return;
@@ -58,6 +53,13 @@ FiberAcceptor::~FiberAcceptor() {
 }
 
 bool FiberAcceptor::Listen() {
+  if (!socket_.IsValid() || idle_fd_ < 0) {
+    TRPC_LOG_ERROR("socket invalid.");
+    return false;
+  }
+
+  SetFd(socket_.GetFd());
+
   socket_.SetReuseAddr();
   socket_.SetReusePort();
   socket_.SetTcpNoDelay();
@@ -78,7 +80,9 @@ bool FiberAcceptor::Listen() {
     }
   }
 
-  socket_.Listen(1024);
+  if (!socket_.Listen(1024)) {
+    return false;
+  }
 
   EnableEvent(EventHandler::EventType::kReadEvent);
 

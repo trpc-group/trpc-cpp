@@ -47,7 +47,6 @@ bool FutureTcpConnPoolConnectionHandler::HandleMessage(const ConnectionPtr& conn
 
     // Decode success.
     if (ret) {
-      TRPC_ASSERT(rsp_protocol);
       conn_reusable &= rsp_protocol->IsConnectionReusable();
       auto* rsp_msg = trpc::object_pool::New<CTransportRspMsg>();
       rsp_msg->msg = std::move(rsp_protocol);

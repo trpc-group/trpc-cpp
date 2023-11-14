@@ -73,7 +73,7 @@ class Socket {
   bool Bind(const UnixAddress& bind_addr);
 
   /// @brief Listen tcp conneciton
-  void Listen(int backlog = SOMAXCONN);
+  bool Listen(int backlog = SOMAXCONN);
 
   /// @brief Establish tcp connection
   int Connect(const NetworkAddress& addr);
@@ -103,28 +103,28 @@ class Socket {
   int RecvMsg(msghdr* message, int flag, NetworkAddress* peer_addr);
 
   /// @brief Set SO_REUSEADD
-  void SetReuseAddr();
+  bool SetReuseAddr();
 
   /// @brief Set SO_REUSEPORT
-  void SetReusePort();
+  bool SetReusePort();
 
   /// @brief Set socket whether to be block
-  void SetBlock(bool block = false);
+  bool SetBlock(bool block = false);
 
   /// @brief Set the option that discard all data in the send buffer when socket close
-  void SetNoCloseWait();
+  bool SetNoCloseWait();
 
   /// @brief Set the delay time to wait for the buffer to continue sending when socket close
-  void SetCloseWait(int delay = 30);
+  bool SetCloseWait(int delay = 30);
 
   /// @brief Set system default behavior when socket clost
-  void SetCloseWaitDefault();
+  bool SetCloseWaitDefault();
 
   /// @brief Set TCP_NODELAY
-  void SetTcpNoDelay();
+  bool SetTcpNoDelay();
 
   /// @brief Set SO_KEEPALIVE
-  void SetKeepAlive();
+  bool SetKeepAlive();
 
   /// @brief Get receive buffer size
   int GetRecvBufferSize();

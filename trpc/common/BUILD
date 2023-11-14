@@ -168,3 +168,31 @@ cc_library(
         "@com_github_gflags_gflags//:gflags",
     ],
 )
+
+cc_test(
+    name = "runtime_manager_fiber_test",
+    srcs = ["runtime_manager_fiber_test.cc"],
+    data = [
+        "//trpc/common/testing:fiber_testing.yaml",
+    ],
+    deps = [
+        ":runtime_manager",
+        "//trpc/common/config:trpc_config",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "runtime_manager_thread_test",
+    srcs = ["runtime_manager_thread_test.cc"],
+    data = [
+        "//trpc/common/testing:merge_testing.yaml",
+    ],
+    deps = [
+        ":runtime_manager",
+        "//trpc/common/config:trpc_config",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

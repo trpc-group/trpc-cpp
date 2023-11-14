@@ -35,13 +35,19 @@ FutureTcpConnPoolConnectorGroup::FutureTcpConnPoolConnectorGroup(FutureConnector
 
 bool FutureTcpConnPoolConnectorGroup::Init() {
   uint64_t timer_id = options_.reactor->AddTimerAfter(0, 10000, [this]() { this->HandleIdleConnection(); });
-  TRPC_ASSERT(timer_id != kInvalidTimerId && "add idle connection timer failed");
+  if (timer_id == kInvalidTimerId) {
+    TRPC_FMT_ERROR("add idle connection timer failed.");
+    return false;
+  }
   timer_ids_.push_back(timer_id);
 
   auto timeout_check_interval = options_.trans_info->request_timeout_check_interval;
   TRPC_ASSERT(timeout_check_interval > 0);
   timer_id = options_.reactor->AddTimerAfter(0, timeout_check_interval, [this]() { this->HandleReqTimeout(); });
-  TRPC_ASSERT(timer_id != kInvalidTimerId && "add request timeout timer failed");
+  if (timer_id == kInvalidTimerId) {
+    TRPC_FMT_ERROR("add request timeout timer failed.");
+    return false;
+  }
   timer_ids_.push_back(timer_id);
 
   return true;
@@ -59,8 +65,6 @@ void FutureTcpConnPoolConnectorGroup::Stop() {
 void FutureTcpConnPoolConnectorGroup::Destroy() { conn_pool_.Destroy(); }
 
 FutureTcpConnPoolConnector* FutureTcpConnPoolConnectorGroup::GetOrCreateConnector(uint64_t conn_id) {
-  TRPC_ASSERT(conn_id != TcpConnPool::kInvalidConnId && "conn id invalid");
-
   FutureTcpConnPoolConnector* conn = conn_pool_.GetConnector(conn_id);
   if (conn != nullptr) {
     return conn;
@@ -94,7 +98,6 @@ FutureTcpConnPoolConnector* FutureTcpConnPoolConnectorGroup::GetOrCreateConnecto
 bool FutureTcpConnPoolConnectorGroup::ReleaseConnector(uint64_t fixed_connector_id) {
   FixedConnectorId* ptr = reinterpret_cast<FixedConnectorId*>(fixed_connector_id);
   uint64_t conn_id = ptr->conn_id;
-  TRPC_ASSERT(conn_id != TcpConnPool::kInvalidConnId);
   auto* connector = conn_pool_.GetConnector(conn_id);
   if (!connector) {
     fixed_connection_count_--;
@@ -117,16 +120,12 @@ bool FutureTcpConnPoolConnectorGroup::ReleaseConnector(uint64_t fixed_connector_
 bool FutureTcpConnPoolConnectorGroup::GetOrCreateConnector(const NodeAddr& node_addr, Promise<uint64_t>& promise) {
   uint64_t conn_id = conn_pool_.GenAvailConnectorId();
   if (conn_id == TcpConnPool::kInvalidConnId) {
-    promise.SetException(
-        CommonException("gen connection id fail, try to modify max_conn_num", TrpcRetCode::TRPC_CLIENT_NETWORK_ERR));
     return false;
   }
 
   auto* connector = GetOrCreateConnector(conn_id);
   if (connector == nullptr) {
     conn_pool_.RecycleConnectorId(conn_id);
-    TRPC_FMT_ERROR("init connector fail, peer addr: ", options_.peer_addr.ToString());
-    promise.SetException(CommonException("init connector fail", TrpcRetCode::TRPC_CLIENT_NETWORK_ERR));
     return false;
   }
 

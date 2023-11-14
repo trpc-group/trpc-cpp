@@ -24,7 +24,6 @@ FutureUdpIoPoolConnectorGroup::FutureUdpIoPoolConnectorGroup(FutureConnectorGrou
   timeout_handle_function_ = [this](const internal::SharedSendQueue::DataIterator& iter) {
     uint64_t conn_id = shared_send_queue_.GetIndex(iter);
     FutureUdpIoPoolConnector* conn = conn_pool_.GetConnector(conn_id);
-    TRPC_ASSERT(conn != nullptr);
     CTransportReqMsg* msg = shared_send_queue_.GetAndPop(iter);
     conn->HandleSendQueueTimeout(msg);
   };
@@ -32,9 +31,11 @@ FutureUdpIoPoolConnectorGroup::FutureUdpIoPoolConnectorGroup(FutureConnectorGrou
 
 bool FutureUdpIoPoolConnectorGroup::Init() {
   auto timeout_check_interval = options_.trans_info->request_timeout_check_interval;
-  TRPC_ASSERT(timeout_check_interval > 0);
   timer_id_ = options_.reactor->AddTimerAfter(0, timeout_check_interval, [this]() { this->HandleReqTimeout(); });
-  TRPC_ASSERT(timer_id_ != kInvalidTimerId);
+  if (timer_id_ == kInvalidTimerId) {
+    TRPC_FMT_ERROR("add request timeout timer failed.");
+    return false;
+  }
 
   return true;
 }
@@ -53,8 +54,6 @@ void FutureUdpIoPoolConnectorGroup::Destroy() {
 }
 
 FutureUdpIoPoolConnector* FutureUdpIoPoolConnectorGroup::GetOrCreateConnector(uint64_t conn_id) {
-  TRPC_ASSERT(conn_id != UdpIoPool::kInvalidConnId && "udp conn id invalid");
-
   FutureUdpIoPoolConnector* conn = conn_pool_.GetConnector(conn_id);
   if (conn != nullptr) {
     return conn;

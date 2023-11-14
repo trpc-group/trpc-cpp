@@ -50,13 +50,13 @@ void FiberUdpTransceiver::RestartWriteEvent() {
   // times. Here, we limit the registration of the write event to only one time by using the restart_write_count_
   std::size_t expected = 0;
   if (restart_write_count_.compare_exchange_strong(expected, 1, std::memory_order_relaxed)) {
-    TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
+    GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
       if (Enabled()) {
         TRPC_ASSERT((GetSetEvents() & EventType::kWriteEvent) == 0);
         SetSetEvents(GetSetEvents() | EventType::kWriteEvent);
         GetReactor()->Update(this);
       }
-    }));
+    });
   }
 }
 

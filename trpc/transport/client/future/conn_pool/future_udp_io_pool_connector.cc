@@ -55,8 +55,13 @@ void FutureUdpIoPoolConnector::Destroy() {
 }
 
 int FutureUdpIoPoolConnector::SendReqMsg(CTransportReqMsg* req_msg) {
-  TRPC_ASSERT(req_msg->context->GetBackupRequestRetryInfo() == nullptr);
-  TRPC_ASSERT(msg_timeout_handler_.IsSendQueueEmpty());
+  if (!msg_timeout_handler_.IsSendQueueEmpty()) {
+    std::string error = "send queue not empty, peer addr:";
+    error += options_.group_options->peer_addr.ToString();
+    future::DispatchException(req_msg, TrpcRetCode::TRPC_INVOKE_UNKNOWN_ERR, std::move(error),
+                              options_.group_options->trans_info->rsp_dispatch_function);
+    return -1;
+  }
 
   msg_timeout_handler_.PushToSendQueue(req_msg);
   int ret = future::SendUdpMsg(req_msg, connection_.Get());

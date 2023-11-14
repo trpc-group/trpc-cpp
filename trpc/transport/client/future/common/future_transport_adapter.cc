@@ -92,8 +92,6 @@ void FutureTransportAdapter::Disconnect(const std::string& target_ip) {
     return;
   }
 
-  TRPC_ASSERT(options_.reactor != nullptr);
-
   Reactor::Task task = [this, target_ip]() {
     group_manager_->Disconnect(target_ip);
   };

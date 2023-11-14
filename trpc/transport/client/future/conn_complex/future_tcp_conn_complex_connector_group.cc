@@ -32,11 +32,15 @@ FutureTcpConnComplexConnectorGroup::FutureTcpConnComplexConnectorGroup(FutureCon
 }
 
 bool FutureTcpConnComplexConnectorGroup::Init() {
-  /// @note Ignore init failed here.
-  connector_->Init();
+  if (!connector_->Init()) {
+    return false;
+  }
 
   idle_connection_timer_id_ = options_.reactor->AddTimerAfter(0, 10000, [this]() { this->HandleIdleConnection(); });
-  TRPC_ASSERT(idle_connection_timer_id_ != kInvalidTimerId && "add idle connection timer failed");
+  if (idle_connection_timer_id_ == kInvalidTimerId) {
+    return false;
+  }
+
   return true;
 }
 
@@ -68,9 +72,6 @@ bool FutureTcpConnComplexConnectorGroup::GetOrCreateConnector(const NodeAddr& no
     connector_->Stop();
     connector_->Destroy();
     if (!connector_->Init()) {
-      std::string err = "ReInit Connector failed";
-      TRPC_LOG_ERROR(err);
-      promise.SetException(CommonException(err.c_str(), TrpcRetCode::TRPC_CLIENT_NETWORK_ERR));
       return false;
     }
   }

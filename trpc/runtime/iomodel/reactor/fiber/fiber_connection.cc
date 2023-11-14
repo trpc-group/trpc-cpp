@@ -68,14 +68,14 @@ void FiberConnection::AttachReactor() {
 }
 
 void FiberConnection::DisableRead() {
-  TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
+  GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
     if (Enabled()) {
       DisableEvent(EventHandler::EventType::kReadEvent);
       GetReactor()->Update(this);
       TRPC_FMT_DEBUG("FiberConnection::DisableRead ip {}, port: {}, is_client {}, Disable Read.",
         GetPeerIp(), GetPeerPort(), IsClient());
     }
-  }));
+  });
 }
 
 int FiberConnection::HandleReadEvent() {
@@ -99,10 +99,10 @@ int FiberConnection::HandleReadEvent() {
           //
           // Meanwhile, `QueueCleanupCallbackCheck()` is called after our task,
           // by the time it checked the counter, it's zero as expected.
-          TRPC_ASSERT(GetReactor()->SubmitTask([this] {
+          GetReactor()->SubmitTask([this] {
             read_events_.store(0, std::memory_order_relaxed);
             QueueCleanupCallbackCheck();
-          }));
+          });
           break;
         } else if (rc == EventAction::kSuppress) {
           SuppressReadAndClearReadEvent();
@@ -138,10 +138,10 @@ int FiberConnection::HandleWriteEvent() {
         } else if (TRPC_UNLIKELY(rc == EventAction::kLeaving)) {
           TRPC_ASSERT(read_mostly_.seldomly_used->cleanup_reason.load(std::memory_order_relaxed) !=
                       CleanupReason::kNone);
-          TRPC_ASSERT(GetReactor()->SubmitTask([this] {
+          GetReactor()->SubmitTask([this] {
             write_events_.store(0, std::memory_order_relaxed);
             QueueCleanupCallbackCheck();
-          }));
+          });
           break;
         } else if (rc == EventAction::kSuppress) {
           SuppressAndClearWriteEvent();
@@ -214,7 +214,7 @@ void FiberConnection::RestartWriteIn(std::chrono::nanoseconds after) {
 void FiberConnection::SuppressReadAndClearReadEvent() {
   // This must be done in `EventLoop`. Otherwise order of calls to
   // `ModEventHandler` is nondeterministic.
-  TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {  //
+  GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {  //
     // We reset `read_events_` to zero first, as it's left non-zero when we
     // leave `HandleReadEvent()`.
     //
@@ -252,11 +252,11 @@ void FiberConnection::SuppressReadAndClearReadEvent() {
         HandleReadEvent();
       }
     }
-  }));
+  });
 }
 
 void FiberConnection::SuppressAndClearWriteEvent() {
-  TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
+  GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
     write_events_.store(0, std::memory_order_relaxed);
     QueueCleanupCallbackCheck();
 
@@ -272,11 +272,11 @@ void FiberConnection::SuppressAndClearWriteEvent() {
         HandleWriteEvent();
       }
     }
-  }));
+  });
 }
 
 void FiberConnection::RestartReadNow() {
-  TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
+  GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
     if (Enabled()) {
       auto count = restart_read_count_.fetch_add(1, std::memory_order_relaxed);
       if (count == 0) {  // We changed it from 0 to 1.
@@ -285,11 +285,11 @@ void FiberConnection::RestartReadNow() {
         GetReactor()->Update(this);
       }
     }
-  }));
+  });
 }
 
 void FiberConnection::RestartWriteNow() {
-  TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
+  GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
     if (Enabled()) {
       auto count = restart_write_count_.fetch_add(1, std::memory_order_relaxed);
       TRPC_ASSERT(count == 0 || count == 1);
@@ -300,7 +300,7 @@ void FiberConnection::RestartWriteNow() {
         GetReactor()->Update(this);
       }
     }
-  }));
+  });
 }
 
 void FiberConnection::WaitForCleanup() {
@@ -314,7 +314,7 @@ void FiberConnection::Kill(CleanupReason reason) {
   TRPC_ASSERT(reason != CleanupReason::kNone);
   auto expected = CleanupReason::kNone;
   if (read_mostly_.seldomly_used->cleanup_reason.compare_exchange_strong(expected, reason, std::memory_order_relaxed)) {
-    TRPC_ASSERT(GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
+    GetReactor()->SubmitTask([this, ref = RefPtr(ref_ptr, this)] {
       TRPC_ASSERT(Enabled());
 
       DisableAllEvent();
@@ -326,7 +326,7 @@ void FiberConnection::Kill(CleanupReason reason) {
       cleanup_pending_.store(true, std::memory_order_relaxed);
 
       QueueCleanupCallbackCheck();
-    }));
+    });
   }
 }
 
@@ -353,7 +353,7 @@ void FiberConnection::QueueCleanupCallbackCheck() {
     // Consider queue a call to `OnCleanup()` then.
     if (!read_mostly_.seldomly_used->cleanup_queued.exchange(true, std::memory_order_release)) {
       // No need to take a reference to us, `OnCleanup()` has not been called.
-      TRPC_ASSERT(GetReactor()->SubmitTask([this] {
+      GetReactor()->SubmitTask([this] {
         // The load below acts as a fence (paired with `exchange` above). (But
         // does it make sense?)
         (void)read_mostly_.seldomly_used->cleanup_queued.load(std::memory_order_acquire);
@@ -380,7 +380,7 @@ void FiberConnection::QueueCleanupCallbackCheck() {
         std::scoped_lock _(read_mostly_.seldomly_used->cleanup_lk);
         read_mostly_.seldomly_used->cleanup_completed = true;
         read_mostly_.seldomly_used->cleanup_cv.notify_one();
-      }));
+      });
     }
   }
 }

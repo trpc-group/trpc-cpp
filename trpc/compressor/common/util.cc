@@ -30,9 +30,7 @@ bool CopyDataToOutputStream(const void* data, std::size_t size, trpc::Noncontigu
     void* next_data;
     int next_size;
     // New a buffer block to write.
-    if (TRPC_UNLIKELY(!out->Next(&next_data, &next_size))) {
-      return false;
-    }
+    out->Next(&next_data, &next_size);
 
     if (left_to_copy <= next_size) {
       // Copy full content.
