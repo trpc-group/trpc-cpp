@@ -56,15 +56,16 @@ cc_library(
     deps = [
         ":config_helper",
         ":default_log_conf_h",
-        ":default_log_conf_parse",
+        ":default_log_conf_parser",
     ],
 )
 
 cc_library(
-    name = "default_log_conf_parse",
+    name = "default_log_conf_parser",
     srcs = ["default_log_conf_parser.cc"],
     hdrs = ["default_log_conf_parser.h"],
     deps = [
+        ":default_value",
         ":config_helper",
         ":default_log_conf_h",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",

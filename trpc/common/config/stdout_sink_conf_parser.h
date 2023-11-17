@@ -19,25 +19,6 @@
 
 namespace YAML {
 
-bool GetStdoutNode(std::string_view logger_name, YAML::Node& stdout_node) {
-  YAML::Node logger_node, sinks_node;
-  // Check if logger is configured
-  if (!GetLoggerNode(logger_name, logger_node)) {
-    std::cerr << "Get loggerNode err: " << "logger_name" << logger_name << std::endl;
-    return false;
-  }
-  // Check if sinks are configured
-  if (!trpc::ConfigHelper::GetNode(logger_node, {"sinks"}, sinks_node)) {
-    std::cerr << "sink not found!" << std::endl;
-    return false;
-  }
-  // Check if local_file is configured
-  if (!trpc::ConfigHelper::GetNode(sinks_node, {"stdout"}, stdout_node)) {
-    return false;
-  }
-  return true;
-}
-
 template <>
 struct convert<trpc::StdoutSinkConfig> {
   static YAML::Node encode(const trpc::StdoutSinkConfig& config) {

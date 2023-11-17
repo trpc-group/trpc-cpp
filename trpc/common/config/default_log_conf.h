@@ -36,10 +36,10 @@ struct DefaultLogConfig {
 
     /// @brief Print out the logger configuration.
     void Display() const {
-      std::cout << "name:" << name << std::endl;
-      std::cout << "min_level:" << min_level << std::endl;
-      std::cout << "format:" << format << std::endl;
-      std::cout << "mode:" << mode << std::endl;
+      std::cout << "name: " << name << std::endl;
+      std::cout << "min_level: " << min_level << std::endl;
+      std::cout << "format: " << format << std::endl;
+      std::cout << "mode: " << mode << " ===> 1: sync 2: async 3: overrun_oldest" << std::endl;
     }
   };
 
@@ -49,10 +49,6 @@ struct DefaultLogConfig {
   /// @brief Print out all the logger configurations
   void Display() const;
 };
-
-/// @brief Get the configuration for a single logger from the default plugin configuration
-template <typename Config>
-bool GetLoggerConfig(std::string_view logger_name, Config& config);
 
 /// @brief Get node config for all loggers under default plugin
 bool GetDefaultLogConfig(trpc::DefaultLogConfig& config);

@@ -22,14 +22,34 @@
 
 #include "trpc/common/config/config_helper.h"
 #include "trpc/common/config/default_log_conf.h"
+#include "trpc/common/config/default_value.h"
 
 namespace YAML {
 
-/// @brief Get yaml configuration under defalut plugin.
+/// @brief Get yaml configuration under default plugin.
 bool GetDefaultLogNode(YAML::Node& default_log_node);
 
 /// @brief Get the yaml configuration under the logger.
 bool GetLoggerNode(std::string_view logger_name, YAML::Node& logger_node);
+
+/// @brief Get the yaml of sinks configuration under the default logger.
+bool GetDefaultLoggerSinkNode(std::string_view logger_name, std::string_view sink_type, std::string_view sink_name,
+                              YAML::Node& sink_log_node);
+
+/// @brief Get the configuration for the logger sink based on the logger name
+template <typename SinkConfig>
+bool GetDefaultLoggerSinkConfig(std::string_view logger_name, std::string_view sink_type, std::string_view sink_name,
+                                SinkConfig& config) {
+  YAML::Node sink_log_node;
+  // Parse a single Logger through yaml to get nodes in local_file
+  if (!GetDefaultLoggerSinkNode(logger_name, sink_type, sink_name, sink_log_node)) {
+    return false;
+  }
+  // Convert node to sink config
+  YAML::convert<SinkConfig> sink_conf;
+  sink_conf.decode(sink_log_node, config);
+  return true;
+}
 
 template <>
 struct convert<trpc::DefaultLogConfig::LoggerInstance> {

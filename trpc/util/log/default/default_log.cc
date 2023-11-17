@@ -15,15 +15,15 @@
 
 #include <string_view>
 
+#include "trpc/common/config/default_value.h"
 #include "trpc/common/config/local_file_sink_conf.h"
+#include "trpc/common/config/local_file_sink_conf_parser.h"
 #include "trpc/common/config/stdout_sink_conf.h"
+#include "trpc/common/config/stdout_sink_conf_parser.h"
 #include "trpc/util/log/default/sinks/local_file/local_file_sink.h"
 #include "trpc/util/log/default/sinks/stdout/stdout_sink.h"
 
 namespace trpc {
-
-// Constant "default"
-constexpr char kTrpcLogCacheStringDefault[] = "default";
 
 void DefaultLog::Start() { spdlog::flush_every(std::chrono::milliseconds{50}); }
 
@@ -39,14 +39,14 @@ void DefaultLog::Stop() {
 }
 
 bool DefaultLog::ShouldLog(const char* instance_name, Level level) const {
-  if (!inited_) {
-    std::cerr << "DefaultLog not inited" << std::endl;
+  if (!initted_) {
+    std::cerr << "DefaultLog not initted" << std::endl;
     return false;
   }
 
   auto iter = instances_.find(instance_name);
   if (iter == instances_.end()) {
-    std::cerr << "DefaultLog instance" << instance_name << " does not exit" << std::endl;
+    std::cerr << "DefaultLog instance " << instance_name << " does not exit" << std::endl;
     return false;
   }
   auto& instance = iter->second;
@@ -54,12 +54,12 @@ bool DefaultLog::ShouldLog(const char* instance_name, Level level) const {
 }
 
 bool DefaultLog::ShouldLog(Level level) const {
-  if (!inited_) {
-    std::cerr << "DefaultLog not inited" << std::endl;
+  if (!initted_) {
+    std::cerr << "DefaultLog not initted" << std::endl;
     return false;
   }
-  if (!inited_trpc_logger_instance_) {
-    std::cout<<"not inited!"<<std::endl;
+  if (!initted_trpc_logger_instance_) {
+    std::cout << "not inited!" << std::endl;
     return false;
   }
   return level >= trpc_logger_instance_.config.min_level;
@@ -68,17 +68,17 @@ bool DefaultLog::ShouldLog(Level level) const {
 void DefaultLog::LogIt(const char* instance_name, Level level, const char* filename_in, int line_in,
                        const char* funcname_in, std::string_view msg,
                        const std::unordered_map<uint32_t, std::any>& filter_data) const {
-  if (!inited_) {
-    std::cerr << "DefaultLog not inited" << std::endl;
+  if (!initted_) {
+    std::cerr << "DefaultLog not initted" << std::endl;
     return;
   }
 
   const DefaultLog::Logger* instance = nullptr;
   // It is preferred if it is the output of the tRPC-Cpp framework log
   if (!strcmp(instance_name, kTrpcLogCacheStringDefault)) {
-    if (inited_trpc_logger_instance_ == false) {
-      std::cerr << "DefaultLog instance:" << kTrpcLogCacheStringDefault << "does not exit" << std::endl;
-      return ;
+    if (initted_trpc_logger_instance_ == false) {
+      std::cerr << "DefaultLog instance: " << kTrpcLogCacheStringDefault << " does not exit" << std::endl;
+      return;
     }
     instance = &trpc_logger_instance_;
   } else {
@@ -101,14 +101,14 @@ void DefaultLog::LogIt(const char* instance_name, Level level, const char* filen
 }
 
 std::pair<Log::Level, bool> DefaultLog::GetLevel(const char* instance_name) const {
-  if (!inited_) {
-    std::cerr << "DefaultLog not inited" << std::endl;
+  if (!initted_) {
+    std::cerr << "DefaultLog not initted" << std::endl;
     return std::make_pair(Level::info, false);
   }
 
   auto iter = instances_.find(instance_name);
   if (iter == instances_.end()) {
-    std::cerr << "DefaultLog instance" << instance_name << " does not exit" << std::endl;
+    std::cerr << "DefaultLog instance " << instance_name << " does not exit" << std::endl;
     return std::make_pair(Level::info, false);
   }
   auto& instance = iter->second;
@@ -117,14 +117,14 @@ std::pair<Log::Level, bool> DefaultLog::GetLevel(const char* instance_name) cons
 }
 
 std::pair<Log::Level, bool> DefaultLog::SetLevel(const char* instance_name, Level level) {
-  if (!inited_) {
-    std::cerr << "DefaultLog not inited" << std::endl;
+  if (!initted_) {
+    std::cerr << "DefaultLog not initted" << std::endl;
     return std::make_pair(Level::info, false);
   }
 
   auto iter = instances_.find(instance_name);
   if (iter == instances_.end()) {
-    std::cerr << "DefaultLog instance" << instance_name << " does not exit" << std::endl;
+    std::cerr << "DefaultLog instance " << instance_name << " does not exit" << std::endl;
     return std::make_pair(Level::info, false);
   }
   auto& instance = iter->second;
@@ -138,14 +138,16 @@ std::pair<Log::Level, bool> DefaultLog::SetLevel(const char* instance_name, Leve
 }
 
 int DefaultLog::Init() {
-  if (inited_) {
+  if (initted_) {
     std::cerr << "DefaultLog already init!" << std::endl;
     return -1;
   }
 
   // Get all logger instances configured for the "default" plugin
   DefaultLogConfig config;
-  if (!GetDefaultLogConfig(config)) return -1;
+  if (!GetDefaultLogConfig(config)) {
+    return -1;
+  }
 
   // "config.instances" stands for the logger instance,
   // users can configure multiple loggers to separate business logs from framework logs.
@@ -154,17 +156,20 @@ int DefaultLog::Init() {
     RegisterInstance(conf.name.c_str(), Logger{conf});
 
     // Create the spdlog logger
-    if (!createSpdLogger(conf.name.c_str())) {
-      std::cerr << "create SpdLogger failed!"
-                << "name: " << conf.name.c_str() << std::endl;
+    if (!CreateSpdLogger(conf.name.c_str())) {
+      std::cerr << "create SpdLogger failed! name: " << conf.name.c_str() << std::endl;
       return -1;
     }
 
     // Init sinks into the spdlog's Logger if exist
-    if (!InitSink<LocalFileSink, LocalFileSinkConfig>(conf.name.c_str())) return -1;
-    if (!InitSink<StdoutSink, StdoutSinkConfig>(conf.name.c_str())) return -1;
+    if (!InitSink<LocalFileSink, LocalFileSinkConfig>(conf.name.c_str(), "local_file")) {
+      return -1;
+    }
+    if (!InitSink<StdoutSink, StdoutSinkConfig>(conf.name.c_str(), "stdout")) {
+      return -1;
+    }
   }
-  inited_ = true;
+  initted_ = true;
   return 0;
 }
 
@@ -173,8 +178,14 @@ bool DefaultLog::RegisterRawSink(const LoggingPtr& raw_sink) {
     std::cerr << "raw_sink is nullptr!" << std::endl;
     return false;
   }
-  auto& instance = instances_[raw_sink->LoggerName()];
-  instance.raw_sinks.push_back(raw_sink);
+  const std::string& logger_name = raw_sink->LoggerName();
+  auto& instance = instances_[logger_name];
+  auto spd_sink = raw_sink->SpdSink();
+  if (spd_sink) {
+    instance.logger->sinks().push_back(spd_sink);
+  } else {
+    instance.raw_sinks.push_back(raw_sink);
+  }
   return true;
 }
 
@@ -216,7 +227,7 @@ DefaultLog::Logger* DefaultLog::GetLoggerInstance(const std::string& instance_na
   }
 }
 
-bool DefaultLog::createSpdLogger(const char* logger_name) {
+bool DefaultLog::CreateSpdLogger(const char* logger_name) {
   auto& instance = instances_[logger_name];
   auto& conf = instance.config;
 
@@ -244,12 +255,12 @@ bool DefaultLog::createSpdLogger(const char* logger_name) {
 }
 
 int DefaultLog::Destroy() {
-  if (!inited_) {
-    std::cerr << "DefaultLog not inited" << std::endl;
+  if (!initted_) {
+    std::cerr << "DefaultLog not initted" << std::endl;
     exit(-1);
   }
 
-  inited_ = false;
+  initted_ = false;
   for (auto& instance : instances_) {
     for (auto& sink : instance.second.raw_sinks) {
       sink->Destroy();

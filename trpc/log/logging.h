@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "spdlog/pattern_formatter.h"
+
 #include "trpc/common/plugin.h"
 #include "trpc/util/log/log.h"
 
@@ -22,7 +24,7 @@ class Logging : public Plugin {
  public:
   /// @brief Gets the logger name.
   /// @return Under which logger the remote logging plugin is mounted.
-  virtual std::string LoggerName() const = 0;
+  virtual const std::string& LoggerName() const = 0;
 
   /// @brief Gets the plugin type
   /// @return plugin type
@@ -36,6 +38,9 @@ class Logging : public Plugin {
   /// @param  msg           Log message
   virtual void Log(const Log::Level level, const char* filename_in, int line_in, const char* funcname_in,
                    std::string_view msg, const std::unordered_map<uint32_t, std::any>& extend_fields_msg) = 0;
+
+  /// @brief Get the pointer of sink instance of spdlog
+  virtual spdlog::sink_ptr SpdSink() const { return nullptr; }
 };
 
 using LoggingPtr = RefPtr<Logging>;
