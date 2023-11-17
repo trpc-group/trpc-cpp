@@ -1,0 +1,6 @@
+global:
+  threadmodel:
+    default:
+      - instance_name: default_instance
+        io_handle_type: merge
+        io_thread_num: 4

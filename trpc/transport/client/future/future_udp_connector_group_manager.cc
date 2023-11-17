@@ -44,8 +44,6 @@ void FutureUdpConnectorGroupManager::Destroy() {
 }
 
 FutureConnectorGroup* FutureUdpConnectorGroupManager::GetConnectorGroup(const NodeAddr& node_addr) {
-  TRPC_ASSERT(options_.trans_info->conn_type == ConnectionType::kUdp);
-
   auto& udp_connector_group = udp_connector_group_[GetUdpConnectorGroupIndex(node_addr.addr_type)];
   if (TRPC_LIKELY(udp_connector_group != nullptr)) {
     return udp_connector_group.get();
@@ -67,10 +65,13 @@ FutureConnectorGroup* FutureUdpConnectorGroupManager::GetConnectorGroup(const No
     udp_connector_group = std::make_unique<FutureUdpIoPoolConnectorGroup>(std::move(connector_group_options));
   }
 
-  TRPC_ASSERT(udp_connector_group != nullptr);
+  if (udp_connector_group->Init()) {
+    return udp_connector_group.get();
+  }
 
-  udp_connector_group->Init();
-  return udp_connector_group.get();
+  udp_connector_group = nullptr;
+
+  return nullptr;
 }
 
 }  // namespace trpc

@@ -32,8 +32,8 @@ int CheckTrpcProtocolMessage(const ConnectionPtr& conn, NoncontiguousBuffer& in,
 
     // A fixed 16-bytes header.
     TrpcFixedHeader header;
-    // Expect: decodes successfully.
-    TRPC_ASSERT(header.Decode(in, false));
+    // only return success.
+    header.Decode(in, false);
 
     // Checks magic number.
     if (TRPC_UNLIKELY(header.magic_value != TrpcMagic::TRPC_MAGIC_VALUE)) {

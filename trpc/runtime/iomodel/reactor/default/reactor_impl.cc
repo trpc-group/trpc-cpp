@@ -31,13 +31,14 @@ ReactorImpl::ReactorImpl(const Options& options)
       stop_notifier_(this) {
   poller_.SetWaitCallback([this](int) { is_polling_ = true; });
 
-  TRPC_ASSERT(options_.max_task_queue_size > 0);
+  if (options_.max_task_queue_size == 0) {
+    options_.max_task_queue_size = 50000;
+  }
+
   for (auto& queue : task_queues_) {
     auto& q = queue.q;
     TRPC_ASSERT(q.Init(options_.max_task_queue_size));
   }
-
-  TRPC_ASSERT(inner_task_queue_.Init(options_.max_task_queue_size));
 
   if (options_.enable_async_io) {
 #ifdef TRPC_BUILD_INCLUDE_ASYNC_IO
@@ -152,11 +153,11 @@ bool ReactorImpl::SubmitTask2(Task&& task, Priority priority) {
 }
 
 bool ReactorImpl::SubmitInnerTask(Task&& task) {
-  if (!inner_task_queue_.Enqueue(std::move(task))) {
-    TRPC_FMT_ERROR("Enqueue task into reactor #{} failed.", options_.id);
-    TRPC_ASSERT(false);
-    return false;
+  {
+    std::scoped_lock _(mutex_);
+    inner_task_queue_.push_back(std::move(task));
   }
+
   // wake up reactor if needed
   if (!is_polling_) {
     task_notifier_.WakeUp();
@@ -166,8 +167,11 @@ bool ReactorImpl::SubmitInnerTask(Task&& task) {
 }
 
 bool ReactorImpl::CheckTask() {
-  if (inner_task_queue_.Size() > 0) {
-    return true;
+  {
+    std::scoped_lock _(mutex_);
+    if (inner_task_queue_.size() > 0) {
+      return true;
+    }
   }
 
   for (auto& queue : task_queues_) {
@@ -180,13 +184,15 @@ bool ReactorImpl::CheckTask() {
 }
 
 bool ReactorImpl::HandleTask(bool clear) {
-  while (true) {
-    Task task;
-    if (inner_task_queue_.Dequeue(&task)) {
-      task();
-    } else {
-      break;
-    }
+  std::list<Task> task_queue;
+  {
+    std::scoped_lock lk(mutex_);
+    task_queue.swap(inner_task_queue_);
+  }
+
+  while (!task_queue.empty()) {
+    task_queue.front()();
+    task_queue.pop_front();
   }
 
   int idle = 0;
@@ -230,7 +236,12 @@ bool ReactorImpl::TrySleep(bool ensure) {
 }
 
 size_t ReactorImpl::GetTaskSize() {
-  size_t task_size = inner_task_queue_.Size();
+  size_t task_size = 0;
+
+  {
+    std::scoped_lock _(mutex_);
+    task_size = inner_task_queue_.size();
+  }
 
   for (size_t i = 0; i < kPriorities; i++) {
     task_size += task_queues_[i].q.Size();

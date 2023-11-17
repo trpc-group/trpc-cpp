@@ -16,7 +16,6 @@
 namespace trpc::internal {
 
 bool SharedSendQueue::Push(uint64_t index, CTransportReqMsg* msg, uint64_t expire_time_ms) {
-  TRPC_ASSERT(index < capacity_);
   if (send_queue_[index].msg == nullptr) {
     DataType data;
     data.msg = msg;
@@ -29,7 +28,6 @@ bool SharedSendQueue::Push(uint64_t index, CTransportReqMsg* msg, uint64_t expir
 }
 
 CTransportReqMsg* SharedSendQueue::Pop(uint64_t index) {
-  TRPC_ASSERT(index < capacity_);
   auto& data = send_queue_[index];
   CTransportReqMsg* msg = data.msg;
   if (msg != nullptr) {
@@ -43,13 +41,11 @@ CTransportReqMsg* SharedSendQueue::Pop(uint64_t index) {
 }
 
 CTransportReqMsg* SharedSendQueue::Get(uint64_t index) {
-  TRPC_ASSERT(index < capacity_);
   return send_queue_[index].msg;
 }
 
 CTransportReqMsg* SharedSendQueue::GetAndPop(const DataIterator& iter) {
   uint64_t index = GetIndex(iter);
-  TRPC_ASSERT(index < capacity_);
   auto& data = send_queue_[index];
   CTransportReqMsg* msg = data.msg;
   if (msg != nullptr) {

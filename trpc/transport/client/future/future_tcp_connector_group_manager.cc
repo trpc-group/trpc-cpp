@@ -49,33 +49,42 @@ void FutureTcpConnectorGroupManager::Destroy() {
   }
 }
 
-void FutureTcpConnectorGroupManager::CreateTimer() {
+bool FutureTcpConnectorGroupManager::CreateTimer() {
   if (!is_create_timer_) {
     if (options_.trans_info->is_complex_conn) {
-      TRPC_ASSERT(shared_msg_timeout_handler_ != nullptr);
       auto timeout_check_interval = options_.trans_info->request_timeout_check_interval;
-      TRPC_ASSERT(timeout_check_interval > 0);
       timer_id_ = options_.reactor->AddTimerAfter(
           0, timeout_check_interval, [this]() { shared_msg_timeout_handler_->DoTimeout(); });
-      TRPC_ASSERT(timer_id_ != kInvalidTimerId && "add request timeout timer failed");
+      if (timer_id_ == kInvalidTimerId) {
+        TRPC_FMT_ERROR("create timer failed.");
+        return false;
+      }
 
       is_create_timer_ = true;
     }
   }
+
+  return true;
 }
 
 bool FutureTcpConnectorGroupManager::GetOrCreateConnector(const NodeAddr& node_addr,
                                                           Promise<uint64_t>& promise) {
-  CreateTimer();
+  if (!CreateTimer()) {
+    return false;
+  }
 
   FutureConnectorGroup* connector_group = GetConnectorGroup(node_addr);
-  return connector_group->GetOrCreateConnector(node_addr, promise);
+  if (connector_group) {
+    return connector_group->GetOrCreateConnector(node_addr, promise);
+  }
+
+  return false;
 }
 
 FutureConnectorGroup* FutureTcpConnectorGroupManager::GetConnectorGroup(const NodeAddr& node_addr) {
-  TRPC_ASSERT(options_.trans_info->conn_type != ConnectionType::kUdp);
-
-  CreateTimer();
+  if (!CreateTimer()) {
+    return nullptr;
+  }
 
   size_t len = 64;
   std::string endpoint_id(len, 0x0);
@@ -97,7 +106,7 @@ FutureConnectorGroup* FutureTcpConnectorGroupManager::GetConnectorGroup(const No
                                                           : NetworkAddress::IpType::kIpV4);
     connector_group_options.conn_group_manager = this;
 
-    std::unique_ptr<FutureConnectorGroup>& connector_group = connector_groups_[endpoint_id];
+    std::unique_ptr<FutureConnectorGroup> connector_group;
     if (options_.trans_info->is_complex_conn) {
       connector_group = std::make_unique<FutureTcpConnComplexConnectorGroup>(std::move(connector_group_options),
                                                                              *shared_msg_timeout_handler_);
@@ -107,9 +116,15 @@ FutureConnectorGroup* FutureTcpConnectorGroupManager::GetConnectorGroup(const No
       connector_group = std::make_unique<FutureTcpConnPoolConnectorGroup>(std::move(connector_group_options));
     }
 
-    connector_group->Init();
+    bool ret = connector_group->Init();
+    if (ret) {
+      FutureConnectorGroup* ptr = connector_group.get();
+      connector_groups_[endpoint_id] = std::move(connector_group);
 
-    return connector_group.get();
+      return ptr;
+    }
+
+    return nullptr;
   }
 }
 

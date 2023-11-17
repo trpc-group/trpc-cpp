@@ -49,7 +49,7 @@ class FutureTcpConnectorGroupManager : public FutureConnectorGroupManager {
   const auto& GetConnectorGroups() { return connector_groups_; }
 
  private:
-  void CreateTimer();
+  bool CreateTimer();
 
  private:
   // map from node to connector group.

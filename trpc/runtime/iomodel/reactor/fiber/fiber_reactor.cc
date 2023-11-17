@@ -34,10 +34,6 @@ uint32_t reactor_task_queue_size = 65536;
 FiberReactor::FiberReactor(const Options& options)
     : options_(options),
       task_notifier_(this) {
-  poller_.SetWaitCallback([this](int) { state_.store(true, std::memory_order_release); });
-
-  TRPC_ASSERT(options_.max_task_queue_size > 0);
-  TRPC_ASSERT(task_queue_.Init(options_.max_task_queue_size * 2));
 }
 
 bool FiberReactor::Initialize() {
@@ -63,8 +59,10 @@ void FiberReactor::Run() {
     HandleTask();
 
     if (!reactor_keep_running) {
-      if (!(task_queue_.Size() > 0)) {
+      if (!CheckTaskQueueSize()) {
         FiberYield();
+      } else {
+        HandleTask();
       }
     }
   }
@@ -77,15 +75,12 @@ void FiberReactor::Update(EventHandler* event_handler) {
 }
 
 bool FiberReactor::SubmitTask(Task&& task, [[maybe_unused]] Priority priority) {
-  if (!task_queue_.Enqueue(std::move(task))) {
-    TRPC_FMT_WARN_IF(TRPC_WITHIN_N(1000), "Push task into reactor #{} failed.", options_.id);
-    return false;
+  {
+    std::scoped_lock lk(mutex_);
+    task_queue_.push_back(std::move(task));
   }
 
-  bool flag = state_.load(std::memory_order_acquire);
-  if (!flag) {
-    task_notifier_.WakeUp();
-  }
+  task_notifier_.WakeUp();
 
   return true;
 }
@@ -94,25 +89,25 @@ bool FiberReactor::SubmitTask2(Task&& task, Priority priority) {
   return SubmitTask(std::move(task), priority);
 }
 
+bool FiberReactor::CheckTaskQueueSize() {
+  std::scoped_lock _(mutex_);
+  return task_queue_.size() > 0;
+}
+
 void FiberReactor::Dispatch() {
-  state_.store(false, std::memory_order_release);
-
-  if (task_queue_.Size() > 0) {
-    state_.store(true, std::memory_order_release);
-    return;
-  }
-
   poller_.Dispatch(Poller::kPollerTimeout);
 }
 
 void FiberReactor::HandleTask() {
-  while (true) {
-    Task task;
-    if (task_queue_.Pop(task)) {
-      task();
-    } else {
-      break;
-    }
+  std::list<Task> task_queue;
+  {
+    std::scoped_lock lk(mutex_);
+    task_queue.swap(task_queue_);
+  }
+
+  while (!task_queue.empty()) {
+    task_queue.front()();
+    task_queue.pop_front();
   }
 }
 
@@ -270,7 +265,7 @@ void AllReactorsBarrier() {
   FiberLatch l(fiber_reactor_workers.size() * reactor_num_per_scheduling_group);
   for (auto&& elws : fiber_reactor_workers) {
     for (auto&& rtw : elws) {
-      TRPC_ASSERT(rtw.reactor->SubmitTask([&] { l.CountDown(); }));
+      rtw.reactor->SubmitTask([&] { l.CountDown(); });
     }
   }
   l.Wait();

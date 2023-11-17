@@ -14,7 +14,9 @@
 #pragma once
 
 #include <atomic>
+#include <list>
 #include <memory>
+#include <mutex>
 #include <string_view>
 
 #include "trpc/runtime/iomodel/reactor/common/epoll_poller.h"
@@ -128,7 +130,8 @@ class alignas(hardware_destructive_interference_size) ReactorImpl final : public
     alignas(hardware_destructive_interference_size) MpScQueue<Task> q;
   } task_queues_[kPriorities];
 
-  alignas(hardware_destructive_interference_size) MpScQueue<Task> inner_task_queue_;
+  std::mutex mutex_;
+  std::list<Task> inner_task_queue_;
 };
 
 }  // namespace trpc

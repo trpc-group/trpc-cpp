@@ -60,31 +60,6 @@ LZ4F_preferences_t GetLz4Pref(LZ4F_blockSizeID_t block_size_id) {
   return prefs;
 }
 
-/*bool CopyDataToOutputStream(const void* data, std::size_t size, trpc::NoncontiguousBufferOutputStream* out) {
-  if (size == 0) {
-    return true;
-  }
-  std::size_t current_pos = 0;
-  int left_to_copy = static_cast<int>(size);
-  while (true) {
-    void* next_data;
-    int next_size;
-    if (TRPC_UNLIKELY(!out->Next(&next_data, &next_size))) {
-      return false;
-    }
-    if (left_to_copy <= next_size) {
-      memcpy(next_data, reinterpret_cast<const char*>(data) + current_pos, left_to_copy);
-      out->BackUp(next_size - left_to_copy);
-      return true;
-    } else {
-      memcpy(next_data, reinterpret_cast<const char*>(data) + current_pos, next_size);
-      current_pos += next_size;
-      left_to_copy -= next_size;
-    }
-  }
-  return true;
-}*/
-
 bool CompressedToOutputStream(trpc::NoncontiguousBufferOutputStream* out_stream, const void* data,
                               std::size_t compressed_size) {
   if (LZ4F_isError(compressed_size)) {
@@ -128,7 +103,7 @@ bool DecompressSingleBuffer(LZ4F_dctx* ctx, const char* in_data, size_t in_size,
     // Update input
     curr_in_data += curr_in_size;
   }
-  TRPC_ASSERT(curr_in_data <= in_data_end);
+
   if (curr_in_data < in_data_end) {
     TRPC_FMT_ERROR("Decompress: Trailing data left in file after frame");
     return false;

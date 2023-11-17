@@ -30,15 +30,12 @@ FutureConnPoolMessageTimeoutHandler::FutureConnPoolMessageTimeoutHandler(uint64_
 
   timeout_handle_function_ = [this] (const internal::SmallCacheTimingWheelTimeoutQueue::DataIterator& iter) {
     CTransportReqMsg* msg = pending_queue_.GetAndPop(iter);
-    TRPC_ASSERT(msg->context);
-    TRPC_ASSERT(msg->extend_info);
 
     if (msg->extend_info->backup_promise) {
       Exception ex(CommonException("Pending queue resend timeout", TRPC_CLIENT_INVOKE_TIMEOUT_ERR));
       future::NotifyBackupRequestResend(std::move(ex), msg->extend_info->backup_promise);
 
       BackupRequestRetryInfo* retry_info_ptr = msg->context->GetBackupRequestRetryInfo();
-      TRPC_ASSERT(retry_info_ptr);
       TRPC_ASSERT(msg->context->GetTimeout() > retry_info_ptr->delay);
       msg->context->SetTimeout(msg->context->GetTimeout() - retry_info_ptr->delay);
       PushToPendingQueue(msg);
@@ -69,11 +66,10 @@ FutureConnPoolMessageTimeoutHandler::~FutureConnPoolMessageTimeoutHandler() {
 
 bool FutureConnPoolMessageTimeoutHandler::PushToSendQueue(CTransportReqMsg* req_msg) {
   TRPC_ASSERT(IsSendQueueEmpty());
-  TRPC_ASSERT(req_msg->extend_info);
+
   int64_t timeout = req_msg->context->GetTimeout();
   if (req_msg->extend_info->backup_promise) {
     BackupRequestRetryInfo* retry_info_ptr = req_msg->context->GetBackupRequestRetryInfo();
-    TRPC_ASSERT(retry_info_ptr);
     timeout = retry_info_ptr->delay;
   }
   timeout += trpc::time::GetMilliSeconds();
@@ -97,11 +93,9 @@ bool FutureConnPoolMessageTimeoutHandler::PushToPendingQueue(CTransportReqMsg* r
     return false;
   }
 
-  TRPC_ASSERT(req_msg->extend_info);
   int64_t timeout = req_msg->context->GetTimeout();
   if (req_msg->extend_info->backup_promise) {
     BackupRequestRetryInfo* retry_info_ptr = req_msg->context->GetBackupRequestRetryInfo();
-    TRPC_ASSERT(retry_info_ptr);
     timeout = retry_info_ptr->delay;
   }
   timeout += trpc::time::GetMilliSeconds();
@@ -124,9 +118,6 @@ CTransportReqMsg* FutureConnPoolMessageTimeoutHandler::PopFromPendingQueue() {
 bool FutureConnPoolMessageTimeoutHandler::HandleSendQueueTimeout(CTransportReqMsg* msg) {
   if (!msg) return false;
 
-  TRPC_ASSERT(msg->context);
-  TRPC_ASSERT(msg->extend_info);
-
   if (msg->extend_info->backup_promise) {
     TRPC_FMT_DEBUG("request {}:{} failed, resend to another channel",
                     msg->context->GetIp(),
@@ -134,7 +125,7 @@ bool FutureConnPoolMessageTimeoutHandler::HandleSendQueueTimeout(CTransportReqMs
     Exception ex(CommonException("Send queue resend timeout", TRPC_CLIENT_INVOKE_TIMEOUT_ERR));
     future::NotifyBackupRequestResend(std::move(ex), msg->extend_info->backup_promise);
     BackupRequestRetryInfo* retry_info_ptr = msg->context->GetBackupRequestRetryInfo();
-    TRPC_ASSERT(retry_info_ptr);
+
     TRPC_ASSERT(msg->context->GetTimeout() > retry_info_ptr->delay);
     msg->context->SetTimeout(msg->context->GetTimeout() - retry_info_ptr->delay);
     PushToSendQueue(msg);

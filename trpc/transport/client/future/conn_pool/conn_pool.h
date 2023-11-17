@@ -141,15 +141,12 @@ ConnPool<T>::ConnPool(const FutureConnectorGroupOptions& options)
 
   timeout_handle_function_ = [this](const internal::SmallCacheTimingWheelTimeoutQueue::DataIterator& iter) {
     CTransportReqMsg* msg = this->pending_queue_.GetAndPop(iter);
-    TRPC_ASSERT(msg->context);
-    TRPC_ASSERT(msg->extend_info);
 
     if (msg->extend_info->backup_promise) {
       Exception ex(CommonException("resend pending timeout", TRPC_CLIENT_INVOKE_TIMEOUT_ERR));
       future::NotifyBackupRequestResend(std::move(ex), msg->extend_info->backup_promise);
 
       BackupRequestRetryInfo* retry_info_ptr = msg->context->GetBackupRequestRetryInfo();
-      TRPC_ASSERT(retry_info_ptr);
       TRPC_ASSERT(msg->context->GetTimeout() > retry_info_ptr->delay);
       msg->context->SetTimeout(msg->context->GetTimeout() - retry_info_ptr->delay);
       PushToPendingQueue(msg);
@@ -173,7 +170,6 @@ uint64_t ConnPool<T>::GenAvailConnectorId() {
   }
 
   uint64_t conn_id = *(free_.rbegin());
-  TRPC_ASSERT(conn_id < max_conn_num_);
 
   // Now this connector id is assgined, but connector is not into vector yet.
   free_.pop_back();
@@ -184,20 +180,15 @@ uint64_t ConnPool<T>::GenAvailConnectorId() {
 
 template <typename T>
 void ConnPool<T>::RecycleConnectorId(uint64_t conn_id) {
-  TRPC_ASSERT(conn_id < max_conn_num_);
-
   // Only when connector id is assigned but connector not into vector.
   if (!is_in_[conn_id]) {
     is_in_[conn_id] = true;
     free_.push_back(conn_id);
-    TRPC_ASSERT(free_.size() <= max_conn_num_);
   }
 }
 
 template <typename T>
 bool ConnPool<T>::AddConnector(uint64_t conn_id, std::unique_ptr<T>&& conn) {
-  TRPC_ASSERT(conn_id < max_conn_num_);
-
   // Already inside, conflict.
   if (connectors_[conn_id] != nullptr) {
     return false;
@@ -210,8 +201,6 @@ bool ConnPool<T>::AddConnector(uint64_t conn_id, std::unique_ptr<T>&& conn) {
 
 template <typename T>
 T* ConnPool<T>::GetConnector(uint64_t conn_id) {
-  TRPC_ASSERT(conn_id < max_conn_num_);
-
   return connectors_[conn_id].get();
 }
 
@@ -242,10 +231,8 @@ bool ConnPool<T>::PushToPendingQueue(CTransportReqMsg* req_msg) {
   }
 
   int64_t timeout = req_msg->context->GetTimeout();
-  TRPC_ASSERT(req_msg->extend_info);
   if (req_msg->extend_info->backup_promise) {
     BackupRequestRetryInfo* retry_info_ptr = req_msg->context->GetBackupRequestRetryInfo();
-    TRPC_ASSERT(retry_info_ptr);
     timeout = retry_info_ptr->delay;
   }
   timeout += trpc::time::GetMilliSeconds();

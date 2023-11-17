@@ -30,10 +30,6 @@ TcpAcceptor::TcpAcceptor(Reactor* reactor, const NetworkAddress& tcp_addr)
       tcp_addr_(tcp_addr),
       socket_(Socket::CreateTcpSocket(tcp_addr.IsIpv6())),
       idle_fd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) {
-  TRPC_ASSERT(socket_.IsValid());
-  TRPC_ASSERT(idle_fd_ >= 0);
-
-  SetFd(socket_.GetFd());
 }
 
 TcpAcceptor::~TcpAcceptor() {
@@ -52,6 +48,13 @@ bool TcpAcceptor::EnableListen(int backlog) {
     return true;
   }
 
+  if (!socket_.IsValid() || idle_fd_ < 0) {
+    TRPC_LOG_ERROR("socket invalid.");
+    return false;
+  }
+
+  SetFd(socket_.GetFd());
+
   socket_.SetReuseAddr();
   socket_.SetReusePort();
   socket_.SetTcpNoDelay();
@@ -67,7 +70,10 @@ bool TcpAcceptor::EnableListen(int backlog) {
   if (!socket_.Bind(tcp_addr_)) {
     return false;
   }
-  socket_.Listen(backlog);
+
+  if (!socket_.Listen(backlog)) {
+    return false;
+  }
 
   EnableEvent(EventHandler::EventType::kReadEvent);
 

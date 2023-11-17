@@ -21,7 +21,6 @@ FutureUdpIoComplexConnectorGroup::FutureUdpIoComplexConnectorGroup(FutureConnect
   connector_options.conn_id = 0;
   connector_options.group_options = &options_;
   connector_ = std::make_unique<FutureUdpIoComplexConnector>(std::move(connector_options));
-  TRPC_ASSERT(connector_ != nullptr);
 }
 
 bool FutureUdpIoComplexConnectorGroup::Init() {

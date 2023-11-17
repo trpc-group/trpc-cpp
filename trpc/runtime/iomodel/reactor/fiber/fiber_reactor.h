@@ -14,6 +14,7 @@
 #pragma once
 
 #include <atomic>
+#include <list>
 #include <memory>
 #include <string_view>
 
@@ -59,6 +60,7 @@ class alignas(hardware_destructive_interference_size) FiberReactor final : publi
  private:
   void Dispatch();
   void HandleTask();
+  bool CheckTaskQueueSize();
 
  private:
   template <typename T>
@@ -74,9 +76,9 @@ class alignas(hardware_destructive_interference_size) FiberReactor final : publi
 
   EventFdNotifier task_notifier_;
 
-  alignas(64) std::atomic<bool> state_{false};
+  std::mutex mutex_;
 
-  MpScQueue<Task> task_queue_;
+  std::list<Task> task_queue_;
 };
 
 namespace fiber {

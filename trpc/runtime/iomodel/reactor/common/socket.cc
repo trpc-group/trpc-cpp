@@ -98,26 +98,32 @@ int Socket::Accept(UnixAddress* peer_addr) {
   return fd;
 }
 
-void Socket::SetReuseAddr() {
+bool Socket::SetReuseAddr() {
   int flag = 1;
   if (SetSockOpt(SO_REUSEADDR, static_cast<const void*>(&flag),
                  static_cast<socklen_t>(sizeof(flag)), SOL_SOCKET) == -1) {
-    TRPC_ASSERT(false);
+    TRPC_LOG_ERROR("SetReuseAddr failed" << ", errno: " << errno <<
+                   ", error msg: " << strerror(errno));
+    return false;
   }
+
+  return true;
 }
 
-void Socket::SetReusePort() {
+bool Socket::SetReusePort() {
 #if defined(SO_REUSEPORT) && !defined(TRPC_DISABLE_REUSEPORT)
   int flag = 1;
   if (SetSockOpt(SO_REUSEPORT, static_cast<const void*>(&flag),
                  static_cast<socklen_t>(sizeof(flag)), SOL_SOCKET) == -1) {
-    TRPC_ASSERT(false);
+    TRPC_LOG_ERROR("SetReusePort failed" << ", errno: " << errno <<
+                   ", error msg: " << strerror(errno));
+    return false;
   }
 #endif
+  return true;
 }
 
 bool Socket::Bind(const NetworkAddress& bind_addr) {
-  TRPC_ASSERT(domain_ == bind_addr.Family());
   int ret = ::bind(fd_, bind_addr.SockAddr(), bind_addr.Socklen());
   if (ret != 0) {
     TRPC_FMT_CRITICAL("Bind address {} error: {}", bind_addr.ToString(), strerror(errno));
@@ -147,10 +153,13 @@ void Socket::Close() {
   }
 }
 
-void Socket::Listen(int backlog) {
+bool Socket::Listen(int backlog) {
   if (::listen(fd_, backlog) < 0) {
-    TRPC_ASSERT(false);
+    TRPC_LOG_ERROR("Listen failed" << ", errno: " << errno <<
+                   ", error msg: " << strerror(errno));
+    return false;
   }
+  return true;
 }
 
 int Socket::Connect(const NetworkAddress& addr) {
@@ -201,12 +210,13 @@ int Socket::RecvMsg(msghdr* message, int flag, NetworkAddress* peer_addr) {
   return ret;
 }
 
-void Socket::SetBlock(bool block) {
+bool Socket::SetBlock(bool block) {
   int val = 0;
 
   if ((val = ::fcntl(fd_, F_GETFL, 0)) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
 
   if (!block) {
@@ -218,7 +228,9 @@ void Socket::SetBlock(bool block) {
   if (::fcntl(fd_, F_SETFL, val) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
+  return true;
 }
 
 int Socket::SetSockOpt(int opt, const void* val, socklen_t opt_len, int level) {
@@ -229,7 +241,7 @@ int Socket::GetSockOpt(int opt, void* val, socklen_t* opt_len, int level) {
   return ::getsockopt(fd_, level, opt, val, opt_len);
 }
 
-void Socket::SetNoCloseWait() {
+bool Socket::SetNoCloseWait() {
   struct linger ling;
   ling.l_onoff = 1;
   ling.l_linger = 0;
@@ -238,10 +250,12 @@ void Socket::SetNoCloseWait() {
                  SOL_SOCKET) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
+  return true;
 }
 
-void Socket::SetCloseWait(int delay) {
+bool Socket::SetCloseWait(int delay) {
   struct linger ling;
   ling.l_onoff = 1;
   ling.l_linger = delay;
@@ -250,10 +264,12 @@ void Socket::SetCloseWait(int delay) {
                  SOL_SOCKET) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
+  return true;
 }
 
-void Socket::SetCloseWaitDefault() {
+bool Socket::SetCloseWaitDefault() {
   struct linger ling;
   ling.l_onoff = 0;
   ling.l_linger = 0;
@@ -262,15 +278,18 @@ void Socket::SetCloseWaitDefault() {
                  SOL_SOCKET) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
+  return true;
 }
 
-void Socket::SetTcpNoDelay() {
+bool Socket::SetTcpNoDelay() {
   int flag = 1;
   if (SetSockOpt(TCP_NODELAY, static_cast<const void*>(&flag), static_cast<socklen_t>(sizeof(flag)),
                  IPPROTO_TCP) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
 
 #ifdef TRPC_DISABLE_TCP_CORK
@@ -283,17 +302,21 @@ void Socket::SetTcpNoDelay() {
                  static_cast<socklen_t>(sizeof(cork_state)), IPPROTO_TCP) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
 #endif
+  return true;
 }
 
-void Socket::SetKeepAlive() {
+bool Socket::SetKeepAlive() {
   int flag = 1;
   if (SetSockOpt(SO_KEEPALIVE, static_cast<const void*>(&flag),
                  static_cast<socklen_t>(sizeof(flag)), SOL_SOCKET) == -1) {
     TRPC_LOG_ERROR("setsockopt failed, fd: " << fd_ << ", errno: " << errno <<
                    ", error msg: " << strerror(errno));
+    return false;
   }
+  return true;
 }
 
 void Socket::SetSendBufferSize(int sz) {

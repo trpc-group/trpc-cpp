@@ -105,25 +105,21 @@ ThreadModel* RandomGetMergeThreadModel() {
 }
 
 bool SubmitIoTask(ThreadModel* thread_model, MsgTask* io_task) noexcept {
-  TRPC_ASSERT(thread_model && io_task);
   MergeThreadModel* merge_thread_model = static_cast<MergeThreadModel*>(thread_model);
   return merge_thread_model->SubmitIoTask(io_task);
 }
 
 bool SubmitHandleTask(ThreadModel* thread_model, MsgTask* handle_task) noexcept {
-  TRPC_ASSERT(thread_model && handle_task);
   MergeThreadModel* merge_thread_model = static_cast<MergeThreadModel*>(thread_model);
   return merge_thread_model->SubmitHandleTask(handle_task);
 }
 
 std::vector<Reactor*> GetReactors(ThreadModel* thread_model) noexcept {
-  TRPC_ASSERT(thread_model);
   MergeThreadModel* merge_thread_model = static_cast<MergeThreadModel*>(thread_model);
   return merge_thread_model->GetReactors();
 }
 
 Reactor* GetReactor(ThreadModel* thread_model, int id) noexcept {
-  TRPC_ASSERT(thread_model);
   MergeThreadModel* merge_thread_model = static_cast<MergeThreadModel*>(thread_model);
   return merge_thread_model->GetReactor(id);
 }

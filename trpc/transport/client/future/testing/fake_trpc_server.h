@@ -307,8 +307,9 @@ class FakeTrpcServer {
       reactor = trpc::separate::GetReactor(thread_model_, -1);
     }
     TRPC_ASSERT(reactor != nullptr);
-    auto ret = reactor->AddTimerAfter(delay_ms, 0, std::move(executor));
-    TRPC_ASSERT(ret != kInvalidTimerId);
+    auto timer_id = reactor->AddTimerAfter(delay_ms, 0, std::move(executor));
+    TRPC_ASSERT(timer_id != kInvalidTimerId);
+    reactor->DetachTimer(timer_id);
   }
 
   NodeAddr GetBindAddr() {

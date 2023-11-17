@@ -33,10 +33,11 @@ bool FutureUdpIoComplexConnector::Init() {
 
   // Register timer id.
   auto timeout_check_interval = options_.group_options->trans_info->request_timeout_check_interval;
-  TRPC_ASSERT(timeout_check_interval > 0);
   timer_id_ = options_.group_options->reactor->AddTimerAfter(0, timeout_check_interval,
                                                              [this]() { this->HandleRequestTimeout(); });
-  TRPC_ASSERT(timer_id_ != kInvalidTimerId);
+  if (timer_id_ == kInvalidTimerId) {
+    return false;
+  }
   return true;
 }
 
@@ -96,8 +97,6 @@ void FutureUdpIoComplexConnector::HandleRequestTimeout() {
 }
 
 int FutureUdpIoComplexConnector::SendReqMsgImpl(CTransportReqMsg* req_msg) {
-
-  TRPC_ASSERT(req_msg->context->GetBackupRequestRetryInfo() == nullptr);
   // Backup request is not support in udp.
   if (msg_timeout_handler_.Push(req_msg) != FutureConnComplexMessageTimeoutHandler::PushResult::kOk)
     return -1;

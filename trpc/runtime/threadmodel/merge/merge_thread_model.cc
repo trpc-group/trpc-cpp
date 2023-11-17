@@ -70,16 +70,10 @@ void MergeThreadModel::Terminate() noexcept {
 }
 
 bool MergeThreadModel::SubmitIoTask(MsgTask* io_task) noexcept {
-  TRPC_ASSERT(io_task);
-  TRPC_ASSERT(io_task->group_id == options_.group_id);
-
   return SubmitMsgTask(io_task);
 }
 
 bool MergeThreadModel::SubmitHandleTask(MsgTask* handle_task) noexcept {
-  TRPC_ASSERT(handle_task);
-  TRPC_ASSERT(handle_task->group_id == options_.group_id);
-
   return SubmitMsgTask(handle_task);
 }
 
@@ -111,7 +105,6 @@ bool MergeThreadModel::SubmitMsgTask(MsgTask* task) noexcept {
   }
 
   Reactor* reactor = worker_threads_[id]->GetReactor();
-  TRPC_ASSERT(reactor);
 
   bool ret = reactor->SubmitTask([task]() {
     task->handler();

@@ -21,7 +21,7 @@
 #include "trpc/server/rpc/rpc_service_impl.h"
 #include "trpc/server/rpc/rpc_service_method.h"
 
-namespace examples::json {
+namespace examples::noop {
 
 class DemoServiceImpl : public ::trpc::RpcServiceImpl {
  public:
@@ -72,10 +72,10 @@ class DemoServer : public ::trpc::TrpcApp {
   void Destroy() override {}
 };
 
-}  // namespace examples::json
+}  // namespace examples::noop
 
 int main(int argc, char** argv) {
-  examples::json::DemoServer demo_server;
+  examples::noop::DemoServer demo_server;
   demo_server.Main(argc, argv);
   demo_server.Wait();
 

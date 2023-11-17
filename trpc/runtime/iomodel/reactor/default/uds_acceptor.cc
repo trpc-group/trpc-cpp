@@ -30,14 +30,13 @@ UdsAcceptor::UdsAcceptor(Reactor* reactor, const UnixAddress& unix_addr)
       unix_addr_(unix_addr),
       socket_(Socket::CreateUnixSocket()),
       idle_fd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) {
-  TRPC_ASSERT(socket_.IsValid());
-  TRPC_ASSERT(idle_fd_ >= 0);
-
-  SetFd(socket_.GetFd());
 }
 
 UdsAcceptor::~UdsAcceptor() {
-  close(idle_fd_);
+  socket_.Close();
+  if (idle_fd_ >= 0) {
+    ::close(idle_fd_);
+  }
 
   if (GetInitializationState() != InitializationState::kInitializedSuccess) {
     return;
@@ -51,6 +50,13 @@ bool UdsAcceptor::EnableListen(int backlog) {
     return true;
   }
 
+  if (!socket_.IsValid() || idle_fd_ < 0) {
+    TRPC_LOG_ERROR("socket invalid.");
+    return false;
+  }
+
+  SetFd(socket_.GetFd());
+
   socket_.SetBlock(false);
   auto& set_socket_opt_fun = GetAcceptSetSocketOptFunction();
   if (set_socket_opt_fun) {
@@ -60,7 +66,10 @@ bool UdsAcceptor::EnableListen(int backlog) {
   if (!socket_.Bind(unix_addr_)) {
     return false;
   }
-  socket_.Listen(backlog);
+
+  if (!socket_.Listen(backlog)) {
+    return false;
+  }
 
   EnableEvent(EventHandler::EventType::kReadEvent);
 

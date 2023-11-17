@@ -1,0 +1,7 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+        concurrency_hint: 8
+        scheduling_group_size: 8
+        reactor_num_per_scheduling_group: 1

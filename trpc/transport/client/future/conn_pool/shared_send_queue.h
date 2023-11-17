@@ -72,7 +72,6 @@ class SharedSendQueue {
   /// @return connection id: 0~N
   uint64_t GetIndex(const DataIterator& iter) {
     uint64_t index = iter - send_queue_.begin();
-    TRPC_ASSERT(index < capacity_);
     return index;
   }
 

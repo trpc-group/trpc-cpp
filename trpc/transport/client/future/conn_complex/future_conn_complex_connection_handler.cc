@@ -36,8 +36,6 @@ bool FutureTcpConnComplexConnectionHandler::HandleMessage(const ConnectionPtr& c
       break;
     }
 
-    // Decode success.
-    TRPC_ASSERT(rsp_protocol);
     conn_reusable &= rsp_protocol->IsConnectionReusable();
     // Get request id from response when conn complex.
     uint32_t seq_id = 0;

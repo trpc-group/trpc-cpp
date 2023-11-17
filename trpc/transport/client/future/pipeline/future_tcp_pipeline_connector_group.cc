@@ -20,13 +20,18 @@ namespace trpc {
 
 bool FutureTcpPipelineConnectorGroup::Init() {
   uint64_t timer_id = options_.reactor->AddTimerAfter(0, 10000, [this]() { this->HandleIdleConnection(); });
-  TRPC_ASSERT(timer_id != kInvalidTimerId && "add idle connection timer failed");
+  if (timer_id == kInvalidTimerId) {
+    TRPC_FMT_ERROR("Add idle connection timer failed.");
+    return false;
+  }
   timer_ids_.push_back(timer_id);
 
   auto timeout_check_interval = options_.trans_info->request_timeout_check_interval;
-  TRPC_ASSERT(timeout_check_interval > 0);
   timer_id = options_.reactor->AddTimerAfter(0, timeout_check_interval, [this]() { this->HandleReqTimeout(); });
-  TRPC_ASSERT(timer_id != kInvalidTimerId && "add request timeout timer failed");
+  if (timer_id == kInvalidTimerId) {
+    TRPC_FMT_ERROR("Add request timeout timer failed.");
+    return false;
+  }
   timer_ids_.push_back(timer_id);
 
   return true;
@@ -72,9 +77,7 @@ FutureTcpPipelineConnector* FutureTcpPipelineConnectorGroup::GetOrCreateConnecto
 }
 
 bool FutureTcpPipelineConnectorGroup::GetOrCreateConnector(const NodeAddr& node_addr, Promise<uint64_t>& promise) {
-  TRPC_FMT_ERROR("pipeline cannot support fixed connector, peer addr: {}", options_.peer_addr.ToString());
-  promise.SetException(CommonException("pipeline cannot support fixed connector",
-                       TrpcRetCode::TRPC_CLIENT_NETWORK_ERR));
+  TRPC_LOG_ERROR("pipeline cannot support fixed connector, peer addr: " << options_.peer_addr.ToString());
   return false;
 }
 
