@@ -34,12 +34,12 @@ struct LocalFileSinkConfig {
   unsigned int reserve_count{10};
   /// @brief Scroll log size
   unsigned int roll_size{1024 * 1024 * 100};
-  /// @brief represents the time of day, as specified by rotation_hour:rotation_minute
+  /// @brief Represents the time of day, as specified by rotation_hour:rotation_minute
   unsigned int rotation_hour{0};
   /// @brief Cut by minutes
   unsigned int rotation_minute{0};
   /// @brief In split by day mode, remove the identity of obsolete files, not by default
-  bool remove_timout_file_switch{false};
+  bool remove_timeout_file_switch{false};
 
   /// @brief Represents an hourly interval in hours, default interval is one hour
   unsigned int hour_interval{1};

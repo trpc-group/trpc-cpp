@@ -24,21 +24,6 @@ void DefaultLogConfig::Display() const {
   }
 }
 
-template <>
-bool GetLoggerConfig<trpc::DefaultLogConfig::LoggerInstance>(std::string_view logger_name,
-                                                             trpc::DefaultLogConfig::LoggerInstance& config) {
-  YAML::Node logger_node;
-  // The node is obtained by yaml parsing a single Logger
-  if (!GetLoggerNode(logger_name, logger_node)) {
-    std::cerr << "Get DefaultLogNode err or logger not found, " << " logger_name: " << logger_name << std::endl;
-    return false;
-  }
-  // Convert node into a LoggerInstance config object
-  YAML::convert<DefaultLogConfig::LoggerInstance> c;
-  c.decode(logger_node, config);
-  return true;
-}
-
 bool GetDefaultLogConfig(trpc::DefaultLogConfig& config) {
   YAML::Node default_log_node;
   // yaml gets node by parsing DefaultLog

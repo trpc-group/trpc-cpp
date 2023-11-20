@@ -19,24 +19,6 @@
 
 namespace YAML {
 
-inline bool GetLocalFileNode(std::string_view logger_name, YAML::Node& local_file_node) {
-  YAML::Node logger_node, sinks_node;
-  // Check if logger is configured
-  if (!GetLoggerNode(logger_name, logger_node)) {
-    return false;
-  }
-  // Check if sinks are configured
-  if (!trpc::ConfigHelper::GetNode(logger_node, {"sinks"}, sinks_node)) {
-    std::cerr<< "sink not found!" <<std::endl;
-    return false;
-  }
-  // Check if local_file is configured
-  if (!trpc::ConfigHelper::GetNode(sinks_node, {"local_file"}, local_file_node)) {
-    return false;
-  }
-  return true;
-}
-
 template <>
 struct convert<trpc::LocalFileSinkConfig> {
   static YAML::Node encode(const trpc::LocalFileSinkConfig& config) {
@@ -49,7 +31,7 @@ struct convert<trpc::LocalFileSinkConfig> {
     node["roll_size"] = config.roll_size;
     node["rotation_hour"] = config.rotation_hour;
     node["rotation_minute"] = config.rotation_minute;
-    node["remove_timout_file_switch"] = config.remove_timout_file_switch;
+    node["remove_timeout_file_switch"] = config.remove_timeout_file_switch;
     node["hour_interval"] = config.hour_interval;
     return node;
   }
@@ -79,8 +61,8 @@ struct convert<trpc::LocalFileSinkConfig> {
     if (node["rotation_minute"]) {
       config.rotation_minute = node["rotation_minute"].as<unsigned int>();
     }
-    if (node["remove_timout_file_switch"]) {
-      config.remove_timout_file_switch = node["remove_timout_file_switch"].as<bool>();
+    if (node["remove_timeout_file_switch"]) {
+      config.remove_timeout_file_switch = node["remove_timeout_file_switch"].as<bool>();
     }
     if (node["hour_interval"]) {
       config.hour_interval = node["hour_interval"].as<unsigned int>();

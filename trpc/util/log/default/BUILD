@@ -13,6 +13,7 @@ cc_library(
     hdrs = ["default_log.h"],
     deps = [
         "//trpc/common/config:default_log_conf",
+        "//trpc/common/config:default_value",
         "//trpc/common/config:local_file_sink_conf",
         "//trpc/common/config:stdout_sink_conf",
         "//trpc/log:logging",

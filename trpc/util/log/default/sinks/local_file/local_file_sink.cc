@@ -27,7 +27,7 @@ int LocalFileSink::Init(const LocalFileSinkConfig& config) {
   } else if (config_.roll_type == "by_day") {
     sink_ = std::make_shared<spdlog::sinks::daily_file_sink_mt>(config_.filename, config_.rotation_hour,
                                                                 config_.rotation_minute, false, config_.reserve_count);
-    if (config_.remove_timout_file_switch) {
+    if (config_.remove_timeout_file_switch) {
       RemoveTimeoutDailyLogFile(config_.filename, config_.reserve_count);
     }
   } else if (config_.roll_type == "by_hour") {
@@ -82,7 +82,7 @@ bool LocalFileSink::RemoveTimeoutDailyLogFile(const std::string& file_name, int 
     if (timeout_flag) {
       int ret = spdlog::details::os::remove_if_exists(file.first);
       if (ret == 0) {
-        std::cout << "delete timeout daily log succ, filename:" << file.first << std::endl;
+        std::cout << "delete timeout daily log succ, filename: " << file.first << std::endl;
       }
     }
   }

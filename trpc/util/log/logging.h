@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <string>
 
+#include "trpc/common/config/default_value.h"
 #include "trpc/util/log/log.h"
 #include "trpc/util/log/printf_like.h"
 #include "trpc/util/log/python_like.h"
@@ -39,8 +40,7 @@ void Destroy();
 ///// For example, if min_level=1 (debug) and info is the level, then true is returned.
 bool IsLogOn(const char* instance_name, trpc::Log::Level level);
 
-// Constant "default"
-constexpr char kTrpcLogCacheStringDefault[] = "default";
+using trpc::kTrpcLogCacheStringDefault;
 
 }  // namespace trpc::log
 
