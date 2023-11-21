@@ -336,8 +336,12 @@ RetCode TrpcClientStream::HandleClose(StreamRecvMessage&& msg) {
     // Close (RESET) due to an exception, so there is no need to check the stream status.
     // Notify the business that the stream has failed.
     SetState(State::kClosed);
+    if (status.OK()) {
+      // Normally, the reset frame will carry error code. But if it doesn't exist, we add an unknown error.
+      status.SetFrameworkRetCode(TrpcRetCode::TRPC_STREAM_UNKNOWN_ERR);
+      status.SetErrorMessage("stream reset recive, but unable to get error message");
+    }
     OnError(status);
-    std::cout << "stream error occurs" << std::endl;
     return RetCode::kError;
   }
 

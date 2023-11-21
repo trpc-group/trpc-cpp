@@ -175,6 +175,11 @@ RetCode TrpcServerStream::HandleClose(StreamRecvMessage&& msg) {
   if (reset) {
     // When closing (RESET) due to an exception, there is no need to check the stream state.
     SetState(State::kClosed);
+    if (status.OK()) {
+      // Normally, the reset frame will carry error code. But if it doesn't exist, we add an unknown error.
+      status.SetFrameworkRetCode(TrpcRetCode::TRPC_STREAM_UNKNOWN_ERR);
+      status.SetErrorMessage("stream reset recive, but unable to get error message");
+    }
     OnError(status);
     return RetCode::kError;
   }
