@@ -126,6 +126,7 @@ cc_library(
         "//trpc/codec/trpc",
         "//trpc/common:status",
         "//trpc/compressor:trpc_compressor",
+        "//trpc/coroutine:fiber_local",
         "//trpc/filter:server_filter_controller_h",
         "//trpc/serialization:serialization_type",
         "//trpc/stream:stream_provider",

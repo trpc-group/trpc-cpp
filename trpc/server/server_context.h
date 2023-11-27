@@ -349,9 +349,7 @@ class ServerContext : public RefCounted<ServerContext> {
   void SetReqEncodeType(uint8_t type) { invoke_info_.req_encode_type = type; }
 
   /// @brief Framework use or for testing. Set the compression type of request data.
-  void SetReqCompressType(uint8_t compress_type) {
-    invoke_info_.req_compress_type = compress_type;
-  }
+  void SetReqCompressType(uint8_t compress_type) { invoke_info_.req_compress_type = compress_type; }
 
   /// @brief Get the compression type for compressing request message.
   uint8_t GetReqCompressType() const { return invoke_info_.req_compress_type; }
@@ -359,17 +357,13 @@ class ServerContext : public RefCounted<ServerContext> {
   [[deprecated("use GetReqCompressType instead")]] uint8_t GetCompressType() const { return GetReqCompressType(); }
 
   /// @brief Set the compression type for decompressing response message.
-  void SetRspCompressType(uint8_t compress_type) {
-    invoke_info_.rsp_compress_type = compress_type;
-  }
+  void SetRspCompressType(uint8_t compress_type) { invoke_info_.rsp_compress_type = compress_type; }
 
   /// @brief Get the compression type for decompressing response message.
   uint8_t GetRspCompressType() const { return invoke_info_.rsp_compress_type; }
 
   /// @brief Set the compression level for decompressing response message.
-  void SetRspCompressLevel(uint8_t compress_level) {
-    invoke_info_.rsp_compress_level = compress_level;
-  }
+  void SetRspCompressLevel(uint8_t compress_level) { invoke_info_.rsp_compress_level = compress_level; }
 
   /// @brief Get the compression level for decompressing response message.
   uint8_t GetRspCompressLevel() const { return invoke_info_.rsp_compress_level; }
@@ -793,5 +787,13 @@ using ServerContextPtr = RefPtr<ServerContext>;
 
 template <typename T>
 using is_server_context = std::is_same<T, ServerContext>;
+
+/// @brief Set the context to a thread-private variable. The private variable itself does not hold the context. The set
+/// operation must be used when the ctx is valid within its lifecycle.
+void SetLocalServerContext(const ServerContextPtr& context);
+
+/// @brief Retrieve the context from a thread-private variable. The private variable itself does not hold the context.
+/// The get operation must be used when the ctx is valid within its lifecycle.
+ServerContextPtr GetLocalServerContext();
 
 }  // namespace trpc

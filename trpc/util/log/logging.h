@@ -259,7 +259,7 @@ using trpc::kTrpcLogCacheStringDefault;
 /// @note  Use case: Separate business logs from framework logs,
 ///        Different business logs specify different loggers.
 ///        For example, if remote logs are connected, business logs can be output to remote.
-#define TRPC_FLOW_LOG(instance, msg) TRPC_STREAM(instance, ::trpc::Log::info, msg)
+#define TRPC_FLOW_LOG(instance, msg) TRPC_STREAM(instance, ::trpc::Log::info, nullptr, msg)
 #define TRPC_FLOW_LOG_EX(context, instance, msg) TRPC_STREAM(instance, ::trpc::Log::info, context, msg)
 
 /// @brief Provides ASSERT that does not invalidate in release mode
