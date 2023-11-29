@@ -19,6 +19,7 @@
 
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/compressor/trpc_compressor.h"
+#include "trpc/coroutine/fiber_local.h"
 #include "trpc/runtime/common/stats/frame_stats.h"
 #include "trpc/serialization/serialization_factory.h"
 #include "trpc/server/service.h"
@@ -301,6 +302,30 @@ void ServerContext::ThrottleConnection(bool set) {
   if (service_) {
     service_->ThrottleConnection(net_info_.connection_id, set);
   }
+}
+
+// Context used for storing data in a fiber environment.
+FiberLocal<ServerContext*> fls_server_context;
+
+// Context used for storing data in a regular thread environment, such as setting it in a business thread and releasing
+// it when the business request processing is completed.
+thread_local ServerContext* tls_server_context = nullptr;
+
+void SetLocalServerContext(const ServerContextPtr& context) {
+  // Set to fiberLocal in a fiber environment, and set to threadLocal in a regular thread environment.
+  if (trpc::fiber::detail::GetCurrentFiberEntity()) {
+    *fls_server_context = context.Get();
+  } else {
+    tls_server_context = context.Get();
+  }
+}
+
+ServerContextPtr GetLocalServerContext() {
+  // Retrieve from fiberLocal in a fiber environment, and retrieve from threadLocal in a regular thread environment.
+  if (trpc::fiber::detail::GetCurrentFiberEntity()) {
+    return RefPtr(ref_ptr, *fls_server_context);
+  }
+  return RefPtr(ref_ptr, tls_server_context);
 }
 
 }  // namespace trpc

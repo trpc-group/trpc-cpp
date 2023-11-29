@@ -285,6 +285,8 @@ bool ServiceAdapter::HandleMessage(const ConnectionPtr& conn, std::deque<std::an
       succ = false;
     }
 
+    SetLocalServerContext(req_msg->context);
+
     MsgTaskHandler msg_handler = [this, req_msg]() mutable {
       auto& context = req_msg->context;
 
@@ -302,6 +304,7 @@ bool ServiceAdapter::HandleMessage(const ConnectionPtr& conn, std::deque<std::an
 
       if (send) {
         this->transport_->SendMsg(send);
+        SetLocalServerContext(nullptr);
       }
     };
 
@@ -364,6 +367,7 @@ bool ServiceAdapter::HandleFiberMessage(const ConnectionPtr& conn, std::deque<st
       context->SetBeginTimestampUs(trpc::time::GetMicroSeconds());
 
       RunServerFilters(FilterPoint::SERVER_POST_SCHED_RECV_MSG, req_msg);
+      SetLocalServerContext(req_msg->context);
 
       STransportRspMsg* send = nullptr;
       Service* service = context->GetService();
@@ -381,6 +385,7 @@ bool ServiceAdapter::HandleFiberMessage(const ConnectionPtr& conn, std::deque<st
       if (send) {
         send->context->SetReserved(static_cast<void*>(conn.Get()));
         this->transport_->SendMsg(send);
+        SetLocalServerContext(nullptr);
       }
 
       conn->Deref();
