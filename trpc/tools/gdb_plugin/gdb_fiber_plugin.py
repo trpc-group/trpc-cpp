@@ -136,6 +136,7 @@ class Fiber(object):
             saved_state = inferior.read_memory(state_save_area, 0x40)
         except GdbMemoryError:
             saved_state = '\x00' * 0x40
+            return None
         # @sa: fiber/detail/x86_64/jump_context.S
         #
         # +---------------------------------------------------------------+
@@ -327,6 +328,8 @@ def try_extract_fiber(inferior, active_frames, offset):
     try:
         # It's a fiber stack. Otherwise we shouldn't have been called.
         fiber = Fiber(inferior, offset - FIBER_STACK_RESERVED_SIZE)
+        if fiber is None:
+            return None
 
         if fiber.stack_top == fiber.stack_bottom:
             # Master fiber.
@@ -430,6 +433,8 @@ def extract_call_stack(inferior, rip, rbp):
     yield rip  # Hmmm...
     try:
         while True:
+            if rbp == 0:
+                return
             ip = struct.unpack('Q', inferior.read_memory(rbp + 8, 8))[0]
             if ip == 0:
                 return

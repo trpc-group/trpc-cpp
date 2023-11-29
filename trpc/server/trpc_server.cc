@@ -71,6 +71,7 @@ void TrpcServer::BuildServiceAdapterOption(const ServiceConfig& config, ServiceA
   option.send_queue_capacity = config.send_queue_capacity;
   option.send_queue_timeout = config.send_queue_timeout;
   option.accept_thread_num = config.accept_thread_num;
+  option.threadmodel_type = config.threadmodel_type;
   option.threadmodel_instance_name = config.threadmodel_instance_name;
   option.stream_read_timeout = config.stream_read_timeout;
   option.stream_max_window_size = config.stream_max_window_size;

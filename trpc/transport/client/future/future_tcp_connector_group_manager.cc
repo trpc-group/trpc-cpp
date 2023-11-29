@@ -24,13 +24,7 @@
 namespace trpc {
 
 FutureTcpConnectorGroupManager::FutureTcpConnectorGroupManager(const Options& options)
-  : FutureConnectorGroupManager(options) {
-  if (options_.trans_info->is_complex_conn) {
-    shared_msg_timeout_handler_ =
-        std::make_unique<FutureConnComplexMessageTimeoutHandler>(options_.trans_info->rsp_dispatch_function);
-    TRPC_ASSERT(shared_msg_timeout_handler_ != nullptr);
-  }
-}
+    : FutureConnectorGroupManager(options) {}
 
 void FutureTcpConnectorGroupManager::Stop() {
   if (options_.trans_info->is_complex_conn && timer_id_ != kInvalidTimerId) {
@@ -52,6 +46,9 @@ void FutureTcpConnectorGroupManager::Destroy() {
 bool FutureTcpConnectorGroupManager::CreateTimer() {
   if (!is_create_timer_) {
     if (options_.trans_info->is_complex_conn) {
+      shared_msg_timeout_handler_ =
+          std::make_unique<FutureConnComplexMessageTimeoutHandler>(options_.trans_info->rsp_dispatch_function);
+      TRPC_ASSERT(shared_msg_timeout_handler_ != nullptr);
       auto timeout_check_interval = options_.trans_info->request_timeout_check_interval;
       timer_id_ = options_.reactor->AddTimerAfter(
           0, timeout_check_interval, [this]() { shared_msg_timeout_handler_->DoTimeout(); });

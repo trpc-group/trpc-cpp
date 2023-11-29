@@ -49,6 +49,7 @@ struct convert<trpc::ServiceConfig> {
     node["recv_buffer_size"] = service_config.recv_buffer_size;
     node["send_queue_capacity"] = service_config.send_queue_capacity;
     node["send_queue_timeout"] = service_config.send_queue_timeout;
+    node["threadmodel_type"] = service_config.threadmodel_type;
     node["threadmodel_instance_name"] = service_config.threadmodel_instance_name;
     node["accept_thread_num"] = service_config.accept_thread_num;
     node["stream_read_timeout"] = service_config.stream_read_timeout;
@@ -121,6 +122,9 @@ struct convert<trpc::ServiceConfig> {
     }
     if (node["send_queue_timeout"]) {
       service_config.send_queue_timeout = node["send_queue_timeout"].as<uint32_t>();
+    }
+    if (node["threadmodel_type"]) {
+      service_config.threadmodel_type = node["threadmodel_type"].as<std::string>();
     }
     if (node["threadmodel_instance_name"]) {
       service_config.threadmodel_instance_name = node["threadmodel_instance_name"].as<std::string>();
