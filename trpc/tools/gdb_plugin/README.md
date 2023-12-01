@@ -56,3 +56,4 @@ RIP 0x00000000009249d4 RBP 0x00007f598e5fe8d0 RSP 0x00007f598e5fe880
 Found 2 fiber(s) in total.
 ```
 
+Note: for the production environment, you can use the following command to minimize the impact of debugging on the running service (although this command can still cause a second-level service suspension): `gdb --pid <PID> --eval-command='source gdb_fiber_plugin.py' --eval-command='set pagination off' --eval-command='list-fibers' --batch`.

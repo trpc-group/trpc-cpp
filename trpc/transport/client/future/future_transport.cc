@@ -295,7 +295,7 @@ uint16_t FutureTransport::SelectTransportAdapter(CTransportReqMsg* msg, uint16_t
 bool FutureTransport::IsSameIOThread(uint16_t index) {
   auto* current_thread = WorkerThread::GetCurrentWorkerThread();
   if (current_thread && current_thread->Role() != kHandle) {
-    if (index == GetLogicId(current_thread)) {
+    if ((index == GetLogicId(current_thread)) && (options_.thread_model->GroupId() == current_thread->GroupId())) {
       return true;
     }
   }

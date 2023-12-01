@@ -41,6 +41,7 @@ void ServiceProxyManager::SetOptionFromConfig(const ServiceProxyConfig& proxy_co
   option->is_reconnection = proxy_conf.is_reconnection;
   option->connect_timeout = proxy_conf.connect_timeout;
   option->allow_reconnect = proxy_conf.allow_reconnect;
+  option->threadmodel_type_name = proxy_conf.threadmodel_type;
   option->threadmodel_instance_name = proxy_conf.threadmodel_instance_name;
   option->service_filters = proxy_conf.service_filters;
 

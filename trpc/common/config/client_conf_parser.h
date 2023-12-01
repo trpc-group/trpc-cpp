@@ -46,6 +46,7 @@ struct convert<trpc::ServiceProxyConfig> {
     node["recv_buffer_size"] = proxy_config.recv_buffer_size;
     node["send_queue_capacity"] = proxy_config.send_queue_capacity;
     node["send_queue_timeout"] = proxy_config.send_queue_timeout;
+    node["threadmodel_type"] = proxy_config.threadmodel_type;
     node["threadmodel_instance_name"] = proxy_config.threadmodel_instance_name;
     node["selector_name"] = proxy_config.selector_name;
     node["namespace"] = proxy_config.namespace_;
@@ -101,6 +102,7 @@ struct convert<trpc::ServiceProxyConfig> {
     if (node["recv_buffer_size"]) proxy_config.recv_buffer_size = node["recv_buffer_size"].as<uint32_t>();
     if (node["send_queue_capacity"]) proxy_config.send_queue_capacity = node["send_queue_capacity"].as<uint32_t>();
     if (node["send_queue_timeout"]) proxy_config.send_queue_timeout = node["send_queue_timeout"].as<uint32_t>();
+    if (node["threadmodel_type"]) proxy_config.threadmodel_type = node["threadmodel_type"].as<std::string>();
     if (node["threadmodel_instance_name"])
       proxy_config.threadmodel_instance_name = node["threadmodel_instance_name"].as<std::string>();
     if (node["selector_name"]) proxy_config.selector_name = node["selector_name"].as<std::string>();
