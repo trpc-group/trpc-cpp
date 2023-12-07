@@ -18,8 +18,7 @@
 
 namespace trpc {
 
-/// @brief Analogous to `std::condition_variable`, but it's for fiber.
-/// @note  It only uses in fiber runtime.
+/// @brief Adaptive condition variable primitive for both fiber and pthread context.
 class FiberConditionVariable {
  public:
   /// @brief Wake up one waiter.

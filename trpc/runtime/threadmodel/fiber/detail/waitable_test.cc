@@ -19,6 +19,8 @@
 
 #include "gtest/gtest.h"
 
+#include "trpc/coroutine/fiber.h"
+#include "trpc/coroutine/testing/fiber_runtime.h"
 #include "trpc/runtime/threadmodel/fiber/detail/fiber_entity.h"
 #include "trpc/runtime/threadmodel/fiber/detail/fiber_worker.h"
 #include "trpc/runtime/threadmodel/fiber/detail/scheduling_group.h"
@@ -103,6 +105,181 @@ TEST(Waitable, MutexOnScheduling) {
       ASSERT_EQ(10000, value);
     }
   }
+}
+
+TEST(Waitable, MutexInPthreadContext) {
+  static constexpr auto B = 64;
+
+  Mutex m;
+  ASSERT_EQ(true, m.try_lock());
+  m.unlock();
+
+  int value = 0;
+  std::thread ts[B];
+  for (int i = 0; i != B; ++i) {
+    ts[i] = std::thread([&m, &value] {
+      std::scoped_lock _(m);
+      ++value;
+    });
+  }
+
+  for (auto&& t : ts) {
+    t.join();
+  }
+
+  ASSERT_EQ(B, value);
+}
+
+TEST(Waitable, MutexInMixedContext) {
+  RunAsFiber([] {
+    static constexpr auto B = 64;
+    Mutex m;
+
+    int value = 0;
+    std::thread ts[B];
+    std::vector<trpc::Fiber> fbs(B);
+    for (int i = 0; i != B; ++i) {
+      ts[i] = std::thread([&m, &value] {
+        std::scoped_lock _(m);
+        ++value;
+      });
+
+      fbs[i] = trpc::Fiber([&m, &value] {
+        std::scoped_lock _(m);
+        ++value;
+      });
+    }
+
+    for (auto&& t : ts) {
+      t.join();
+    }
+
+    for (auto&& e : fbs) {
+      e.Join();
+    }
+
+    ASSERT_EQ(2 * B, value);
+  });
+}
+TEST(Waitable, ConditionVariableInPthreadContext) {
+  constexpr auto N = 64;
+  std::atomic<std::size_t> run{0};
+  Mutex lock[N];
+  ConditionVariable cv[N];
+  bool set[N] = {false};
+  std::vector<std::thread> prod(N);
+  std::vector<std::thread> cons(N);
+
+  for (int i = 0; i != N; ++i) {
+    prod[i] = std::thread([&run, i, &cv, &lock, &set] {
+      trpc::FiberSleepFor(trpc::Random(20) * std::chrono::milliseconds(1));
+      std::unique_lock lk(lock[i]);
+      cv[i].wait(lk, [&] { return set[i]; });
+      ++run;
+    });
+
+    cons[i] = std::thread([&run, i, &cv, &lock, &set] {
+      trpc::FiberSleepFor(trpc::Random(20) * std::chrono::milliseconds(1));
+      std::scoped_lock _(lock[i]);
+      set[i] = true;
+      cv[i].notify_one();
+      ++run;
+    });
+  }
+
+  for (auto&& e : prod) {
+    ASSERT_TRUE(e.joinable());
+    e.join();
+  }
+
+  for (auto&& e : cons) {
+    ASSERT_TRUE(e.joinable());
+    e.join();
+  }
+
+  ASSERT_EQ(N * 2, run);
+}
+
+TEST(Waitable, ConditionVariableNotifyPthreadFromFiber) {
+  RunAsFiber([] {
+    constexpr auto K = 64;
+    std::atomic<std::size_t> executed{0};
+    Mutex lock[K];
+    ConditionVariable cv[K];
+    bool set[K] = {false};
+    std::vector<std::thread> prod(K);
+    std::vector<trpc::Fiber> cons(K);
+
+    for (int i = 0; i != K; ++i) {
+      prod[i] = std::thread([&executed, i, &cv, &lock, &set] {
+        trpc::FiberSleepFor(trpc::Random(20) * std::chrono::milliseconds(1));
+        std::unique_lock lk(lock[i]);
+        cv[i].wait(lk, [&] { return set[i]; });
+        ++executed;
+      });
+
+      cons[i] = trpc::Fiber([&executed, i, &cv, &lock, &set] {
+        trpc::FiberSleepFor(trpc::Random(20) * std::chrono::milliseconds(1));
+        std::scoped_lock _(lock[i]);
+        set[i] = true;
+        cv[i].notify_one();
+        ++executed;
+      });
+    }
+
+    for (auto&& e : prod) {
+      ASSERT_TRUE(e.joinable());
+      e.join();
+    }
+
+    for (auto&& e : cons) {
+      ASSERT_TRUE(e.Joinable());
+      e.Join();
+    }
+
+    ASSERT_EQ(K * 2, executed);
+  });
+}
+
+TEST(Waitable, ConditionVariableNotifyFiberFromPthread) {
+  RunAsFiber([] {
+    constexpr auto N = 64;
+    std::atomic<std::size_t> run{0};
+    Mutex lock[N];
+    ConditionVariable cv[N];
+    bool set[N] = {false};
+    std::vector<trpc::Fiber> prod(N);
+    std::vector<std::thread> cons(N);
+
+    for (int i = 0; i != N; ++i) {
+      prod[i] = trpc::Fiber([&run, i, &cv, &lock, &set] {
+        trpc::FiberSleepFor(trpc::Random(20) * std::chrono::milliseconds(1));
+        std::scoped_lock _(lock[i]);
+        set[i] = true;
+        cv[i].notify_one();
+        ++run;
+      });
+
+      cons[i] = std::thread([&run, i, &cv, &lock, &set] {
+        trpc::FiberSleepFor(trpc::Random(20) * std::chrono::milliseconds(1));
+        std::unique_lock lk(lock[i]);
+        cv[i].wait(lk, [&] { return set[i]; });
+        ++run;
+      });
+    }
+
+    for (auto&& e : prod) {
+      ASSERT_TRUE(e.Joinable());
+      e.Join();
+    }
+
+    for (auto&& e : cons) {
+      ASSERT_TRUE(e.joinable());
+      e.join();
+    }
+
+    ASSERT_EQ(N * 2, run);
+  });
 }
 
 void TestConditionVariable(std::string_view scheduling_name) {
@@ -347,6 +524,34 @@ void TestEvent(std::string_view scheduling_name) {
     counters.join();
     waiters.join();
     ASSERT_EQ(N, waited);
+  }
+}
+
+TEST(Waitable, EventWaitInPthreadSetFromFiber) {
+  RunAsFiber([]() {
+    for (int i = 0; i != 100; ++i) {
+      auto ev = std::make_unique<Event>();
+      std::thread t([&] {
+        trpc::FiberSleepFor(trpc::Random(10) * std::chrono::milliseconds(1));
+        ev->Wait();
+      });
+      trpc::FiberSleepFor(trpc::Random(10) * std::chrono::milliseconds(1));
+      ev->Set();
+      t.join();
+    }
+  });
+}
+
+TEST(Waitable, EventWaitInPthreadSetFromPthread) {
+  for (int i = 0; i != 100; ++i) {
+    auto ev = std::make_unique<Event>();
+    std::thread t([&] {
+      trpc::FiberSleepFor(trpc::Random(10) * std::chrono::milliseconds(1));
+      ev->Wait();
+    });
+    trpc::FiberSleepFor(trpc::Random(10) * std::chrono::milliseconds(1));
+    ev->Set();
+    t.join();
   }
 }
 

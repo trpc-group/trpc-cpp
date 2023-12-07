@@ -16,8 +16,7 @@
 
 namespace trpc {
 
-/// @brief Analogous to `std::latch`, but it's for fiber.
-/// @note  It only uses in fiber runtime.
+/// @brief Adaptive latch primitive for both fiber and pthread context.
 class FiberLatch {
  public:
   explicit FiberLatch(std::ptrdiff_t count);

@@ -114,7 +114,9 @@ void SchedulingImpl::Enter(std::size_t index) noexcept {
   worker_index_ = index;
 
   // Initialize master fiber for this worker.
-  SetUpMasterFiberEntity();
+  if (worker_index_ != SchedulingGroup::kTimerWorkerIndex) {
+    SetUpMasterFiberEntity();
+  }
 }
 
 void SchedulingImpl::Schedule() noexcept {

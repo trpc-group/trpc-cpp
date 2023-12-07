@@ -233,6 +233,7 @@ cc_test(
     srcs = ["fiber_test.cc"],
     deps = [
         "//trpc/coroutine/testing:fiber_runtime_test",
+        "//trpc/util:latch",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
