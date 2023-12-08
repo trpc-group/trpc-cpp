@@ -282,7 +282,7 @@ bool TransformConfig(const Json::Value& from, std::map<std::string, std::string>
       Json::ValueType value_type = from[*it].type();
       switch (value_type) {
         case Json::intValue: {
-          config_map->insert(std::pair<std::string, std::string>(key_name, std::to_string(from[*it].asInt())));
+          config_map->insert(std::pair<std::string, std::string>(key_name, std::to_string(from[*it].asInt64())));
           break;
         }
         case Json::uintValue: {

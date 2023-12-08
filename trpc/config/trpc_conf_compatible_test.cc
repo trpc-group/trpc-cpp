@@ -1,5 +1,7 @@
 #include "trpc/config/trpc_conf_compatible.h"
 
+#include "fmt/core.h"
+#include "fmt/format.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
 #include "yaml-cpp/yaml.h"
@@ -64,6 +66,7 @@ TEST_F(TrpcConfCompatibleTest, GetInt64_Success) {
   ASSERT_TRUE(trpc::config::GetInt64(config_json, "value2", &result));
   ASSERT_EQ(result, -42);
 }
+
 
 TEST_F(TrpcConfCompatibleTest, GetInt64_Fail) {
   Json::Value config_json;
@@ -150,6 +153,41 @@ TEST_F(TrpcConfCompatibleTest, ExtractYamlKeys) {
   ASSERT_EQ(yaml_keys.size(), 2);
   ASSERT_EQ(yaml_keys[0], "key1");
   ASSERT_EQ(yaml_keys[1], "key2");
+}
+
+TEST_F(TrpcConfCompatibleTest, TransformConfig_JSON_Success_WithIntegerMaxAndMin) {
+  auto int_max = std::numeric_limits<std::int32_t>::max();
+  auto int_min = std::numeric_limits<std::int32_t>::min();
+  auto int64_max = std::numeric_limits<std::int64_t>::max();
+  auto int64_min = std::numeric_limits<std::int64_t>::min();
+  std::string from = fmt::format(R"({{"id": "0001", "int_max": {}, "int_min": {}, "int64_max": {}, "int64_min": {}}})",
+                                 int_max, int_min, int64_max, int64_min);
+
+  Json::Value json_value;
+  bool trans_result = trpc::config::TransformConfig(from, &json_value);
+  ASSERT_TRUE(trans_result);
+
+  std::map<std::string, std::string> out_map;
+  trans_result = trpc::config::TransformConfig(json_value, &out_map, "");
+  ASSERT_TRUE(trans_result);
+  ASSERT_TRUE(out_map.find("id") != out_map.end());
+  ASSERT_TRUE(out_map.find("int_max") != out_map.end());
+  ASSERT_TRUE(out_map.find("int_min") != out_map.end());
+  ASSERT_TRUE(out_map.find("int64_max") != out_map.end());
+  ASSERT_TRUE(out_map.find("int64_min") != out_map.end());
+}
+
+TEST_F(TrpcConfCompatibleTest, TransformConfig_JSON_Fail_WithIntegerOverflow) {
+  std::string int_overflow{"12233344449223372036854775807"};
+  std::string from = fmt::format(R"({{"id": "0001", "int_overflow": {}}})", int_overflow);
+
+  Json::Value json_value;
+  bool trans_result = trpc::config::TransformConfig(from, &json_value);
+  // Overflowed integer-64 value in cpp-json is ok.
+  ASSERT_TRUE(trans_result);
+
+  int64_t v{0};
+  ASSERT_FALSE(trpc::config::GetInt64(json_value, "int_overflow", &v));
 }
 
 }  // namespace trpc::testing

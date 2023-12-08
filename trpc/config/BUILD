@@ -132,6 +132,7 @@ cc_test(
     srcs = ["trpc_conf_compatible_test.cc"],
     deps = [
         ":trpc_conf",
+        "@com_github_fmtlib_fmt//:fmtlib",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
