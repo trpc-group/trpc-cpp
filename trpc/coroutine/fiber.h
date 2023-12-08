@@ -183,23 +183,23 @@ bool BatchStartFiberDetached(std::vector<Function<void()>>&& start_procs);
 /// @note  It only uses in fiber runtime.
 void FiberYield();
 
-/// @brief Block calling fiber until `expires_at`.
-/// @note  It only uses in fiber runtime.
+/// @brief Block calling pthread or calling fiber until `expires_at`.
+/// @note  It can be used in pthread context and fiber context.
 void FiberSleepUntil(const std::chrono::steady_clock::time_point& expires_at);
 
-/// @brief Block calling fiber for `expires_in`.
-/// @note  It only uses in fiber runtime.
+/// @brief Block calling pthread or calling fiber for `expires_in`.
+/// @note  It can be used in pthread context and fiber context.
 void FiberSleepFor(const std::chrono::nanoseconds& expires_in);
 
 /// @brief `SleepUntil` for clocks other than `std::steady_clock`.
-/// @note  It only uses in fiber runtime.
+/// @note  It can be used in pthread context and fiber context.
 template <class Clock, class Duration>
 void FiberSleepUntil(const std::chrono::time_point<Clock, Duration>& expires_at) {
   return FiberSleepUntil(ReadSteadyClock() + (expires_at - Clock::now()));
 }
 
 /// @brief `SleepFor` for durations other than `std::chrono::nanoseconds`.
-/// @note  It only uses in fiber runtime.
+/// @note  It can be used in pthread context and fiber context.
 template <class Rep, class Period>
 void FiberSleepFor(const std::chrono::duration<Rep, Period>& expires_in) {
   return FiberSleepFor(static_cast<std::chrono::nanoseconds>(expires_in));

@@ -39,6 +39,18 @@ cc_library(
 cc_library(
     name = "futex_notifier",
     hdrs = ["futex_notifier.h"],
+    deps = [
+        "//trpc/util/chrono",
+    ],
+)
+
+cc_test(
+    name = "futex_notifier_test",
+    srcs = ["futex_notifier_test.cc"],
+    deps = [
+        ":futex_notifier",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(

@@ -73,7 +73,6 @@ cc_library(
         "stack_allocator_impl",
         ":assembly",
         ":context",
-        "//trpc/util/internal:casting",
         "//trpc/log:trpc_log",
         "//trpc/runtime/threadmodel/common:worker_thread",
         "//trpc/tvar/compound_ops:internal_latency",
@@ -91,9 +90,11 @@ cc_library(
         "//trpc/util:unique_id",
         "//trpc/util/chrono",
         "//trpc/util/chrono:tsc",
+        "//trpc/util/internal:casting",
         "//trpc/util/object_pool:object_pool_ptr",
         "//trpc/util/queue:bounded_mpmc_queue",
         "//trpc/util/queue:bounded_spmc_queue",
+        "//trpc/util/thread:futex_notifier",
         "//trpc/util/thread:latch",
         "//trpc/util/thread:predicate_notifier",
         "//trpc/util/thread:spinlock",
@@ -169,6 +170,8 @@ cc_test(
     deps = [
         ":fiber_impl",
         ":testing",
+        "//trpc/coroutine:fiber",
+        "//trpc/coroutine/testing:fiber_runtime_test",
         "@com_google_googletest//:gtest_main",
     ],
 )

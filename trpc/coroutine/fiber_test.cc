@@ -24,9 +24,7 @@
 #include "trpc/coroutine/fiber_latch.h"
 #include "trpc/coroutine/testing/fiber_runtime.h"
 
-DECLARE_bool(trpc_fiber_stack_enable_guard_page);
-DECLARE_int32(trpc_cross_numa_work_stealing_ratio);
-DECLARE_int32(trpc_fiber_run_queue_size);
+#define COUT std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|"
 
 namespace trpc {
 
@@ -150,4 +148,154 @@ TEST(Fiber, GetFiberCount) {
     ASSERT_EQ(0, trpc::GetFiberCount() - fiber_count);
   });
 }
+
+TEST(Fiber, FiberSleepInFiberContext) {
+  RunAsFiber([] {
+    FiberLatch l(1);
+    StartFiberDetached([&l] {
+      // Test FiberSleepFor.
+      auto sleep_for = 100 * std::chrono::milliseconds(1);
+      auto start = ReadSystemClock();  // Used system_clock intentionally.
+      FiberSleepFor(sleep_for);
+
+      auto use_time = (ReadSystemClock() - start) / std::chrono::milliseconds(1);
+      auto expect_time = sleep_for / std::chrono::milliseconds(1);
+      auto error_time = use_time - expect_time;
+      COUT << "use_time:" << use_time << ",expect_time:" << expect_time
+           << ",error_time:" << error_time << std::endl;
+
+      ASSERT_NEAR((ReadSystemClock() - start) / std::chrono::milliseconds(1),
+                  sleep_for / std::chrono::milliseconds(1), 20);
+
+      // Test FiberSleepUntil.
+      auto sleep_until = ReadSystemClock() + 100 * std::chrono::milliseconds(1);
+      FiberSleepUntil(sleep_until);
+
+      use_time = (ReadSystemClock().time_since_epoch()) / std::chrono::milliseconds(1);
+      expect_time = sleep_until.time_since_epoch() / std::chrono::milliseconds(1);
+      error_time = use_time - expect_time;
+
+      COUT << "use_time:" << use_time << ",expect_time:" << expect_time
+           << ",error_time:" << error_time << std::endl;
+
+      ASSERT_NEAR(use_time, expect_time, 20);
+
+      l.CountDown();
+    });
+
+    l.Wait();
+  });
+}
+
+TEST(Fiber, FiberSleepInPthreadContext) {
+  auto sleep_for = 100 * std::chrono::milliseconds(1);
+  auto start = ReadSystemClock();
+  FiberSleepFor(sleep_for);
+
+  auto use_time = (ReadSystemClock() - start) / std::chrono::milliseconds(1);
+  auto expect_time = sleep_for / std::chrono::milliseconds(1);
+  auto error_time = use_time - expect_time;
+  COUT << "use_time:" << use_time << ",expect_time:" << expect_time
+       << ",error_time:" << error_time << std::endl;
+
+  ASSERT_NEAR((ReadSystemClock() - start) / std::chrono::milliseconds(1),
+               sleep_for / std::chrono::milliseconds(1), 20);
+
+  auto sleep_until = ReadSystemClock() + 100 * std::chrono::milliseconds(1);
+  FiberSleepUntil(sleep_until);
+
+  use_time = (ReadSystemClock().time_since_epoch()) / std::chrono::milliseconds(1);
+  expect_time = sleep_until.time_since_epoch() / std::chrono::milliseconds(1);
+  error_time = use_time - expect_time;
+
+  COUT << "use_time:" << use_time << ",expect_time:" << expect_time
+       << ",error_time:" << error_time << std::endl;
+
+  ASSERT_NEAR(use_time, expect_time, 20);
+}
+
+TEST(Fiber, FiberMutexInFiberContext) {
+  RunAsFiber([] {
+    static constexpr auto B = 1000;
+    FiberLatch l(B);
+
+    FiberMutex m;
+    int value = 0;
+    for (int i = 0; i != B; ++i) {
+      StartFiberDetached([&l, &m, &value] {
+        std::scoped_lock _(m);
+        ++value;
+
+        l.CountDown();
+      });
+    }
+
+    l.Wait();
+
+    COUT << "value:" << value << std::endl;
+
+    ASSERT_EQ(B, value);
+  });
+}
+
+TEST(Fiber, FiberMutexInPthreadContext) {
+  static constexpr auto B = 64;
+  Latch l(B);
+
+  FiberMutex m;
+  ASSERT_EQ(true, m.try_lock());
+  m.unlock();
+
+  int value = 0;
+  std::thread ts[B];
+  for (int i = 0; i != B; ++i) {
+    ts[i] = std::thread([&l, &m, &value] {
+      std::scoped_lock _(m);
+      ++value;
+
+      l.count_down();
+    });
+  }
+
+  l.wait();
+  for (auto&& t : ts) {
+    t.join();
+  }
+
+  COUT << "value:" << value << std::endl;
+  ASSERT_EQ(B, value);
+}
+
+TEST(Fiber, FiberMutexInMixedContext) {
+  RunAsFiber([] {
+    static constexpr auto B = 64;
+    FiberLatch l(2 * B);
+    FiberMutex m;
+
+    int value = 0;
+    std::thread ts[B];
+    for (int i = 0; i != B; ++i) {
+      ts[i] = std::thread([&l, &m, &value] {
+        std::scoped_lock _(m);
+        ++value;
+        l.CountDown();
+      });
+
+      StartFiberDetached([&l, &m, &value] {
+        std::scoped_lock _(m);
+        ++value;
+        l.CountDown();
+      });
+    }
+
+    l.Wait();
+    for (auto&& t : ts) {
+      t.join();
+    }
+
+    COUT << "value:" << value << std::endl;
+    ASSERT_EQ(2 * B, value);
+  });
+}
+
 }  // namespace trpc

@@ -14,16 +14,14 @@
 
 namespace trpc {
 
-/// @brief Event for fiber. 
+/// @brief Adaptive event primitive for both fiber and pthread context.
 class FiberEvent {
  public:
   /// @brief Wait until `Set()` is called.
   ///        If `Set()` is called before `Wait()`, this method returns immediately.
-  /// @note  This method only uses in fiber runtime.
   void Wait() { event_.Wait(); }
 
-  /// @brief Wake up fibers blockings on `Wait()`.
-  /// @note  You can call this method outside of fiber runtime.
+  /// @brief Wake up fibers and pthreads blockings on `Wait()`.
   void Set() { event_.Set(); }
 
  private:

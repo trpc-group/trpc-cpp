@@ -19,7 +19,7 @@
 
 namespace trpc {
 
-/// @brief Analogous to `std::shared_mutex`, but it for fiber.
+/// @brief Adaptive shared mutex primitive for both fiber and pthread context.
 /// @note  Performance-wise, reader-writer lock does NOT perform well unless
 ///        your critical section is sufficient large. In certain cases, reader-writer
 ///        lock can perform worse than `Mutex`. If reader performance is critical to

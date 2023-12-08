@@ -14,8 +14,7 @@
 
 namespace trpc {
 
-/// @brief Analogous to `std::mutex`, but it's for fiber.
-/// @note  It only uses in fiber runtime.
+/// @brief Adaptive mutex primitive for both fiber and pthread context.
 using FiberMutex = ::trpc::fiber::detail::Mutex;
 
 }  // namespace trpc

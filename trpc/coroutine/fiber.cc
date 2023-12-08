@@ -10,6 +10,7 @@
 
 #include "trpc/coroutine/fiber.h"
 
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -151,8 +152,18 @@ void FiberYield() {
 }
 
 void FiberSleepUntil(const std::chrono::steady_clock::time_point& expires_at) {
-  fiber::detail::WaitableTimer wt(expires_at);
-  wt.wait();
+  if (trpc::fiber::detail::IsFiberContextPresent()) {
+    fiber::detail::WaitableTimer wt(expires_at);
+    wt.wait();
+    return;
+  }
+
+  auto now = ReadSteadyClock();
+  if (expires_at <= now) {
+    return;
+  }
+
+  std::this_thread::sleep_for(expires_at - now);
 }
 
 void FiberSleepFor(const std::chrono::nanoseconds& expires_in) {

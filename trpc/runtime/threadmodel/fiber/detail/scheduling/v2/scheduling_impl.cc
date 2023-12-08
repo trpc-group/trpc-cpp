@@ -74,7 +74,9 @@ void SchedulingImpl::Enter(std::size_t index) noexcept {
     vtm_[worker_index_] = worker_index_;
   }
 
-  SetUpMasterFiberEntity();
+  if (worker_index_ != SchedulingGroup::kTimerWorkerIndex) {
+    SetUpMasterFiberEntity();
+  }
 }
 
 void SchedulingImpl::Leave() noexcept {

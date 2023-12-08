@@ -24,6 +24,7 @@
 #include "trpc/util/likely.h"
 #include "trpc/util/object_pool/object_pool_ptr.h"
 #include "trpc/util/ref_ptr.h"
+#include "trpc/util/thread/futex_notifier.h"
 #include "trpc/util/thread/spinlock.h"
 
 namespace trpc::fiber::detail {
@@ -40,8 +41,11 @@ class SchedulingGroup;
 struct WaitBlock {
   FiberEntity* waiter = nullptr;  // This initialization will be optimized away.
   trpc::DoublyLinkedListEntry chain;
-  std::atomic<bool> satisfied = false;
+  trpc::FutexNotifier futex;  // For pthread context, which waiter is default nullptr.
+  std::atomic<bool> satisfied = false;  // For fiber context, which waiter is not nullptr.
 };
+
+using WaitBlockList = trpc::DoublyLinkedList<WaitBlock, &WaitBlock::chain>;
 
 // Basic class for implementing waitable classes.
 //
@@ -58,9 +62,9 @@ class Waitable {
   // Returns `true` if the waiter is added to the wait chain, returns
   // `false` if the wait is immediately satisfied.
   //
-  // To prevent wake-up loss, `FiberEntity::scheduler_lock` must be held by the
-  // caller. (Otherwise before you take the lock, the fiber could have been
-  // concurrently waken up, which is lost, by someone else.)
+  // For fiber context, to prevent wake-up loss, `FiberEntity::scheduler_lock`
+  // must be held by the caller. (Otherwise before you take the lock, the fiber
+  // could have been concurrently waken up, which is lost, by someone else.)
   bool AddWaiter(WaitBlock* waiter);
 
   // Remove a waiter.
@@ -71,7 +75,7 @@ class Waitable {
   // Popup one waiter and schedule it.
   //
   // Returns `nullptr` if there's no waiter.
-  FiberEntity* WakeOne();
+  WaitBlock* WakeOne();
 
   // Set this `Waitable` as "persistently" awakened. After this call, all
   // further calls to `AddWaiter` will fail.
@@ -83,7 +87,7 @@ class Waitable {
   // immediately and could have freed this `Waitable` before you touch it again.
   //
   // Normally you should call `WakeAll` after calling this method.
-  void SetPersistentAwakened(FiberEntityList& wbs);
+  void SetPersistentAwakened(WaitBlockList& wbs);
 
   // Undo `SetPersistentAwakened()`.
   void ResetAwakened();
@@ -95,7 +99,7 @@ class Waitable {
  private:
   Spinlock lock_;
   bool persistent_awakened_ = false;
-  trpc::DoublyLinkedList<WaitBlock, &WaitBlock::chain> waiters_;
+  WaitBlockList waiters_;
 };
 
 // "Waitable" timer. This `Waitable` signals all its waiters once the given time
@@ -135,29 +139,33 @@ class WaitableTimer {
   RefPtr<WaitableRefCounted> impl_;
 };
 
-// Mutex for fiber.
+/// @brief Implementation of adaptive mutex primitive for both fiber and pthread context.
 class Mutex {
  public:
   bool try_lock() {
-    TRPC_DCHECK(IsFiberContextPresent());
-
     std::uint32_t expected = 0;
     return count_.compare_exchange_strong(expected, 1, std::memory_order_acquire);
   }
 
   void lock() {
-    TRPC_DCHECK(IsFiberContextPresent());
-
     if (TRPC_LIKELY(try_lock())) {
       return;
     }
-    LockSlow();
+
+    if (IsFiberContextPresent()) {
+      LockSlowFromFiber();
+      return;
+    }
+
+    LockSlowFromPthread();
   }
 
   void unlock();
 
  private:
-  void LockSlow();
+  void LockSlowFromFiber();
+
+  void LockSlowFromPthread();
 
  private:
   Waitable impl_;
@@ -165,20 +173,17 @@ class Mutex {
   // Synchronizes between slow path of `lock()` and `unlock()`.
   Spinlock slow_path_lock_;
 
-  // Number of waiters (plus the owner). Hopefully `std::uint32_t` is large
-  // enough.
+  // Number of waiters (plus the owner). Hopefully `std::uint32_t` is large enough.
   std::atomic<std::uint32_t> count_{0};
 };
 
-// Condition variable for fiber.
+/// @brief Adaptive condition variable primitive for both fiber and pthread context.
 class ConditionVariable {
  public:
   void wait(std::unique_lock<Mutex>& lock);
 
   template <class F>
   void wait(std::unique_lock<Mutex>& lock, F&& pred) {
-    TRPC_DCHECK(IsFiberContextPresent());
-
     while (!std::forward<F>(pred)()) {
       wait(lock);
     }
@@ -194,8 +199,6 @@ class ConditionVariable {
 
   template <class F>
   bool wait_until(std::unique_lock<Mutex>& lk, std::chrono::steady_clock::time_point timeout, F&& pred) {
-    TRPC_DCHECK(IsFiberContextPresent());
-
     while (!std::forward<F>(pred)()) {
       wait_until(lk, timeout);
       if (ReadSteadyClock() >= timeout) {
@@ -208,6 +211,13 @@ class ConditionVariable {
 
   void notify_one() noexcept;
   void notify_all() noexcept;
+
+ private:
+  bool WaitUntilFromFiber(std::unique_lock<Mutex>& lock,
+                          std::chrono::steady_clock::time_point expires_at);
+
+  bool WaitUntilFromPthread(std::unique_lock<Mutex>& lock,
+                            std::chrono::steady_clock::time_point expires_at);
 
  private:
   Waitable impl_;
@@ -243,21 +253,23 @@ class ExitBarrier : public object_pool::EnableLwSharedFromThis<ExitBarrier> {
   ConditionVariable cv_;
 };
 
-// Emulates Event in Win32 API.
-//
-// For internal use only. Normally you'd like to use `Mutex` +
-// `ConditionVariable` instead.
+/// @brief Adaptive Event primitive for both fiber and pthread context.
+/// @note Emulates Event in Win32 API.
+///       For internal use only. Normally you'd like to use `Mutex` + `ConditionVariable` instead.
 class Event {
  public:
   // Wait until `Set()` is called. If `Set()` is called before `Wait()`, this
   // method returns immediately.
   void Wait();
 
-  // Wake up fibers blockings on `Wait()`. All subsequent calls to `Wait()` will
+  // Wake up fibers or pthreads blockings on `Wait()`. All subsequent calls to `Wait()` will
   // return immediately.
-  //
-  // It's explicitly allowed to call this method outside of fiber context.
   void Set();
+
+ private:
+  void WaitFromFiber();
+
+  void WaitFromPthread();
 
  private:
   Waitable impl_;

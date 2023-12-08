@@ -111,4 +111,102 @@ TEST(FiberShardMutex, AllWriter) {
   });
 }
 
+TEST(FiberSharedMutex, UseInPthreadContext) {
+  static constexpr auto B = 64;
+  Latch l(B);
+
+  FiberSharedMutex rwlock;
+  ASSERT_EQ(true, rwlock.try_lock());
+  rwlock.unlock();
+
+  ASSERT_EQ(true, rwlock.try_lock_shared());
+  rwlock.unlock_shared();
+
+  std::thread ts[B];
+  int counter1 = 0;
+  int counter2 = 0;
+  for (int i = 0; i != B; ++i) {
+    ts[i] = std::thread([&] {
+      for (int _ = 0; _ != 100; ++_) {
+        auto op = Random(100);
+        if (op < 80) {
+          std::shared_lock _(rwlock);
+          EXPECT_EQ(counter1, counter2);
+        } else {
+          std::scoped_lock _(rwlock);
+          ++counter1;
+          ++counter2;
+          EXPECT_EQ(counter1, counter2);
+        }
+      }
+
+      l.count_down();
+    });
+  }
+
+  l.wait();
+  for (auto&& t : ts) {
+    t.join();
+  }
+}
+
+TEST(FiberSharedMutex, UseInMixedContext) {
+  RunAsFiber([] {
+    static constexpr auto B = 64;
+    FiberLatch l(2 * B);
+
+    FiberSharedMutex rwlock;
+
+    std::thread ts[B];
+    std::vector<Fiber> fibers;
+    int counter1 = 0;
+    int counter2 = 0;
+    for (int i = 0; i != B; ++i) {
+      ts[i] = std::thread([&] {
+        for (int _ = 0; _ != 100; ++_) {
+          auto op = Random(100);
+          if (op < 80) {
+            std::shared_lock _(rwlock);
+            EXPECT_EQ(counter1, counter2);
+          } else {
+            std::scoped_lock _(rwlock);
+            ++counter1;
+            ++counter2;
+            EXPECT_EQ(counter1, counter2);
+          }
+        }
+
+        l.CountDown();
+      });
+
+      fibers.emplace_back([&] {
+        for (int _ = 0; _ != 100; ++_) {
+          auto op = Random(100);
+          if (op < 70) {
+            std::shared_lock _(rwlock);
+            EXPECT_EQ(counter1, counter2);
+          } else {
+            std::scoped_lock _(rwlock);
+            ++counter1;
+            ++counter2;
+            EXPECT_EQ(counter1, counter2);
+          }
+        }
+
+        l.CountDown();
+      });
+    }
+
+    l.Wait();
+
+    for (auto&& t : ts) {
+      t.join();
+    }
+
+    for (auto&& e : fibers) {
+      e.Join();
+    }
+  });
+}
+
 }  // namespace trpc

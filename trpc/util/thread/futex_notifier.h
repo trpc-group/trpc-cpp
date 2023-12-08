@@ -21,6 +21,8 @@
 #include <atomic>
 #include <memory>
 
+#include "trpc/util/chrono/chrono.h"
+
 namespace trpc {
 
 /// @brief Waking up/notifying between multiple threads based on futex
@@ -52,6 +54,54 @@ class FutexNotifier {
   void Wait(const State& expected_state) {
     syscall(SYS_futex, &pending_wake_, (FUTEX_WAIT | FUTEX_PRIVATE_FLAG),
             expected_state.val_, NULL, NULL, 0);
+  }
+
+  /// @brief Wait to be awakened up or until timeout occured.
+  /// @param expected_state Expected state to block at.
+  /// @param abs_time Pointer to absolute time to trigger timeout.
+  /// @return false: timeout occured, true: awakened up.
+  /// @note For compatibility, upper `void Wait` interface is reserved.
+  bool Wait(const State& expected_state, const std::chrono::steady_clock::time_point* abs_time) {
+    timespec timeout;
+    timespec* timeout_ptr = nullptr;
+
+    while (true) {
+      if (abs_time != nullptr) {
+        auto now = ReadSteadyClock();
+
+        // Already timeout.
+        if (*abs_time <= now)
+          return false;
+
+        auto diff = (*abs_time - now) / std::chrono::nanoseconds(1);
+        // Convert format.
+        timeout.tv_sec = diff / 1000000000L;
+        timeout.tv_nsec = diff - timeout.tv_sec * 1000000000L;
+        timeout_ptr = &timeout;
+      }
+
+      int ret = syscall(SYS_futex, &pending_wake_, (FUTEX_WAIT | FUTEX_PRIVATE_FLAG),
+                        expected_state.val_, timeout_ptr, nullptr, 0);
+      // Timeout occured.
+      if ((ret != 0) && (errno == ETIMEDOUT))
+        return false;
+
+      // The value pointed to by uaddr was not equal to the expected value val at the time of the call.
+      // Take it as awakened up by another thread already.
+      if ((ret != 0) && (errno == EAGAIN))
+        return true;
+
+      // Interrupted, just continue to guarantee enough timeout.
+      if ((ret != 0) && (errno == EINTR))
+        continue;
+
+      // Spurious wake-up, just continue.
+      if ((ret == 0) &&  (pending_wake_ == expected_state.val_))
+        continue;
+
+      // Awakened up by others or real timeout.
+      return (ret == 0) ? true : false;
+    }
   }
 
   void Stop() {
