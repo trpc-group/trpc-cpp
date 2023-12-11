@@ -38,6 +38,24 @@ TEST(NoncontiguousBuffer, Find) {
   ASSERT_EQ(4, buffer.Find("needle"));
 }
 
+TEST(NoncontiguousBuffer, Find2) {
+  std::string boundary("--12345--");
+  std::string data(
+      "--12345\r\n"
+      "Content-Disposition: form-data; name=\"somekey\"\r\n"
+      "\r\n"
+      "Hello; World\r\n"
+      "--12345--");
+  NoncontiguousBuffer buffer;
+  buffer.Append(CreateBufferSlow(data.data(), 21));
+  buffer.Append(CreateBufferSlow(data.data() + 21, 54));
+  buffer.Append(CreateBufferSlow(data.data() + 75, 2));
+  buffer.Append(CreateBufferSlow(data.data() + 77, 4));
+  buffer.Append(CreateBufferSlow(data.data() + 81, 1));
+  ASSERT_EQ(data, FlattenSlow(buffer));
+  ASSERT_EQ(data.find(boundary), buffer.Find(boundary));
+}
+
 TEST(NoncontiguousBuffer, FindNotExists) {
   NoncontiguousBuffer buffer;
   buffer.Append(CreateBufferSlow("onexistent"));

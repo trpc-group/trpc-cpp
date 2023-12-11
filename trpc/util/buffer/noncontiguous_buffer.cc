@@ -112,16 +112,11 @@ void MakeDelta2(std::unique_ptr<ptrdiff_t[]>& delta2, std::basic_string_view<uin
 std::vector<std::pair<size_t, trpc::BufferView>>::const_iterator BinarySearch(
     const std::vector<std::pair<size_t, trpc::BufferView>>& buffers, size_t val,
     std::vector<std::pair<size_t, trpc::BufferView>>::const_iterator hint) {
-  if (val >= hint->first + hint->second.size()) {
-    ++hint;
-  } else if (val < hint->first) {
-    --hint;
-  }
-  if (val >= hint->first && val < hint->first + hint->second.size()) {
+  if (hint->first <= val && val < hint->first + hint->second.size()) {
     return hint;
   }
   return std::lower_bound(buffers.begin(), --buffers.end(), val,
-                          [](const auto& entry, size_t value) { return entry.first < value; });
+                          [](const auto& entry, size_t value) { return entry.first + entry.second.size() <= value; });
 }
 
 // The following source codes are from flare.
@@ -159,6 +154,7 @@ size_t NoncontiguousBoyerMooreSearcher::operator()(const NoncontiguousBuffer& bu
   }
 
   std::vector<std::pair<size_t, trpc::BufferView>> buffers;
+  buffers.reserve(buffer.size());
   size_t accumulate_size = 0;
   for (const auto& block : buffer) {
     buffers.emplace_back(accumulate_size, trpc::BufferView{block.data(), block.size()});
