@@ -20,6 +20,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include "trpc/common/config/global_conf.h"
+#include "trpc/util/net_util.h"
 
 namespace YAML {
 
@@ -398,12 +399,18 @@ struct convert<trpc::GlobalConfig> {
   static YAML::Node encode(const trpc::GlobalConfig& global_config) {
     YAML::Node node;
 
+    node["local_ip"] = global_config.local_ip;
+    node["local_nic"] = global_config.local_nic;
     node["namespace"] = global_config.env_namespace;
     node["env_name"] = global_config.env_name;
     node["container_name"] = global_config.container_name;
+    node["full_set_name"] = global_config.full_set_name;
+    node["enable_set"] = global_config.enable_set ? "Y" : "N";
     node["thread_disable_process_name"] = global_config.thread_disable_process_name;
     node["periphery_task_scheduler_thread_num"] = global_config.periphery_task_scheduler_thread_num;
     node["inner_periphery_task_scheduler_thread_num"] = global_config.inner_periphery_task_scheduler_thread_num;
+    node["enable_runtime_report"] = global_config.enable_runtime_report;
+    node["report_runtime_info_interval"] = global_config.report_runtime_info_interval;
     node["threadmodel"] = global_config.threadmodel_config;
     node["heartbeat"] = global_config.heartbeat_config;
     node["buffer_pool"] = global_config.buffer_pool_config;
@@ -414,6 +421,16 @@ struct convert<trpc::GlobalConfig> {
   }
 
   static bool decode(const YAML::Node& node, trpc::GlobalConfig& global_config) {
+    if (node["local_ip"]) {
+      global_config.local_ip = node["local_ip"].as<std::string>();
+    } else if (!global_config.local_nic.empty()) {
+      global_config.local_ip = trpc::util::GetIpByEth(global_config.local_nic);
+    }
+
+    if (node["local_nic"]) {
+        global_config.local_nic = node["local_nic"].as<std::string>();
+    }
+
     if (node["namespace"]) {
         global_config.env_namespace = node["namespace"].as<std::string>();
     }
@@ -424,6 +441,17 @@ struct convert<trpc::GlobalConfig> {
 
     if (node["container_name"]) {
         global_config.container_name = node["container_name"].as<std::string>();
+    }
+
+    if (node["full_set_name"]) {
+      global_config.full_set_name =
+          (YAML::NodeType::Null == node["full_set_name"].Type()) ? "" : node["full_set_name"].as<std::string>();
+    }
+
+    if (node["enable_set"]) {
+      std::string str_enable_set =
+          (YAML::NodeType::Null == node["enable_set"].Type()) ? "" : node["enable_set"].as<std::string>();
+      global_config.enable_set = (str_enable_set == "Y");
     }
 
     if (node["thread_disable_process_name"]) {
@@ -437,6 +465,14 @@ struct convert<trpc::GlobalConfig> {
     if (node["inner_periphery_task_scheduler_thread_num"]) {
       global_config.inner_periphery_task_scheduler_thread_num =
           node["inner_periphery_task_scheduler_thread_num"].as<uint32_t>();
+    }
+
+    if (node["enable_runtime_report"]) {
+      global_config.enable_runtime_report = node["enable_runtime_report"].as<bool>();
+    }
+
+    if (node["report_runtime_info_interval"]) {
+      global_config.report_runtime_info_interval = node["report_runtime_info_interval"].as<uint32_t>();
     }
 
     if (node["threadmodel"]) {
