@@ -390,7 +390,7 @@ class ClientContext : public RefCounted<ClientContext> {
   /// The request will be send directly to the address of remote service instance set by user after this function
   /// is called by user. The naming selector will be ignored.
   void SetAddr(const std::string& ip, uint16_t port) {
-    endpoint_info_.addr.ip = std::move(ip);
+    endpoint_info_.addr.ip = ip;
     endpoint_info_.addr.port = port;
     endpoint_info_.addr.addr_type =
         ip.find(':') != std::string::npos ? NodeAddr::AddrType::kIpV6 : NodeAddr::AddrType::kIpV4;

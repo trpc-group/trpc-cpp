@@ -165,6 +165,8 @@ class TrpcPlugin {
   void StopPlugin(PluginInfo& plugin_info);
   void DestroyPlugins();
   void DestroyPlugin(PluginInfo& plugin_info);
+  std::unordered_map<std::string, PluginInfo>::iterator FindPlugin(const std::string& name);
+  bool IsDepPluginNameValid(const std::vector<std::string>& dep_plugin_names);
 
   template <typename T>
   bool AddPlugins(const std::unordered_map<std::string, T>& plugins) {
@@ -174,12 +176,15 @@ class TrpcPlugin {
       plugin_info.is_inited = false;
       plugin_info.is_destroyed = false;
 
-      plugins_.emplace(it.second->Name(), std::move(plugin_info));
+      std::string plugin_name = it.second->Name() + "#" + std::to_string(static_cast<int>(it.second->Type()));
+      plugins_.emplace(plugin_name, std::move(plugin_info));
 
       std::vector<std::string> dep_plugin_names;
       it.second->GetDependencies(dep_plugin_names);
+      // Check if the dependent plugin name is valid
+      TRPC_ASSERT(IsDepPluginNameValid(dep_plugin_names) && "Dependent plugin name invalid");
       for (auto& dep_plugin_name : dep_plugin_names) {
-        plugins_reverse_deps_[dep_plugin_name].push_back(it.second->Name());
+        plugins_reverse_deps_[dep_plugin_name].push_back(plugin_name);
       }
     }
 
