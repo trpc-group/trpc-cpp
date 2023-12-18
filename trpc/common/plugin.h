@@ -58,6 +58,9 @@ class Plugin : public RefCounted<Plugin> {
 
   /// @brief get the collection of plugins that this plugin depends on
   ///        dependent plugins need to be initialized first
+  /// @note If there are cases of dependencies with the same name (possible in cases where the types are
+  ///       different), the plugin_name needs to follow the following format: 'plugin_name#plugin_type', where
+  ///       plugin_name is the name of the plugin and plugin_type is the corresponding index of the plugin type.
   virtual void GetDependencies(std::vector<std::string>& plugin_names) const {}
 
   /// @brief init plugin

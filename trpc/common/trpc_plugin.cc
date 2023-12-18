@@ -161,7 +161,7 @@ void TrpcPlugin::InitPlugin(PluginInfo& plugin_info) {
   plugin_info.plugin->GetDependencies(dep_plugin_names);
   if (!dep_plugin_names.empty()) {
     for (const auto& name : dep_plugin_names) {
-      auto it = plugins_.find(name);
+      auto it = FindPlugin(name);
       if (it == plugins_.end()) {
         TRPC_FMT_ERROR("plugin `{}` dependence plugin `{}` not found.", plugin_info.plugin->Name(), name);
         TRPC_ASSERT(false);
@@ -200,7 +200,7 @@ void TrpcPlugin::StartPlugin(PluginInfo& plugin_info) {
   plugin_info.plugin->GetDependencies(dep_plugin_names);
   if (!dep_plugin_names.empty()) {
     for (const auto& name : dep_plugin_names) {
-      auto it = plugins_.find(name);
+      auto it = FindPlugin(name);
       TRPC_ASSERT(it != plugins_.end());
 
       StartPlugin(it->second);
@@ -261,7 +261,7 @@ void TrpcPlugin::StopPlugin(PluginInfo& plugin_info) {
   std::vector<std::string>& reverse_dep_plugin_names = plugins_reverse_deps_[plugin_info.plugin->Name()];
   if (!reverse_dep_plugin_names.empty()) {
     for (const auto& name : reverse_dep_plugin_names) {
-      auto it = plugins_.find(name);
+      auto it = FindPlugin(name);
       TRPC_ASSERT(it != plugins_.end());
 
       StopPlugin(it->second);
@@ -293,7 +293,7 @@ void TrpcPlugin::DestroyPlugin(PluginInfo& plugin_info) {
   std::vector<std::string>& reverse_dep_plugin_names = plugins_reverse_deps_[plugin_info.plugin->Name()];
   if (!reverse_dep_plugin_names.empty()) {
     for (const auto& name : reverse_dep_plugin_names) {
-      auto it = plugins_.find(name);
+      auto it = FindPlugin(name);
       TRPC_ASSERT(it != plugins_.end());
 
       DestroyPlugin(it->second);
@@ -303,6 +303,56 @@ void TrpcPlugin::DestroyPlugin(PluginInfo& plugin_info) {
   // Destroy self
   plugin_info.plugin->Destroy();
   plugin_info.is_destroyed = true;
+}
+
+std::unordered_map<std::string, TrpcPlugin::PluginInfo>::iterator TrpcPlugin::FindPlugin(const std::string& name) {
+  auto it = plugins_.find(name);
+  if (it != plugins_.end()) {
+    return it;
+  }
+
+  std::unordered_map<std::string, TrpcPlugin::PluginInfo>::iterator match_it = plugins_.end();
+  bool already_match = false;
+  auto new_name = name + "#";
+  for (it = plugins_.begin(); it != plugins_.end(); ++it) {
+    auto& plugin_name = it->first;
+    if (!plugin_name.compare(0, new_name.size(), new_name)) {
+      if (already_match) {
+        TRPC_FMT_ERROR("Find multiple match {} plugins, you need specify the dependencies with the plugin_type", name);
+        TRPC_ASSERT(false && "Find multiple match plugins");
+      } else {
+        already_match = true;
+        match_it = it;
+      }
+    }
+  }
+
+  return match_it;
+}
+
+bool TrpcPlugin::IsDepPluginNameValid(const std::vector<std::string>& dep_plugin_names) {
+  bool ret = true;
+  for (auto& plugin_name : dep_plugin_names) {
+    auto pos = plugin_name.find_first_of("#");
+    if (pos == std::string::npos) {
+      continue;
+    }
+
+    // If it contains '#', then the string at the end should be PluginType.
+    auto str = plugin_name.substr(pos + 1);
+    try {
+      auto plugin_type = std::stoi(str);
+      if (plugin_type > static_cast<int>(PluginType::kUnspecified)) {
+        ret = false;
+        TRPC_FMT_ERROR("dependent plugin name {} invalid", plugin_name);
+      }
+    } catch (const std::exception&) {
+      ret = false;
+      TRPC_FMT_ERROR("dependent plugin name {} invalid", plugin_name);
+    }
+  }
+
+  return ret;
 }
 
 bool TrpcPlugin::RegisterServerCodec(const ServerCodecPtr& codec) {

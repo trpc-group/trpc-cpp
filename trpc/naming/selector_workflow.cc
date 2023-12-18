@@ -141,7 +141,6 @@ void SelectorWorkFlow::SetRequestAddr(const ClientContextPtr& context, TrpcEndpo
   extend_addr.addr.port = instance.port;
   extend_addr.addr.addr_type = instance.is_ipv6 ? NodeAddr::AddrType::kIpV6 : NodeAddr::AddrType::kIpV4;
   if (has_metadata_) {
-    // extend_addr.metadata["instance_id"] = std::move(instance.meta["instance_id"]);
     extend_addr.metadata[naming::kNodeSetName] = std::move(instance.meta[naming::kNodeSetName]);
     extend_addr.metadata[naming::kNodeContainerName] = std::move(instance.meta[naming::kNodeContainerName]);
   }
@@ -159,7 +158,6 @@ void SelectorWorkFlow::SetBackupRequestAddrs(const ClientContextPtr& context,
     extend_addr.addr.port = ins.port;
     extend_addr.addr.addr_type = ins.is_ipv6 ? NodeAddr::AddrType::kIpV6 : NodeAddr::AddrType::kIpV4;
     if (has_metadata_) {
-      // extend_addr.metadata["instance_id"] = std::move(ins.meta["instance_id"]);
       extend_addr.metadata[naming::kNodeSetName] = std::move(ins.meta[naming::kNodeSetName]);
       extend_addr.metadata[naming::kNodeContainerName] = std::move(ins.meta[naming::kNodeContainerName]);
     }
