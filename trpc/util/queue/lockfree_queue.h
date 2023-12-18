@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include "trpc/util/algorithm/power_of_two.h"
+
 namespace trpc {
 
 /// @brief Implementation of a thread-safe lock-free queue that supports multiple producers and multiple
@@ -54,21 +56,11 @@ class alignas(64) LockFreeQueue {
       return RT_OK;
     }
 
-    bool size_is_power_of_2 = (size >= 2) && ((size & (size - 1)) == 0);
-    if (!size_is_power_of_2) {
-      uint64_t tmp = 1;
-      while (tmp <= size) {
-        tmp <<= 1;
-      }
-
-      size = tmp;
-    }
-
-    mask_ = size - 1;
-    capacity_ = size;
+    capacity_ = RoundUpPowerOf2(size);
+    mask_ = capacity_ - 1;
 
     elements_ = std::make_unique<Element[]>(capacity_);
-    for (size_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < capacity_; ++i) {
       elements_[i].sequence = i;
     }
 
