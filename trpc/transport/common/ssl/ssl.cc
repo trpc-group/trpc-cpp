@@ -679,6 +679,7 @@ Ssl::~Ssl() {
   if (ssl_) {
     SSL_shutdown(ssl_);
     SSL_free(ssl_);
+    ssl_ = nullptr;
   }
 }
 

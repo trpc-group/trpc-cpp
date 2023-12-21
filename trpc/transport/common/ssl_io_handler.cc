@@ -76,6 +76,14 @@ int SslIoHandler::Writev(const struct iovec* iov, int iovcnt) {
   return n;
 }
 
+void SslIoHandler::Destroy() {
+  if (ssl_) {
+    ssl_->Shutdown();
+    ssl_ = nullptr;
+    handshaked_ = false;
+  }
+}
+
 }  // namespace trpc::ssl
 
 #endif

@@ -31,6 +31,10 @@ FiberTcpConnection::FiberTcpConnection(Reactor* reactor, const Socket& socket)
 }
 
 FiberTcpConnection::~FiberTcpConnection() {
+  // Requirements: destroy IO-handler before close socket.
+  GetIoHandler()->Destroy();
+  socket_.Close();
+
   TRPC_LOG_DEBUG("~FiberTcpConnection fd:" << socket_.GetFd() << ", conn_id:" << this->GetConnId());
   TRPC_ASSERT(!socket_.IsValid());
 }
@@ -77,6 +81,7 @@ bool FiberTcpConnection::DoConnect() {
                                                           << ", is_client:" << IsClient()
                                                           << ", conn_id: " << this->GetConnId() << ", failed.");
 
+  GetIoHandler()->Destroy();
   socket_.Close();
 
   return false;
@@ -361,7 +366,7 @@ void FiberTcpConnection::OnCleanup(CleanupReason reason) {
 
   writing_buffers_.Stop();
 
-  socket_.Close();
+  // For multi-threads-safety, move "socket_.Close()" to ~FiberTcpConnection();
 }
 
 IoHandler::HandshakeStatus FiberTcpConnection::DoHandshake(bool from_on_readable) {
