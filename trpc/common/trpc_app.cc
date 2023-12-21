@@ -153,6 +153,10 @@ void TrpcApp::ParseFrameworkConfig(int argc, char* argv[]) {
   google::CommandLineFlagInfo info;
 
   if (google::GetCommandLineFlagInfo("config", &info) && info.is_default) {
+    if (InitFrameworkConfig() == 0) {
+      return;
+    }
+
     std::cerr << "start server with config, for example: " << argv[0] << " --config=default.yaml" << std::endl;
     exit(-1);
   }
@@ -162,6 +166,8 @@ void TrpcApp::ParseFrameworkConfig(int argc, char* argv[]) {
     std::cerr << "load config failed." << std::endl;
     exit(-1);
   }
+
+  UpdateFrameworkConfig();
 }
 
 bool TrpcApp::Daemonlize() {

@@ -22,6 +22,7 @@
 
 #include "trpc/runtime/threadmodel/fiber/detail/assembly.h"
 #include "trpc/runtime/threadmodel/fiber/detail/fiber_entity.h"
+#include "trpc/runtime/threadmodel/fiber/detail/scheduling/scheduling_var.h"
 #include "trpc/runtime/threadmodel/fiber/detail/timer_worker.h"
 #include "trpc/runtime/threadmodel/fiber/detail/waitable.h"
 #include "trpc/util/chrono/tsc.h"
@@ -151,15 +152,17 @@ void SchedulingImpl::Leave() noexcept {
 
 FiberEntity* SchedulingImpl::AcquireFiber() noexcept {
   if (auto rc = GetOrInstantiateFiber(run_queue_.Pop())) {
-    // Acquiring the lock here guarantees us anyone who is working on this fiber
-    // (with the lock held) has done its job before we returning it to the
-    // caller (worker).
-    std::scoped_lock _(rc->scheduler_lock);
+    {
+      // Acquiring the lock here guarantees us anyone who is working on this fiber
+      // (with the lock held) has done its job before we returning it to the
+      // caller (worker).
+      std::scoped_lock _(rc->scheduler_lock);
 
-    TRPC_CHECK(rc->state == FiberState::Ready);
-    rc->state = FiberState::Running;
+      TRPC_CHECK(rc->state == FiberState::Ready);
+      rc->state = FiberState::Running;
+    }
 
-    // SchedulingVar::GetInstance()->ready_run_latency.Update(ReadTsc() - rc->last_ready_tsc);
+    SchedulingVar::GetInstance()->ready_run_latency.Update(ReadTsc() - rc->last_ready_tsc);
 
     return rc;
   }
@@ -389,10 +392,6 @@ void SchedulingImpl::Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& sch
 
   self->state = FiberState::Waiting;
 
-  // We simply yield to master fiber for now.
-  // In future we can directly yield to next ready fiber. This way we can
-  // eliminate a context switch.
-  //
   // Note that we need to hold `scheduler_lock` until we finished context swap.
   // Otherwise if we're in ready queue, we can be resume again even before we
   // stopped running. This will be disastrous.
@@ -407,32 +406,88 @@ void SchedulingImpl::Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& sch
   // starts to run again, `std::unique_lock<...>::owns_lock` does not
   // necessarily be updated in time (before the fiber checks it), which can lead
   // to subtle bugs.
-  auto master = GetMasterFiberEntity();
-  master->ResumeOn([self_lock = scheduler_lock.release()]() { self_lock->unlock(); });
+  if (auto rc = GetOrInstantiateFiber(run_queue_.Pop())) {
+    TRPC_ASSERT(self != rc);
+    {
+      std::scoped_lock _(rc->scheduler_lock);
+
+      TRPC_CHECK(rc->state == FiberState::Ready);
+      rc->state = FiberState::Running;
+    }
+
+    SchedulingVar::GetInstance()->ready_run_latency.Update(ReadTsc() - rc->last_ready_tsc);
+
+    rc->ResumeOn([self_lock = scheduler_lock.release()]() { self_lock->unlock(); });
+  } else {
+     auto master = GetMasterFiberEntity();
+     master->ResumeOn([self_lock = scheduler_lock.release()]() { self_lock->unlock(); });
+  }
 
   // When we're back, we should be in the same fiber.
   TRPC_CHECK_EQ(self, GetCurrentFiberEntity());
 }
 
-void SchedulingImpl::Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& scheduler_lock) noexcept {
+void SchedulingImpl::Resume(FiberEntity* to) noexcept {
+  PostResume(to);
+}
+
+void SchedulingImpl::Resume(FiberEntity* self, FiberEntity* to) noexcept {
+  TRPC_DCHECK_NE(self, GetMasterFiberEntity(), "Current fiber not be master fiber.");
+  TRPC_DCHECK_NE(to, GetMasterFiberEntity(), "Master fiber should not be added to run queue.");
+  TRPC_ASSERT(self != to);
+
+  {
+    std::unique_lock lk(to->scheduler_lock);
+    to->state = FiberState::Running;
+    to->scheduling_group = scheduling_group_;
+  }
+
+  to->ResumeOn([this, self]() {
+    PostResume(self);
+  });
+
+  // When we're back, we should be in the same fiber.
+  TRPC_CHECK_EQ(self, GetCurrentFiberEntity());
+}
+
+void SchedulingImpl::PostResume(FiberEntity* fiber) noexcept {
   TRPC_DCHECK_NE(fiber, GetMasterFiberEntity(), "Master fiber should not be added to run queue.");
 
-  fiber->state = FiberState::Ready;
-  fiber->scheduling_group = scheduling_group_;
-  fiber->last_ready_tsc = ReadTsc();
-  if (scheduler_lock) {
-    scheduler_lock.unlock();
+  {
+    std::unique_lock lk(fiber->scheduler_lock);
+
+    fiber->state = FiberState::Ready;
+    fiber->scheduling_group = scheduling_group_;
+    fiber->last_ready_tsc = ReadTsc();
   }
 
   QueueRunnableEntity(fiber, fiber->scheduling_group_local, true);
 }
 
 void SchedulingImpl::Yield(FiberEntity* self) noexcept {
-  auto master = GetMasterFiberEntity();
+  if (auto rc = GetOrInstantiateFiber(run_queue_.Pop())) {
+    {
+      std::scoped_lock _(rc->scheduler_lock);
 
-  // Master's state is not maintained in a coherency way..
-  master->state = FiberState::Ready;
-  SwitchTo(self, master);
+      TRPC_CHECK(rc->state == FiberState::Ready);
+      rc->state = FiberState::Running;
+    }
+
+    SchedulingVar::GetInstance()->ready_run_latency.Update(ReadTsc() - rc->last_ready_tsc);
+
+    rc->ResumeOn([this, self]() {
+      PostResume(self);
+    });
+
+    // When we're back, we should be in the same fiber.
+    TRPC_CHECK_EQ(self, GetCurrentFiberEntity());
+  } else {
+    auto master = GetMasterFiberEntity();
+
+    // Master's state is not maintained in a coherency way..
+    master->state = FiberState::Ready;
+    SwitchTo(self, master);
+  }
 }
 
 void SchedulingImpl::SwitchTo(FiberEntity* self, FiberEntity* to) noexcept {
@@ -451,7 +506,7 @@ void SchedulingImpl::SwitchTo(FiberEntity* self, FiberEntity* to) noexcept {
   // `to`. This can be quite costly.
   // to->ResumeOn([this, self]() { ReadyFiber(self, std::unique_lock(self->scheduler_lock)); });
   to->ResumeOn([this, self]() {
-    Resume(self, std::unique_lock(self->scheduler_lock));
+    PostResume(self);
   });
 
   // When we're back, we should be in the same fiber.

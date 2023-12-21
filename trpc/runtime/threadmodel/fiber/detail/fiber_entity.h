@@ -260,8 +260,8 @@ using FiberEntityList = DoublyLinkedList<FiberEntity, &FiberEntity::chain>;
 // special initialization (as the compiler can see their definition, not just
 // declaration). Had we defined them in `fiber_entity.cc`, call to "TLS init
 // function for ..." might be needed by `GetXxxFiberEntity()` below.
-inline thread_local FiberEntity* master_fiber;
-inline thread_local FiberEntity* current_fiber;
+inline thread_local FiberEntity* master_fiber{nullptr};
+inline thread_local FiberEntity* current_fiber{nullptr};
 
 // Set up & get master fiber (i.e., so called "main" fiber) of this thread.
 void SetUpMasterFiberEntity() noexcept;

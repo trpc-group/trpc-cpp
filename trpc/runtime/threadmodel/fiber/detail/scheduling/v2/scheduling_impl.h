@@ -67,7 +67,9 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
 
   void Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& scheduler_lock) noexcept override;
 
-  void Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& scheduler_lock) noexcept override;
+  void Resume(FiberEntity* to) noexcept override;
+
+  void Resume(FiberEntity* self, FiberEntity* to) noexcept override;
 
   void Yield(FiberEntity* self) noexcept override;
 
@@ -84,6 +86,8 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
   bool PushToGlobalQueue(detail::v1::RunQueue& global_queue, RunnableEntity* fiber, bool wait = false) noexcept;
   bool QueueRunnableEntity(RunnableEntity* entity, bool is_fiber_reactor) noexcept;
   FiberEntity* AcquireReactorFiber() noexcept;
+  FiberEntity* GetFiberEntity() noexcept;
+  void Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& scheduler_lock) noexcept;
   inline FiberEntity* GetOrInstantiateFiber(RunnableEntity* entity) noexcept;
   inline void SetFiberRunning(FiberEntity* fiber_entity) noexcept;
 
@@ -103,10 +107,6 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
   // global queue used to store fiber tasks created by non-fiber worker threads.
   // GlobalQueue global_queue_;
   v1::RunQueue global_queue_;
-  // yield queue used to store yield fiber tasks with the lowest priority
-  // the existence of this queue is to prevent other fiber tasks in different queues from being blocked when a fiber
-  // yields GlobalQueue yield_fiber_queue_;
-  v1::RunQueue yield_fiber_queue_;
   // local queue of each fiber worker thread
   std::unique_ptr<LocalQueue[]> local_queues_;
 

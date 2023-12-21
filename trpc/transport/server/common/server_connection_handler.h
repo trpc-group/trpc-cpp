@@ -71,6 +71,7 @@ class ServerConnectionHandler : public ConnectionHandler {
   }
 
   void MessageWriteDone(const IoMessage& message) override {
+    TRPC_FMT_DEBUG("MessageWriteDone request_id: {}", message.seq_id);
     if (bind_info_->run_io_filters_function) {
       bind_info_->run_io_filters_function(FilterPoint::SERVER_POST_IO_SEND_MSG, message.msg);
     }

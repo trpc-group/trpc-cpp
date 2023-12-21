@@ -15,73 +15,114 @@
 
 namespace trpc::fiber::detail::v2 {
 
-LocalQueue::LocalQueue(int64_t c) {
-  TRPC_ASSERT(c && (!(c & (c - 1))));
-  top_.store(0, std::memory_order_relaxed);
-  bottom_.store(0, std::memory_order_relaxed);
-  array_.store(new Array{c}, std::memory_order_relaxed);
+LocalQueue::LocalQueue()
+    : bottom_(1),
+      capacity_(0),
+      runnables_(nullptr),
+      top_(1) {
 }
 
-LocalQueue::~LocalQueue() {
-  delete array_.load();
-}
-
-bool LocalQueue::Push(RunnableEntity* entity) {
-  int64_t b = bottom_.load(std::memory_order_relaxed);
-  int64_t t = top_.load(std::memory_order_acquire);
-  Array* a = array_.load(std::memory_order_relaxed);
-
-  if (a->Capacity() - 1 < (b - t)) {
+bool LocalQueue::Init(size_t capacity) {
+  if (capacity_ != 0) {
     return false;
   }
 
-  a->Push(b, entity);
-  std::atomic_thread_fence(std::memory_order_release);
-  bottom_.store(b + 1, std::memory_order_relaxed);
+  if (capacity == 0) {
+    return false;
+  }
+
+  if (capacity & (capacity - 1)) {
+    return false;
+  }
+
+  runnables_ = new(std::nothrow) RunnableEntity*[capacity];
+  if (!runnables_) {
+    return false;
+  }
+
+  capacity_ = capacity;
+
+  return true;
+}
+
+LocalQueue::~LocalQueue() {
+  delete [] runnables_;
+  runnables_ = nullptr;
+}
+
+bool LocalQueue::Push(RunnableEntity* entity) {
+  assert(capacity_ > 0);
+  size_t b = bottom_.load(std::memory_order_relaxed);
+  size_t t = top_.load(std::memory_order_acquire);
+  if (b >= t + capacity_) {
+    return false;
+  }
+
+  runnables_[b & (capacity_ - 1)] = entity;
+  bottom_.store(b + 1, std::memory_order_release);
 
   return true;
 }
 
 RunnableEntity* LocalQueue::Pop() {
-  int64_t b = bottom_.load(std::memory_order_relaxed) - 1;
-  Array* a = array_.load(std::memory_order_relaxed);
-  bottom_.store(b, std::memory_order_relaxed);
-  std::atomic_thread_fence(std::memory_order_seq_cst);
-  int64_t t = top_.load(std::memory_order_relaxed);
+  assert(capacity_ > 0);
+  size_t b = bottom_.load(std::memory_order_relaxed);
+  size_t t = top_.load(std::memory_order_relaxed);
 
-  RunnableEntity* entity{nullptr};
-
-  if (t <= b) {
-    entity = a->Pop(b);
-    if (t == b) {
-      if (!top_.compare_exchange_strong(t, t + 1, std::memory_order_seq_cst, std::memory_order_relaxed)) {
-        entity = nullptr;
-      }
-      bottom_.store(b + 1, std::memory_order_relaxed);
-    }
-  } else {
-    bottom_.store(b + 1, std::memory_order_relaxed);
+  if (t >= b) {
+    return nullptr;
   }
 
-  return entity;
+  size_t newb = b - 1;
+  bottom_.store(newb, std::memory_order_relaxed);
+
+  std::atomic_thread_fence(std::memory_order_seq_cst);
+
+  t = top_.load(std::memory_order_relaxed);
+  if (t > newb) {
+    bottom_.store(b, std::memory_order_relaxed);
+    return nullptr;
+  }
+
+  RunnableEntity* entity = runnables_[newb & (capacity_ - 1)];
+  if (t != newb) {
+    return entity;
+  }
+
+  bool popped = top_.compare_exchange_strong(
+      t, t + 1, std::memory_order_seq_cst, std::memory_order_relaxed);
+  bottom_.store(b, std::memory_order_relaxed);
+  if (popped) {
+    return entity;
+  }
+
+  return nullptr;
 }
 
 RunnableEntity* LocalQueue::Steal() {
-  int64_t t = top_.load(std::memory_order_acquire);
-  std::atomic_thread_fence(std::memory_order_seq_cst);
-  int64_t b = bottom_.load(std::memory_order_acquire);
+  assert(capacity_ > 0);
+  size_t t = top_.load(std::memory_order_acquire);
+  size_t b = bottom_.load(std::memory_order_acquire);
+  if (t >= b) {
+    return nullptr;
+  }
 
   RunnableEntity* entity{nullptr};
 
-  if (t < b) {
-    Array* a = array_.load(std::memory_order_consume);
-    entity = a->Pop(t);
-    if (!top_.compare_exchange_strong(t, t + 1, std::memory_order_seq_cst, std::memory_order_relaxed)) {
+  do {
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+
+    b = bottom_.load(std::memory_order_acquire);
+    if (t >= b) {
       return nullptr;
     }
-  }
+
+    entity = runnables_[t & (capacity_ - 1)];
+  } while (!top_.compare_exchange_strong(t, t + 1,
+      std::memory_order_seq_cst, std::memory_order_relaxed));
 
   return entity;
 }
 
 }  // namespace trpc::fiber::detail::v2
+ 

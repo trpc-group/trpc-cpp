@@ -59,7 +59,9 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
 
   void Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& scheduler_lock) noexcept override;
 
-  void Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& scheduler_lock) noexcept override;
+  void Resume(FiberEntity* to) noexcept override;
+
+  void Resume(FiberEntity* self, FiberEntity* to) noexcept override;
 
   void Yield(FiberEntity* self) noexcept override;
 
@@ -79,6 +81,8 @@ class alignas(hardware_destructive_interference_size) SchedulingImpl final : pub
   bool WakeUpOneDeepSleepingWorker() noexcept;
   FiberEntity* GetOrInstantiateFiber(RunnableEntity* entity) noexcept;
   bool QueueRunnableEntity(RunnableEntity* entity, bool sg_local, bool wait = false) noexcept;
+  bool Push(RunnableEntity* entity, bool sg_local, bool wait) noexcept;
+  void PostResume(FiberEntity* fiber) noexcept;
 
  private:
   // This class guarantees no wake-up loss by keeping a "wake-up count". If a wake

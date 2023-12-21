@@ -53,6 +53,8 @@ namespace trpc {
 static UniqueId unique_id;
 
 Status ServiceProxy::UnaryInvoke(const ClientContextPtr& context, const ProtocolPtr& req, ProtocolPtr& rsp) {
+  TRPC_FMT_DEBUG("UnaryInvoke msg request_id: {}", context->GetRequestId());
+
   // full-link timeout check, it will immediately return a failure if there is no timeout left
   if (CheckTimeout(context)) {
     return context->GetStatus();
@@ -73,6 +75,8 @@ Status ServiceProxy::UnaryInvoke(const ClientContextPtr& context, const Protocol
 }
 
 Future<ProtocolPtr> ServiceProxy::AsyncUnaryInvoke(const ClientContextPtr& context, const ProtocolPtr& req) {
+  TRPC_FMT_DEBUG("UnaryInvoke msg request_id: {}", context->GetRequestId());
+
   if (CheckTimeout(context)) {
     const Status& result = context->GetStatus();
     return MakeExceptionFuture<ProtocolPtr>(

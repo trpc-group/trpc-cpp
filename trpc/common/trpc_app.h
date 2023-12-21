@@ -63,6 +63,13 @@ class TrpcApp {
   /// @param signo usr1
   static void SigUsr1Handler(int signo);
 
+  /// @brief The interface for initilize the framework configuration by code(not use file)
+  /// @return 0: success, other: failure
+  virtual int InitFrameworkConfig() { return -1; }
+
+  /// @brief The interface for updating framework configuration content
+  virtual void UpdateFrameworkConfig() {}
+
   /// @brief The interface for registering custom implemented plugins
   /// Override this interface and call `trpc::TrpcPlugin::RegisterXXPlugin(XxPlugin)`
   /// e.g. trpc::TrpcPlugin::RegisterServerCodec(XxServerCodec);

@@ -86,11 +86,13 @@ class alignas(hardware_destructive_interference_size) Scheduling {
   virtual void Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& scheduler_lock) noexcept = 0;
 
   /// @brief Resumes the execution of the fiber, used in conjunction with 'Suspend'
-  /// @param fiber the fiber to be resumed for execution
-  /// @param scheduler_lock lock of scheduler
-  /// @note The 'FiberEntity::scheduler_lock' of the fiber must be held by the caller
-  ///       This behavior can help prevent a race condition between calling this method and the 'Suspend' method
-  virtual void Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& scheduler_lock) noexcept = 0;
+  /// @param to The fiber to be resumed for execution
+  virtual void Resume(FiberEntity* to) noexcept = 0;
+
+  /// @brief Resumes the execution of the fiber, used in conjunction with 'Suspend'
+  /// @param self The currently executing fiber, will be rescheduled
+  /// @param to The fiber to be resumed for execution
+  virtual void Resume(FiberEntity* self, FiberEntity* to) noexcept = 0;
 
   /// @brief Yield pthread worker to someone else.
   ///        The caller must not be added to run queue by anyone else (either concurrently or prior to this call).
