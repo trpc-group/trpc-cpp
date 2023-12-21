@@ -56,6 +56,8 @@ void FiberClientConnectionHandler::PreSendMessage(const IoMessage& io_msg) {
 }
 
 void FiberClientConnectionHandler::MessageWriteDone(const IoMessage& message) {
+  TRPC_FMT_DEBUG("MessageWriteDone request_id: {}", message.seq_id);
+
   if (trans_info_->run_io_filters_function) {
     trans_info_->run_io_filters_function(FilterPoint::CLIENT_POST_IO_SEND_MSG, message.msg);
   }

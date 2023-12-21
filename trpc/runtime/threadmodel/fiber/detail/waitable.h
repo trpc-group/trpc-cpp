@@ -162,6 +162,9 @@ class Mutex {
 
   void unlock();
 
+  // only use by framework, for ConditionVariable `wait` to schedule fiber 
+  void SetPost() { is_post_ = true; }
+
  private:
   void LockSlowFromFiber();
 
@@ -175,6 +178,9 @@ class Mutex {
 
   // Number of waiters (plus the owner). Hopefully `std::uint32_t` is large enough.
   std::atomic<std::uint32_t> count_{0};
+
+  // For ConditionVariable wait use
+  bool is_post_{false};
 };
 
 /// @brief Adaptive condition variable primitive for both fiber and pthread context.

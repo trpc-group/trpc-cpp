@@ -62,7 +62,7 @@ bool FiberTcpConnection::DoConnect() {
 
   int ret = socket_.Connect(remote_addr);
   if (ret == 0) {
-    TRPC_LOG_TRACE("FiberTcpConnection::DoConnect target: " << remote_addr.ToString() << ", fd: " << socket_.GetFd()
+    TRPC_LOG_DEBUG("FiberTcpConnection::DoConnect target: " << remote_addr.ToString() << ", fd: " << socket_.GetFd()
                                                             << ", is_client:" << IsClient()
                                                             << ", conn_id: " << this->GetConnId() << ", progress.");
 
@@ -231,6 +231,10 @@ FiberTcpConnection::ReadStatus FiberTcpConnection::ReadData() {
 }
 
 FiberConnection::EventAction FiberTcpConnection::ConsumeReadData() {
+  if (read_buffer_.buffer.ByteSize() <= 0) {
+    return EventAction::kReady;
+  }
+
   RefPtr ref(ref_ptr, this);
   std::deque<std::any> data;
   int checker_ret = GetConnectionHandler()->CheckMessage(ref, read_buffer_.buffer, data);

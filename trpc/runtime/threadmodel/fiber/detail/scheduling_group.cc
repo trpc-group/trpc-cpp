@@ -86,8 +86,12 @@ void SchedulingGroup::Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& sc
   scheduling_->Suspend(self, std::move(scheduler_lock));
 }
 
-void SchedulingGroup::Resume(FiberEntity* self, std::unique_lock<Spinlock>&& scheduler_lock) noexcept {
-  scheduling_->Resume(self, std::move(scheduler_lock));
+void SchedulingGroup::Resume(FiberEntity* to) noexcept {
+  scheduling_->Resume(to);
+}
+
+void SchedulingGroup::Resume(FiberEntity* self, FiberEntity* to) noexcept {
+  scheduling_->Resume(self, to);
 }
 
 void SchedulingGroup::Yield(FiberEntity* self) noexcept {

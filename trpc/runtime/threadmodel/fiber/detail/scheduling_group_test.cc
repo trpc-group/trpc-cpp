@@ -200,11 +200,11 @@ void TestWaitForFiberExit(std::string_view scheduling_name) {
             ++waited;
           });
       if (Random() % 2 == 0) {
-        scheduling_group->Resume(f1, std::unique_lock(f1->scheduler_lock));
-        scheduling_group->Resume(f2, std::unique_lock(f2->scheduler_lock));
+        scheduling_group->Resume(f1);
+        scheduling_group->Resume(f2);
       } else {
-        scheduling_group->Resume(f2, std::unique_lock(f2->scheduler_lock));
-        scheduling_group->Resume(f1, std::unique_lock(f1->scheduler_lock));
+        scheduling_group->Resume(f2);
+        scheduling_group->Resume(f1);
       }
     }
     while (waited != N) {
@@ -234,10 +234,8 @@ void SleepyFiberProc(std::atomic<std::size_t>* leaving) {
   std::unique_lock lk(self->scheduler_lock);
 
   auto timer_cb = [self, &timer_removed](auto) {
-    std::unique_lock lk(self->scheduler_lock);
     ++timer_removed;
-    self->state = FiberState::Ready;
-    self->scheduling_group->Resume(self, std::move(lk));
+    self->scheduling_group->Resume(self);
   };
   auto timer_id =
       SetTimerAt(sg, ReadSteadyClock() + 1s + Random(1000'000) * 1us, timer_cb);

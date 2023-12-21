@@ -55,9 +55,12 @@ bool SchedulingImpl::Init(SchedulingGroup* scheduling_group, std::size_t schedul
   // reactor queue is set to group_size.
   TRPC_ASSERT(fiber_reactor_queue_.Init(group_size_));
   TRPC_ASSERT(global_queue_.Init(GetFiberRunQueueSize()));
-  TRPC_ASSERT(yield_fiber_queue_.Init(GetFiberRunQueueSize()));
 
   local_queues_ = std::make_unique<LocalQueue[]>(group_size_);
+  for (size_t i = 0; i < group_size_; ++i) {
+    TRPC_ASSERT(local_queues_[i].Init(1024));
+  }
+
   vtm_.assign(group_size_, 0);
 
   waiters_.resize(group_size_);
@@ -128,9 +131,9 @@ void SchedulingImpl::Schedule() noexcept {
 FiberEntity* SchedulingImpl::WaitForFiber() noexcept {
   FiberEntity* fiber_entity = nullptr;
 
-  ++num_thieves_;
-
-  fiber_entity = ExploreTask();
+  if (num_thieves_.fetch_add(1) <= group_size_ / 2) {
+    fiber_entity = ExploreTask();
+  }
 
   if (fiber_entity) {
     if (num_thieves_.fetch_sub(1) == 1) {
@@ -187,21 +190,6 @@ FiberEntity* SchedulingImpl::WaitForFiber() noexcept {
     return fiber_entity;
   }
 
-  if (yield_fiber_queue_.UnsafeSize() > 0) {
-    notifier_->CancelWait(waiters_[worker_index_]);
-
-    fiber_entity = GetOrInstantiateFiber(yield_fiber_queue_.Pop());
-    if (fiber_entity) {
-      if (num_thieves_.load() == 0) {
-        notifier_->Notify(false);
-      }
-      return fiber_entity;
-    } else {
-      vtm_[worker_index_] = worker_index_;
-      return nullptr;
-    }
-  }
-
   // Now I really need to relinguish my self to others
   notifier_->CommitWait(waiters_[worker_index_]);
   return nullptr;
@@ -213,9 +201,9 @@ FiberEntity* SchedulingImpl::ExploreTask() noexcept {
 
   for (;;) {
     if (worker_index_ == vtm_[worker_index_]) {
-      fiber_entity = GetOrInstantiateFiber(global_queue_.Pop());
+      fiber_entity = GetOrInstantiateFiber(local_queues_[worker_index_].Pop());
       if (!fiber_entity) {
-        fiber_entity = GetOrInstantiateFiber(local_queues_[worker_index_].Pop());
+        fiber_entity = GetOrInstantiateFiber(global_queue_.Pop());
       }
     } else {
       fiber_entity = GetOrInstantiateFiber(local_queues_[vtm_[worker_index_]].Steal());
@@ -225,7 +213,7 @@ FiberEntity* SchedulingImpl::ExploreTask() noexcept {
       break;
     }
 
-    if (++num_steals > group_size_) {
+    if (++num_steals > group_size_ / 2) {
       break;
     }
 
@@ -259,10 +247,12 @@ FiberEntity* SchedulingImpl::GetOrInstantiateFiber(RunnableEntity* entity) noexc
 }
 
 void SchedulingImpl::SetFiberRunning(FiberEntity* fiber_entity) noexcept {
-  std::scoped_lock _(fiber_entity->scheduler_lock);
+  {
+    std::scoped_lock _(fiber_entity->scheduler_lock);
 
-  TRPC_CHECK(fiber_entity->state == FiberState::Ready);
-  fiber_entity->state = FiberState::Running;
+    TRPC_CHECK(fiber_entity->state == FiberState::Ready);
+    fiber_entity->state = FiberState::Running;
+  }
 
   SchedulingVar::GetInstance()->ready_run_latency.Update(ReadTsc() - fiber_entity->last_ready_tsc);
 }
@@ -341,6 +331,17 @@ bool SchedulingImpl::PushToLocalQueue(RunnableEntity* fiber) noexcept {
   return true;
 }
 
+FiberEntity* SchedulingImpl::GetFiberEntity() noexcept {
+  TRPC_CHECK(scheduling_group_ == SchedulingGroup::Current(), "scheduling group are inconsistent");
+
+  auto* fiber_entity = local_queues_[worker_index_].Pop();
+  if (fiber_entity) {
+    return GetOrInstantiateFiber(fiber_entity);
+  }
+
+  return nullptr;
+}
+
 void SchedulingImpl::Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& scheduler_lock) noexcept {
   TRPC_CHECK_EQ(self, GetCurrentFiberEntity(), "`self` must be pointer to caller's `FiberEntity`.");
   TRPC_CHECK(scheduler_lock.owns_lock(), "Scheduler lock must be held by caller prior to call to this method.");
@@ -349,10 +350,6 @@ void SchedulingImpl::Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& sch
              "yourself and `Suspend()`, what you really need is `Yield()`.");
   self->state = FiberState::Waiting;
 
-  // We simply yield to master fiber for now.
-  // In future we can directly yield to next ready fiber. This way we can
-  // eliminate a context switch.
-  //
   // Note that we need to hold `scheduler_lock` until we finished context swap.
   // Otherwise if we're in ready queue, we can be resume again even before we
   // stopped running. This will be disastrous.
@@ -367,11 +364,33 @@ void SchedulingImpl::Suspend(FiberEntity* self, std::unique_lock<Spinlock>&& sch
   // starts to run again, `std::unique_lock<...>::owns_lock` does not
   // necessarily be updated in time (before the fiber checks it), which can lead
   // to subtle bugs.
-  auto master = GetMasterFiberEntity();
-  master->ResumeOn([self_lock = scheduler_lock.release()]() { self_lock->unlock(); });
+  if (auto rc = GetFiberEntity()) {
+    TRPC_ASSERT(self != rc);
+    {
+      std::scoped_lock _(rc->scheduler_lock);
+
+      TRPC_CHECK(rc->state == FiberState::Ready);
+      rc->state = FiberState::Running;
+    }
+
+    SchedulingVar::GetInstance()->ready_run_latency.Update(ReadTsc() - rc->last_ready_tsc);
+
+    rc->ResumeOn([self_lock = scheduler_lock.release()]() { self_lock->unlock(); });
+  } else {
+     auto master = GetMasterFiberEntity();
+     master->ResumeOn([self_lock = scheduler_lock.release()]() { self_lock->unlock(); });
+  }
 
   // When we're back, we should be in the same fiber.
   TRPC_CHECK_EQ(self, GetCurrentFiberEntity());
+}
+
+void SchedulingImpl::Resume(FiberEntity* to) noexcept {
+  Resume(to, std::unique_lock(to->scheduler_lock));
+}
+
+void SchedulingImpl::Resume(FiberEntity* self, FiberEntity* to) noexcept {
+  Resume(to, std::unique_lock(to->scheduler_lock));
 }
 
 void SchedulingImpl::Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& scheduler_lock) noexcept {
@@ -387,13 +406,13 @@ void SchedulingImpl::Resume(FiberEntity* fiber, std::unique_lock<Spinlock>&& sch
     scheduler_lock.unlock();
   }
 
-  if (TRPC_UNLIKELY(pre_state == FiberState::Yield)) {
-    PushToGlobalQueue(yield_fiber_queue_, fiber, true);
-    notifier_->Notify(false);
-    return;
-  }
-
   if (!fiber->is_fiber_reactor) {
+    if (pre_state == FiberState::Yield) {
+      PushToGlobalQueue(global_queue_, fiber, true);
+      notifier_->Notify(false);
+      return;
+    }
+
     // handle fiber
     if (scheduling_group_ == SchedulingGroup::Current() && worker_index_ < group_size_) {
       PushToLocalQueue(fiber);

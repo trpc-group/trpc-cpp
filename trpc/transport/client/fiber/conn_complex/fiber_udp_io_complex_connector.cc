@@ -148,7 +148,7 @@ bool FiberUdpIoComplexConnector::MessageHandleFunction(const ConnectionPtr& conn
       if (TRPC_UNLIKELY(ctx.Get() == nullptr)) {
         // The request corresponding to the response cannot be found,
         // and the request may have timed out, so it will not be processed
-        TRPC_LOG_ERROR("can not find request, id: " << id << ", maybe timeout");
+        TRPC_LOG_WARN("can not find request, request_id: " << id << ", maybe timeout");
         continue;
       }
 

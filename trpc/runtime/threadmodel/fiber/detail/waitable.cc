@@ -49,8 +49,7 @@ class AsyncWaker {
           // Someone else satisfied the wait earlier.
           return;
         }
-        wait_cb->waiter->scheduling_group->Resume(
-            wait_cb->waiter, std::unique_lock(wait_cb->waiter->scheduler_lock));
+        wait_cb->waiter->scheduling_group->Resume(wait_cb->waiter);
       }
     };
 
@@ -186,7 +185,7 @@ void WaitableTimer::OnTimerExpired(RefPtr<WaitableRefCounted> ref) {
     }
     // This is fiber waiter.
     if (wb->waiter) {
-      wb->waiter->scheduling_group->Resume(wb->waiter, std::unique_lock(wb->waiter->scheduler_lock));
+      wb->waiter->scheduling_group->Resume(wb->waiter);
       continue;
     }
 
@@ -198,6 +197,9 @@ void WaitableTimer::OnTimerExpired(RefPtr<WaitableRefCounted> ref) {
 // Implementation of `Mutex` goes below.
 
 void Mutex::unlock() {
+  bool is_post = is_post_;
+  is_post_ = false;
+
   auto was = count_.fetch_sub(1, std::memory_order_release);
   if (was == 1) {
     // Lucky day, no one is waiting on the mutex.
@@ -217,7 +219,17 @@ void Mutex::unlock() {
 
   // This is fiber waiter.
   if (wb->waiter) {
-    wb->waiter->scheduling_group->Resume(wb->waiter, std::unique_lock(wb->waiter->scheduler_lock));
+    if (!is_post) {
+      if (wb->waiter->scheduling_group == SchedulingGroup::Current()) {
+        auto current = GetCurrentFiberEntity();
+        if (current != GetMasterFiberEntity()) {
+          wb->waiter->scheduling_group->Resume(GetCurrentFiberEntity(), wb->waiter);
+          return;
+        }
+      }
+    }
+
+    wb->waiter->scheduling_group->Resume(wb->waiter);
     return;
   }
 
@@ -314,6 +326,9 @@ bool ConditionVariable::WaitUntilFromFiber(std::unique_lock<Mutex>& lock,
     awaker->SetTimer(expires_at);
   }
 
+  // Not reschedule fiber when executing the following `lock.unlock()` code
+  lock.mutex()->SetPost();
+
   // Release user's lock.
   lock.unlock();
 
@@ -355,7 +370,7 @@ void ConditionVariable::notify_one() noexcept {
   }
   // This is fiber waiter.
   if (wb->waiter) {
-    wb->waiter->scheduling_group->Resume(wb->waiter, std::unique_lock(wb->waiter->scheduler_lock));
+    wb->waiter->scheduling_group->Resume(wb->waiter);
     return;
   }
 
@@ -372,7 +387,7 @@ void ConditionVariable::notify_all() noexcept {
 
     // This is fiber waiter.
     if (wb->waiter) {
-      wb->waiter->scheduling_group->Resume(wb->waiter, std::unique_lock(wb->waiter->scheduler_lock));
+      wb->waiter->scheduling_group->Resume(wb->waiter);
       continue;
     }
 
@@ -460,7 +475,7 @@ void Event::Set() {
 
     // This is fiber waiter.
     if (wb->waiter) {
-      wb->waiter->scheduling_group->Resume(wb->waiter, std::unique_lock(wb->waiter->scheduler_lock));
+      wb->waiter->scheduling_group->Resume(wb->waiter);
       continue;
     }
 

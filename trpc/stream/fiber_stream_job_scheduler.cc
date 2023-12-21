@@ -23,40 +23,55 @@ using namespace std::literals;
 namespace trpc::stream {
 
 void FiberStreamJobScheduler::PushRecvMessage(StreamRecvMessage&& msg) {
-  std::scoped_lock lock(stream_mutex_);
+  bool is_running = true;
 
-  // The stream coroutine has stopped and no longer allows messages to be added.
-  if (terminate_) {
-    TRPC_FMT_TRACE("stream terminate, forbidden push send message");
-    return;
+  {
+    std::scoped_lock lock(stream_mutex_);
+
+    // The stream coroutine has stopped and no longer allows messages to be added.
+    if (terminate_) {
+      TRPC_FMT_TRACE("stream terminate, forbidden push send message");
+      return;
+    }
+
+    stream_recv_msgs_.emplace_back(std::move(msg));
+
+    if (!running_) {
+      running_ = true;
+      is_running = false;
+    }
   }
 
-  stream_recv_msgs_.emplace_back(std::move(msg));
-
-  if (!running_) {
-    running_ = true;
+  if (!is_running) {
     bool start_fiber = StartFiberDetached([ref = RefPtr(ref_ptr, this)]() { ref->Run(); });
     TRPC_ASSERT(start_fiber && "FiberStreamJobScheduler PushRecvMessage failed due to fiber create failed");
   }
 }
 
 RetCode FiberStreamJobScheduler::PushSendMessage(StreamSendMessage&& msg, bool push_front) {
-  std::scoped_lock lock(stream_mutex_);
+  bool is_running = true;
+  {
+    std::scoped_lock lock(stream_mutex_);
 
-  // The stream coroutine has stopped and no longer allows messages to be added.
-  if (terminate_) {
-    TRPC_FMT_TRACE("stream terminate, forbidden push send message");
-    return RetCode::kError;
+    // The stream coroutine has stopped and no longer allows messages to be added.
+    if (terminate_) {
+      TRPC_FMT_TRACE("stream terminate, forbidden push send message");
+      return RetCode::kError;
+    }
+
+    if (push_front) {
+      stream_send_msgs_.emplace_front(std::move(msg));
+    } else {
+      stream_send_msgs_.emplace_back(std::move(msg));
+    }
+
+    if (!running_) {
+      running_ = true;
+      is_running = false;
+    }
   }
 
-  if (push_front) {
-    stream_send_msgs_.emplace_front(std::move(msg));
-  } else {
-    stream_send_msgs_.emplace_back(std::move(msg));
-  }
-
-  if (!running_) {
-    running_ = true;
+  if (!is_running) {
     bool start_fiber = StartFiberDetached([ref = RefPtr(ref_ptr, this)]() { ref->Run(); });
     TRPC_ASSERT(start_fiber && "FiberStreamJobScheduler PushSendMessage failed due to fiber create failed");
   }

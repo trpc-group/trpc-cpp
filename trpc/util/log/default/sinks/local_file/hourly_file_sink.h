@@ -56,7 +56,7 @@ class HourlyFileSink : public spdlog::sinks::base_sink<Mutex> {
         max_files_(max_files),
         hour_interval_(hour_interval),
         filenames_q_() {
-    if (hour_interval_ < 0 || hour_interval_ > 23) {
+    if (hour_interval_ > 23) {
       std::cerr << "HourlyFileSink, Invalid hour_interval_: " << hour_interval_ << std::endl;
     }
     auto now = spdlog::log_clock::now();

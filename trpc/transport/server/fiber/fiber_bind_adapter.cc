@@ -162,12 +162,8 @@ bool FiberBindAdapter::Listen() {
       return false;
     }
     if (connection_idle_timeout_ > 0) {
-      bool start_fiber = StartFiberDetached([this] {
-        this->idle_conn_cleaner_ = SetFiberTimer(ReadSteadyClock(), std::chrono::seconds(1),
-                                                 [this, ref = RefPtr(ref_ptr, this)] { RemoveIdleConnection(); });
-      });
-
-      TRPC_ASSERT(start_fiber && "StartFiberDetached to execute RemoveIdleConnection faild,abort!!!");
+        idle_conn_cleaner_ = SetFiberTimer(ReadSteadyClock(), std::chrono::seconds(1),
+                                           [this, ref = RefPtr(ref_ptr, this)] { RemoveIdleConnection(); });
     }
   }
 
