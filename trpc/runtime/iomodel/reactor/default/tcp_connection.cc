@@ -101,6 +101,7 @@ bool TcpConnection::DoConnect() {
                                                      << ", failed. error no: " << errno
                                                      << ", msg: " << strerror(errno));
 
+  GetIoHandler()->Destroy();
   socket_.Close();
   HandleClose(false);
 
@@ -352,6 +353,9 @@ void TcpConnection::HandleClose(bool destroy) {
     GetConnectionHandler()->NotifyMessageFailed(msg, ConnectionErrorCode::kNetworkException);
   }
   io_msgs_.clear();
+
+  // Requirements: destroy IO-handler before close socket.
+  GetIoHandler()->Destroy();
 
   DisableReadWrite();
 

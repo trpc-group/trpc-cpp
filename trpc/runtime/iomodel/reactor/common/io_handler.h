@@ -45,6 +45,9 @@ class IoHandler {
 
   /// @brief write data to the connection
   virtual int Writev(const iovec* iov, int iovcnt) = 0;
+
+  /// @brief Destroy IO handler.
+  virtual void Destroy() {}
 };
 
 }  // namespace trpc

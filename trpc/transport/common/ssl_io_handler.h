@@ -35,6 +35,8 @@ class SslIoHandler : public IoHandler {
 
   int Writev(const struct iovec* iov, int iovcnt) override;
 
+  void Destroy() override;
+
  private:
   Connection* conn_{nullptr};
   SslPtr ssl_{nullptr};
