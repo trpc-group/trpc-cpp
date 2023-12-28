@@ -59,7 +59,12 @@ std::pair<std::chrono::steady_clock::time_point, std::uint64_t> ReadConsistentTi
 ///       use `std::steady_clock` instead. TSC is suitable for situations where
 ///       accuracy can be trade for speed.
 #if defined(__x86_64__) || defined(__MACHINEX86_X64)
-inline std::uint64_t ReadTsc() { return __rdtsc(); }
+inline std::uint64_t ReadTsc() {
+  unsigned int lo = 0;
+  unsigned int hi = 0;
+  asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
+  return ((uint64_t)hi << 32) | lo;
+}
 #elif defined(__aarch64__)
 inline std::uint64_t ReadTsc() {
   // Sub-100MHz resolution (exactly 100MHz in our environment), not as accurate

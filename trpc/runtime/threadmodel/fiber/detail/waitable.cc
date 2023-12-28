@@ -401,12 +401,10 @@ void ConditionVariable::notify_all() noexcept {
 ExitBarrier::ExitBarrier() : count_(1) {}
 
 std::unique_lock<Mutex> ExitBarrier::GrabLock() {
-  TRPC_DCHECK(IsFiberContextPresent());
   return std::unique_lock(lock_);
 }
 
 void ExitBarrier::UnsafeCountDown(std::unique_lock<Mutex> lk) {
-  TRPC_DCHECK(IsFiberContextPresent());
   TRPC_CHECK(lk.owns_lock() && lk.mutex() == &lock_);
 
   // tsan reports a data race if we unlock the lock before notifying the
@@ -421,8 +419,6 @@ void ExitBarrier::UnsafeCountDown(std::unique_lock<Mutex> lk) {
 }
 
 void ExitBarrier::Wait() {
-  TRPC_DCHECK(IsFiberContextPresent());
-
   std::unique_lock lk(lock_);
   return cv_.wait(lk, [this] { return count_ == 0; });
 }

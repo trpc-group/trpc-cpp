@@ -122,6 +122,7 @@ class Fiber {
   void Detach();
 
   /// @brief Wait for the fiber to exit.
+  /// @note  Can be run in both pthread context and fiber context.
   void Join();
 
   /// @brief Test if we can call `join()` on this object.

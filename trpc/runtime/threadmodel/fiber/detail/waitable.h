@@ -248,7 +248,7 @@ class ExitBarrier : public object_pool::EnableLwSharedFromThis<ExitBarrier> {
   // Count down the barrier's internal counter and wake up waiters.
   void UnsafeCountDown(std::unique_lock<Mutex> lk);
 
-  // Won't block.
+  // Won't block, can be run in both pthread context and fiber context.
   void Wait();
 
   void Reset() { count_ = 1; }
