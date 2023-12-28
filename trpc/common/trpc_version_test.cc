@@ -27,7 +27,7 @@ class TestTrpcCppVersion : public ::testing::Test {
 };
 
 TEST_F(TestTrpcCppVersion, CheckTrpcCppVersion) {
-  trpc_cpp_version_ = "1.0.0";
+  trpc_cpp_version_ = "1.1.0";
 
   std::cout << "TRPC_Cpp_Version:" << TRPC_Cpp_Version() << std::endl;
 

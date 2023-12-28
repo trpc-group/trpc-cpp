@@ -14,7 +14,7 @@
 #pragma once
 
 #define TRPC_CPP_MAJOR_VERSION 1
-#define TRPC_CPP_MINOR_VERSION 0
+#define TRPC_CPP_MINOR_VERSION 1
 #define TRPC_CPP_PATCH_VERSION 0
 
 // (e.g. "-alpha", "-alpha.1", "-beta", "-rc", "-rc.1")
