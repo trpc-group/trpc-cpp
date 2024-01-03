@@ -30,8 +30,15 @@ namespace trpc::stream {
 class HttpClientStream : public HttpStreamReaderWriterProvider {
  public:
   /// @brief Stream state.
+  ///        State transition logic: create stream (kInitial)
+  ///                                  -> SendRequestHeader success (kReading) -> receive eof (cancel kReading)
+  ///                                  -> Write success (kWriting) -> WriteDone (cancel kWriting)
+  ///                                  -> Close (kClosed)
+  ///                                  -> Read reach end (kReadEof)
   /// @note If the final state has `kWriting` or `kReading`, it indicates that the read/write stream has not ended,
-  /// which is judged as an exception.
+  ///       which is judged as an exception.
+  ///       If both kReading and kClosed are present simultaneously, it indicates that the connection was disconnected
+  ///       before receiving all the data, which is considered an exception.
   enum State {
     kInitial = 0,       ///< Initial state.
     kWriting = 1 << 0,  ///< Stream is writing by user.
@@ -119,7 +126,11 @@ class HttpClientStream : public HttpStreamReaderWriterProvider {
 
     // The end of the `Cut` operation may be due to a normal return, or it may be due to an interruption from
     // `Close/EOF`.
-    if (state_ & kClosed) {
+    // If the framework network has already received EOF, it should still return normally even if the stream
+    // (connection) has been closed.
+    // So an error should only occur when the stream (connection) is closed and the framework network has not yet
+    // received EOF.
+    if ((state_ & (kClosed | kReading)) == (kClosed | kReading)) {
       return kStreamStatusClientNetworkError;
     }
 
