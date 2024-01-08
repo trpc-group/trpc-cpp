@@ -26,13 +26,8 @@ void FiberTrpcClientStreamConnectionHandler::Init() {
   // obtained from the factory to prevent repeated judgments and obtain non-NULL values later on.
   client_codec_ = ClientCodecFactory::GetInstance()->Get(GetTransInfo()->protocol);
   TRPC_ASSERT(client_codec_ && "trpc client codec not registered");
-}
 
-StreamHandlerPtr FiberTrpcClientStreamConnectionHandler::GetOrCreateStreamHandler() {
-  std::unique_lock _(mutex_);
-  // The `stream_handler` only needs to be created when a client calls the stream interface on this connection for the
-  // first time. Whether the `stream_handler` is assigned can serve as a flag for distinguishing between stream and
-  // unary calls.
+  // Create stream handler
   if (!stream_handler_) {
     StreamOptions options;
     options.server_mode = false;
@@ -46,12 +41,19 @@ StreamHandlerPtr FiberTrpcClientStreamConnectionHandler::GetOrCreateStreamHandle
     stream_handler_ = ClientStreamHandlerFactory::GetInstance()->Create(GetTransInfo()->protocol, std::move(options));
     stream_handler_->Init();
   }
+}
+
+StreamHandlerPtr FiberTrpcClientStreamConnectionHandler::GetOrCreateStreamHandler() {
+  // When using fiber，stream_handler need to be created before.
+  // Because with network connecting failed frequently, Stop/Join of this connection handler may be invoking before
+  // GetOrCreateStreamHandler. This abnormal situation will cause Stop/Join of stream_handler not being invoked.
+  use_stream_ = true;
   return stream_handler_;
 }
 
 bool FiberTrpcClientStreamConnectionHandler::HandleMessage(const ConnectionPtr& conn, std::deque<std::any>& rsp_list) {
   // Unary response.
-  if (!stream_handler_) {
+  if (!use_stream_) {
     return FiberClientConnectionHandler::HandleMessage(conn, rsp_list);
   }
 

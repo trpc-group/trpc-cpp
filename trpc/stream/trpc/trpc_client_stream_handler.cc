@@ -34,6 +34,10 @@ StreamReaderWriterProviderPtr TrpcClientStreamHandler::CreateStream(StreamOption
   stream->SetFilterController(&filter_controller_);
 
   return CriticalSection<RefPtr<TrpcClientStream>>([this, stream_id, stream]() {
+    if (conn_closed_) {
+      TRPC_LOG_ERROR("connection will be closed, reject creation of new stream: " << stream_id);
+      return RefPtr<TrpcClientStream>();
+    }
     auto found = streams_.find(stream_id);
     if (found != streams_.end()) {
       TRPC_LOG_ERROR("stream " << stream_id << " already exists.");

@@ -46,7 +46,9 @@ class FiberTrpcClientStreamConnectionHandler : public FiberClientStreamConnectio
   /// Used to distinguish between streaming and non-streaming packets in mixed packet scenarios.
   ClientCodecPtr client_codec_{nullptr};
   StreamHandlerPtr stream_handler_{nullptr};
-  FiberMutex mutex_;
+  /// Flag used to avoids connection MessageHandle doing stream frame distrubution when stream is not needed.
+  /// Default to false, true if GetOrCreateStreamHandler being invoked.
+  bool use_stream_{false};
 };
 
 /// @brief Implementation of stream connection handler for tRPC client stream which works in [SEPARATE/MERGE] thread

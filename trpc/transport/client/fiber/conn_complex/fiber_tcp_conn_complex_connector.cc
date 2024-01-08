@@ -134,10 +134,11 @@ void FiberTcpConnComplexConnector::ConnectionCleanFunction(Connection* conn) {
   SetHealthy(false);
 
   RefPtr connector(ref_ptr, this);
-  bool flag = options_.connector_group->DelConnector(this);
-  if (!flag) {
-    return;
-  }
+
+  // When connector becomes unhealthy, it may be deleted by another thread at GetOrCreate in ConnectorGroup.
+  // DelConnector invoking here may fail, but still need ClearResource.
+  // The atomic variable cleanup_ will keep ClearResource being invoked only once.
+  options_.connector_group->DelConnector(this);
 
   if (cleanup_.exchange(true)) {
     return;

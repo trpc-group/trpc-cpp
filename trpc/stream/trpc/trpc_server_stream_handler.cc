@@ -40,6 +40,10 @@ StreamReaderWriterProviderPtr TrpcServerStreamHandler::CreateStream(StreamOption
   context->SetStreamReaderWriterProvider(stream);
 
   return CriticalSection<RefPtr<TrpcServerStream>>([this, stream_id, stream]() {
+    if (conn_closed_) {
+      TRPC_LOG_ERROR("connection will be closed, reject creation of new stream: " << stream_id);
+      return RefPtr<TrpcServerStream>();
+    }
     auto found = streams_.find(stream_id);
     if (found != streams_.end()) {
       TRPC_LOG_ERROR("stream " << stream_id << " already exists.");
