@@ -145,7 +145,10 @@ class FiberBlockingNoncontiguousBuffer {
   }
 
   void Stop() {
-    stop_token_ = true;
+    {
+      std::lock_guard lk(mutex_);
+      stop_token_ = true;
+    }
     not_full_.notify_one();
     not_empty_.notify_one();
   }
