@@ -3,10 +3,16 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "runtime_state",
+    hdrs = ["runtime_state.h"],
+)
+
+cc_library(
     name = "fiber_runtime",
     srcs = ["fiber_runtime.cc"],
     hdrs = ["fiber_runtime.h"],
     deps = [
+        ":runtime_state",
         "//trpc/common/config:trpc_config",
         "//trpc/runtime/threadmodel:thread_model",
         "//trpc/runtime/threadmodel:thread_model_manager",
@@ -22,6 +28,7 @@ cc_library(
     srcs = ["merge_runtime.cc"],
     hdrs = ["merge_runtime.h"],
     deps = [
+        ":runtime_state",
         "//trpc/common/config:trpc_config",
         "//trpc/runtime/iomodel/reactor",
         "//trpc/runtime/threadmodel:thread_model",
@@ -40,6 +47,7 @@ cc_library(
     srcs = ["separate_runtime.cc"],
     hdrs = ["separate_runtime.h"],
     deps = [
+        ":runtime_state",
         "//trpc/common/config:trpc_config",
         "//trpc/runtime/iomodel/reactor",
         "//trpc/runtime/threadmodel:thread_model",

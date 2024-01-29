@@ -15,6 +15,7 @@
 
 #include "trpc/common/config/global_conf.h"
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/runtime/runtime_state.h"
 #include "trpc/runtime/threadmodel/separate/non_steal/non_steal_scheduling.h"
 #include "trpc/runtime/threadmodel/separate/separate_thread_model.h"
 #include "trpc/runtime/threadmodel/separate/steal/steal_scheduling.h"
@@ -25,6 +26,12 @@
 #include "trpc/util/thread/thread_helper.h"
 
 namespace trpc::separate {
+
+// admin runtime state manager
+RuntimeState admin_runtime_state{RuntimeState::kUnknown};
+
+// business_threadmodels state manager
+RuntimeState business_runtime_state{RuntimeState::kUnknown};
 
 // admin_threadmodel and business_threadmodels has not owned threadmodel's ownership
 // all managered by ThreadModelManager
@@ -173,28 +180,48 @@ void InitAdminThreadModel() {
 }  // namespace
 
 void StartAdminRuntime() {
-  InitAdminThreadModel();
+  // It can be restarted if it has not been started before or has already been destroyed
+  if (admin_runtime_state == RuntimeState::kUnknown || admin_runtime_state == RuntimeState::kDestroyed) {
+    InitAdminThreadModel();
 
-  admin_threadmodel->Start();
+    admin_threadmodel->Start();
+
+    admin_runtime_state = RuntimeState::kStarted;
+  }
 }
 
 void TerminateAdminRuntime() {
+  if (admin_runtime_state != RuntimeState::kStarted) {
+    return;
+  }
+
   admin_threadmodel->Terminate();
 
   ThreadModelManager::GetInstance()->Del(admin_threadmodel->GroupName());
 
   admin_threadmodel = nullptr;
+
+  admin_runtime_state = RuntimeState::kDestroyed;
 }
 
 void StartRuntime() {
-  InitBusinessThreadModel();
+  // It can be restarted if it has not been started before or has already been destroyed
+  if (business_runtime_state == RuntimeState::kUnknown || business_runtime_state == RuntimeState::kDestroyed) {
+    InitBusinessThreadModel();
 
-  for (auto&& it : business_threadmodels) {
-    it->Start();
+    for (auto&& it : business_threadmodels) {
+      it->Start();
+    }
+
+    business_runtime_state = RuntimeState::kStarted;
   }
 }
 
 void TerminateRuntime() {
+  if (business_runtime_state != RuntimeState::kStarted) {
+    return;
+  }
+
   for (auto&& it : business_threadmodels) {
     it->Terminate();
 
@@ -202,6 +229,8 @@ void TerminateRuntime() {
   }
 
   business_threadmodels.clear();
+
+  business_runtime_state = RuntimeState::kDestroyed;
 }
 
 ThreadModel* RandomGetSeparateThreadModel() {
