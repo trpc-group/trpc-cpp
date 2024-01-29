@@ -24,6 +24,7 @@
 #include "trpc/runtime/common/periphery_task_scheduler.h"
 #include "trpc/runtime/fiber_runtime.h"
 #include "trpc/runtime/runtime.h"
+#include "trpc/runtime/runtime_state.h"
 #include "trpc/runtime/separate_runtime.h"
 #include "trpc/serialization/trpc_serialization.h"
 #include "trpc/telemetry/telemetry_factory.h"
@@ -39,6 +40,9 @@
 #include "trpc/util/thread/latch.h"
 
 namespace trpc {
+
+// FrameworkRuntime state manager
+RuntimeState framework_runtime_state{RuntimeState::kUnknown};
 
 int RunInTrpcRuntime(std::function<int()>&& func) {
   const GlobalConfig& global_config = TrpcConfig::GetInstance()->GetGlobalConfig();
@@ -121,37 +125,49 @@ int RunInThreadRuntime(std::function<int()>&& func) {
 }
 
 int InitFrameworkRuntime() {
-  const GlobalConfig& global_config = TrpcConfig::GetInstance()->GetGlobalConfig();
-  const ThreadModelConfig& threadmodel_config = global_config.threadmodel_config;
-  if (threadmodel_config.use_fiber_flag) {
-    runtime::SetRuntimeType(runtime::kFiberRuntime);
-  } else {
-    TRPC_FMT_ERROR("not running in fiber runtime, please check the framework config.");
-    return -1;
+  // It can be restarted if it has not been started before or has already been destroyed
+  if (framework_runtime_state == RuntimeState::kUnknown || framework_runtime_state == RuntimeState::kDestroyed) {
+    const GlobalConfig& global_config = TrpcConfig::GetInstance()->GetGlobalConfig();
+    const ThreadModelConfig& threadmodel_config = global_config.threadmodel_config;
+    if (threadmodel_config.use_fiber_flag) {
+      runtime::SetRuntimeType(runtime::kFiberRuntime);
+    } else {
+      TRPC_FMT_ERROR("not running in fiber runtime, please check the framework config.");
+      return -1;
+    }
+
+    util::IgnorePipe();
+
+    // set object pool option
+    const BufferPoolConfig& buffer_pool_config = global_config.buffer_pool_config;
+    memory_pool::SetMemBlockSize(buffer_pool_config.block_size);
+    memory_pool::SetMemPoolThreshold(buffer_pool_config.mem_pool_threshold);
+
+    internal::TimeKeeper::Instance()->Start();
+
+    if (IsInFiberRuntime()) {
+      fiber::StartRuntime();
+      // need to StartAdminRuntime
+      separate::StartAdminRuntime();
+      runtime::InitFiberReactorConfig();
+    }
+
+    framework_runtime_state = RuntimeState::kStarted;
+    return 0;
   }
 
-  util::IgnorePipe();
-
-  // set object pool option
-  const BufferPoolConfig& buffer_pool_config = global_config.buffer_pool_config;
-  memory_pool::SetMemBlockSize(buffer_pool_config.block_size);
-  memory_pool::SetMemPoolThreshold(buffer_pool_config.mem_pool_threshold);
-
-  internal::TimeKeeper::Instance()->Start();
-
-  if (IsInFiberRuntime()) {
-    fiber::StartRuntime();
-    runtime::InitFiberReactorConfig();
-  }
-
-  return 0;
+  return -1;
 }
 
 bool IsInFiberRuntime() {
   return runtime::IsInFiberRuntime();
 }
 
-void DestroyFrameworkRuntime() {
+int DestroyFrameworkRuntime() {
+  if (framework_runtime_state != RuntimeState::kStarted) {
+    return -1;
+  }
+
   if (IsInFiberRuntime()) {
     separate::TerminateAdminRuntime();
 
@@ -162,6 +178,10 @@ void DestroyFrameworkRuntime() {
   internal::TimeKeeper::Instance()->Join();
 
   TrpcPlugin::GetInstance()->DestroyResource();
+
+  framework_runtime_state = RuntimeState::kDestroyed;
+
+  return 0;
 }
 
 }  // namespace trpc

@@ -15,6 +15,7 @@
 
 #include "trpc/common/config/global_conf.h"
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/runtime/runtime_state.h"
 #include "trpc/runtime/threadmodel/merge/merge_thread_model.h"
 #include "trpc/runtime/threadmodel/thread_model_manager.h"
 #include "trpc/util/check.h"
@@ -23,6 +24,9 @@
 #include "trpc/util/thread/thread_helper.h"
 
 namespace trpc::merge {
+
+// business_threadmodels state manager
+RuntimeState business_runtime_state{RuntimeState::kUnknown};
 
 // business_threadmodels has not owned threadmodel's ownership, all managered by ThreadModelManager
 static std::vector<ThreadModel*> business_threadmodels;
@@ -78,14 +82,23 @@ void Init() {
 }  // namespace
 
 void StartRuntime() {
-  Init();
+  // It can be restarted if it has not been started before or has already been destroyed
+  if (business_runtime_state == RuntimeState::kUnknown || business_runtime_state == RuntimeState::kDestroyed) {
+    Init();
 
-  for (auto&& it : business_threadmodels) {
-    it->Start();
+    for (auto&& it : business_threadmodels) {
+      it->Start();
+    }
+
+    business_runtime_state = RuntimeState::kStarted;
   }
 }
 
 void TerminateRuntime() {
+  if (business_runtime_state != RuntimeState::kStarted) {
+    return;
+  }
+
   for (auto&& it : business_threadmodels) {
     it->Terminate();
 
@@ -93,6 +106,8 @@ void TerminateRuntime() {
   }
 
   business_threadmodels.clear();
+
+  business_runtime_state = RuntimeState::kDestroyed;
 }
 
 ThreadModel* RandomGetMergeThreadModel() {

@@ -75,6 +75,7 @@ cc_library(
         "//trpc/naming:trpc_naming_registry",
         "//trpc/runtime",
         "//trpc/runtime:fiber_runtime",
+        "//trpc/runtime:runtime_state",
         "//trpc/runtime:separate_runtime",
         "//trpc/runtime/common:periphery_task_scheduler",
         "//trpc/serialization:trpc_serialization",
@@ -178,6 +179,7 @@ cc_test(
     deps = [
         ":runtime_manager",
         "//trpc/common/config:trpc_config",
+        "//trpc/util:latch",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
