@@ -473,7 +473,7 @@ class ApiUserHandler : public ::trpc::http::HttpHandler {
 
 #### Register `HttpController`
 
-Using the `TPRC_HTTP_HANDLER` macro, users can easily register `Controller`-like interfaces to the route:
+Using the `TRPC_HTTP_HANDLER` macro, users can easily register `Controller`-like interfaces to the route:
 
 Note: `Controller` does not inherit the `HttpHandler` class, but only has the same interface signature.
 

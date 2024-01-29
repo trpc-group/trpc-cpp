@@ -114,7 +114,7 @@ $ curl http://127.0.0.1:8889/cmds/loglevel
 # the custom value is 10 before reloading config
 $ curl http://127.0.0.1:8889/cmds/myhandler1
 {"custom_value":10}
-# change the "custom:value" of server/trcp_cpp_fiber.yaml to 20, and then reload the config
+# change the "custom:value" of server/trpc_cpp_fiber.yaml to 20, and then reload the config
 $ curl http://127.0.0.1:8889/cmds/reload-config -X POST
 {"errorcode":0,"message":"reload config ok"}
 # the custom value is 20 after reloading config

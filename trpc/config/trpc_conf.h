@@ -44,7 +44,7 @@ void Destroy();
 template <typename... Args>
 DefaultConfigPtr Load(const std::string& path, Args&&... opts) {
   static_assert((std::is_same_v<Args, LoadOptions> && ...), "Args must be LoadOption objects");
-  // Hand it to the tPRC-CPP default loader
+  // Hand it to the tRPC-CPP default loader
   std::vector<LoadOptions> options = {std::forward<LoadOptions>(opts)...};
   return detail::Load(path, std::move(options));
 }

@@ -447,7 +447,7 @@ class ApiUserHandler : public ::trpc::http::HttpHandler {
 
 #### 注册 `HttpController`
 
-使用 `TPRC_HTTP_HANDLER` 宏，用户也可以方便地注册类似于 `Controller` 类接口到路由中:
+使用 `TRPC_HTTP_HANDLER` 宏，用户也可以方便地注册类似于 `Controller` 类接口到路由中:
 
 提示： Controller 未继承 `HttpHandler` 类，只是接口签名相同。
 
