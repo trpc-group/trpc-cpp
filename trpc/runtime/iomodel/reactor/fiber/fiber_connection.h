@@ -118,6 +118,12 @@ class alignas(hardware_destructive_interference_size) FiberConnection : public C
 
   std::atomic<std::size_t> restart_read_count_{0}, restart_write_count_{0};
 
+  // Connection closing cleanup and connection sending/receiving mutex lock, to protect connection cleanup and network
+  // data transmission/reception thread safety.
+  std::mutex mutex_;
+  // Connection unavailability status flag.
+  bool conn_unavailable_{false};
+
  private:
   void SuppressReadAndClearReadEvent();
   void SuppressAndClearWriteEvent();

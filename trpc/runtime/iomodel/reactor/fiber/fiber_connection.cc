@@ -352,6 +352,12 @@ void FiberConnection::QueueCleanupCallbackCheck() {
       read_mostly_.seldomly_used->error_events.load(std::memory_order_relaxed) == 0) {
     // Consider queue a call to `OnCleanup()` then.
     if (!read_mostly_.seldomly_used->cleanup_queued.exchange(true, std::memory_order_release)) {
+      {
+        std::scoped_lock<std::mutex> _(mutex_);
+        // Set the connection unavailability status flag in advance to make read/write tasks retreat in advance,
+        // reducing the conflict of Cleanup callback locks.
+        conn_unavailable_ = true;
+      }
       // No need to take a reference to us, `OnCleanup()` has not been called.
       GetReactor()->SubmitTask([this] {
         // The load below acts as a fence (paired with `exchange` above). (But
