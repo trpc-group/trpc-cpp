@@ -41,6 +41,6 @@ int InitFrameworkRuntime();
 /// @brief Destroy the runtime environment of the framework.
 /// @note for compatible, please not use it.
 /// @private For internal use purpose only.
-void DestroyFrameworkRuntime();
+int DestroyFrameworkRuntime();
 
 }  // namespace trpc
