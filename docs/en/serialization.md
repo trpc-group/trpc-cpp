@@ -8,7 +8,7 @@ the following:
 * How to use JSON as a message type.
 * How to use binary data as a message type.
 
-The tPRC framework uses `Protobuf Message` as the request and response message types by default. It also
+The tRPC framework uses `Protobuf Message` as the request and response message types by default. It also
 supports using `trpc` protocol to transmit JSON and binary data messages.
 In other worlds, JSON and binary data can be used as request and response message types.
 

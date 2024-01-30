@@ -9,7 +9,7 @@
 
 ## Redis 协议
 
-Redis 客户端使用 RESP（Redis的序列化协议）协议与 Redis 服务端进行通信。虽然该协议是专门为 Redis 设计的，但是该协议也可以用于其他客户端-服务器（Client-Server）软件项目。Redis 协议是一种文本协议，客户端和服务器发送的命令或数据以 `\r\n`（CRLF） 结尾。有些开发者会误以为 Redis 协议是以空格分隔的，在使用 tPRC-Cpp 客户端 的时候喜欢自己拼 Redis访 问命令。在不太了解 Redis 协议本身的时候推荐使用 `trpc::redis::cmdgen{}.xxxx` 系列接口生成对应的[command](https://redis.io/commands)，直接把生成的command 传入 proxy 对应接口访问 Redis 服务端。
+Redis 客户端使用 RESP（Redis的序列化协议）协议与 Redis 服务端进行通信。虽然该协议是专门为 Redis 设计的，但是该协议也可以用于其他客户端-服务器（Client-Server）软件项目。Redis 协议是一种文本协议，客户端和服务器发送的命令或数据以 `\r\n`（CRLF） 结尾。有些开发者会误以为 Redis 协议是以空格分隔的，在使用 tRPC-Cpp 客户端 的时候喜欢自己拼 Redis访 问命令。在不太了解 Redis 协议本身的时候推荐使用 `trpc::redis::cmdgen{}.xxxx` 系列接口生成对应的[command](https://redis.io/commands)，直接把生成的command 传入 proxy 对应接口访问 Redis 服务端。
 
 ## 接口形式
 
