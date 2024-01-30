@@ -31,10 +31,6 @@ FiberTcpConnection::FiberTcpConnection(Reactor* reactor, const Socket& socket)
 }
 
 FiberTcpConnection::~FiberTcpConnection() {
-  // Requirements: destroy IO-handler before close socket.
-  GetIoHandler()->Destroy();
-  socket_.Close();
-
   TRPC_LOG_DEBUG("~FiberTcpConnection fd:" << socket_.GetFd() << ", conn_id:" << this->GetConnId());
   TRPC_ASSERT(!socket_.IsValid());
 }
@@ -116,7 +112,15 @@ int FiberTcpConnection::Send(IoMessage&& msg) {
     }
 
     constexpr auto kMaximumBytesPerCall = 1048576;
+    // External calls to the Send method may conflict with Socket closing concurrently, so a lock is added here for
+    // protection.
+    std::unique_lock<std::mutex> lock(mutex_);
+    // If the connection is unavailable, return an error directly.
+    if (conn_unavailable_) {
+      return -1;
+    }
     auto flush_status = FlushWritingBuffer(kMaximumBytesPerCall);
+    lock.unlock();
     if (TRPC_LIKELY(flush_status == FlushStatus::kFlushed)) {
       return 0;
     } else if (flush_status == FlushStatus::kSystemBufferSaturated || flush_status == FlushStatus::kQuotaExceeded) {
@@ -370,7 +374,13 @@ void FiberTcpConnection::OnCleanup(CleanupReason reason) {
 
   writing_buffers_.Stop();
 
-  // For multi-threads-safety, move "socket_.Close()" to ~FiberTcpConnection();
+  {
+    std::scoped_lock<std::mutex> _(mutex_);
+    conn_unavailable_ = true;
+    // Requirements: destroy IO-handler before close socket.
+    GetIoHandler()->Destroy();
+    socket_.Close();
+  }
 }
 
 IoHandler::HandshakeStatus FiberTcpConnection::DoHandshake(bool from_on_readable) {
