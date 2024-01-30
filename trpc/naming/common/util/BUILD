@@ -10,5 +10,6 @@ cc_library(
     hdrs = ["utils_help.h"],
     deps = [
         "//trpc/naming/common:common_defs",
+        "//trpc/util/algorithm:random",
     ],
 )
