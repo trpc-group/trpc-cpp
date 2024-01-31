@@ -72,7 +72,7 @@ class StreamReaderImpl : public RefCounted<StreamReaderImpl<R>> {
  private:
   inline bool Deserialize(NoncontiguousBuffer* buffer, void* msg) {
     serialization::DataType type;
-    if constexpr (std::is_convertible_v<R*, google::protobuf::Message*>) {
+    if constexpr (std::is_convertible_v<R*, google::protobuf::MessageLite*>) {
       type = serialization::kPbMessage;
     } else if constexpr (std::is_convertible_v<R*, rapidjson::Document*>) {
       type = serialization::kRapidJson;
@@ -132,7 +132,7 @@ class StreamWriterImpl : public RefCounted<StreamWriterImpl<W>> {
  private:
   inline bool Serialize(void* msg, NoncontiguousBuffer* buffer) {
     serialization::DataType type;
-    if constexpr (std::is_convertible_v<W*, google::protobuf::Message*>) {
+    if constexpr (std::is_convertible_v<W*, google::protobuf::MessageLite*>) {
       type = serialization::kPbMessage;
     } else if constexpr (std::is_convertible_v<W*, rapidjson::Document*>) {
       type = serialization::kRapidJson;
