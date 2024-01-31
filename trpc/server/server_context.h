@@ -513,8 +513,8 @@ class ServerContext : public RefCounted<ServerContext> {
   /// @note  before calling this method, you should call `SetResponse(false)` in the rpc interface implemented
   template <typename T>
   void SendUnaryResponse(const Status& status, T& biz_rsp) {
-    if constexpr (std::is_convertible_v<T*, google::protobuf::Message*>) {
-      SendUnaryResponse(status, static_cast<google::protobuf::Message*>(&biz_rsp));
+    if constexpr (std::is_convertible_v<T*, google::protobuf::MessageLite*>) {
+      SendUnaryResponse(status, static_cast<google::protobuf::MessageLite*>(&biz_rsp));
     } else if constexpr (std::is_convertible_v<T*, rapidjson::Document*>) {
       SendUnaryResponse(status, static_cast<rapidjson::Document*>(&biz_rsp));
     } else if constexpr (std::is_convertible_v<T*, flatbuffers::trpc::MessageFbs*>) {
@@ -600,7 +600,7 @@ class ServerContext : public RefCounted<ServerContext> {
 
  private:
   // Implementation of asynchronous packet return on the server side
-  void SendUnaryResponse(const Status& status, google::protobuf::Message* pb);
+  void SendUnaryResponse(const Status& status, google::protobuf::MessageLite* pb);
 
   // Implementation of asynchronous packet return on the server side
   void SendUnaryResponse(const Status& status, flatbuffers::trpc::MessageFbs* fbs);

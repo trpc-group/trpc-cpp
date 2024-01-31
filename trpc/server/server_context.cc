@@ -74,7 +74,7 @@ void ServerContext::SetDyeingKey(const std::string& key, const std::string& valu
   invoke_info_.message_type |= TrpcMessageType::TRPC_DYEING_MESSAGE;
 }
 
-void ServerContext::SendUnaryResponse(const Status& status, google::protobuf::Message* pb) {
+void ServerContext::SendUnaryResponse(const Status& status, google::protobuf::MessageLite* pb) {
   void* rsp_data = static_cast<void*>(pb);
   SendUnaryResponse(status, rsp_data, serialization::kPbMessage);
 }

@@ -143,9 +143,9 @@ class UnaryRpcMethodHandler : public RpcMethodHandlerInterface {
 
 #ifdef TRPC_PROTO_USE_ARENA
   static constexpr bool IsEnablePbArena() {
-    return std::is_convertible_v<RequestType*, google::protobuf::Message*> &&
+    return std::is_convertible_v<RequestType*, google::protobuf::MessageLite*> &&
            google::protobuf::Arena::is_arena_constructable<RequestType>::value &&
-           std::is_convertible_v<ResponseType*, google::protobuf::Message*> &&
+           std::is_convertible_v<ResponseType*, google::protobuf::MessageLite*> &&
            google::protobuf::Arena::is_arena_constructable<ResponseType>::value;
   }
 #endif
