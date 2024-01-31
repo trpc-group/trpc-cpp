@@ -25,9 +25,7 @@ namespace trpc {
 /// @brief DNS discovery filter
 class DomainSelectorFilter : public MessageClientFilter {
  public:
-  DomainSelectorFilter() { selector_flow_ = std::make_unique<SelectorWorkFlow>("domain", false, false); }
-
-  ~DomainSelectorFilter() override {}
+  DomainSelectorFilter();
 
   /// @brief initialization
   int Init() override {

@@ -20,7 +20,10 @@
 #include <vector>
 
 #include "trpc/common/plugin.h"
+#include "trpc/naming/common/util/circuit_break/circuit_break_whitelist.h"
+#include "trpc/naming/common/util/circuit_break/circuit_breaker.h"
 #include "trpc/naming/common/util/utils_help.h"
+#include "trpc/naming/direct/direct_selector_conf.h"
 #include "trpc/naming/load_balance.h"
 #include "trpc/naming/selector.h"
 
@@ -30,6 +33,10 @@ namespace trpc {
 class SelectorDirect : public Selector {
  public:
   explicit SelectorDirect(const LoadBalancePtr& load_balance);
+
+  /// @brief Initialization
+  /// @return Returns 0 on success, -1 on failure
+  int Init() noexcept override;
 
   /// @brief Return the name of the plugin.
   /// @return The name of the plugin.
@@ -71,11 +78,20 @@ class SelectorDirect : public Selector {
   /// @return 0 on success, -1 on failure.
   int SetEndpoints(const RouterInfo* info) override;
 
+  /// @brief Sets the whitelist of framework error codes for circuit breaking reporting
+  bool SetCircuitBreakWhiteList(const std::vector<int>& framework_retcodes) override;
+
  private:
-  /// @brief Gets the load balancer plugin with the specified name.
-  /// @param name The name of the load balancer plugin.
-  /// @return A pointer to the load balancer plugin.
+  // Gets the load balancer plugin with the specified name.
   LoadBalance* GetLoadBalance(const std::string& name);
+
+  naming::CircuitBreakerPtr CreateCircuitBreaker(const std::string& service_name);
+
+  bool DoUpdate(const std::string& service_name, const std::string& load_balance_name);
+
+  bool CheckAndUpdate(const SelectorInfo* info);
+
+  bool IsSuccess(int framework_result);
 
  private:
   // The name of the default load balancer plugin.
@@ -84,14 +100,22 @@ class SelectorDirect : public Selector {
   struct EndpointsInfo {
     // The endpoints for the target service.
     std::vector<TrpcEndpointInfo> endpoints;
+    // The available endpoints for the target service.
+    std::vector<TrpcEndpointInfo> available_endpoints;
     // The endpoint ID generator.
     EndpointIdGenerator id_generator;
+    // circuit breaker
+    naming::CircuitBreakerPtr circuit_breaker{nullptr};
   };
 
   std::unordered_map<std::string, EndpointsInfo> targets_map_;
   // The default load balancer plugin.
   LoadBalancePtr default_load_balance_;
   mutable std::shared_mutex mutex_;
+
+  naming::DirectSelectorConfig config_;
+
+  naming::CircuitBreakWhiteList circuitbreak_whitelist_;
 };
 
 using SelectorDirectPtr = RefPtr<SelectorDirect>;

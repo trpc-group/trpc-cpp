@@ -7,9 +7,6 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "common_defs",
     hdrs = ["common_defs.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps = [
         ":common_inc_deprecated",
         "//trpc/client:client_context",
@@ -34,8 +31,5 @@ cc_library(
 cc_library(
     name = "constants",
     hdrs = ["constants.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps = [],
 )

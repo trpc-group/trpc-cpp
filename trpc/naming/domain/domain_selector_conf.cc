@@ -11,7 +11,7 @@
 //
 //
 
-#include "trpc/common/config/domain_naming_conf.h"
+#include "trpc/naming/domain/domain_selector_conf.h"
 
 #include "trpc/util/log/logging.h"
 
@@ -21,6 +21,8 @@ void DomainSelectorConfig::Display() const {
   TRPC_FMT_DEBUG("-----DomainSelectorConfig begin-------");
 
   TRPC_FMT_DEBUG("exclude_ipv6:{}", exclude_ipv6);
+
+  circuit_break_config.Display();
 
   TRPC_FMT_DEBUG("--------------------------------------");
 }

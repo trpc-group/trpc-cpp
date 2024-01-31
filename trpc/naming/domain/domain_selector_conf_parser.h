@@ -13,7 +13,7 @@
 
 #include "yaml-cpp/yaml.h"
 
-#include "trpc/common/config/domain_naming_conf.h"
+#include "trpc/naming/domain/domain_selector_conf.h"
 
 namespace YAML {
 
@@ -21,7 +21,11 @@ template <>
 struct convert<trpc::naming::DomainSelectorConfig> {
   static YAML::Node encode(const trpc::naming::DomainSelectorConfig& config) {
     YAML::Node node;
+
     node["exclude_ipv6"] = config.exclude_ipv6;
+
+    node["circuitBreaker"] = config.circuit_break_config;
+
     return node;
   }
 
@@ -29,6 +33,11 @@ struct convert<trpc::naming::DomainSelectorConfig> {
     if (node["exclude_ipv6"]) {
       config.exclude_ipv6 = node["exclude_ipv6"].as<bool>();
     }
+
+    if (node["circuitBreaker"]) {
+      config.circuit_break_config = node["circuitBreaker"].as<trpc::naming::CircuitBreakConfig>();
+    }
+
     return true;
   }
 };
