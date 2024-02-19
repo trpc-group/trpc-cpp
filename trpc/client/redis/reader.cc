@@ -239,8 +239,9 @@ void Reader::MoveToNextTask() {
     } else {
       // Reset type
       assert(cur->idx_ < prv->elements_);
-      prv->obj_->u_.array_.push_back(Reply());
-      cur->obj_ = &prv->obj_->u_.array_.back();
+      std::vector<Reply>& array = std::get<std::vector<Reply>>(prv->obj_->u_);
+      array.push_back(Reply());
+      cur->obj_ = &(array.back());
       cur->elements_ = -1;
       cur->idx_++;
       return;
@@ -342,9 +343,10 @@ int Reader::ProcessMultiBulkItem(NoncontiguousBuffer& in, NoncontiguousBuffer::c
       // It need update rstack_ when count of elements > 1
       if (elements > 0) {
         cur->elements_ = elements;
-        cur->obj_->u_.array_.emplace_back();
+        std::vector<Reply>& array = std::get<std::vector<Reply>>(cur->obj_->u_);
+        array.emplace_back();
         ridx_++;
-        rstack_[ridx_].obj_ = &cur->obj_->u_.array_.back();
+        rstack_[ridx_].obj_ = &(array.back());
         rstack_[ridx_].elements_ = -1;
         rstack_[ridx_].idx_ = 0;
         rstack_[ridx_].parent_ = cur;
@@ -448,13 +450,12 @@ bool Reader::GetReply(NoncontiguousBuffer& in, std::deque<std::any>& out, const 
     if (pipeline_count > 1) {
       ReadTask* cur = &(rstack_[ridx_]);
       cur->obj_->type_ = Reply::Type::ARRAY;
-
       cur->obj_->Set(ArrayReplyMarker{});
-
       cur->elements_ = pipeline_count;
-      cur->obj_->u_.array_.emplace_back();
+      std::vector<Reply>& array = std::get<std::vector<Reply>>(cur->obj_->u_);
+      array.emplace_back();
       ridx_++;
-      rstack_[ridx_].obj_ = &cur->obj_->u_.array_.back();
+      rstack_[ridx_].obj_ = &(array.back());
       rstack_[ridx_].elements_ = -1;
       rstack_[ridx_].idx_ = 0;
       rstack_[ridx_].parent_ = cur;
