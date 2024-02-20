@@ -247,6 +247,36 @@ TEST(Reply, EmptyArrayMove) {
   EXPECT_EQ(0, value.size());
 }
 
+TEST(Reply, Construct) {
+  trpc::redis::Reply r1;
+  r1.type_ = trpc::redis::Reply::Type::STRING;
+  r1.Set(trpc::redis::StringReplyMarker{}, "redis", 5);
+
+  // Default copy constructor
+  trpc::redis::Reply copy_construct_reply(r1);
+  EXPECT_EQ("redis", r1.GetString());
+  EXPECT_EQ("redis", copy_construct_reply.GetString());
+
+  // Default move constructor
+  trpc::redis::Reply move_construct_reply(std::move(r1));
+  EXPECT_EQ("", r1.GetString());
+  EXPECT_EQ("redis", move_construct_reply.GetString());
+
+  trpc::redis::Reply r2;
+  r2.type_ = trpc::redis::Reply::Type::STRING;
+  r2.Set(trpc::redis::StringReplyMarker{}, "redis", 5);
+
+  // Default copy assignment
+  trpc::redis::Reply copy_assigning_reply = r2;
+  EXPECT_EQ("redis", r2.GetString());
+  EXPECT_EQ("redis", copy_assigning_reply.GetString());
+
+  // Default move assignment
+  trpc::redis::Reply move_assigning_reply(std::move(r2));
+  EXPECT_EQ("", r2.GetString());
+  EXPECT_EQ("redis", move_assigning_reply.GetString());
+}
+
 }  // namespace testing
 
 }  // namespace trpc

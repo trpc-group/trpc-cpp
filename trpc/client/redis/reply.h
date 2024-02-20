@@ -17,6 +17,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace trpc {
@@ -45,22 +46,8 @@ struct Reply {
     INVALID,
   };
 
-  union Any {
-    Any() {}
-    ~Any() {}
-    Any(std::string&& value) : value_(std::move(value)) {}
-    Any(int64_t integer) : integer_(integer) {}
-    Any(std::vector<Reply>&& array) : array_(std::move(array)) {}
-
-    std::string value_;
-
-    int64_t integer_{0};
-
-    std::vector<Reply> array_;
-  };
-
   Type type_ = Type::NONE;
-  Any u_;
+  std::variant<std::string, int64_t, std::vector<Reply>> u_;
   bool has_value_ = false;
   uint32_t serial_no_ = 0;
 
@@ -83,148 +70,70 @@ struct Reply {
 
   explicit Reply(InvalidReplyMarker) : type_(Type::INVALID), serial_no_(0) {}
 
-  [[gnu::always_inline]] Reply(Reply&& x) noexcept
-      : type_(x.type_), has_value_(x.has_value_), serial_no_(x.serial_no_) {
-    switch (type_) {
-      case Type::NONE:
-        break;
-      case Type::STRING:
-      case Type::STATUS:
-      case Type::ERROR:
-        new (&u_.value_) std::basic_string<char>(std::move(x.u_.value_));
-        x.u_.value_.~basic_string();
-        break;
-      case Type::INTEGER:
-        u_.integer_ = x.u_.integer_;
-        break;
-      case Type::ARRAY:
-        new (&u_.array_) std::vector<Reply>(std::move(x.u_.array_));
-        x.u_.array_.~vector();
-        break;
-      case Type::NIL:
-      case Type::INVALID:
-        break;
-      default:
-        break;
-    }
+  Reply(const Reply& x) = default;
+  Reply(Reply&& x) = default;
 
-    x.type_ = Type::INVALID;
-  }
-
-  [[gnu::always_inline]] ~Reply() noexcept {
-    switch (type_) {
-      case Type::STRING:
-      case Type::STATUS:
-      case Type::ERROR:
-        if (has_value_) {
-          u_.value_.~basic_string();
-        }
-        break;
-      case Type::INTEGER:
-        break;
-      case Type::ARRAY:
-        if (has_value_) {
-          u_.array_.~vector();
-        }
-        break;
-      case Type::NONE:
-      case Type::NIL:
-      case Type::INVALID:
-        break;
-      default:
-        break;
-    }
-  }
-
-  Reply(const Reply& x) noexcept : type_(x.type_), has_value_(x.has_value_), serial_no_(x.serial_no_) {
-    switch (type_) {
-      case Type::NONE:
-        break;
-      case Type::STRING:
-      case Type::STATUS:
-      case Type::ERROR:
-        new (&u_.value_) std::basic_string<char>(x.u_.value_);
-        break;
-      case Type::INTEGER:
-        u_.integer_ = x.u_.integer_;
-        break;
-      case Type::ARRAY:
-        new (&u_.array_) std::vector<Reply>(x.u_.array_);
-        break;
-      case Type::NIL:
-      case Type::INVALID:
-        break;
-      default:
-        break;
-    }
-  }
-
-  Reply& operator=(Reply&& x) noexcept {
-    if (this != &x) {
-      this->~Reply();
-      new (this) Reply(std::move(x));
-    }
-    return *this;
-  }
-
-  Reply& operator=(const Reply& x) noexcept {
-    if (this != &x) {
-      this->~Reply();
-      new (this) Reply(x);
-    }
-    return *this;
-  }
+  Reply& operator=(const Reply& x) = default;
+  Reply& operator=(Reply&& x) = default;
 
   inline void Set(StringReplyMarker, const char* s, size_t len, size_t capacity) {
     has_value_ = true;
-    new (&u_.value_) std::string();
-    u_.value_.reserve(capacity);
-    u_.value_.append(s, len);
+    std::string value;
+    value.reserve(capacity);
+    value.append(s, len);
+    u_ = std::move(value);
   }
 
   inline void Set(StringReplyMarker, const char* s, size_t len) {
     has_value_ = true;
-    new (&u_.value_) std::string();
     if (len < 1) {
       return;
     }
-    u_.value_.reserve(len);
-    u_.value_.append(s, len);
+
+    std::string value;
+    value.reserve(len);
+    value.append(s, len);
+    u_ = std::move(value);
   }
 
   inline void Set(StatusReplyMarker, const char* s, size_t len, size_t capacity) {
     has_value_ = true;
-    new (&u_.value_) std::string();
-    u_.value_.reserve(capacity);
-    u_.value_.append(s, len);
+    std::string value;
+    value.reserve(capacity);
+    value.append(s, len);
+    u_ = std::move(value);
   }
 
   inline void Set(StatusReplyMarker, const char* s, size_t len) {
     has_value_ = true;
-    new (&u_.value_) std::string(s, s + len);
+    u_ = std::string(s, s + len);
   }
 
   inline void Set(ErrorReplyMarker, const char* s, size_t len, size_t capacity) {
     has_value_ = true;
-    new (&u_.value_) std::string();
-    u_.value_.reserve(capacity);
-    u_.value_.append(s, len);
+    std::string value;
+    value.reserve(capacity);
+    value.append(s, len);
+    u_ = std::move(value);
   }
 
   inline void Set(ErrorReplyMarker, const char* s, size_t len) {
     has_value_ = true;
-    new (&u_.value_) std::string(s, s + len);
+    u_ = std::string(s, s + len);
   }
 
-  inline void Set(IntegerReplyMarker, int64_t i) { u_.integer_ = i; }
+  inline void Set(IntegerReplyMarker, int64_t i) { u_ = i; }
   inline void Set(ArrayReplyMarker) {
     has_value_ = true;
-    new (&u_.array_) std::vector<Reply>();
+    u_ = std::vector<Reply>();
   }
   inline void Set(NilReplyMarker) { type_ = Type::NIL; }
   inline void Set(InvalidReplyMarker) { type_ = Type::INVALID; }
 
-  inline void AppendString(const char* s, size_t len) { u_.value_.append(s, len); }
+  inline void AppendString(const char* s, size_t len) {
+    std::string& value = std::get<std::string>(u_);
+    value.append(s, len);
+  }
 
   inline bool IsNone() const { return type_ == Type::NONE; }
   inline bool IsNil() const { return type_ == Type::NIL; }
@@ -236,18 +145,17 @@ struct Reply {
   inline bool IsInvalid() const { return type_ == Type::INVALID; }
 
   /// @brief Get reply as string ONLY when type is in[string/status/error]
-  inline const std::basic_string<char>& GetString() const { return u_.value_; }
+  inline const std::basic_string<char>& GetString() const { return std::get<std::string>(u_); }
 
-  inline int64_t GetInteger() const { return u_.integer_; }
-  inline const std::vector<Reply>& GetArray() const { return u_.array_; }
+  inline int64_t GetInteger() const { return std::get<int64_t>(u_); }
+  inline const std::vector<Reply>& GetArray() const { return std::get<std::vector<Reply>>(u_); }
 
   /// @brief Get reply as string ONLY when type is string when need for high performance
   /// It will use std::move the move this reply,so DO NOT invoke repeatly
   inline int GetString(std::string& value) {
     if (has_value_ && type_ == Type::STRING) {
-      if (!u_.value_.empty()) {
-        value = std::move(u_.value_);
-      }
+      value = std::move(std::get<std::string>(u_));
+
       has_value_ = false;
       return 0;
     }
@@ -258,9 +166,8 @@ struct Reply {
   /// It will use std::move the move this reply,so DO NOT invoke repeatly
   inline int GetArray(std::vector<Reply>& value) {
     if (has_value_ && type_ == Type::ARRAY) {
-      if (!u_.array_.empty()) {
-        value = std::move(u_.array_);
-      }
+      value = std::move(std::get<std::vector<Reply>>(u_));
+
       has_value_ = false;
       return 0;
     }
