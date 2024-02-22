@@ -40,3 +40,12 @@ jobs:
            make -j8
     - name: Run Examples
       run: ./run_examples_cmake.sh
+  code-check:
+    runs-on: [self-hosted, trpc-cpp-ci]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Check
+      run: |
+           ./clean.sh
+           bazel build //trpc/... --copt=-Wreturn-type --copt=-Wall --copt=-Wextra
