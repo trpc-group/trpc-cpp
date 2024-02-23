@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//trpc/admin:base_funcs",
         "//trpc/common/config:config_helper",
+        "//trpc/coroutine:fiber",
         "//trpc/metrics:metrics_factory",
         "//trpc/metrics:trpc_metrics_report",
         "//trpc/runtime",
