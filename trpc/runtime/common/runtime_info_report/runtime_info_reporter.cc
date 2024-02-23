@@ -18,6 +18,7 @@
 #include "trpc/admin/base_funcs.h"
 #include "trpc/common/config/config_helper.h"
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/coroutine/fiber.h"
 #include "trpc/metrics/metrics_factory.h"
 #include "trpc/metrics/trpc_metrics_report.h"
 #include "trpc/runtime/common/heartbeat/heartbeat_report.h"
@@ -107,6 +108,7 @@ void UpdateRuntimeInfo(std::map<std::string, double>* attrs) {
   if (runtime::IsInFiberRuntime()) {
     // number of fibers in task queue
     attrs->insert({"trpc.FiberTaskQueueSize", static_cast<int>(trpc::fiber::GetFiberQueueSize())});
+    attrs->insert({"trpc.FiberCount", trpc::GetFiberCount()});
   }
 }
 
