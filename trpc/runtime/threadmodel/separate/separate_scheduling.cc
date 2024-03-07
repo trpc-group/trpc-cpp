@@ -17,15 +17,15 @@
 
 namespace trpc {
 
-static std::unordered_map<std::string_view, SeparateSchedulingCreateFunction> scheduling_create_funtion_map;
+static std::unordered_map<std::string, SeparateSchedulingCreateFunction> scheduling_create_funtion_map;
 
-bool RegisterSeparateSchedulingImpl(const std::string_view& name, SeparateSchedulingCreateFunction&& func) {
+bool RegisterSeparateSchedulingImpl(const std::string& name, SeparateSchedulingCreateFunction&& func) {
   scheduling_create_funtion_map[name] = std::move(func);
 
   return true;
 }
 
-std::unique_ptr<SeparateScheduling> CreateSeparateScheduling(const std::string_view& name) {
+std::unique_ptr<SeparateScheduling> CreateSeparateScheduling(const std::string& name) {
   auto it = scheduling_create_funtion_map.find(name);
   if (it != scheduling_create_funtion_map.end()) {
     return (it->second)();

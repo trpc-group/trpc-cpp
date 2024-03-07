@@ -59,7 +59,7 @@ class TestSeparateThreadModel : public ::testing::Test {
           std::make_unique<separate::NonStealScheduling>(std::move(option));
       return sep_sche;
     };
-    RegisterSeparateSchedulingImpl(kNonStealScheduling, std::move(sche_create_func));
+    RegisterSeparateSchedulingImpl(std::string(kNonStealScheduling), std::move(sche_create_func));
 
     // Register the taskflow scheduler creation function
     sche_create_func = []() {
@@ -70,7 +70,7 @@ class TestSeparateThreadModel : public ::testing::Test {
       std::unique_ptr<SeparateScheduling> sep_sche = std::make_unique<separate::StealScheduling>(std::move(option));
       return sep_sche;
     };
-    RegisterSeparateSchedulingImpl(kStealScheduling, std::move(sche_create_func));
+    RegisterSeparateSchedulingImpl(std::string(kStealScheduling), std::move(sche_create_func));
   }
 
   static SeparateThreadModel* CreateSeparateThreadModel(ScheduleType type) {
