@@ -88,8 +88,8 @@ constexpr std::string_view kNonStealScheduling = "non_steal";
 
 constexpr std::string_view kStealScheduling = "steal";
 
-bool RegisterSeparateSchedulingImpl(const std::string_view& name, SeparateSchedulingCreateFunction&& func);
+bool RegisterSeparateSchedulingImpl(const std::string& name, SeparateSchedulingCreateFunction&& func);
 
-std::unique_ptr<SeparateScheduling> CreateSeparateScheduling(const std::string_view& name);
+std::unique_ptr<SeparateScheduling> CreateSeparateScheduling(const std::string& name);
 
 }  // namespace trpc
