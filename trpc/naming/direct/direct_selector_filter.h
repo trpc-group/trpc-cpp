@@ -26,9 +26,7 @@ namespace trpc {
 class DirectSelectorFilter : public MessageClientFilter {
  public:
   /// @brief Constructor that creates a SelectorWorkFlow object
-  DirectSelectorFilter() { selector_flow_ = std::make_unique<SelectorWorkFlow>("direct", false, false); }
-
-  ~DirectSelectorFilter() override {}
+  DirectSelectorFilter();
 
   /// @brief Initializes the SelectorWorkFlow object
   /// @return 0 if successful, -1 otherwise

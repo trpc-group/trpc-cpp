@@ -289,34 +289,6 @@ cc_test(
 )
 
 cc_library(
-    name = "domain_naming_conf",
-    srcs = ["domain_naming_conf.cc"],
-    hdrs = ["domain_naming_conf.h"],
-    deps = [
-        "//trpc/util/log:logging",
-        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
-    ],
-)
-
-cc_library(
-    name = "domain_naming_conf_parser",
-    hdrs = ["domain_naming_conf_parser.h"],
-    deps = [
-        ":domain_naming_conf",
-    ],
-)
-
-cc_test(
-    name = "domain_naming_conf_test",
-    srcs = ["domain_naming_conf_test.cc"],
-    deps = [
-        ":domain_naming_conf",
-        ":domain_naming_conf_parser",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "local_file_provider_conf",
     srcs = ["local_file_provider_conf.cc"],
     hdrs = [

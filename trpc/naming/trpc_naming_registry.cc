@@ -16,6 +16,8 @@
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/filter/filter.h"
 #include "trpc/filter/filter_manager.h"
+#include "trpc/naming/common/util/circuit_break/circuit_breaker_creator_factory.h"
+#include "trpc/naming/common/util/circuit_break/default_circuit_breaker.h"
 #include "trpc/naming/common/util/loadbalance/polling/polling_load_balance.h"
 #include "trpc/naming/direct/direct_selector_filter.h"
 #include "trpc/naming/direct/selector_direct.h"
@@ -33,6 +35,16 @@ namespace trpc {
 
 // Initialize the Selector inside trpc: currently domain and direct plugins.
 void RegisterInnerSelector() {
+  // register circuitbreak creator
+  naming::CircuitBreakerCreatorFactory::GetInstance()->Register(
+      naming::DefaultCircuitBreaker::kName, [](const YAML::Node* plugin_config, const std::string& service_name) {
+        naming::DefaultCircuitBreakerConfig config;
+        if (plugin_config) {
+          YAML::convert<naming::DefaultCircuitBreakerConfig>::decode(*plugin_config, config);
+        }
+        return std::make_shared<naming::DefaultCircuitBreaker>(config, service_name);
+      });
+
   LoadBalancePtr polling_load_balance = trpc::LoadBalanceFactory::GetInstance()->Get(kPollingLoadBalance);
   if (polling_load_balance == nullptr) {
     // Register the default load balancer
