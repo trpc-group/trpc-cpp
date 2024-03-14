@@ -12,6 +12,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "power_of_two_test",
+    srcs = ["power_of_two_test.cc"],
+    deps = [
+        ":power_of_two",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "random",
     hdrs = ["random.h"],
@@ -23,5 +32,14 @@ cc_library(
     hdrs = ["hash.h"],
     deps = [
         "//trpc/util/log:logging",
+    ],
+)
+
+cc_test(
+    name = "hash_test",
+    srcs = ["hash_test.cc"],
+    deps = [
+        ":hash",
+        "@com_google_googletest//:gtest_main",
     ],
 )
