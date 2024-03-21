@@ -89,7 +89,7 @@ trpc_proto_library(
     name = "http_rpc_proto",
     srcs = ["http_rpc.proto"],
     native_proto_deps = [
-        "@trpc_cpp//trpc/proto:trpc_options_proto",
+        "@com_github_trpc_protocol//trpc/proto:trpc_options_proto",
     ],
     use_trpc_plugin = True,
 )

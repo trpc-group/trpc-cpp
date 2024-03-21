@@ -343,3 +343,10 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
         ],
         patch_args = ["-p1"],
     )
+
+    # com_github_trpc_protocol
+    git_repository(
+        name = "com_github_trpc_protocol",
+        remote = "https://github.com/trpc-group/trpc.git",
+        tag = "v{ver}".format(ver = kwargs.get("com_github_trpc_protocol_ver", "1.0.0")),
+    )

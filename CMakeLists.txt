@@ -107,6 +107,11 @@ endif()
 set(TRPC_INSTALL_PATH_PREFIX  ${TRPC_CMAKE_INSTALL_DEFAULT_PREFIX}/trpc-${TRPC_VERSION}/)
 set(CMAKE_INSTALL_PREFIX ${TRPC_INSTALL_PATH_PREFIX})
 
+#---------------------------------------------------------------------------------------
+# tRPC Protocol
+#---------------------------------------------------------------------------------------
+include(trpc_protocol)
+
 # Print tRPC-Cpp version
 message(STATUS "Build tRPC-Cpp: v${TRPC_VERSION}")
 
@@ -203,6 +208,7 @@ add_subdirectory(${TRPC_ROOT_PATH}/trpc/tools/flatbuffers_tool/)
 #---------------------------------------------------------------------------------------
 set(GEN_PB_PROTO_FILES ${TRPC_ROOT_PATH}/trpc/codec/trpc/trpc.proto
                        ${TRPC_ROOT_PATH}/trpc/proto/trpc.proto
+                       ${TRPC_ROOT_PATH}/trpc/trpc.proto
                        ${TRPC_ROOT_PATH}/trpc/proto/trpc_options.proto
                        ${TRPC_ROOT_PATH}/trpc/tools/comm/trpc_cpp_options.proto)
 
