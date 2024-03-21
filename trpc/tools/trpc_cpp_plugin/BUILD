@@ -19,7 +19,7 @@ cc_library(
 cc_proto_library(
     name = "cc_trpc_options_proto",
     deps = [
-        "//trpc/proto:trpc_options_proto",
+        "@com_github_trpc_protocol//trpc/proto:trpc_options_proto",
     ],
 )
 
