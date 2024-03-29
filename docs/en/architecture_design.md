@@ -93,16 +93,17 @@ The request processing generally includes the following processes:
 
 The service exit process generally includes the following processes:
 
-1. Wait for all requests received by the server to be processed(To avoid being unable to exit due to waiting, the default maximum waiting time is set to 5 seconds.It can be configured through server::stop_max_wait_time);
-2. Stop the listening and reading events of the server network connection;
-3. Close the server network connections;
-4. Call the `Destroy` method of the `TrpcApp` business subclass to stop the dynamic resources created by the business (for example: started threads);
-5. Stop the dynamic resources created by the plugins (for example: threads started inside the plugins);
-6. Stop the framework runtime environment runtime;
-7. Release the resources inside the runtime environment of the framework;
-8. Release the internal resources of the framework operating environment TrpcServer;
-9. Release the internal resources of the framework operating environment TrpcClient;
-10. The program exits;
+1. Unregister all services from the name service to prevent future traffic from being routed to this node;
+2. Disable the readable event for connections, including:a. Disable the readable event for the listening socket to avoid creating new connections,b. Disable the readable event for the connected socket to avoid receiving new requests from that socket;
+3. Wait for all requests received by the server to be processed(To avoid being unable to exit due to waiting, the default maximum waiting time is set to 5 seconds.It can be configured through server::stop_max_wait_time);
+4. Close the server network connections;
+5. Call the `Destroy` method of the `TrpcApp` business subclass to stop the dynamic resources created by the business (for example: started threads);
+6. Stop the dynamic resources created by the plugins (for example: threads started inside the plugins);
+7. Stop the framework runtime environment runtime;
+8. Release the resources inside the runtime environment of the framework;
+9. Release the internal resources of the framework operating environment TrpcServer;
+10. Release the internal resources of the framework operating environment TrpcClient;
+11. The program exits;
 
 ## Client
 
