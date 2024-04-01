@@ -213,6 +213,21 @@ void TrpcServer::Stop() {
     }
   }
 
+  // Disable the readable event for the listening socket to avoid creating new connections
+  // Disable the readable event for the connected socket to avoid receiving new requests
+  std::vector<ServiceAdapterPtr> stop_listened_adapters;
+  for (const auto& iter : service_adapters_) {
+    TRPC_LOG_DEBUG(iter.first << " start to StopListen...");
+    auto stop_listened_adapter_it =
+        std::find(stop_listened_adapters.begin(), stop_listened_adapters.end(), iter.second);
+    if (stop_listened_adapter_it != stop_listened_adapters.end()) {
+      continue;
+    }
+
+    iter.second->StopListen(true);
+    stop_listened_adapters.push_back(iter.second);
+  }
+
   uint64_t begin_stop_time = trpc::time::GetMilliSeconds();
   while (FrameStats::GetInstance()->GetServerStats().GetReqConcurrency() > 0) {
     TRPC_LOG_DEBUG("current ReqConcurrency:" << FrameStats::GetInstance()->GetServerStats().GetReqConcurrency()
