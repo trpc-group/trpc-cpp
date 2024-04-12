@@ -53,10 +53,10 @@ message HelloReply {
 ## 根据 Protobuf IDL 文件构建项目代码
 
 若用户已经构建了项目，则本节可以直接跳过，直接查看下节。
-为了方便用户构建项目，框架提供基于 Protobuf 的 IDL 文件快速构建项目的脚本: [create_trpc_server.sh](../../create_trpc_server.sh)，其使用方式参考[README](../../trpc/tools/trpc_create_server_plugin/README.md)，采用脚本构建项目命令
-
+为了方便用户构建项目，框架提供基于 Protobuf 的 IDL 文件快速构建项目的trpc-cmdline工具，这时执行下面命令:
 ```sh
-./create_trpc_server.sh ./ ./helloworld.proto 
+# 其中trpc为你在环境搭建中安装的trpc-cmdline工具，-l指定language为cpp语言，protofile为用于生成桩代码的proto文件
+trpc create -l cpp --protofile=helloworld.proto
 ```
 
 命令执行后，会在当前目录下生成`helloworld`项目，其目录结构如下：
@@ -65,35 +65,36 @@ message HelloReply {
 .
 ├── build.sh
 ├── clean.sh
+├── client
+│   ├── BUILD
+│   ├── conf
+│   │   ├── trpc_cpp_fiber.yaml
+│   │   └── trpc_cpp_future.yaml
+│   ├── fiber_client.cc
+│   └── future_client.cc
+├── proto
+│   ├── BUILD
+│   ├── helloworld.proto
+│   └── WORKSPACE
 ├── README.md
 ├── run_client.sh
 ├── run_server.sh
-├── test
-│   ├── helloworld
-│   │   ├── BUILD
-│   │   ├── conf
-│   │   │   ├── trpc_cpp_fiber.yaml
-│   │   │   └── trpc_cpp.yaml
-│   │   ├── greeter_service.cc
-│   │   ├── greeter_service.h
-│   │   ├── helloworld.proto
-│   │   ├── helloworld_server.cc
-│   │   └── helloworld_server.h
-│   └── test
-│       ├── BUILD
-│       ├── conf
-│       │   ├── trpc_cpp_fiber.yaml
-│       │   └── trpc_cpp_future.yaml
-│       ├── fiber_client.cc
-│       ├── future_client.cc
-│       └── README.md
+├── server
+│   ├── BUILD
+│   ├── conf
+│   │   ├── trpc_cpp_fiber.yaml
+│   │   └── trpc_cpp.yaml
+│   ├── server.cc
+│   ├── server.h
+│   ├── service.cc
+│   └── service.h
 └── WORKSPACE
 ```
 
 介绍一下该项目目录：
 
 - build.sh 和 clean.sh表示构建和清理项目；run_client.sh 和 run_server.sh表示启动客户端和服务端测试
-- 第一个`test`目录表示`app`名称，其子目录`helloworld`表示`server`名称；第二个test目录存储测试客户端代码，仅用于测试
+- 其中server目录下的代码是此服务相关实现的代码，client目录下的代码是用于本地测试服务的客户端代码
 - `WORKSPACE` 用于`bazel`编译所需工作区配置内容如下
 
   ```bzl

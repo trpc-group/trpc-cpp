@@ -34,12 +34,12 @@ See [GreeterServiceTest_SayHelloOK](/examples/helloworld/greeter_service_test.cc
 
 In the scenario of asynchronous response, the user needs to actively call `context->SendUnaryResponse` in the program to send the response. Since this scenario involves network calls, mocking the network is necessary in unit tests.
 
-To facilitate writing unit tests for this scenario, we provides the [MockServerTransport](/trpc/server/testing/server_testing.h#L44) class, which is designed specifically for testing purposes.
+To facilitate writing unit tests for this scenario, we provides the [MockServerTransport](/trpc/server/testing/mock_server_transport.h#L25) class, which is designed specifically for testing purposes.
 
 To write test with MockServerTransport, first you can should set the transport of service to `MockServerTransport` by calling the `Service::SetServerTransport` interface. Then, you can mock the network calls using the `EXPECT_CALL` syntax from gmock. Here is the pseudocode:
 
 ```cpp
-#include "trpc/server/testing/server_testing.h"
+#include "trpc/server/testing/mock_server_transport.h"
 
 TEST(GreeterServiceTest, SayHelloOK) {
   auto transport= std::make_unique<::trpc::testing::MockServerTransport>();
