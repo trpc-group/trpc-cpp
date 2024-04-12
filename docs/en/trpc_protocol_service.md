@@ -53,10 +53,10 @@ The above defines a standard Protobuf IDL file. Next, we will build the project 
 ## Build the project code based on the Protobuf IDL file
 
 If the user has already built the project, this section can be skipped, and you can proceed to the next section.
-To facilitate project building, the framework provides a script for quickly building projects based on Protobuf IDL files: [create_trpc_server.sh](../../create_trpc_server.sh). The usage of this script can be found in the README. To build the project using the script, execute the following command:
-
+To facilitate project building, the framework provides the trpc-cmdline tool for quickly building projects based on Protobuf IDL files. In this case, execute the following command:
 ```sh
-./create_trpc_server.sh ./ ./helloworld.proto 
+#Here, 'trpc' is the trpc-cmdline tool installed during your environment setup. '-l' specifies the language as C++, 'protofile' is the proto file used for generating stub code.
+trpc create -l cpp --protofile=helloworld.proto
 ```
 
 After executing the command, a `helloworld` project will be generated in the current directory with the following directory structure.
@@ -65,35 +65,36 @@ After executing the command, a `helloworld` project will be generated in the cur
 .
 ├── build.sh
 ├── clean.sh
+├── client
+│   ├── BUILD
+│   ├── conf
+│   │   ├── trpc_cpp_fiber.yaml
+│   │   └── trpc_cpp_future.yaml
+│   ├── fiber_client.cc
+│   └── future_client.cc
+├── proto
+│   ├── BUILD
+│   ├── helloworld.proto
+│   └── WORKSPACE
 ├── README.md
 ├── run_client.sh
 ├── run_server.sh
-├── test
-│   ├── helloworld
-│   │   ├── BUILD
-│   │   ├── conf
-│   │   │   ├── trpc_cpp_fiber.yaml
-│   │   │   └── trpc_cpp.yaml
-│   │   ├── greeter_service.cc
-│   │   ├── greeter_service.h
-│   │   ├── helloworld.proto
-│   │   ├── helloworld_server.cc
-│   │   └── helloworld_server.h
-│   └── test
-│       ├── BUILD
-│       ├── conf
-│       │   ├── trpc_cpp_fiber.yaml
-│       │   └── trpc_cpp_future.yaml
-│       ├── fiber_client.cc
-│       ├── future_client.cc
-│       └── README.md
+├── server
+│   ├── BUILD
+│   ├── conf
+│   │   ├── trpc_cpp_fiber.yaml
+│   │   └── trpc_cpp.yaml
+│   ├── server.cc
+│   ├── server.h
+│   ├── service.cc
+│   └── service.h
 └── WORKSPACE
 ```
 
 Introducing the project directory:
 
 - build.sh and clean.sh are used for building and cleaning the project, respectively. run_client.sh and run_server.sh are used to start the client and server tests.
-- The first `test` directory represents the `app` name, and its subdirectory `helloworld` represents the `server` name. The second test directory stores the test client code, which is only used for testing purposes.
+- The code in the server directory is related to the implementation of this service, while the code in the client directory is used for testing the service locally.
 - `WORKSPACE` is used for configuring the workspace required for `bazel` compilation. Its contents are as follows:
 
   ```bzl

@@ -33,12 +33,12 @@ TEST(GreeterServiceTest, SayHelloOK) {
 
 异步回包场景相比同步回包场景，需要用户在程序中主动调用`context->SendUnaryResponse`进行回包。此场景涉及网络调用，故单测中需要对网络进行 mock。
 
-为了方便写单测，框架提供了针对这种测试场景的[MockServerTransport](/trpc/server/testing/server_testing.h#L44)类。
+为了方便写单测，框架提供了针对这种测试场景的[MockServerTransport](/trpc/server/testing/mock_server_transport.h#L25)类。
 
 使用时先调用 `Service::SetServerTransport` 接口将 transport 设置为 MockServerTransport，然后通过 gmock 的 EXPECT_CALL 语法来对网络调用进行 mock，伪代码如下所示：
 
 ```cpp
-#include "trpc/server/testing/server_testing.h"
+#include "trpc/server/testing/mock_server_transport.h"
 
 TEST(GreeterServiceTest, SayHelloOK) {
   auto transport= std::make_unique<::trpc::testing::MockServerTransport>();
