@@ -26,13 +26,13 @@
 
 namespace trpc {
 
-FiberConnectorGroupManager::FiberConnectorGroupManager(TransInfo&& trans_info) : trans_info_(std::move(trans_info)) {
+FiberConnectorGroupManager::FiberConnectorGroupManager(TransInfo&& trans_info)
+    : tcp_connector_groups_(trans_info.endpoint_hash_bucket_size),
+      trans_info_(std::move(trans_info)) {
   udp_impl_.store(std::make_unique<UdpImpl>().release());
 
   fiber_transport_state_.store(ClientTransportState::kInitialized);
 }
-
-FiberConnectorGroupManager::~FiberConnectorGroupManager() { Stop(); }
 
 void FiberConnectorGroupManager::Stop() {
   ClientTransportState old_value = ClientTransportState::kInitialized;
@@ -41,10 +41,7 @@ void FiberConnectorGroupManager::Stop() {
     return;
   }
 
-  {
-    std::unique_lock lock(tcp_mutex_);
-    tcp_connector_groups_.swap(tcp_connector_groups_to_destroy_);
-  }
+  tcp_connector_groups_.GetAllItems(tcp_connector_groups_to_destroy_);
 
   for (auto& group : tcp_connector_groups_to_destroy_) {
     group.second->Stop();
@@ -73,17 +70,14 @@ void FiberConnectorGroupManager::Destroy() {
     return;
   }
 
-  std::unordered_map<std::string, FiberConnectorGroup*> tmp_tcp;
-  {
-    std::unique_lock lock(tcp_mutex_);
-    tcp_connector_groups_to_destroy_.swap(tmp_tcp);
-  }
-
-  for (auto& group : tmp_tcp) {
+  for (auto& group : tcp_connector_groups_to_destroy_) {
     group.second->Destroy();
     delete group.second;
     group.second = nullptr;
   }
+
+  tcp_connector_groups_.Reclaim();
+  tcp_connector_groups_to_destroy_.clear();
 
   {
     std::scoped_lock _(udp_mutex_);
@@ -106,6 +100,10 @@ void FiberConnectorGroupManager::Destroy() {
 }
 
 FiberConnectorGroup* FiberConnectorGroupManager::Get(const NodeAddr& node_addr) {
+  if (TRPC_UNLIKELY(fiber_transport_state_.load(std::memory_order_relaxed) != ClientTransportState::kInitialized)) {
+    return nullptr;
+  }
+
   if (trans_info_.conn_type != ConnectionType::kUdp) {
     return GetFromTcpGroup(node_addr);
   }
@@ -118,30 +116,23 @@ FiberConnectorGroup* FiberConnectorGroupManager::GetFromTcpGroup(const NodeAddr&
   std::string endpoint(len, 0x0);
   snprintf(const_cast<char*>(endpoint.c_str()), len, "%s:%d", node_addr.ip.c_str(), node_addr.port);
 
-  {
-    std::shared_lock lock(tcp_mutex_);
-    auto it = tcp_connector_groups_.find(endpoint);
-    if (it != tcp_connector_groups_.end()) {
-      return it->second;
-    }
+  FiberConnectorGroup* connector_group{nullptr};
+  bool ret = tcp_connector_groups_.Get(endpoint, connector_group);
+
+  if (ret) {
+    return connector_group;
   }
 
-  if (TRPC_UNLIKELY(fiber_transport_state_.load(std::memory_order_relaxed) != ClientTransportState::kInitialized)) {
-    return nullptr;
-  }
-
-  {
-    std::unique_lock lock(tcp_mutex_);
-    auto it = tcp_connector_groups_.find(endpoint);
-    if (it != tcp_connector_groups_.end()) {
-      return it->second;
-    }
-
-    FiberConnectorGroup* pool = CreateTcpConnectorGroup(node_addr);
-    tcp_connector_groups_.emplace(std::move(endpoint), pool);
-
+  FiberConnectorGroup* pool = CreateTcpConnectorGroup(node_addr);
+  ret = tcp_connector_groups_.GetOrInsert(endpoint, pool, connector_group);
+  if (!ret) {
     return pool;
   }
+
+  delete pool;
+  pool = nullptr;
+
+  return connector_group;
 }
 
 FiberConnectorGroup* FiberConnectorGroupManager::GetFromUdpGroup(const NodeAddr& node_addr) {

@@ -16,4 +16,6 @@ namespace trpc::hazptr {
 
 void Object::PushRetired(HazptrDomain* domain) { domain->Retire(this); }
 
+void Object::PushReclaim(HazptrDomain* domain) { domain->Reclaim(this); }
+
 }  // namespace trpc::hazptr

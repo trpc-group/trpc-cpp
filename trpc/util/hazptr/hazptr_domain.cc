@@ -23,9 +23,11 @@ using namespace std::literals;
 
 namespace trpc {
 
+static constexpr uint32_t kRetireMask = 127;
+
 HazptrDomain::HazptrDomain() {
   timer_id_ = internal::TimeKeeper::Instance()->AddTimer(
-      {}, 10s, [this](auto) { ReclaimBestEffort(); }, false);
+      {}, 100ms, [this](auto) { ReclaimBestEffort(); }, false);
 }
 
 HazptrDomain::~HazptrDomain() { internal::TimeKeeper::Instance()->KillTimer(timer_id_); }
@@ -50,12 +52,16 @@ void HazptrDomain::PutEntry(hazptr::Entry* entry) {
 void HazptrDomain::Retire(hazptr::Object* object) {
   PushRetired(object);
 
-  // If `Retire` is called frequently enough, we can reduce frequency of calling
-  // `ReclaimBestEffort` here.
-  //
-  // For the moment I don't expect `Retire` itself to be called too often, as
-  // hazard pointer itself should be used in read-mostly scenario in the first
-  // place.
+  auto old = retire_call_count_.fetch_add(1, std::memory_order_relaxed);
+
+  if ((old & kRetireMask) == 0) {
+    ReclaimBestEffort();
+  }
+}
+
+void HazptrDomain::Reclaim(hazptr::Object* object) {
+  PushRetired(object);
+
   ReclaimBestEffort();
 }
 

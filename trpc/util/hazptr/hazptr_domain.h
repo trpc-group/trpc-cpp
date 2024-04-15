@@ -48,8 +48,11 @@ class HazptrDomain {
   hazptr::Entry* GetEntry();
   void PutEntry(hazptr::Entry* entry);
 
-  // Retire object for reclamation.
+  // Delay retire object for reclamation.
   void Retire(hazptr::Object* object);
+
+  // Reclaim object.
+  void Reclaim(hazptr::Object* object);
 
  private:
   hazptr::Entry* GetEntrySlow();
@@ -73,6 +76,8 @@ class HazptrDomain {
   std::atomic<hazptr::Entry*> hazptrs_{nullptr};
   // Objects to be reclaimed.
   std::atomic<hazptr::Object*> retired_{nullptr};
+  // The count of Call Retire
+  std::atomic<std::uint32_t> retire_call_count_{0};
 };
 
 // For `Hazptr`s that are constructedi without specifying a domain explicitly,

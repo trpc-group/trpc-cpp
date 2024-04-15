@@ -167,7 +167,10 @@ struct ServiceProxyOption {
 
   /// The queue size of FiberPipelineConnector
   /// if memory usage high, reduce it
-  uint32_t fiber_pipeline_connector_queue_size = 16 * 1024;
+  uint32_t fiber_pipeline_connector_queue_size{16 * 1024};
+
+  /// The hashmap bucket size for storing ip/port <--> Connector
+  uint32_t endpoint_hash_bucket_size{kEndpointHashBucketSize};
 
   /// Whether to support reconnection in fixed connection mode, the default value is true.
   /// For scenarios where reconnection is not allowed, such as transactional operations, set this value to false.

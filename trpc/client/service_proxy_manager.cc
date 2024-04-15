@@ -91,27 +91,34 @@ void ServiceProxyManager::SetOptionDefaultValue(const std::string& name, std::sh
 }
 
 void ServiceProxyManager::Stop() {
-  for (int i = 0; i != kShards; ++i) {
-    auto& shard = shards_[i];
-    std::scoped_lock _(shard.lock);
+  if (is_stoped_.exchange(true)) {
+    return;
+  }
 
-    for (auto& it : shard.service_proxys) {
-      it.second->Stop();
-    }
+  service_proxys_.GetAllItems(service_proxys_to_destroy_);
+
+  for (auto& item : service_proxys_to_destroy_) {
+    item.second->Stop();
   }
 }
 
 void ServiceProxyManager::Destroy() {
-  for (int i = 0; i < kShards; ++i) {
-    auto& shard = shards_[i];
-    std::scoped_lock _(shard.lock);
-
-    for (auto& it : shard.service_proxys) {
-      it.second->Destroy();
-    }
-
-    shard.service_proxys.clear();
+  if (!is_stoped_.load()) {
+    return;
   }
+
+  if (is_destroyed_.exchange(true)) {
+    return;
+  }
+
+  for (auto& item : service_proxys_to_destroy_) {
+    item.second->Destroy();
+  }
+
+  service_proxys_.Reclaim();
+  service_proxys_to_destroy_.clear();
+  is_stoped_.store(false);
+  is_destroyed_.store(false);
 }
 
 }  // namespace trpc

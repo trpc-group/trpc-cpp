@@ -529,6 +529,8 @@ void TrpcPlugin::DestroyResource() {
 
   log::Destroy();
 
+  GetTrpcClient()->Destroy();
+
   is_all_inited_ = false;
   is_all_destroyed_ = false;
   is_invoke_by_framework_ = false;

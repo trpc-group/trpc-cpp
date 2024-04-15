@@ -89,6 +89,9 @@ struct TransInfo {
   /// The timeout for data to wait to enter the send queue(for fiber)
   uint32_t send_queue_timeout = 3000;
 
+  /// The hashmap bucket size for storing ip/port <--> Connector
+  uint32_t endpoint_hash_bucket_size = 1024;
+
   /// Protocol name
   std::string protocol;
 

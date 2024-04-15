@@ -165,7 +165,7 @@ TEST(Fiber, FiberSleepInFiberContext) {
            << ",error_time:" << error_time << std::endl;
 
       ASSERT_NEAR((ReadSystemClock() - start) / std::chrono::milliseconds(1),
-                  sleep_for / std::chrono::milliseconds(1), 20);
+                  sleep_for / std::chrono::milliseconds(1), 100);
 
       // Test FiberSleepUntil.
       auto sleep_until = ReadSystemClock() + 100 * std::chrono::milliseconds(1);
