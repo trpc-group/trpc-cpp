@@ -49,6 +49,7 @@ class Object {
   // Check for double free. For debugging purpose only.
   void PreRetireCheck() { TRPC_CHECK_EQ(next_, this); }
   void PushRetired(HazptrDomain* domain);
+  void PushReclaim(HazptrDomain* domain);
 
  private:
   Object* next_ = {this};
@@ -72,6 +73,13 @@ class HazptrObject : public hazptr::Object {
     PreRetireCheck();
     deleter_ = std::move(deleter);
     PushRetired(domain);
+  }
+
+  // Reclaim the object. The object will be destroyed by `deleter` immediately
+  void Reclaim(D deleter = {}, HazptrDomain* domain = GetDefaultHazptrDomain()) {
+    PreRetireCheck();
+    deleter_ = std::move(deleter);
+    PushReclaim(domain);
   }
 
  private:

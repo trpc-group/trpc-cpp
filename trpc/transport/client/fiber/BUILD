@@ -12,6 +12,7 @@ cc_library(
         "//trpc/transport/client/fiber/conn_complex:fiber_conn_complex_impl",
         "//trpc/transport/client/fiber/conn_pool:fiber_conn_pool_impl",
         "//trpc/transport/client/fiber/pipeline:fiber_pipeline_impl",
+        "//trpc/util/concurrency:lightly_concurrent_hashmap",
         "//trpc/util/hazptr",
         "//trpc/util/log:logging",
     ],

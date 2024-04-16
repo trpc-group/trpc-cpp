@@ -62,16 +62,23 @@ class FiberTcpConnComplexConnectorGroup final : public FiberConnectorGroup {
 
  private:
   struct Impl : HazptrObject<Impl> {
-    std::vector<RefPtr<FiberTcpConnComplexConnector>> tcp_conns;
+    RefPtr<FiberTcpConnComplexConnector> tcp_conn;
+  };
+
+  struct alignas(64) ConnectorImpl {
+    std::mutex mut;
+    std::atomic<Impl*> impl;
   };
 
   FiberConnectorGroup::Options options_;
 
   size_t max_conn_num_;
 
-  std::atomic<Impl*> impl_;
+  std::atomic<size_t> index_{0};
 
-  std::mutex mutex_;
+  std::unique_ptr<ConnectorImpl[]> conn_impl_;
+
+  std::vector<RefPtr<FiberTcpConnComplexConnector>> destroy_tcp_conns_;
 };
 
 }  // namespace trpc

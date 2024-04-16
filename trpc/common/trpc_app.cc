@@ -25,7 +25,6 @@
 
 #include "gflags/gflags.h"
 
-// #include "trpc/client/http/http_service_proxy.h"
 #include "trpc/filter/server_filter_manager.h"
 #include "trpc/runtime/runtime.h"
 #include "trpc/tvar/common/sampler.h"
@@ -88,8 +87,6 @@ void TrpcApp::DestroyRuntime() {
   runtime::TerminateRuntime();
 
   server_->Destroy();
-
-  trpc::GetTrpcClient()->Destroy();
 
   TrpcPlugin::GetInstance()->DestroyResource();
 }

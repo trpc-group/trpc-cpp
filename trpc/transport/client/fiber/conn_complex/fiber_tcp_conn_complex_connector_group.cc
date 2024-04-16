@@ -21,7 +21,7 @@
 namespace trpc {
 
 FiberTcpConnComplexConnectorGroup::FiberTcpConnComplexConnectorGroup(const FiberConnectorGroup::Options& options)
-    : options_(options), impl_{std::make_unique<Impl>().release()} {
+    : options_(options) {
   max_conn_num_ = options_.trans_info->max_conn_num;
   if (max_conn_num_ == 64) {
     // If max_conn_num is the default value of 64, change it to 1
@@ -30,66 +30,41 @@ FiberTcpConnComplexConnectorGroup::FiberTcpConnComplexConnectorGroup(const Fiber
 
   TRPC_LOG_DEBUG("conn_complex max_conn_num_:" << max_conn_num_ << ", protocol:" << options_.trans_info->protocol);
 
-  std::vector<RefPtr<FiberTcpConnComplexConnector>> tcp_conns;
-  tcp_conns.resize(max_conn_num_);
+  conn_impl_ = std::make_unique<ConnectorImpl[]>(max_conn_num_);
 
   for (size_t i = 0; i < max_conn_num_; ++i) {
-    tcp_conns[i].Reset();
+    conn_impl_[i].impl.store(std::make_unique<Impl>().release(), std::memory_order_relaxed);
   }
-
-  impl_.load(std::memory_order_relaxed)->tcp_conns = std::move(tcp_conns);
 }
 
 FiberTcpConnComplexConnectorGroup::~FiberTcpConnComplexConnectorGroup() {}
 
 void FiberTcpConnComplexConnectorGroup::Stop() {
-  auto imp = std::make_unique<Impl>();
-  {
-    std::scoped_lock lock(mutex_);
-    Hazptr hazptr;
-    // here need to copy tcp_conns, because when `FiberTcpConnComplexConnector` invoke `Stop`,
-    // `Stop` will invoke `DelConnector` to delete the connector
-    imp->tcp_conns = hazptr.Keep(&impl_)->tcp_conns;
-  }
+  destroy_tcp_conns_.clear();
 
-  if (!imp) {
-    return;
-  }
+  for (size_t i = 0; i < max_conn_num_; ++i) {
+    std::scoped_lock lock(conn_impl_[i].mut);
 
-  TRPC_LOG_DEBUG("Stop ip:" << options_.peer_addr.Ip() << ", port:" << options_.peer_addr.Port()
-                            << ", size:" << imp->tcp_conns.size());
-
-  for (std::size_t i = 0; i < imp->tcp_conns.size(); i++) {
-    auto connector = imp->tcp_conns[i];
-    if (connector != nullptr) {
-      connector->Stop();
+    auto ptr = conn_impl_[i].impl.exchange(nullptr, std::memory_order_relaxed);
+    if (ptr) {
+      if (ptr->tcp_conn != nullptr) {
+        TRPC_LOG_DEBUG("Stop i:" << i << ", ip:" << options_.peer_addr.Ip() << ", port:" << options_.peer_addr.Port());
+        destroy_tcp_conns_.push_back(ptr->tcp_conn);
+      }
+      ptr->Retire();
     }
+  }
+
+  for (auto& item : destroy_tcp_conns_) {
+    item->Stop();
   }
 }
 
 void FiberTcpConnComplexConnectorGroup::Destroy() {
-  Impl* imp = nullptr;
-  {
-    std::scoped_lock lock(mutex_);
-    imp = impl_.exchange(nullptr, std::memory_order_relaxed);
+  for (auto& item : destroy_tcp_conns_) {
+    TRPC_LOG_DEBUG("Destroy ip:" << options_.peer_addr.Ip() << ", port:" << options_.peer_addr.Port());
+    item->Destroy();
   }
-
-  if (!imp) {
-    return;
-  }
-
-  TRPC_LOG_DEBUG("Destroy ip:" << options_.peer_addr.Ip() << ", port:" << options_.peer_addr.Port()
-                               << ", size:" << imp->tcp_conns.size());
-
-  for (std::size_t i = 0; i < imp->tcp_conns.size(); i++) {
-    auto connector = imp->tcp_conns[i];
-    if (connector != nullptr) {
-      connector->Destroy();
-    }
-  }
-
-  imp->tcp_conns.clear();
-  imp->Retire();
 }
 
 int FiberTcpConnComplexConnectorGroup::SendRecv(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_msg) {
@@ -190,19 +165,18 @@ stream::StreamReaderWriterProviderPtr FiberTcpConnComplexConnectorGroup::CreateS
 }
 
 RefPtr<FiberTcpConnComplexConnector> FiberTcpConnComplexConnectorGroup::GetOrCreate() {
-  thread_local size_t tls_index = 0;
+  size_t index = index_.fetch_add(1, std::memory_order_relaxed);
+  size_t uid = index % max_conn_num_;
 
-  size_t uid = tls_index % max_conn_num_;
   RefPtr<FiberTcpConnComplexConnector> connector{nullptr};
-  RefPtr<FiberTcpConnComplexConnector> idle_connector{nullptr};
-
   {
     Hazptr hazptr;
-    auto ptr = hazptr.Keep(&impl_);
-    connector = ptr->tcp_conns.at(uid);
+    auto ptr = hazptr.Keep(&(conn_impl_[uid].impl));
+
+    connector = ptr->tcp_conn;
+
     if (connector != nullptr && connector->IsHealthy()) {
       if (!connector->IsConnIdleTimeout()) {
-        ++tls_index;
         return connector;
       }
       TRPC_LOG_DEBUG("connection uid:" << uid << ", ip:" << options_.peer_addr.Ip()
@@ -213,22 +187,20 @@ RefPtr<FiberTcpConnComplexConnector> FiberTcpConnComplexConnectorGroup::GetOrCre
   TRPC_LOG_DEBUG("connection uid:" << uid << ", ip:" << options_.peer_addr.Ip()
                                    << ", port:" << options_.peer_addr.Port() << ", get nullptr.");
 
-  {
-    auto new_impl = std::make_unique<Impl>();
+  RefPtr<FiberTcpConnComplexConnector> idle_connector{nullptr};
 
-    std::scoped_lock _(mutex_);
+  {
+    uint64_t conn_id = 0;
+
+    std::scoped_lock _(conn_impl_[uid].mut);
+
     {
       Hazptr hazptr;
-      new_impl->tcp_conns = hazptr.Keep(&impl_)->tcp_conns;
-    }
+      auto ptr = hazptr.Keep(&(conn_impl_[uid].impl));
+      connector = ptr->tcp_conn;
 
-    connector = new_impl->tcp_conns.at(uid);
-
-    uint64_t conn_id = 0;
-    if (connector != nullptr) {
-      if (connector->IsHealthy()) {
+      if (connector != nullptr && connector->IsHealthy()) {
         if (!connector->IsConnIdleTimeout()) {
-          ++tls_index;
           return connector;
         } else {
           conn_id = connector->GetConnId() + max_conn_num_;
@@ -236,25 +208,26 @@ RefPtr<FiberTcpConnComplexConnector> FiberTcpConnComplexConnectorGroup::GetOrCre
           idle_connector = connector;
         }
       } else {
-        conn_id = connector->GetConnId() + max_conn_num_;
+        conn_id = uid;
       }
-    } else {
-      conn_id = uid;
     }
 
     TRPC_LOG_DEBUG("connection uid:" << uid << ", ip:" << options_.peer_addr.Ip()
                                      << ", port:" << options_.peer_addr.Port() << ", get nullptr too.");
 
+    auto new_impl = std::make_unique<Impl>();
+
     connector = CreateTcpConnComplexConnector(conn_id);
     if (connector->Init()) {
-      new_impl->tcp_conns[uid] = connector;
+      new_impl->tcp_conn = connector;
     } else {
-      new_impl->tcp_conns[uid] = nullptr;
+      new_impl->tcp_conn = nullptr;
       connector = nullptr;
       TRPC_LOG_DEBUG("connection uid:" << uid << ", ip:" << options_.peer_addr.Ip()
                                        << ", port:" << options_.peer_addr.Port() << ", init failed.");
     }
-    impl_.exchange(new_impl.release(), std::memory_order_relaxed)->Retire();
+
+    conn_impl_[uid].impl.exchange(new_impl.release(), std::memory_order_relaxed)->Retire();
   }
 
   if (idle_connector) {
@@ -279,23 +252,31 @@ RefPtr<FiberTcpConnComplexConnector> FiberTcpConnComplexConnectorGroup::CreateTc
 
 bool FiberTcpConnComplexConnectorGroup::DelConnector(FiberTcpConnComplexConnector* connector) {
   size_t uid = connector->GetConnId() % max_conn_num_;
-  auto new_impl = std::make_unique<Impl>();
 
-  std::scoped_lock lock(mutex_);
+  std::scoped_lock lock(conn_impl_[uid].mut);
+
+  bool is_found{false};
   {
     Hazptr hazptr;
-    auto ptr = hazptr.Keep(&impl_);
+    auto ptr = hazptr.Keep(&(conn_impl_[uid].impl));
     if (!ptr) {
       return false;
     }
-    new_impl->tcp_conns = ptr->tcp_conns;
+
+    if (ptr->tcp_conn.Get() == connector) {
+      is_found = true;
+    }
   }
 
-  RefPtr<FiberTcpConnComplexConnector> fiber_connector = new_impl->tcp_conns.at(uid);
-  if (fiber_connector.Get() == connector) {
-    new_impl->tcp_conns[uid] = nullptr;
+  auto new_impl = std::make_unique<Impl>();
 
-    impl_.exchange(new_impl.release(), std::memory_order_relaxed)->Retire();
+  if (is_found) {
+    new_impl->tcp_conn = nullptr;
+
+    TRPC_LOG_DEBUG("DelConnector uid:" << connector->GetConnId() << ", ip:" << options_.peer_addr.Ip()
+                                       << ", port:" << options_.peer_addr.Port());
+
+    conn_impl_[uid].impl.exchange(new_impl.release(), std::memory_order_relaxed)->Retire();
 
     return true;
   }

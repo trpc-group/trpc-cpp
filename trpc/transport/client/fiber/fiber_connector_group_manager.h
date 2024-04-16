@@ -23,6 +23,7 @@
 #include "trpc/transport/client/common/client_transport_state.h"
 #include "trpc/transport/client/fiber/fiber_connector_group.h"
 #include "trpc/transport/client/trans_info.h"
+#include "trpc/util/concurrency/lightly_concurrent_hashmap.h"
 #include "trpc/util/hazptr/hazptr.h"
 #include "trpc/util/hazptr/hazptr_object.h"
 
@@ -33,8 +34,6 @@ namespace trpc {
 class FiberConnectorGroupManager {
  public:
   explicit FiberConnectorGroupManager(TransInfo&& trans_info);
-
-  ~FiberConnectorGroupManager();
 
   /// @brief Get `FiberConnectorGroup` by `NodeAddr`, if not existed, create it.
   FiberConnectorGroup* Get(const NodeAddr& node_addr);
@@ -56,16 +55,10 @@ class FiberConnectorGroupManager {
     FiberConnectorGroup* udp_connector_groups[2];
   };
 
-  std::unordered_map<std::string, FiberConnectorGroup*> tcp_connector_groups_;
+  concurrency::LightlyConcurrentHashMap<std::string, FiberConnectorGroup*> tcp_connector_groups_;
 
   // Initialized by Stop function to store connector groups which will by destroyed by Destroy function.
   std::unordered_map<std::string, FiberConnectorGroup*> tcp_connector_groups_to_destroy_;
-
-  // With gcc 8.3.1, no fiber yield is allowed in critical section protected by shared mutex,
-  // as fiber may rescheduled into another thread, making shared mutex unlock an undefined behavior,
-  // which may leads to deadlock, as specified by cpp cppreference:
-  // https://en.cppreference.com/w/cpp/thread/shared_mutex/unlock
-  mutable std::shared_mutex tcp_mutex_;
 
   std::atomic<UdpImpl*> udp_impl_{nullptr};
 

@@ -24,7 +24,7 @@ namespace trpc {
 
 void NonRpcServiceImpl::Dispatch(const ServerContextPtr& context, const ProtocolPtr& req,
                                  ProtocolPtr& rsp)  noexcept {
-  auto non_rpc_service_methods = GetNonRpcServiceMethod();
+  auto& non_rpc_service_methods = GetNonRpcServiceMethod();
   auto it = non_rpc_service_methods.find(context->GetFuncName());
   if (it == non_rpc_service_methods.end()) {
     HandleNoFuncError(context);

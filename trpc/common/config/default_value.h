@@ -64,6 +64,9 @@ constexpr uint32_t kDefaultSendQueueCapacity = 0;
 /// Note: use in fiber runtime.
 constexpr uint32_t kDefaultSendQueueTimeout = 3000;
 
+ /// The default size of hashmap bucket for storing ip/port <--> Connector
+constexpr uint32_t kEndpointHashBucketSize = 1024;
+
 /// The default maximum number of connections that can be established to the backend nodes.
 constexpr uint32_t kDefaultMaxConnNum = 64;
 

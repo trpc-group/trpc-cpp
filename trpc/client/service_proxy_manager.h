@@ -22,6 +22,7 @@
 #include "trpc/client/service_proxy.h"
 #include "trpc/client/service_proxy_option_setter.h"
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/util/concurrency/lightly_concurrent_hashmap.h"
 #include "trpc/util/likely.h"
 
 namespace trpc {
@@ -92,14 +93,12 @@ class ServiceProxyManager {
   void SetOptionDefaultValue(const std::string& name, std::shared_ptr<ServiceProxyOption>& option);
 
  private:
-  struct alignas(hardware_destructive_interference_size) Shard {
-    std::mutex lock;
-    std::unordered_map<std::string, std::shared_ptr<ServiceProxy>> service_proxys;
-  };
+  concurrency::LightlyConcurrentHashMap<std::string, std::shared_ptr<ServiceProxy>> service_proxys_;
 
-  constexpr static uint16_t kShards = 64;
+  std::unordered_map<std::string, std::shared_ptr<ServiceProxy>> service_proxys_to_destroy_;
 
-  Shard shards_[kShards];
+  std::atomic<bool> is_stoped_{false};
+  std::atomic<bool> is_destroyed_{false};
 };
 
 template <typename T>
@@ -109,14 +108,10 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name) {
     return nullptr;
   }
 
-  std::size_t hash_value = std::hash<std::string>{}(name);
-
-  auto& shard = shards_[hash_value % kShards];
-  std::scoped_lock _(shard.lock);
-
-  auto it = shard.service_proxys.find(name);
-  if (it != shard.service_proxys.end()) {
-    return std::dynamic_pointer_cast<T>(it->second);
+  std::shared_ptr<ServiceProxy> proxy;
+  bool ret = service_proxys_.Get(name, proxy);
+  if (ret) {
+    return std::dynamic_pointer_cast<T>(proxy);
   }
 
   std::shared_ptr<T> new_proxy = std::make_shared<T>();
@@ -145,9 +140,12 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name) {
     new_proxy->SetEndpointInfo(option->target);
   }
 
-  shard.service_proxys[name] = std::static_pointer_cast<ServiceProxy>(new_proxy);
+  ret = service_proxys_.GetOrInsert(name, std::static_pointer_cast<ServiceProxy>(new_proxy), proxy);
+  if (!ret) {
+    return new_proxy;
+  }
 
-  return new_proxy;
+  return std::dynamic_pointer_cast<T>(proxy);
 }
 
 template <typename T>
@@ -157,14 +155,10 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const 
     return nullptr;
   }
 
-  std::size_t hash_value = std::hash<std::string>{}(name);
-
-  auto& shard = shards_[hash_value % kShards];
-  std::scoped_lock _(shard.lock);
-
-  auto it = shard.service_proxys.find(name);
-  if (it != shard.service_proxys.end()) {
-    return std::dynamic_pointer_cast<T>(it->second);
+  std::shared_ptr<ServiceProxy> proxy;
+  bool ret = service_proxys_.Get(name, proxy);
+  if (ret) {
+    return std::dynamic_pointer_cast<T>(proxy);
   }
 
   std::shared_ptr<T> new_proxy = std::make_shared<T>();
@@ -182,9 +176,12 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const 
     new_proxy->SetEndpointInfo(option_ptr->target);
   }
 
-  shard.service_proxys[name] = std::static_pointer_cast<ServiceProxy>(new_proxy);
+  ret = service_proxys_.GetOrInsert(name, std::static_pointer_cast<ServiceProxy>(new_proxy), proxy);
+  if (!ret) {
+    return new_proxy;
+  }
 
-  return new_proxy;
+  return std::dynamic_pointer_cast<T>(proxy);
 }
 
 template <typename T>
@@ -195,14 +192,10 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name,
     return nullptr;
   }
 
-  std::size_t hash_value = std::hash<std::string>{}(name);
-
-  auto& shard = shards_[hash_value % kShards];
-  std::scoped_lock _(shard.lock);
-
-  auto it = shard.service_proxys.find(name);
-  if (it != shard.service_proxys.end()) {
-    return std::dynamic_pointer_cast<T>(it->second);
+  std::shared_ptr<ServiceProxy> proxy;
+  bool ret = service_proxys_.Get(name, proxy);
+  if (ret) {
+    return std::dynamic_pointer_cast<T>(proxy);
   }
 
   std::shared_ptr<T> new_proxy = std::make_shared<T>();
@@ -233,10 +226,14 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name,
     new_proxy->SetEndpointInfo(option->target);
   }
 
-  shard.service_proxys[name] = std::static_pointer_cast<ServiceProxy>(new_proxy);
+  ret = service_proxys_.GetOrInsert(name, std::static_pointer_cast<ServiceProxy>(new_proxy), proxy);
+  if (!ret) {
+    return new_proxy;
+  }
 
-  return new_proxy;
+  return std::dynamic_pointer_cast<T>(proxy);
 }
+
 template <typename T>
 std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const ServiceProxyOption* option_ptr) {
   if (TRPC_UNLIKELY(name.empty())) {
@@ -244,14 +241,10 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const 
     return nullptr;
   }
 
-  std::size_t hash_value = std::hash<std::string>{}(name);
-
-  auto& shard = shards_[hash_value % kShards];
-  std::scoped_lock _(shard.lock);
-
-  auto it = shard.service_proxys.find(name);
-  if (it != shard.service_proxys.end()) {
-    return std::dynamic_pointer_cast<T>(it->second);
+  std::shared_ptr<ServiceProxy> proxy;
+  bool ret = service_proxys_.Get(name, proxy);
+  if (ret) {
+    return std::dynamic_pointer_cast<T>(proxy);
   }
 
   std::shared_ptr<T> new_proxy = std::make_shared<T>();
@@ -298,9 +291,12 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const 
   TRPC_FMT_TRACE("ServiceProxy name:{}, target:{}, threadmodel_instance_name:{}", name, new_proxy->option_->target,
                  new_proxy->option_->threadmodel_instance_name);
 
-  shard.service_proxys[name] = std::static_pointer_cast<ServiceProxy>(new_proxy);
+  ret = service_proxys_.GetOrInsert(name, std::static_pointer_cast<ServiceProxy>(new_proxy), proxy);
+  if (!ret) {
+    return new_proxy;
+  }
 
-  return new_proxy;
+  return std::dynamic_pointer_cast<T>(proxy);
 }
 
 }  // namespace trpc

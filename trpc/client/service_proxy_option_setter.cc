@@ -99,6 +99,7 @@ void SetDefaultOption(const std::shared_ptr<ServiceProxyOption>& option) {
   option->is_reconnection = kDefaultIsReconnection;
   option->connect_timeout = kDefaultConnectTimeout;
   option->allow_reconnect = kDefaultAllowReconnect;
+  option->endpoint_hash_bucket_size = kEndpointHashBucketSize;
   option->threadmodel_type_name = kDefaultThreadmodelType;
   option->threadmodel_instance_name = "";
   option->support_pipeline = kDefaultSupportPipeline;
@@ -186,6 +187,9 @@ void SetSpecifiedOption(const ServiceProxyOption* option_ptr, const std::shared_
 
   auto allow_reconnect = GetValidInput<bool>(option_ptr->allow_reconnect, kDefaultAllowReconnect);
   SetOutputByValidInput<bool>(allow_reconnect, option->allow_reconnect);
+
+  auto endpoint_hash_bucket_size = GetValidInput<uint32_t>(option_ptr->endpoint_hash_bucket_size, 0);
+  SetOutputByValidInput<uint32_t>(endpoint_hash_bucket_size, option->endpoint_hash_bucket_size);
 
   auto threadmodel_type_name = GetValidInput<std::string>(option_ptr->threadmodel_type_name, kDefaultThreadmodelType);
   SetOutputByValidInput<std::string>(threadmodel_type_name, option->threadmodel_type_name);

@@ -108,6 +108,9 @@ struct ServiceProxyConfig {
   /// Use in fiber runtime
   uint32_t send_queue_timeout{kDefaultSendQueueTimeout};
 
+  /// The hashmap bucket size for storing ip/port <--> Connector
+  uint32_t endpoint_hash_bucket_size{kEndpointHashBucketSize};
+
   /// The thread model type use by `ServiceProxy`, deprecated.
   std::string threadmodel_type;
 

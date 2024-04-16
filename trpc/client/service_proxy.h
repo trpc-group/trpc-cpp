@@ -30,6 +30,7 @@
 #include "trpc/transport/client/client_transport.h"
 #include "trpc/transport/client/preallocation_option.h"
 #include "trpc/tvar/basic_ops/reducer.h"
+#include "trpc/util/unique_id.h"
 
 namespace trpc {
 
@@ -190,6 +191,8 @@ class ServiceProxy {
 
  private:
   std::shared_ptr<ServiceProxyOption> option_;
+
+  UniqueId unique_id_;
 
   // service routing name
   std::string service_name_;
