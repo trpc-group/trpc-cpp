@@ -108,6 +108,10 @@ int TcpAcceptor::HandleReadEvent() {
     NetworkAddress peer_addr;
     int conn_fd = socket_.Accept(&peer_addr);
     if (conn_fd >= 0) {
+      // When Accept returns standard input(0),standard output(1),and standard error(2), just only log
+      if (conn_fd < 3) {
+        TRPC_LOG_WARN("Accept return std fd,conn_fd:" << conn_fd);
+      }
       AcceptConnectionFunction& accept_handler = GetAcceptHandleFunction();
       if (accept_handler) {
         AcceptConnectionInfo info;
