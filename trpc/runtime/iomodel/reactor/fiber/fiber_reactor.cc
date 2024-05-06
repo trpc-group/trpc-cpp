@@ -226,9 +226,9 @@ void TerminateAllReactor() {
 }
 
 Reactor* GetReactor(std::size_t scheduling_group, int fd) {
-  TRPC_CHECK(fd != 0 && fd != -1,
-              "You're likely passing in a fd got from calling `Get()` on an "
-              "invalid `Handle`.");
+  TRPC_CHECK(fd != -1,
+             "You're likely passing in a fd got from calling `Get()` on an "
+             "invalid `Handle`.");
   if (fd == -2) {
     fd = Random<int>();
   }
