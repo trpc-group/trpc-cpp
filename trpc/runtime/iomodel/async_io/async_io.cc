@@ -108,7 +108,7 @@ trpc::Future<int32_t> AsyncIO::SubmitOne(F&& fill_sqe) {
   io_uring_sqe_set_data(sqe, user_data);
 
   int ret = io_uring_submit(ring);
-  if (TRPC_UNLIKELY(ret != 1)) {
+  if (TRPC_UNLIKELY(ret <= 0)) {
     trpc::object_pool::Delete<IOURingUserData>(user_data);
     if (ret < 0) {
       return MakeExceptionFuture<int32_t>(AsyncIOError(ret));
@@ -116,7 +116,7 @@ trpc::Future<int32_t> AsyncIO::SubmitOne(F&& fill_sqe) {
     std::string msg = "Submit success but return not one, ret:" + std::to_string(ret);
     return MakeExceptionFuture<int32_t>(AsyncIOError(AsyncIOError::SUBMIT_FAIL, msg));
   }
-  submitted_++;
+  submitted_ += ret;
 
   return user_data->pr.GetFuture();
 }
