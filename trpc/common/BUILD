@@ -136,6 +136,7 @@ cc_library(
         "//trpc/transport/common:ssl_helper",
         "//trpc/util/log/default:default_log",
         "//trpc/util:net_util",
+        "//trpc/overload_control:trpc_overload_control",
     ] + select({
         "//trpc:trpc_include_rpcz": [
             "//trpc/rpcz:collector",
