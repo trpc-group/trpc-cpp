@@ -33,7 +33,7 @@
 namespace trpc::admin {
 
 extern "C" {
-extern void* _dl_sym(void* handle, const char* symbol, void* caller);
+extern void* __attribute__((weak)) _dl_sym(void* handle, const char* symbol, void* caller);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
