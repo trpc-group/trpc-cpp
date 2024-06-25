@@ -188,3 +188,11 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "overload_control_factory",
+    hdrs = ["overload_control_factory.h"],
+    deps = [
+        "//trpc/log:trpc_log",
+    ],
+)
