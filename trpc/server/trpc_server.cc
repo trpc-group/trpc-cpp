@@ -107,10 +107,10 @@ void TrpcServer::BuildAdminServiceAdapter() {
     option.max_conn_num = 100;
     option.max_packet_size = UINT32_MAX;
     option.threadmodel_instance_name = std::string(kSeparateAdminInstance);
+    admin_service_name_ = option.service_name;
 
     auto service_adapter = std::make_shared<ServiceAdapter>(std::move(option));
 
-    admin_service_name_ = option.service_name;
     admin_service_ = std::make_shared<trpc::AdminService>();
     admin_service_->SetAdapter(service_adapter.get());
 
