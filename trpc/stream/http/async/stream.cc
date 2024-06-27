@@ -48,6 +48,11 @@ Future<> HttpAsyncStream::PushSendMessage(HttpStreamFramePtr&& msg) {
   if (IsStateTerminate()) {
     Stop();
   }
+  // If got empty buffer, there is no need to write to connection.
+  // Maybe caused by invoking `WriteDone` at content-length mode.
+  if (out.ByteSize() == 0) {
+    return MakeReadyFuture<>();
+  }
   return AsyncWrite(std::move(out));
 }
 
