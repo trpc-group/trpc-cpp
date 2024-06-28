@@ -452,7 +452,13 @@ class FutureImplBase {
     int64_t timeout_us = timeout * 1000;
     auto start = std::chrono::system_clock::now();
 
-    while (!state_base_->has_result) {
+    while (true) {
+      {
+        std::lock_guard<std::mutex> lock(state_base_->mtx);
+        if (state_base_->has_result) {
+          break;
+        }
+      }
       std::this_thread::sleep_for(std::chrono::microseconds(100));
       auto now = std::chrono::system_clock::now();
       auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - start);

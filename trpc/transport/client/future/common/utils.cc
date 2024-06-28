@@ -88,11 +88,17 @@ void DispatchResponse(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_msg,
 }
 
 void DispatchException(CTransportReqMsg* req_msg, int ret, std::string&& err_msg,
-                       const TransInfo::RspDispatchFunction& rsp_dispatch_function) {
+                       const TransInfo::RspDispatchFunction& rsp_dispatch_function,
+                       const TransInfo::RunClientFiltersFunction& run_client_filters_function) {
   object_pool::LwUniquePtr<MsgTask> task = object_pool::MakeLwUnique<MsgTask>();
   task->task_type = runtime::kResponseMsg;
   task->param = req_msg;
-  task->handler = [req_msg, ret, msg = std::move(err_msg)]() mutable {
+  task->handler = [req_msg, ret, msg = std::move(err_msg), run_client_filters_function]() mutable {
+    // For rpcz
+    if (run_client_filters_function != nullptr) {
+      run_client_filters_function(FilterPoint::CLIENT_POST_SCHED_RECV_MSG, req_msg);
+    }
+
     auto* backup_promise = req_msg->extend_info->backup_promise;
     Exception ex(CommonException(msg.c_str(), ret));
     req_msg->extend_info->promise.SetException(ex);
