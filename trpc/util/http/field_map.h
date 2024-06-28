@@ -79,7 +79,7 @@ class FieldMap {
   /// @brief  Does same thing as Set method, but only works when key does not exist in the map.
   template <typename K, typename V>
   void SetIfNotPresent(K&& key, V&& value) {
-    if (auto it = pairs_.lower_bound(key); it == pairs_.end() || it->first != key) {
+    if (auto it = pairs_.lower_bound(key); it == pairs_.end() || !CaseInsensitiveEqualTo()(it->first, key)) {
       pairs_.emplace_hint(it, std::forward<K>(key), std::forward<V>(value));
     }
   }

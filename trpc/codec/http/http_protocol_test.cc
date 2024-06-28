@@ -35,8 +35,9 @@ TEST_F(HttpProtoFixture, HttpRequestProtocolTest) {
   HttpRequestProtocol req = HttpRequestProtocol(std::make_shared<http::Request>());
   req.request->SetContent(test);
   NoncontiguousBuffer buff;
-  EXPECT_FALSE(req.ZeroCopyDecode(buff));
-  EXPECT_FALSE(req.ZeroCopyEncode(buff));
+  ASSERT_FALSE(req.ZeroCopyDecode(buff));
+  ASSERT_FALSE(req.ZeroCopyEncode(buff));
+  ASSERT_NE(0, req.GetMessageSize());
 }
 
 TEST_F(HttpProtoFixture, HttpResponseProtocolTest) {
@@ -47,8 +48,9 @@ TEST_F(HttpProtoFixture, HttpResponseProtocolTest) {
   reply.SetStatus(trpc::http::HttpResponse::StatusCode::kOk);
   reply.SetContent("{\"age\":\"18\",\"height\":180}");
   NoncontiguousBuffer buff;
-  EXPECT_FALSE(rsp.ZeroCopyDecode(buff));
-  EXPECT_FALSE(rsp.ZeroCopyEncode(buff));
+  ASSERT_FALSE(rsp.ZeroCopyDecode(buff));
+  ASSERT_FALSE(rsp.ZeroCopyEncode(buff));
+  ASSERT_NE(0, rsp.GetMessageSize());
 }
 
 TEST(HttpRequestProtocolTest, GetOkNonContiguousProtocolBody) {
@@ -59,13 +61,13 @@ TEST(HttpRequestProtocolTest, GetOkNonContiguousProtocolBody) {
   request_protocol.SetNonContiguousProtocolBody(builder.DestructiveGet());
 
   auto body_buffer = request_protocol.GetNonContiguousProtocolBody();
-  EXPECT_EQ(greetings.size(), body_buffer.ByteSize());
+  ASSERT_EQ(greetings.size(), body_buffer.ByteSize());
 }
 
 TEST(HttpRequestProtocolTest, GetEmptyNonContiguousProtocolBody) {
   HttpRequestProtocol request_protocol{std::make_shared<http::HttpRequest>()};
   auto body_buffer = request_protocol.GetNonContiguousProtocolBody();
-  EXPECT_EQ(0, body_buffer.size());
+  ASSERT_EQ(0, body_buffer.size());
 }
 
 TEST(HttpResponseProtocolTest, GetOkNonContiguousProtocolBody) {
@@ -74,8 +76,8 @@ TEST(HttpResponseProtocolTest, GetOkNonContiguousProtocolBody) {
 
   response_protocol.SetNonContiguousProtocolBody(CreateBufferSlow(greetings));
 
-  EXPECT_EQ(greetings.size(), response_protocol.GetNonContiguousProtocolBody().ByteSize());
-  EXPECT_TRUE(response_protocol.response.GetContent().empty());
+  ASSERT_EQ(greetings.size(), response_protocol.GetNonContiguousProtocolBody().ByteSize());
+  ASSERT_TRUE(response_protocol.response.GetContent().empty());
 }
 
 TEST(EncodeTypeToMimeTest, EncodeTypeToMime) {
@@ -92,7 +94,7 @@ TEST(EncodeTypeToMimeTest, EncodeTypeToMime) {
   };
 
   for (const auto& t : testings) {
-    EXPECT_EQ(t.expect, EncodeTypeToMime(t.encode_type));
+    ASSERT_EQ(t.expect, EncodeTypeToMime(t.encode_type));
   }
 }
 
@@ -112,7 +114,7 @@ TEST(MimeToEncodeTypeTest, MimeToEncodeType) {
   };
 
   for (const auto& t : testings) {
-    EXPECT_EQ(t.expect, MimeToEncodeType(t.mime));
+    ASSERT_EQ(t.expect, MimeToEncodeType(t.mime));
   }
 }
 

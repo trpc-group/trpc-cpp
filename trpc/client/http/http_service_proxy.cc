@@ -68,14 +68,15 @@ Future<ProtocolPtr> HttpServiceProxy::AsyncInnerUnaryInvoke(const ClientContextP
       ProtocolPtr p = rsp.GetValue0();
       // When the call is successful, set the response data (for use by the `CLIENT_POST_RPC_INVOKE` filter).
       context->SetResponseData(&p);
-      filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
       if (!CheckHttpResponse(context, p)) {
         std::string error = fmt::format("service name:{},check http reply failed,{}", GetServiceName(),
                                         context->GetStatus().ToString());
         TRPC_LOG_ERROR(error);
+        filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
         return MakeExceptionFuture<ProtocolPtr>(
             CommonException(context->GetStatus().ErrorMessage().c_str(), context->GetStatus().GetFuncRetCode()));
       }
+      filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
       return MakeReadyFuture<ProtocolPtr>(std::move(p));
     }
 
