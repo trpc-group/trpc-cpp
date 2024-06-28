@@ -48,6 +48,7 @@ extern "C" {
 
 // FIXME: TSan support does not work yet.
 #ifdef TRPC_INTERNAL_USE_TSAN
+#ifndef TRPC_INTERNAL_EXCLUDE_TSAN_INTERFACE
 extern "C" {
 [[gnu::weak]] void* __tsan_get_current_fiber(void);
 [[gnu::weak]] void* __tsan_create_fiber(unsigned);
@@ -78,6 +79,7 @@ const unsigned __tsan_mutex_recursive_unlock = 1 << 7;
 [[gnu::weak]] void __tsan_acquire(void*);
 [[gnu::weak]] void __tsan_release(void*);
 }
+#endif
 
 #define TRPC_INTERNAL_TSAN_MUTEX_CREATE(...) __tsan_mutex_create(__VA_ARGS__)
 #define TRPC_INTERNAL_TSAN_MUTEX_DESTROY(...) __tsan_mutex_destroy(__VA_ARGS__)

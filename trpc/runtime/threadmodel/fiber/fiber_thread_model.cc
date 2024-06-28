@@ -129,16 +129,27 @@ void FiberThreadModel::Start() noexcept {
 }
 
 void FiberThreadModel::Terminate() noexcept {
+  // Exit the timer worker first due to it uses the tls variable of the FiberWorker thread.
   for (auto&& e : scheduling_groups_) {
     for (auto&& ee : e) {
       ee->timer_worker->Stop();
-      ee->scheduling_group->Stop();
     }
   }
 
   for (auto&& e : scheduling_groups_) {
     for (auto&& ee : e) {
       ee->timer_worker->Join();
+    }
+  }
+
+  for (auto&& e : scheduling_groups_) {
+    for (auto&& ee : e) {
+      ee->scheduling_group->Stop();
+    }
+  }
+
+  for (auto&& e : scheduling_groups_) {
+    for (auto&& ee : e) {
       for (auto&& eee : ee->fiber_workers) {
         eee->Join();
       }
