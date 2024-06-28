@@ -72,6 +72,9 @@ class HttpRequestProtocol : public Protocol {
   void SetFromHttpServiceProxy(bool from_http_service_proxy) { from_http_service_proxy_ = from_http_service_proxy; }
   bool IsFromHttpServiceProxy() { return from_http_service_proxy_; }
 
+  /// @brief Get size of message
+  uint32_t GetMessageSize() const override;
+
  public:
   uint32_t request_id{0};
   http::RequestPtr request{nullptr};
@@ -100,6 +103,9 @@ class HttpResponseProtocol : public Protocol {
   NoncontiguousBuffer GetNonContiguousProtocolBody() override {
     return std::move(*response.GetMutableNonContiguousBufferContent());
   }
+
+  /// @brief Get size of message
+  uint32_t GetMessageSize() const override;
 
  public:
   http::Response response;

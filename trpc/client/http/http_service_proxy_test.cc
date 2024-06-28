@@ -20,6 +20,7 @@
 #include "trpc/client/make_client_context.h"
 #include "trpc/client/service_proxy_option_setter.h"
 #include "trpc/codec/codec_manager.h"
+#include "trpc/filter/filter_manager.h"
 #include "trpc/future/future_utility.h"
 #include "trpc/naming/trpc_naming_registry.h"
 #include "trpc/proto/testing/helloworld.pb.h"
@@ -27,6 +28,32 @@
 #include "trpc/serialization/trpc_serialization.h"
 
 namespace trpc::testing {
+
+class TestClientFilter : public trpc::MessageClientFilter {
+ public:
+  std::string Name() override { return "test_filter"; }
+
+  std::vector<trpc::FilterPoint> GetFilterPoint() override {
+    std::vector<FilterPoint> points = {trpc::FilterPoint::CLIENT_PRE_RPC_INVOKE,
+                                       trpc::FilterPoint::CLIENT_POST_RPC_INVOKE};
+    return points;
+  }
+
+  void operator()(trpc::FilterStatus& status, trpc::FilterPoint point, const trpc::ClientContextPtr& context) override {
+    status = FilterStatus::CONTINUE;
+    // record the status upon entering the CLIENT_POST_RPC_INVOKE point
+    if (point == FilterPoint::CLIENT_POST_RPC_INVOKE) {
+      status_ = context->GetStatus();
+    }
+  }
+
+  void SetStatus(trpc::Status&& status) { status_ = std::move(status); }
+
+  Status GetStatus() { return status_; }
+
+ private:
+  trpc::Status status_;
+};
 
 class HttpServiceProxyTest : public ::testing::Test {
  public:
@@ -46,6 +73,10 @@ class HttpServiceProxyTest : public ::testing::Test {
     codec::Init();
     serialization::Init();
     naming::Init();
+
+    filter_ = std::make_shared<TestClientFilter>();
+    trpc::FilterManager::GetInstance()->AddMessageClientFilter(filter_);
+    option_->service_filters.push_back(filter_->Name());
   }
 
   static void TearDownTestCase() {
@@ -58,9 +89,11 @@ class HttpServiceProxyTest : public ::testing::Test {
 
  protected:
   static std::shared_ptr<ServiceProxyOption> option_;
+  static std::shared_ptr<TestClientFilter> filter_;
 };
 
 std::shared_ptr<ServiceProxyOption> HttpServiceProxyTest::option_ = std::make_shared<ServiceProxyOption>();
+std::shared_ptr<TestClientFilter> HttpServiceProxyTest::filter_;
 
 class MockHttpServiceProxy : public trpc::http::HttpServiceProxy {
  public:
@@ -3889,6 +3922,109 @@ TEST_F(HttpServiceProxyTest, ConstructPBRequest) {
     EXPECT_STREQ("application/pb", req.GetHeader("Content-Type").c_str());
     EXPECT_STREQ("0", req.GetHeader("Content-Length").c_str());
   }
+}
+
+TEST_F(HttpServiceProxyTest, FilterExecWhenSuccess) {
+  auto proxy = std::make_shared<MockHttpServiceProxy>();
+  proxy->SetMockServiceProxyOption(option_);
+  auto ctx = MakeClientContext(proxy);
+  ctx->SetStatus(Status());
+  ctx->SetAddr("127.0.0.1", 10002);
+
+  trpc::http::HttpResponse reply;
+  reply.SetVersion("1.1");
+  reply.SetStatus(trpc::http::HttpResponse::StatusCode::kOk);
+  proxy->SetReplyError(false);
+  proxy->SetReply(reply);
+
+  std::string rspStr;
+  filter_->SetStatus(Status());
+  auto st = proxy->GetString(ctx, "http://127.0.0.1:10002/hello", &rspStr);
+  ASSERT_TRUE(st.OK());
+  // verify that the status is OK upon entering the RPC post-filter point
+  ASSERT_TRUE(filter_->GetStatus().OK());
+
+  proxy->SetReplyError(false);
+  proxy->SetReply(reply);
+  ctx = MakeClientContext(proxy);
+  ctx->SetStatus(Status());
+  ctx->SetAddr("127.0.0.1", 10002);
+  filter_->SetStatus(Status());
+  auto async_get_string_fut =
+      proxy->AsyncGetString(ctx, "http://127.0.0.1:10002/hello").Then([](Future<std::string>&& future) {
+        EXPECT_TRUE(future.IsReady());
+        // verify that the status is OK upon entering the RPC post-filter point
+        EXPECT_TRUE(filter_->GetStatus().OK());
+
+        return MakeReadyFuture<>();
+      });
+  future::BlockingGet(std::move(async_get_string_fut));
+}
+
+TEST_F(HttpServiceProxyTest, FilterExecWithFrameworkErr) {
+  auto proxy = std::make_shared<MockHttpServiceProxy>();
+  proxy->SetMockServiceProxyOption(option_);
+  auto ctx = MakeClientContext(proxy);
+  ctx->SetStatus(Status());
+  ctx->SetAddr("127.0.0.1", 10002);
+
+  proxy->SetReplyError(true);
+  std::string rspStr;
+  filter_->SetStatus(Status());
+  auto st = proxy->GetString(ctx, "http://127.0.0.1:10002/hello", &rspStr);
+  ASSERT_FALSE(st.OK());
+  // verify that the status is already failed upon entering the RPC post-filter point
+  ASSERT_FALSE(filter_->GetStatus().OK());
+
+  proxy->SetReplyError(true);
+  ctx = MakeClientContext(proxy);
+  ctx->SetStatus(Status());
+  ctx->SetAddr("127.0.0.1", 10002);
+  filter_->SetStatus(Status());
+  auto async_get_string_fut =
+      proxy->AsyncGetString(ctx, "http://127.0.0.1:10002/hello").Then([](Future<std::string>&& future) {
+        EXPECT_TRUE(future.IsFailed());
+        // verify that the status is already failed upon entering the RPC post-filter point
+        EXPECT_FALSE(filter_->GetStatus().OK());
+        return MakeReadyFuture<>();
+      });
+  future::BlockingGet(std::move(async_get_string_fut));
+}
+
+TEST_F(HttpServiceProxyTest, FilterExecWithHttpErr) {
+  auto proxy = std::make_shared<MockHttpServiceProxy>();
+  proxy->SetMockServiceProxyOption(option_);
+  auto ctx = MakeClientContext(proxy);
+  ctx->SetStatus(Status());
+  ctx->SetAddr("127.0.0.1", 10002);
+
+  trpc::http::HttpResponse reply;
+  reply.SetVersion("1.1");
+  reply.SetStatus(trpc::http::HttpResponse::StatusCode::kForbidden);
+  proxy->SetReplyError(false);
+  proxy->SetReply(reply);
+
+  std::string rspStr;
+  filter_->SetStatus(Status());
+  auto st = proxy->GetString(ctx, "http://127.0.0.1:10002/hello", &rspStr);
+  ASSERT_FALSE(st.OK());
+  // verify that the status is already failed upon entering the RPC post-filter point
+  ASSERT_FALSE(filter_->GetStatus().OK());
+
+  proxy->SetReplyError(false);
+  proxy->SetReply(reply);
+  ctx = MakeClientContext(proxy);
+  ctx->SetStatus(Status());
+  ctx->SetAddr("127.0.0.1", 10002);
+  filter_->SetStatus(Status());
+  auto async_get_string_fut =
+      proxy->AsyncGetString(ctx, "http://127.0.0.1:10002/hello").Then([](Future<std::string>&& future) {
+        EXPECT_TRUE(future.IsFailed());
+        // verify that the status is already failed upon entering the RPC post-filter point
+        EXPECT_FALSE(filter_->GetStatus().OK());
+        return MakeReadyFuture<>();
+      });
+  future::BlockingGet(std::move(async_get_string_fut));
 }
 
 }  // namespace trpc::testing

@@ -207,4 +207,22 @@ TEST_F(FieldMapTest, FlatPairsCount) {
   ASSERT_EQ(17, header_.FlatPairsCount());
 }
 
+TEST_F(FieldMapTest, SetIfNotPresentOk) {
+  EXPECT_EQ(0, header_.Values("User-Defined-Key99").size());
+  header_.SetIfNotPresent("User-Defined-Key99", "user-defined-value99");
+  EXPECT_EQ(1, header_.Values("User-Defined-Key99").size());
+  EXPECT_EQ("user-defined-value99", header_.Get("User-Defined-Key99"));
+
+  EXPECT_EQ(1, header_.Values("User-Defined-Key01").size());
+  header_.SetIfNotPresent("User-Defined-Key01", "user-defined-value01-new");
+  EXPECT_EQ(1, header_.Values("User-Defined-Key01").size());
+  EXPECT_EQ("user-defined-value01", header_.Get("User-Defined-Key01"));
+
+  // case insensitivity test
+  EXPECT_EQ(1, header_.Values("user-defined-key01").size());
+  header_.SetIfNotPresent("user-defined-key01", "user-defined-value01-new");
+  EXPECT_EQ(1, header_.Values("user-defined-key01").size());
+  EXPECT_EQ("user-defined-value01", header_.Get("user-defined-key01"));
+}
+
 }  // namespace trpc::http::testing
