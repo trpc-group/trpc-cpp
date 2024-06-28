@@ -103,9 +103,13 @@ struct convert<trpc::ServiceProxyConfig> {
     if (node["recv_buffer_size"]) proxy_config.recv_buffer_size = node["recv_buffer_size"].as<uint32_t>();
     if (node["send_queue_capacity"]) proxy_config.send_queue_capacity = node["send_queue_capacity"].as<uint32_t>();
     if (node["send_queue_timeout"]) proxy_config.send_queue_timeout = node["send_queue_timeout"].as<uint32_t>();
-    if (node["endpoint_hash_bucket_size"]) proxy_config.endpoint_hash_bucket_size = node["endpoint_hash_bucket_size"].as<uint32_t>();
+    if (node["endpoint_hash_bucket_size"]) {
+      proxy_config.endpoint_hash_bucket_size = node["endpoint_hash_bucket_size"].as<uint32_t>();
+    }
     if (node["threadmodel_type"]) proxy_config.threadmodel_type = node["threadmodel_type"].as<std::string>();
-    if (node["threadmodel_instance_name"]) proxy_config.threadmodel_instance_name = node["threadmodel_instance_name"].as<std::string>();
+    if (node["threadmodel_instance_name"]) {
+      proxy_config.threadmodel_instance_name = node["threadmodel_instance_name"].as<std::string>();
+    }
     if (node["selector_name"]) proxy_config.selector_name = node["selector_name"].as<std::string>();
     if (node["namespace"]) proxy_config.namespace_ = node["namespace"].as<std::string>();
     if (node["load_balance_name"]) proxy_config.load_balance_name = node["load_balance_name"].as<std::string>();
