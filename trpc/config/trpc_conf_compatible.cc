@@ -246,6 +246,11 @@ bool TransformConfig(const std::string& from, Json::Value* json_value) {
       TRPC_FMT_ERROR("Json parse error. content:{}, error:{}", from, err_msg);
       return false;
     }
+    // It will cause coredump if str `from` is not json-format.
+    if (!json_value->isArray() && !json_value->isObject()) {
+      TRPC_FMT_ERROR("Json is not array or object. content:{}", from);
+      return false;
+    }
   } catch (std::exception& ex) {
     TRPC_FMT_ERROR("parse string to json ex:{} ", ex.what());
     return false;

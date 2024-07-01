@@ -117,7 +117,7 @@ ssize_t WritingBufferList::FlushTo(IoHandler* io, ConnectionHandler* conn_handle
   // We did write something out. Remove those buffers and update the result accordingly.
   auto flushed = static_cast<std::size_t>(rc);
   bool drained = false;
-  if (size_.fetch_sub(flushed, std::memory_order_acquire) < max_capacity) {
+  if (size_.fetch_sub(flushed, std::memory_order_acq_rel) - flushed < max_capacity) {
     writable_cv_.notify_one();
   }
 
