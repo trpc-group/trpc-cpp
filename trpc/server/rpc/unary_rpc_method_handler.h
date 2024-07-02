@@ -200,7 +200,7 @@ class UnaryRpcMethodHandler : public RpcMethodHandlerInterface {
  private:
   bool Serialize(serialization::Serialization* serialization, void* rsp, NoncontiguousBuffer& buff) {
     serialization::DataType type;
-    if constexpr (std::is_convertible_v<RequestType*, google::protobuf::Message*>) {
+    if constexpr (std::is_convertible_v<RequestType*, google::protobuf::MessageLite*>) {
       type = serialization::kPbMessage;
     } else if constexpr (std::is_convertible_v<RequestType*, rapidjson::Document*>) {
       type = serialization::kRapidJson;
@@ -219,7 +219,7 @@ class UnaryRpcMethodHandler : public RpcMethodHandlerInterface {
 
   bool Deserialize(serialization::Serialization* serialization, NoncontiguousBuffer* req_data, void* req) {
     serialization::DataType type;
-    if constexpr (std::is_convertible_v<RequestType*, google::protobuf::Message*>) {
+    if constexpr (std::is_convertible_v<RequestType*, google::protobuf::MessageLite*>) {
       type = serialization::kPbMessage;
     } else if constexpr (std::is_convertible_v<RequestType*, rapidjson::Document*>) {
       type = serialization::kRapidJson;

@@ -190,4 +190,11 @@ TEST_F(TrpcConfCompatibleTest, TransformConfig_JSON_Fail_WithIntegerOverflow) {
   ASSERT_FALSE(trpc::config::GetInt64(json_value, "int_overflow", &v));
 }
 
+TEST_F(TrpcConfCompatibleTest, FindValueFromJson_json_string) {
+  std::string from = R"(1)";
+  Json::Value json_value;
+  bool trans_result = trpc::config::TransformConfig(from, &json_value);
+  ASSERT_FALSE(trans_result);
+}
+
 }  // namespace trpc::testing
