@@ -43,8 +43,10 @@ void DispatchResponse(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_msg,
 /// @param ret Error code.
 /// @param err_msg Error message.
 /// @param rsp_dispatch_function Function to decide which handle thread to dispatch to.
+/// @param run_client_filters_function Function to run client filters.
 void DispatchException(CTransportReqMsg* req_msg, int ret, std::string&& err_msg,
-                       const TransInfo::RspDispatchFunction& rsp_dispatch_function);
+                       const TransInfo::RspDispatchFunction& rsp_dispatch_function,
+                       const TransInfo::RunClientFiltersFunction& run_client_filters_function = nullptr);
 
 /// @brief To trigger backup request withdraw.
 /// @param promise Related Promise of backup request.

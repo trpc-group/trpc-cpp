@@ -58,7 +58,8 @@ bool FutureTcpConnPoolConnectionHandler::HandleMessage(const ConnectionPtr& conn
     std::string error = "decode failed peer addr = ";
     error += options_.group_options->peer_addr.ToString();
     future::DispatchException(msg, TrpcRetCode::TRPC_CLIENT_DECODE_ERR, std::move(error),
-                              options_.group_options->trans_info->rsp_dispatch_function);
+                              options_.group_options->trans_info->rsp_dispatch_function,
+                              options_.group_options->trans_info->run_client_filters_function);
     // Decode error, let caller close connection.
     return false;
   }
@@ -158,7 +159,8 @@ bool FutureUdpIoPoolConnectionHandler::HandleMessage(const ConnectionPtr& conn,
     std::string error = "decode failed peer addr = ";
     error += options_.group_options->peer_addr.ToString();
     future::DispatchException(msg, TrpcRetCode::TRPC_CLIENT_DECODE_ERR, std::move(error),
-                              options_.group_options->trans_info->rsp_dispatch_function);
+                              options_.group_options->trans_info->rsp_dispatch_function,
+                              options_.group_options->trans_info->run_client_filters_function);
   }
 
   // When there is no pending request to send, just recycle connection.
