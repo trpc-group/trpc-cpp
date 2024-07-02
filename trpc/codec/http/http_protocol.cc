@@ -57,6 +57,10 @@ bool HttpRequestProtocol::WaitForFullRequest() {
   return false;
 }
 
+uint32_t HttpRequestProtocol::GetMessageSize() const { return request->ContentLength(); }
+
+uint32_t HttpResponseProtocol::GetMessageSize() const { return response.ContentLength(); }
+
 namespace internal {
 const std::string& GetHeaderString(const http::HeaderPairs& header, const std::string& name) {
   return header.Get(name);
