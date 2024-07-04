@@ -29,20 +29,37 @@ DEFINE_string(service_name, "trpc.test.helloworld.Greeter", "callee service name
 
 int DoAsyncRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy) {
   ::trpc::ClientContextPtr client_ctx = ::trpc::MakeClientContext(proxy);
+
   ::trpc::test::helloworld::HelloRequest req;
-  req.set_msg("future");
+  req.set_name("issueshooter");
+  req.set_age(18);
+  req.add_hobby("opensource project");
+  req.add_hobby("movies");
+  req.add_hobby("books");
+
   bool succ = true;
   auto fut = proxy->AsyncSayHello(client_ctx, req)
       .Then([&succ](::trpc::Future<::trpc::test::helloworld::HelloReply>&& fut) {
-        if (fut.IsReady()) {
-          auto rsp = fut.GetValue0();
-          std::cout << "get rsp msg: " << rsp.msg() << std::endl;
-        } else {
-          auto exception = fut.GetException();
-          succ = false;
-          std::cerr << "get rpc error: " << exception.what() << std::endl;
-        }
-        return ::trpc::MakeReadyFuture<>();
+          if (fut.IsReady()) {
+              auto rsp = fut.GetValue0();
+              std::cout << "get rsp:" << std::endl;
+              std::cout << " name: " << rsp.name() << std::endl;
+              std::cout << " age: " << rsp.age() << std::endl;
+              std::cout << " hobby: ";
+              std::string hobbies_str;
+              for (const auto& hobby : rsp.hobby()) {
+                  if (!hobbies_str.empty()) {
+                      hobbies_str += ", ";
+                  }
+                  hobbies_str += hobby;
+              }
+              std::cout << hobbies_str << std::endl;
+          } else {
+              auto exception = fut.GetException();
+              succ = false;
+              std::cerr << "get rpc error: " << exception.what() << std::endl;
+          }
+          return ::trpc::MakeReadyFuture<>();
       });
   ::trpc::future::BlockingGet(std::move(fut));
   return succ ? 0 : -1;

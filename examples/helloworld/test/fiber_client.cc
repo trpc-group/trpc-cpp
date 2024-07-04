@@ -28,16 +28,32 @@ DEFINE_string(service_name, "trpc.test.helloworld.Greeter", "callee service name
 
 int DoRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy) {
   ::trpc::ClientContextPtr client_ctx = ::trpc::MakeClientContext(proxy);
-  ::trpc::test::helloworld::HelloRequest req;
-  req.set_msg("fiber");
-  ::trpc::test::helloworld::HelloReply rsp;
-  ::trpc::Status status = proxy->SayHello(client_ctx, req, &rsp);
-  if (!status.OK()) {
-    std::cerr << "get rpc error: " << status.ErrorMessage() << std::endl;
-    return -1;
-  }
-  std::cout << "get rsp msg: " << rsp.msg() << std::endl;
-  return 0;
+	
+	::trpc::test::helloworld::HelloRequest req;
+	req.set_name("issueshooter");
+	req.set_age(18);
+	req.add_hobby("opensource project");
+	req.add_hobby("movies");
+	req.add_hobby("books");
+	
+	::trpc::test::helloworld::HelloReply rsp;
+	::trpc::Status status = proxy->SayHello(client_ctx, req, &rsp);
+	if (!status.OK()) {
+		std::cerr << "get rpc error: " << status.ErrorMessage() << std::endl;
+		return -1;
+	}
+	std::cout << "get rsp: \n name: " << rsp.name() << std::endl;
+	std::cout << " age: " << rsp.age() << std::endl;
+	std::cout << " hobby: ";
+	std::string hobbies_str;
+	for (const auto& hobby : rsp.hobby()) {
+		if (!hobbies_str.empty()) {
+			hobbies_str += ", "; 
+		}
+		hobbies_str += hobby; 
+	}
+	std::cout << hobbies_str << std::endl;
+	return 0;
 }
 
 int Run() {

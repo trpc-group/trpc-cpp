@@ -42,7 +42,7 @@ int Run() {
 
   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::RpcServiceProxy>(FLAGS_target, option);
 
-  std::string req_json_str = "{\"age\":18,\"height\":180}";
+  std::string req_json_str = "{\"name\":\"issueshooter\",\"age\":18,\"hobby\":[\"opensource project\",\"movies\",\"books\"]}";
 
   rapidjson::Document hello_req;
   hello_req.Parse(req_json_str.c_str());
@@ -67,7 +67,21 @@ int Run() {
   }
 
   for (rapidjson::Value::ConstMemberIterator iter = hello_rsp.MemberBegin(); iter != hello_rsp.MemberEnd(); ++iter) {
-    std::cout << "json name: " << iter->name.GetString() << ", value: " << iter->value.GetInt() << std::endl;
+    std::cout << "json name: " << iter->name.GetString() << ", value: ";
+    if (iter->value.IsInt()) {
+      std::cout << iter->value.GetInt() << std::endl;
+    } else if (iter->value.IsString()){
+      std::cout << iter->value.GetString() << std::endl;
+    }else if (iter->value.IsArray()){
+      std::string array_values;
+      for (auto& v : iter->value.GetArray()){
+        if (!array_values.empty()){
+          array_values += ",";
+        }
+        array_values += v.GetString();
+      }
+      std::cout << array_values << std::endl;
+    }
   }
 
   return 0;

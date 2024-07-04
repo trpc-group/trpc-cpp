@@ -37,9 +37,35 @@ class DemoServiceImpl : public ::trpc::RpcServiceImpl {
                               const rapidjson::Document* request,
                               rapidjson::Document* reply) {
     for (rapidjson::Value::ConstMemberIterator iter = request->MemberBegin(); iter != request->MemberEnd(); ++iter) {
-      TRPC_FMT_INFO("json name: {}, value: {}", iter->name.GetString(), iter->value.GetInt());
+      if (iter->value.IsInt()) {
+          TRPC_FMT_INFO("json name: {}, value: {}", iter->name.GetString(), iter->value.GetInt());
+      } else if (iter->value.IsArray()) {
+          std::string array_values;
+          for (auto& v : iter->value.GetArray()) {
+              if (!array_values.empty()){
+                array_values += ",";
+              }
+              array_values += v.GetString();
+          }
+          TRPC_FMT_INFO("json name: {}, values: {}", iter->name.GetString(), array_values);
+      } else if (iter->value.IsString()) {
+          TRPC_FMT_INFO("json name: {}, value: {}", iter->name.GetString(), iter->value.GetString());
+      }
     }
-    reply->CopyFrom(*request, const_cast<rapidjson::Document*>(request)->GetAllocator());
+
+    // Copy request to reply to start with the same JSON
+    reply->CopyFrom(*request, reply->GetAllocator());
+    // Check and modify the "name" field if it exists
+    if (reply->HasMember("name") && (*reply)["name"].IsString()) {
+        std::string modifiedName = "hello " + std::string((*reply)["name"].GetString());
+        (*reply)["name"].SetString(modifiedName.c_str(), modifiedName.length(), reply->GetAllocator());
+    }
+    // Check and increment the "age" field if it exists
+    if (reply->HasMember("age") && (*reply)["age"].IsInt()) {
+        int incrementedAge = (*reply)["age"].GetInt() + 1;
+        (*reply)["age"].SetInt(incrementedAge);
+    }
+
     return ::trpc::kSuccStatus;
   }
 };

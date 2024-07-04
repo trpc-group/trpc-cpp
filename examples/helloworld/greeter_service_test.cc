@@ -32,16 +32,25 @@ namespace testing {
 
 TEST(GreeterServiceTest, SayHelloOK) {
   auto server_context = MakeServerContext();
-
   ::trpc::test::helloworld::HelloRequest request;
-  request.set_msg("tRPC");
+  request.set_name("issueshooter");
+  request.set_age(18);
+  request.add_hobby("opensource project"); 
+  request.add_hobby("movies");
+  request.add_hobby("books"); 
+
   ::trpc::test::helloworld::HelloReply response;
 
   test::helloworld::GreeterServiceImpl svc_impl;
   ::trpc::Status status = svc_impl.SayHello(server_context, &request, &response);
 
   ASSERT_TRUE(status.OK());
-  ASSERT_EQ(response.msg(), "Hello, tRPC");
+  ASSERT_EQ(response.name(), "hello issueshooter");
+  ASSERT_EQ(response.age(), 19); 
+  ASSERT_EQ(response.hobby_size(), 3); 
+  ASSERT_EQ(response.hobby(0), "opensource project");
+  ASSERT_EQ(response.hobby(1), "movies");
+  ASSERT_EQ(response.hobby(2), "books");
 }
 
 }  // namespace testing

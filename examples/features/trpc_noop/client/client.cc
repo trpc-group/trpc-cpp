@@ -14,6 +14,7 @@
 #include <atomic>
 #include <csignal>
 #include <cstdint>
+#include <nlohmann/json.hpp>
 
 #include "gflags/gflags.h"
 
@@ -27,7 +28,13 @@ DEFINE_string(addr, "127.0.0.1:12351", "ip:port");
 DEFINE_string(client_config, "trpc_cpp_fiber.yaml", "");
 
 void SendStringMsg(const std::shared_ptr<::trpc::RpcServiceProxy>& proxy) {
-  std::string req_msg("hello world");
+  nlohmann::json json_req_msg = {
+    {"name","issueshooter"},
+    {"age",18},
+    {"hobby",{"opensource project","movies","books"}}
+  };
+  //Convert JSON to string
+  std::string req_msg = json_req_msg.dump();
   std::string rsp_msg;
 
   ::trpc::ClientContextPtr context = ::trpc::MakeClientContext(proxy);
@@ -44,7 +51,12 @@ void SendStringMsg(const std::shared_ptr<::trpc::RpcServiceProxy>& proxy) {
 }
 
 void SendNoncontiguousBufferMsg(const std::shared_ptr<::trpc::RpcServiceProxy>& proxy) {
-  ::trpc::NoncontiguousBuffer req_msg = ::trpc::CreateBufferSlow("hello world");
+  nlohmann::json json_req_msg = {
+    {"name","issueshooter"},
+    {"age",18},
+    {"hobby",{"opensource project","movies","books"}}
+  };
+  ::trpc::NoncontiguousBuffer req_msg = ::trpc::CreateBufferSlow(json_req_msg.dump());
   ::trpc::NoncontiguousBuffer rsp_msg;
 
   ::trpc::ClientContextPtr context = ::trpc::MakeClientContext(proxy);

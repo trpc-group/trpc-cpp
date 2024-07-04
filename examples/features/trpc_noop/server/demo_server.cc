@@ -14,6 +14,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <nlohmann/json.hpp>
 
 #include "trpc/common/trpc_app.h"
 #include "trpc/log/trpc_log.h"
@@ -40,16 +41,37 @@ class DemoServiceImpl : public ::trpc::RpcServiceImpl {
   ::trpc::Status NoopSayHello1(const ::trpc::ServerContextPtr& context,
                                const std::string* request,
                                std::string* reply) {
-    TRPC_FMT_INFO("request msg: {}", *request);
-    *reply = *request;
+    //Parse the JSON string back to JSON.
+    nlohmann::json req_json = nlohmann::json::parse(*request);
+    TRPC_FMT_INFO("request msg: {}", req_json.dump());
+
+    if (req_json.contains("name") && req_json["name"].is_string()) {
+        req_json["name"] = "hello " + req_json["name"].get<std::string>();
+    }
+    if (req_json.contains("age") && req_json["age"].is_number_integer()) {
+        req_json["age"] = req_json["age"].get<int>() + 1;
+    }
+
+    //Convert modified JSON to string to send back.
+    *reply = req_json.dump();
     return ::trpc::kSuccStatus;
   }
 
   ::trpc::Status NoopSayHello2(const ::trpc::ServerContextPtr& context,
                                const ::trpc::NoncontiguousBuffer* request,
                                ::trpc::NoncontiguousBuffer* reply) {
-    TRPC_FMT_INFO("request msg: {}", ::trpc::FlattenSlow(*request));
-    *reply = *request;
+    nlohmann::json req_json = nlohmann::json::parse(::trpc::FlattenSlow(*request));
+    TRPC_FMT_INFO("request msg: {}", req_json.dump());
+
+    if (req_json.contains("age") && req_json["age"].is_number_integer()) {
+        req_json["age"] = req_json["age"].get<int>() + 2;
+    }
+    if (req_json.contains("name") && req_json["name"].is_string()) {
+        req_json["name"] = "bye " + req_json["name"].get<std::string>();
+    }
+    
+    std::string mod_req = req_json.dump();
+    *reply = ::trpc::CreateBufferSlow(mod_req.data(), mod_req.size());
     return ::trpc::kSuccStatus;
   }
 };
