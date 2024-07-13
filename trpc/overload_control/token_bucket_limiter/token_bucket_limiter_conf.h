@@ -24,7 +24,8 @@ namespace trpc::overload_control {
 /// @brief Token_bucket concurrent control configuration.
 struct TokenBucketLimiterControlConf {
   uint32_t capacity{60000};  ///< Maximum token bucket count capacity.
-  uint32_t rate{100};  ///< Token production rate(count/second).
+  uint32_t current_token{0};  ///< Current token count.
+  uint32_t rate{1000};  ///< Token production rate(count/second).
 
   bool is_report{false};  ///< Whether to report the judgment result to the monitoring plugin.
 

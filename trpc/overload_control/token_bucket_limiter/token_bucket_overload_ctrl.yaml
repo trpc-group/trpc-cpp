@@ -37,7 +37,8 @@ plugins:
           local_file: # Local log file
             filename: trpc.log # The name of log file
   overload_control:
-    token_bucket_limiter:
+    token_bucket_control:
       capacity: 60000 # Maximum token bucket count capacity. It is configured small for unit testing purposes, but users can configure it to be larger.
+      current_token: 20000 # Initial token count.
       rate: 5000 # Token production rate(count/second).
       is_report: true # Whether to report

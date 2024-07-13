@@ -16,6 +16,7 @@
 #pragma once
 
 #include "trpc/filter/filter.h"
+#include "trpc/tvar/common/atomic_type.h"
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
 #include "trpc/overload_control/overload_control_defs.h"
 #include "trpc/server/server_context.h"

@@ -82,6 +82,9 @@ constexpr char kTransinfoKeyTrpcPriority[] = "trpc-priority";
 /// @brief Name of overload protection limiter based on token bucket.
 constexpr char kTokenBucketLimiterName[] = "token_bucket_limiter";
 
+/// @brief Name of monitoring dimensions for request-based concurrent overload protection rate limiter.
+constexpr char kOverloadctrlTokenBucketLimiter[] = "overloadctrl_token_bucket_limiter";
+
 }  // namespace trpc::overload_control
 
 #endif

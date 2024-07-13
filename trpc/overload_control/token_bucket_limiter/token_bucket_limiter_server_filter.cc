@@ -32,6 +32,8 @@ int TokenBucketLimiterServerFilter::Init() {
   }
   token_bucket_conf_.Display();
 
+  current_token.Store(0);
+
   return 0;
 }
 
@@ -57,10 +59,39 @@ void TokenBucketLimiterServerFilter::operator()(FilterStatus& status, FilterPoin
 }
 
 void ConcurrencyLimiterServerFilter::OnRequest(FilterStatus& status, const ServerContextPtr& context) {
-  // TODO
+  if (TRPC_UNLIKELY(!context->GetStatus().OK())) {
+    // If it is already a dirty request, it will not be processed further to ensure that the first error code is
+    // not overwritten.
+    return;
+  }
+  // Get the current unfinished requests.
+  const uint32_t current_concurrency = FrameStats::GetInstance()->GetServerStats().GetReqConcurrency();
+  uint32_t token_count = current_token.Load();
+  bool passed = (current_concurrency <= token_count);
+  if (!passed) {
+    TRPC_FMT_ERROR_EVERY_SECOND(
+        "rejected by token_bucket limiter overload control, current concurrency: {}, current valid token: {}",
+        current_concurrency, token_count);
+    context->SetStatus(
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by token_bucket limiter overload control"));
+    status = FilterStatus::REJECT;
+    return;
+  }
+  uint32 rest_token = token_count - current_concurrency;
+  current_token.Store(rest_token);
+  // Report the result.
+  if (token_bucket_conf_.is_report) {
+    OverloadInfo infos;
+    infos.attr_name = kOverloadctrlTokenBucketLimiter;
+    infos.report_name = fmt::format("/{}/{}", context->GetCalleeName(), context->GetFuncName());
+    infos.tags[kOverloadctrlPass] = (passed == true ? 1 : 0);
+    infos.tags[kOverloadctrlLimited] = (passed == false ? 1 : 0);
+    infos.tags["token_count"] = token_count;
+    infos.tags["current_concurrency"] = current_concurrency;
+    Report::GetInstance()->ReportOverloadInfo(infos);
+  }
 }
 
 }  // namespace trpc::overload_control
-
 
 #endif
