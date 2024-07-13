@@ -79,6 +79,9 @@ constexpr char kOverloadctrlThrottler[] = "overloadctrl_throttler";
 /// @brief Key for request priority in trpc framework.
 constexpr char kTransinfoKeyTrpcPriority[] = "trpc-priority";
 
+/// @brief Name of overload protection limiter based on token bucket.
+constexpr char kTokenBucketLimiterName[] = "token_bucket_limiter";
+
 }  // namespace trpc::overload_control
 
 #endif
