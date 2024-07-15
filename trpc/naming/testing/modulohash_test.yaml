@@ -1,0 +1,8 @@
+plugins:
+  selector:
+    loadbalance:
+      load_balance_name: "trpc_modulohash_load_balance"
+      hash_nodes: 20
+      hash_func: "md5"
+      hash_args: [0,1]
+
