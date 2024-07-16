@@ -24,8 +24,12 @@ bool TokenBucketOverloadController::Init() {
 
 void Register(const TokenBucketLimiterControlConf& conf) {
   capacity = conf.capacity;
-  current_token = conf.current_token;
+  current_token.Store(conf.current_token);
   rate = conf.rate;
+}
+
+bool CheckLimit(const int current_concurrency) {
+  return current_concurrency <= current_token.Load();
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {

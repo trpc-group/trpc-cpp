@@ -14,6 +14,7 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_server_filter.h"
+#include "trpc/overload_control/token_bucket_limiter/token_bucket_overload_controller.h"
 
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/filter/filter_manager.h"
@@ -32,7 +33,9 @@ int TokenBucketLimiterServerFilter::Init() {
   }
   token_bucket_conf_.Display();
 
-  current_token.Store(0);
+  TokenBucketOverloadControllerPtr service_controller = new TokenBucketOverloadController();
+  service_controller->Register(token_bucket_conf_);
+  service_controller->Init();
 
   return 0;
 }
@@ -66,9 +69,7 @@ void ConcurrencyLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
   }
   // Get the current unfinished requests.
   const uint32_t current_concurrency = FrameStats::GetInstance()->GetServerStats().GetReqConcurrency();
-  uint32_t token_count = current_token.Load();
-  bool passed = (current_concurrency <= token_count);
-  if (!passed) {
+  if (!CheckLimit(current_concurrency)) {
     TRPC_FMT_ERROR_EVERY_SECOND(
         "rejected by token_bucket limiter overload control, current concurrency: {}, current valid token: {}",
         current_concurrency, token_count);

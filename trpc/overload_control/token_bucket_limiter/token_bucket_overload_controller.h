@@ -38,6 +38,8 @@ public:
   /// @brief Register the controller plugin by the conf.
   void Register(const TokenBucketLimiterControlConf& conf);
 
+  bool CheckLimit(const int current_concurrency);
+
   bool BeforeSchedule(const ServerContextPtr& context) override;
 
   bool AfterSchedule(const ServerContextPtr& context) override;
