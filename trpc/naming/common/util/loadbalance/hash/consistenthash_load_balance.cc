@@ -81,17 +81,6 @@ std::string ConsistentHashLoadBalance::GenerateKeysAsString(const SelectorInfo* 
   return key;
 }
 
-std::uint64_t ConsistentHashLoadBalance::Hash(const std::string& input, const std::string& hash_func) {
-  if (hash_func == MD5HASH) {
-    return MD5Hash(input);
-  } else if (hash_func == BKDRHASH) {
-    return BKDRHash(input);
-  } else if (hash_func == FNV1AHASH) {
-    return FNV1aHash(input);
-  } else {
-    return MurMurHash3(input);
-  }
-}
 
 // Update the routing nodes used for load balancing
 int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {

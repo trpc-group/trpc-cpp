@@ -48,8 +48,6 @@ class ConsistentHashLoadBalance : public LoadBalance {
 
   std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t> indexs);
 
-  std::uint64_t Hash(const std::string& key, const std::string& hash_func);
-
   struct InnerEndpointInfos {
     std::vector<TrpcEndpointInfo> endpoints;
     std::uint64_t hash;

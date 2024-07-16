@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "trpc/naming/common/util/loadbalance/hash/City.h"
 #include "trpc/naming/common/util/loadbalance/hash/MurmurHash3.h"
 
 namespace trpc {
@@ -28,6 +29,7 @@ static const std::string MD5HASH = "md5";
 static const std::string BKDRHASH = "bkdr";
 static const std::string FNV1AHASH = "fnv1a";
 static const std::string MURMURHASH3 = "murmur3";
+static const std::string CITYHASH = "city";
 
 std::uint64_t MD5Hash(const std::string& input) {
   std::uint8_t hash[MD5_DIGEST_LENGTH];
@@ -64,6 +66,31 @@ std::uint64_t MurMurHash3(const std::string& input) {
   uint64_t hash[2];
   MurmurHash3_x64_128(input.c_str(), input.size(), seed, hash);
   return hash[0];
+}
+
+std::uint64_t CityHash(const std::string& input) {
+  uint64_t seed = 42;
+  return CityHash64WithSeed(input.c_str(), input.size(), seed);
+}
+
+std::uint64_t GetHash(const std::string& input, const std::string& hash_func) {
+  if (hash_func == MD5HASH) {
+    return MD5Hash(input);
+  } else if (hash_func == BKDRHASH) {
+    return BKDRHash(input);
+  } else if (hash_func == CITYHASH) {
+    return FNV1aHash(input);
+  } else if (hash_func == FNV1AHASH) {
+    return FNV1aHash(input);
+  } else {
+    return MurMurHash3(input);
+  }
+}
+
+std::uint64_t Hash(const std::string& input, const std::string& hash_func) { return GetHash(input, hash_func); }
+
+std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num) {
+  return GetHash(input, hash_func) % num;
 }
 
 }  // namespace trpc

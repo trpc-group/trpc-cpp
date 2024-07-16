@@ -81,17 +81,6 @@ std::string ModuloHashLoadBalance::GenerateKeysAsString(const SelectorInfo* info
   return key;
 }
 
-std::uint64_t ModuloHashLoadBalance::Hash(const std::string& input, uint64_t num, const std::string& hash_func) {
-  if (hash_func == MD5HASH) {
-    return MD5Hash(input) % num;
-  } else if (hash_func == BKDRHASH) {
-    return BKDRHash(input) % num;
-  } else if (hash_func == FNV1AHASH) {
-    return FNV1aHash(input) % num;
-  } else {
-    return MurMurHash3(input) % num;
-  }
-}
 
 // Update the routing nodes used for load balancing
 int ModuloHashLoadBalance::Update(const LoadBalanceInfo* info) {
@@ -117,7 +106,7 @@ int ModuloHashLoadBalance::Update(const LoadBalanceInfo* info) {
     endpoint_info.endpoints.assign(info->endpoints->begin(), info->endpoints->end());
 
     endpoint_info.hash = Hash(GenerateKeysAsString(select_info, loadbalance_config_.hash_args),
-                              endpoint_info.endpoints.size(), loadbalance_config_.hash_func);
+                              loadbalance_config_.hash_func, endpoint_info.endpoints.size());
 
     std::unique_lock<std::shared_mutex> lock(mutex_);
     callee_router_infos_[select_info->name] = endpoint_info;

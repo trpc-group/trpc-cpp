@@ -47,8 +47,6 @@ class ModuloHashLoadBalance : public LoadBalance {
 
   std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t> indexs);
 
-  std::uint64_t Hash(const std::string& key, uint64_t num, const std::string& hash_func);
-
   struct InnerEndpointInfos {
     std::vector<TrpcEndpointInfo> endpoints;
     std::uint64_t hash;

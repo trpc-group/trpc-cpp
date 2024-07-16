@@ -37,7 +37,7 @@ struct convert<trpc::naming::LoadBalanceSelectorConfig> {
       config.hash_nodes = node["hash_nodes"].as<uint32_t>();
     }
     if (node["hash_args"]) {
-      config.hash_args = node["hash_args"].as<std::vector<u_int32_t>>();
+      config.hash_args = node["hash_args"].as<std::vector<uint32_t>>();
     }
     if (node["hash_func"]) {
       config.hash_func = node["hash_func"].as<std::string>();

@@ -22,7 +22,7 @@ void LoadBalanceSelectorConfig::Display() const {
 
   TRPC_FMT_DEBUG("load_balance:{}", load_balance_name);
   TRPC_FMT_DEBUG("hash_nodes:{}", hash_nodes);
-  TRPC_FMT_DEBUG("hash_args:{}", hash_args.size());
+  TRPC_FMT_DEBUG("hash_args size:{}", hash_args.size());
   TRPC_FMT_DEBUG("hash_func:{}", hash_func);
 
   TRPC_FMT_DEBUG("--------------------------------------");
