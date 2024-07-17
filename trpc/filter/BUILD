@@ -317,6 +317,7 @@ cc_library(
                    "//trpc/overload_control/fiber_limiter:fiber_limiter_server_filter",
                    "//trpc/overload_control/high_percentile:high_percentile_server_filter",
                    "//trpc/overload_control/throttler:throttler_client_filter",
+				   "//trpc/overload_control/token_bucket_limiter:token_bucket_limiter_server_filter",
                ],
            }),
 )

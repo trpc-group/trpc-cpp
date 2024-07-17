@@ -18,18 +18,39 @@
 namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
-  stop = false;
-  refill_thread = std::thread(&TokenBucketOverloadController::refill, this);
+  begin_timestamp = GetSystemMilliSeconds();
+  return true;
 }
 
-void Register(const TokenBucketLimiterControlConf& conf) {
+TokenBucketOverloadController::TokenBucketOverloadController(const TokenBucketLimiterControlConf& conf) {
   capacity = conf.capacity;
-  current_token.Store(conf.current_token);
+  current_token = conf.current_token;
   rate = conf.rate;
 }
 
-bool CheckLimit(const int current_concurrency) {
-  return current_concurrency <= current_token.Load();
+void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf& conf) {
+  capacity = conf.capacity;
+  current_token = conf.current_token;
+  rate = conf.rate;
+}
+
+bool TokenBucketOverloadController::CheckLimit(uint32_t current_concurrency) {
+  return current_concurrency <= current_token;
+}
+
+void TokenBucketOverloadController::AddToken() {
+  uint64_t current_timestamp = GetSystemMilliSeconds();
+  uint64_t gap_timestamp = current_timestamp - begin_timestamp;
+  uint32_t add_count = (uint32_t) (gap_timestamp * rate / 1000);
+  current_token = std::min(current_token + add_count, capacity);
+}
+
+void TokenBucketOverloadController::ConsumeToken(uint32_t consume_count) {
+  current_token -= consume_count;
+}
+
+uint64_t TokenBucketOverloadController::GetBeginTimeStamp() {
+  return begin_timestamp;
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
@@ -41,22 +62,11 @@ bool TokenBucketOverloadController::AfterSchedule(const ServerContextPtr& contex
 }
 
 void TokenBucketOverloadController::Stop() {
-  stop = true;
-  if (refill_thread.joinable()) {
-    refill_thread.join();
-  }
+
 }
 
 void TokenBucketOverloadController::Destroy() {
 
-}
-
-void TokenBucketOverloadController::refill() {
-  while (!stop) {
-    std::this_thread::sleep_for(std::chrono::millseconds(1000));
-    new_token = min(current_token.Load() + rate, capacity);
-    current_token.Store(new_token);
-  }
 }
 
 }  // namespace trpc::overload_control

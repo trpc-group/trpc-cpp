@@ -43,13 +43,13 @@ YAML::Node convert<trpc::overload_control::TokenBucketLimiterControlConf>::encod
   return node;
 }
 
-bool convert<trpc::overload_control::ConcurrencyLimiterControlConf>::decode(
-    const YAML::Node& node, trpc::overload_control::ConcurrencyLimiterControlConf& config) {
+bool convert<trpc::overload_control::TokenBucketLimiterControlConf>::decode(
+    const YAML::Node& node, trpc::overload_control::TokenBucketLimiterControlConf& config) {
   if (node["capacity"]) {
-    config.max_concurrency = node["capacity"].as<uint32_t>();
+    config.capacity = node["capacity"].as<uint32_t>();
   }
   if (node["current_token"]) {
-    config.current_token_count = node["current_token"].as<uint32_t>();
+    config.current_token = node["current_token"].as<uint32_t>();
   }
   if (node["rate"]) {
     config.rate = node["rate"].as<uint32_t>();
