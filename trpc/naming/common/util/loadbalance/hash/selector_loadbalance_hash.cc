@@ -11,13 +11,12 @@
 //
 //
 
-#include "trpc/naming/testing/selector_loadbalance_test.h"
+#include "trpc/naming/common/util/loadbalance/hash/selector_loadbalance_hash.h"
 
 #include <memory>
 #include <sstream>
 #include <utility>
 
-#include "selector_loadbalance_test.h"
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/naming/common/util/loadbalance/polling/polling_load_balance.h"
 #include "trpc/naming/load_balance_factory.h"

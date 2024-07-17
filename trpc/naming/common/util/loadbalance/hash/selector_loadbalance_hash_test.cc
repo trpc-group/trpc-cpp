@@ -11,7 +11,7 @@
 //
 //
 
-#include "trpc/naming/testing/selector_loadbalance_test.h"
+#include "trpc/naming/common/util/loadbalance/hash/selector_loadbalance_hash.h"
 
 #include <memory>
 
@@ -149,7 +149,7 @@ TEST(TestSelectorLoadBalance, consistenthash_test) {
   EXPECT_TRUE(endpoint.id != kInvalidEndpointId);
 
   ptr->Select(&select_info, &temp);
-  EXPECT_TRUE((temp.host == "192.168.0.2" || temp.host == "127.0.0.1")&& temp.host != endpoint.host);
+  EXPECT_TRUE((temp.host == "192.168.0.2" || temp.host == "127.0.0.1") && temp.host != endpoint.host);
   EXPECT_TRUE((temp.port == 1002 || temp.port == 1001) && temp.port != endpoint.port);
   EXPECT_TRUE(temp.id != kInvalidEndpointId);
 
@@ -233,7 +233,7 @@ TEST(TestSelectorLoadBalance, modulohash_test) {
   EXPECT_TRUE(endpoint.id != kInvalidEndpointId);
 
   ptr->Select(&select_info, &temp);
-  EXPECT_TRUE((temp.host == "192.168.0.2" || temp.host == "127.0.0.1")&& temp.host != endpoint.host);
+  EXPECT_TRUE((temp.host == "192.168.0.2" || temp.host == "127.0.0.1") && temp.host != endpoint.host);
   EXPECT_TRUE((temp.port == 1002 || temp.port == 1001) && temp.port != endpoint.port);
   EXPECT_TRUE(temp.id != kInvalidEndpointId);
 
@@ -272,4 +272,4 @@ TEST(TestSelectorLoadBalance, modulohash_test) {
   ptr->Destroy();
 }
 
-}
+}  // namespace trpc

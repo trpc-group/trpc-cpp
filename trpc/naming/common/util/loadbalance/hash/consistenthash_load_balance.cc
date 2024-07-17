@@ -81,7 +81,6 @@ std::string ConsistentHashLoadBalance::GenerateKeysAsString(const SelectorInfo* 
   return key;
 }
 
-
 // Update the routing nodes used for load balancing
 int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {
   if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
