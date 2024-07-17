@@ -1,15 +1,24 @@
-//
-//
-// Tencent is pleased to support the open source community by making tRPC available.
-//
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
-// All rights reserved.
-//
-// If you have downloaded a copy of the tRPC source code from Tencent,
-// please note that tRPC source code is licensed under the  Apache 2.0 License,
-// A copy of the Apache 2.0 License is included in this file.
-//
-//
+/*
+*
+ * Tencent is pleased to support the open source community by making
+ * tRPC available.
+ *
+ * Copyright (C) 2023 THL A29 Limited, a Tencent company.
+ * All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
@@ -33,8 +42,8 @@ int TokenBucketLimiterServerFilter::Init() {
   }
   token_bucket_conf_.Display();
 
-  TokenBucketOverloadController tbc(token_bucket_conf_);
-  service_controller_ = std::make_shared<TokenBucketOverloadController>(tbc);
+  TokenBucketOverloadController token_bucket_controller(token_bucket_conf_);
+  service_controller_ = std::make_shared<TokenBucketOverloadController>(token_bucket_controller);
   service_controller_->Init();
 
   return 0;
@@ -71,11 +80,10 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
   uint32_t current_concurrency = FrameStats::GetInstance()->GetServerStats().GetReqConcurrency();
   service_controller_->AddToken();
   bool passed = service_controller_->CheckLimit(current_concurrency); 
-  TRPC_FMT_INFO("TokenBucketLimiterServerFilter::OnRequest, concurrency: {}, token_count: {}", current_concurrency, service_controller_->current_token); 
   if (!passed) {
     TRPC_FMT_ERROR_EVERY_SECOND(
-        "rejected by token_bucket limiter overload control, current concurrency: {}",
-        current_concurrency);
+        "rejected by token_bucket limiter overload control, current concurrency: {}, current token: {}",
+        current_concurrency, service_controller_->GetCurrentToken());
     context->SetStatus(
         Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by token_bucket limiter overload control"));
     status = FilterStatus::REJECT;
@@ -90,6 +98,7 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     infos.tags[kOverloadctrlPass] = (passed == true ? 1 : 0);
     infos.tags[kOverloadctrlLimited] = (passed == false ? 1 : 0);
     infos.tags["current_concurrency"] = current_concurrency;
+    infos.tags["current_token"] = service_controller_->GetCurrentToken();
     Report::GetInstance()->ReportOverloadInfo(infos);
   }
 }

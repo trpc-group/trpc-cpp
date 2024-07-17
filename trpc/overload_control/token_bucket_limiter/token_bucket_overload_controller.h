@@ -1,15 +1,24 @@
-//
-//
-// Tencent is pleased to support the open source community by making tRPC available.
-//
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
-// All rights reserved.
-//
-// If you have downloaded a copy of the tRPC source code from Tencent,
-// please note that tRPC source code is licensed under the  Apache 2.0 License,
-// A copy of the Apache 2.0 License is included in this file.
-//
-//
+/*
+*
+ * Tencent is pleased to support the open source community by making
+ * tRPC available.
+ *
+ * Copyright (C) 2023 THL A29 Limited, a Tencent company.
+ * All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
@@ -31,6 +40,7 @@ namespace trpc::overload_control {
 /// @brief Overload protection controller based on token bucket algorithm.
 class TokenBucketOverloadController : public ServerOverloadController {
 public:
+  /// @brief Construct the controller plugin by the config.
   TokenBucketOverloadController(const TokenBucketLimiterControlConf& conf);
 
   /// @brief Name of controller
@@ -39,16 +49,16 @@ public:
   /// @brief Initialization function.
   bool Init() override;
 
-  /// @brief Register the controller plugin by the conf.
-  void Register(const TokenBucketLimiterControlConf& conf);
-
+  /// @brief Check whether the concurrent count is less than the tokens count in the bucket.
   bool CheckLimit(uint32_t current_concurrency);
 
+  /// @brief Add tokens based on timestamp gap.
   void AddToken();
 
+  /// @brief Concurrent requests consume tokens.
   void ConsumeToken(uint32_t consume_count);
 
-  uint64_t GetBeginTimeStamp();
+  uint32_t GetCurrentToken();
 
   bool BeforeSchedule(const ServerContextPtr& context) override;
 
@@ -58,14 +68,11 @@ public:
 
   void Destroy() override;
 
-private:
-  void refill();
-
 public:
-  uint32_t capacity;
-  uint32_t rate;
-  uint32_t current_token;  ///< Current token count in token bucket.
-  uint64_t begin_timestamp;	///< System begin timestamp(millisecond).
+  uint32_t capacity_;		///< Capacity of token bucket.
+  uint32_t rate_;			///< The rate of adding tokens (per second)
+  uint32_t current_token_;	///< Current token count in token bucket.
+  uint64_t last_timestamp_;	///< The timestamp(millisecond) of when the token was last added.
 };
 
 using TokenBucketOverloadControllerPtr = std::shared_ptr<TokenBucketOverloadController>;
