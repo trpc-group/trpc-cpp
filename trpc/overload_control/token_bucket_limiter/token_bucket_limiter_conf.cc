@@ -22,9 +22,9 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
-
 #include "trpc/log/trpc_log.h"
+
+#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
 
 namespace trpc::overload_control {
 

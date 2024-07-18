@@ -40,5 +40,5 @@ plugins:
     token_bucket_limiter:
       capacity: 50 # Maximum token bucket count capacity. It is configured small for unit testing purposes, but users can configure it to be larger.
       initial_token: 0 # Initial token count.
-      rate: 10 # Token production rate(count/second).
+      rate: 5 # Token production rate(count/second).
       is_report: true # Whether to report

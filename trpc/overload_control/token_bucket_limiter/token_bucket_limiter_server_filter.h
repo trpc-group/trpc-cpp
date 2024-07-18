@@ -56,7 +56,7 @@ private:
 private:
   TokenBucketLimiterControlConf token_bucket_conf_;
 
-  TokenBucketOverloadControllerPtr service_controller_;
+  ServerOverloadControllerPtr service_controller_;
 };
 
 }  // namespace trpc::overload_control

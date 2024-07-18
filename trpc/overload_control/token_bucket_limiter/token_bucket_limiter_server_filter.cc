@@ -78,18 +78,13 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
   }
   // Get the current unfinished requests.
   uint32_t current_concurrency = FrameStats::GetInstance()->GetServerStats().GetReqConcurrency();
-  service_controller_->AddToken();
-  bool passed = service_controller_->CheckLimit(current_concurrency); 
+  bool passed = service_controller_->BeforeSchedule(context); 
   if (!passed) {
-    TRPC_FMT_ERROR_EVERY_SECOND(
-        "rejected by token_bucket limiter overload control, current concurrency: {}, current token: {}",
-        current_concurrency, service_controller_->GetCurrentToken());
-    context->SetStatus(
-        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by token_bucket limiter overload control"));
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by token_bucket limiter overload control, current concurrency: {}", 
+			current_concurrency);
     status = FilterStatus::REJECT;
     return;
   }
-  service_controller_->ConsumeToken(current_concurrency);
   // Report the result.
   if (token_bucket_conf_.is_report) {
     OverloadInfo infos;
@@ -97,8 +92,7 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     infos.report_name = fmt::format("/{}/{}", context->GetCalleeName(), context->GetFuncName());
     infos.tags[kOverloadctrlPass] = (passed == true ? 1 : 0);
     infos.tags[kOverloadctrlLimited] = (passed == false ? 1 : 0);
-    infos.tags["current_concurrency"] = current_concurrency;
-    infos.tags["current_token"] = service_controller_->GetCurrentToken();
+	infos.tags["current_concurrency"] = current_concurrency;
     Report::GetInstance()->ReportOverloadInfo(infos);
   }
 }

@@ -24,6 +24,7 @@
 
 #pragma once
 
+//#include <mutex>
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -42,23 +43,12 @@ class TokenBucketOverloadController : public ServerOverloadController {
 public:
   /// @brief Construct the controller plugin by the config.
   TokenBucketOverloadController(const TokenBucketLimiterControlConf& conf);
-
+  
   /// @brief Name of controller
   std::string Name() override { return "TokenBucketOverloadController"; };
 
   /// @brief Initialization function.
   bool Init() override;
-
-  /// @brief Check whether the concurrent count is less than the tokens count in the bucket.
-  bool CheckLimit(uint32_t current_concurrency);
-
-  /// @brief Add tokens based on timestamp gap.
-  void AddToken();
-
-  /// @brief Concurrent requests consume tokens.
-  void ConsumeToken(uint32_t consume_count);
-
-  uint32_t GetCurrentToken();
 
   bool BeforeSchedule(const ServerContextPtr& context) override;
 
@@ -68,7 +58,11 @@ public:
 
   void Destroy() override;
 
-public:
+private:
+  /// @brief Add tokens based on timestamp gap.
+  void AddToken();
+
+private:
   uint32_t capacity_;		///< Capacity of token bucket.
   uint32_t rate_;			///< The rate of adding tokens (per second)
   uint32_t current_token_;	///< Current token count in token bucket.

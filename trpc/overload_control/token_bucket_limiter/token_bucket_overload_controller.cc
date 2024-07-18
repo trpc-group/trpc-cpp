@@ -39,10 +39,6 @@ TokenBucketOverloadController::TokenBucketOverloadController(const TokenBucketLi
   rate_ = conf.rate;
 }
 
-bool TokenBucketOverloadController::CheckLimit(uint32_t current_concurrency) {
-  return current_concurrency <= current_token_;
-}
-
 void TokenBucketOverloadController::AddToken() {
   uint64_t current_timestamp = GetSystemMilliSeconds();
   uint64_t gap_timestamp = current_timestamp - last_timestamp_;
@@ -51,15 +47,14 @@ void TokenBucketOverloadController::AddToken() {
   last_timestamp_ = current_timestamp;
 }
 
-void TokenBucketOverloadController::ConsumeToken(uint32_t consume_count) {
-  current_token_ -= consume_count;
-}
-
-uint32_t TokenBucketOverloadController::GetCurrentToken() {
-  return current_token_;
-}
-
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
+  AddToken();
+  if (current_token_ == 0) {
+	context->SetStatus(Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server token bucket overload control"));
+	return false;
+  }
+  --current_token_;
+  context->SetStatus(Status());
   return true;
 }
 
