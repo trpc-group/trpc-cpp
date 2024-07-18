@@ -68,10 +68,6 @@ bool InitializeServerFilter() {
   flow_control_server_filter->Init();
   FilterManager::GetInstance()->AddMessageServerFilter(flow_control_server_filter);
 
-  MessageServerFilterPtr token_bucket_server_limiter_filter(new overload_control::TokenBucketLimiterServerFilter());
-  token_bucket_server_limiter_filter->Init();
-  FilterManager::GetInstance()->AddMessageServerFilter(token_bucket_server_limiter_filter);
-
 #endif
 
 
