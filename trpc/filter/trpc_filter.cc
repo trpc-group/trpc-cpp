@@ -35,7 +35,6 @@
 #include "trpc/overload_control/high_percentile/high_percentile_server_filter.h"
 #include "trpc/overload_control/throttler/throttler_client_filter.h"
 #include "trpc/overload_control/flow_control/flow_controller_server_filter.h"
-#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_server_filter.h"
 #endif
 
 // #include "trpc/filter/retry/retry_limit_client_filter.h"
@@ -67,7 +66,6 @@ bool InitializeServerFilter() {
   MessageServerFilterPtr flow_control_server_filter(new overload_control::FlowControlServerFilter());
   flow_control_server_filter->Init();
   FilterManager::GetInstance()->AddMessageServerFilter(flow_control_server_filter);
-
 #endif
 
 
