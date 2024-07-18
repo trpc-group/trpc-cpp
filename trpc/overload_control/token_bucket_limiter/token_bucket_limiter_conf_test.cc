@@ -29,29 +29,29 @@ namespace trpc::overload_control {
 namespace testing {
 
 TEST(TokenBucketLimiterControlConf, All) {
-	TokenBucketLimiterControlConf conf;
-	ASSERT_EQ(conf.capacity, 60000);
-	ASSERT_EQ(conf.initial_token, 0);
-	ASSERT_EQ(conf.rate, 1000);
-	ASSERT_EQ(conf.is_report, 1000);
-
-	YAML::convert<TokenBucketLimiterControlConf> concurr_yaml;
-
-	conf.capacity = 20000;
-	conf.initial_token = 5000;
-	conf.rate = 2000;
-
-	YAML::Node concurr_node = concurr_yaml.encode(conf);
-	
-	TokenBucketLimiterControlConf decode_conf;
-
-	ASSERT_EQ(concurr_yaml.decode(concurr_node, decode_conf), true);
-
-	ASSERT_EQ(decode_conf.capacity, 20000);
-	ASSERT_EQ(decode_conf.initial_token, 5000);
-	ASSERT_EQ(decode_conf.rate, 2000);
-
-	decode_conf.Display();
+  TokenBucketLimiterControlConf conf;
+  ASSERT_EQ(conf.capacity, 1000);
+  ASSERT_EQ(conf.initial_token, 0);
+  ASSERT_EQ(conf.rate, 10);
+  ASSERT_EQ(conf.is_report, false);
+  
+  YAML::convert<TokenBucketLimiterControlConf> concurr_yaml;
+  
+  conf.capacity = 20000;
+  conf.initial_token = 5000;
+  conf.rate = 2000;
+  
+  YAML::Node concurr_node = concurr_yaml.encode(conf);
+  
+  TokenBucketLimiterControlConf decode_conf;
+  
+  ASSERT_EQ(concurr_yaml.decode(concurr_node, decode_conf), true);
+  
+  ASSERT_EQ(decode_conf.capacity, 20000);
+  ASSERT_EQ(decode_conf.initial_token, 5000);
+  ASSERT_EQ(decode_conf.rate, 2000);
+  
+  decode_conf.Display();
 }
 
 }	// namespace testing

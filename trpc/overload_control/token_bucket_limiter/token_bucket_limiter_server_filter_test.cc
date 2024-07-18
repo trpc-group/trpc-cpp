@@ -88,24 +88,19 @@ TEST_F(TokenBucketLimiterServerTestFixture, Overload) {
   MessageServerFilterPtr filter = trpc::FilterManager::GetInstance()->GetMessageServerFilter(kTokenBucketLimiterName);
   TokenBucketLimiterServerFilter* token_bucket_filter = static_cast<TokenBucketLimiterServerFilter*>(filter.get());
 
-  uint32_t max_concurr = 100;
-  for (uint32_t i = 0; i < max_concurr + 1; i++) {
-    FrameStats::GetInstance()->GetServerStats().AddReqConcurrency();
-  }
-
   uint32_t reject_count = 0;
   uint32_t concurr = 100;
   std::vector<std::thread> threads;
   for (uint32_t i = 1; i <= concurr; i++) {
-	threads.emplace_back([&](){
-	  ServerContextPtr context = MakeServerContext();
-	  FilterStatus status = FilterStatus::CONTINUE;
-	  token_bucket_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
-	  if (context->GetStatus().OK() == false) {
-		reject_count++;
-		ASSERT_EQ(status, FilterStatus::REJECT);
-	  }
-	});
+    threads.emplace_back([&](){
+      ServerContextPtr context = MakeServerContext();
+      FilterStatus status = FilterStatus::CONTINUE;
+      token_bucket_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
+      if (context->GetStatus().OK() == false) {
+    	reject_count++;
+    	ASSERT_EQ(status, FilterStatus::REJECT);
+      }
+    });
   }
   ASSERT_TRUE(reject_count >= 30);
 
