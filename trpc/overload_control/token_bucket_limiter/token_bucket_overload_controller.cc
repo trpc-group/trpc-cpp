@@ -29,7 +29,7 @@
 namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
-  last_timestamp_ = GetSystemMilliSeconds();
+  last_timestamp_ = trpc::time::GetSystemMilliSeconds();
   return true;
 }
 
@@ -40,7 +40,7 @@ TokenBucketOverloadController::TokenBucketOverloadController(const TokenBucketLi
 }
 
 void TokenBucketOverloadController::AddToken() {
-  uint64_t current_timestamp = GetSystemMilliSeconds();
+  uint64_t current_timestamp = trpc::time::GetSystemMilliSeconds();
   uint64_t gap_timestamp = current_timestamp - last_timestamp_;
   uint32_t add_count = (uint32_t) (gap_timestamp * rate_ / 1000);
   current_token_ = std::min(current_token_ + add_count, capacity_);
