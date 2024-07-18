@@ -24,7 +24,7 @@
 
 #pragma once
 
-//#include <mutex>
+#include <mutex>
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -41,8 +41,8 @@ namespace trpc::overload_control {
 /// @brief Overload protection controller based on token bucket algorithm.
 class TokenBucketOverloadController : public ServerOverloadController {
 public:
-  /// @brief Construct the controller plugin by the config.
-  TokenBucketOverloadController(const TokenBucketLimiterControlConf& conf);
+  /// @brief Register the controller plugin by the config.
+  void Register(const TokenBucketLimiterControlConf& conf);
   
   /// @brief Name of controller
   std::string Name() override { return "TokenBucketOverloadController"; };
@@ -67,6 +67,8 @@ private:
   uint32_t rate_;			///< The rate of adding tokens (per second)
   uint32_t current_token_;	///< Current token count in token bucket.
   uint64_t last_timestamp_;	///< The timestamp(millisecond) of when the token was last added.
+
+  mutable std::mutex mutex_;	///< Lock to protect current_token_.
 };
 
 using TokenBucketOverloadControllerPtr = std::shared_ptr<TokenBucketOverloadController>;

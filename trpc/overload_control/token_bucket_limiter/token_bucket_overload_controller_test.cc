@@ -40,7 +40,8 @@ TEST(TokenBucketOverloadController, All) {
   tb_conf.rate = 0;
   tb_conf.capacity = 100;
   TokenBucketOverloadController tb_controller(tb_conf);
-  TokenBucketOverloadControllerPtr tb = std::make_shared<TokenBucketOverloadController>(tb_controller);
+  ServerOverloadControllerPtr tb = std::make_shared<TokenBucketOverloadController>();
+  tb->Register(tb_conf);
   ASSERT_TRUE(tb->Init() == true);
   auto context = MakeRefCounted<ServerContext>();
   context->SetRequestMsg(std::make_shared<trpc::testing::TestProtocol>());

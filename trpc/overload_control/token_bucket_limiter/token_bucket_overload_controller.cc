@@ -33,13 +33,14 @@ bool TokenBucketOverloadController::Init() {
   return true;
 }
 
-TokenBucketOverloadController::TokenBucketOverloadController(const TokenBucketLimiterControlConf& conf) {
+void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf& conf) {
   capacity_ = conf.capacity;
   current_token_ = conf.initial_token;
   rate_ = conf.rate;
 }
 
 void TokenBucketOverloadController::AddToken() {
+  std::unique_lock<std::mutex> lock(mutex_);
   uint64_t current_timestamp = trpc::time::GetSystemMilliSeconds();
   uint64_t gap_timestamp = current_timestamp - last_timestamp_;
   uint32_t add_count = (uint32_t) (gap_timestamp * rate_ / 1000);
@@ -49,6 +50,7 @@ void TokenBucketOverloadController::AddToken() {
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
   AddToken();
+  std::unique_lock<std::mutex> lock(mutex_);
   if (current_token_ == 0) {
 	context->SetStatus(Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server token bucket overload control"));
 	return false;
