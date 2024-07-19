@@ -24,7 +24,8 @@
 #include "trpc/util/log/logging.h"
 #include "trpc/util/string_util.h"
 
-namespace trpc {
+namespace trpc::testing {
+
 
 TestSelectorLoadBalance::TestSelectorLoadBalance(const LoadBalancePtr& load_balance)
     : default_load_balance_(load_balance) {
@@ -37,6 +38,7 @@ int TestSelectorLoadBalance::Init() noexcept {
   }
 
   default_load_balance_ = LoadBalanceFactory::GetInstance()->Get(loadbalance_config_.load_balance_name);
+  std::cout<<"the selector use loadbalance is "<<default_load_balance_->Name()<<std::endl;
   return 0;
 }
 LoadBalance* TestSelectorLoadBalance::GetLoadBalance(const std::string& name) {
@@ -177,5 +179,6 @@ int TestSelectorLoadBalance::SetEndpoints(const RouterInfo* info) {
   default_load_balance_->Update(&load_balance_info);
   return 0;
 }
+
 
 }  // namespace trpc

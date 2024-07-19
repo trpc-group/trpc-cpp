@@ -24,7 +24,7 @@
 #include "trpc/naming/common/util/loadbalance/hash/modulohash_load_balance.h"
 #include "trpc/naming/common/util/loadbalance/polling/polling_load_balance.h"
 
-namespace trpc {
+namespace trpc::testing {
 
 TEST(TestSelectorLoadBalance, polling_test) {
   TrpcPlugin::GetInstance()->RegisterLoadBalance(MakeRefCounted<ConsistentHashLoadBalance>());

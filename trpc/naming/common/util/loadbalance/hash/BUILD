@@ -14,7 +14,7 @@ cc_library(
     deps = [
         "//trpc/naming:load_balance_factory",
         "//trpc/util/log:logging",
-        "//trpc/naming/common/util/loadbalance/hash:hash_func",
+        "//trpc/naming/common/util/hash:hash_func",
         "//trpc/common/config:loadbalance_naming_conf",
     ],
 )
@@ -29,41 +29,9 @@ cc_library(
     deps = [
         "//trpc/naming:load_balance_factory",
         "//trpc/util/log:logging",
-        "//trpc/naming/common/util/loadbalance/hash:hash_func",
+        "//trpc/naming/common/util/hash:hash_func",
         "//trpc/common/config:loadbalance_naming_conf",
     ],
-)
-
-cc_library(
-    name = "hash_func",
-    hdrs = ["hash_func.h"],
-    visibility = [
-        "//visibility:public",
-    ],
-    linkopts =["-lssl","-lcrypto"],
-    deps = [
-        "//trpc/naming/common/util/loadbalance/hash:MurmurHash3",
-        "//trpc/naming/common/util/loadbalance/hash:City",
-    ],
-)
-
-cc_library(
-    name="MurmurHash3",
-    srcs=["MurmurHash3.cpp"],
-    hdrs=["MurmurHash3.h"],
-    visibility=[
-        "//visibility:public",
-    ],
-    deps=[],
-)
-cc_library(
-    name="City",
-    srcs=["City.cpp"],
-    hdrs=["City.h"],
-    visibility=[
-        "//visibility:public",
-    ],
-    deps=[],
 )
 
 

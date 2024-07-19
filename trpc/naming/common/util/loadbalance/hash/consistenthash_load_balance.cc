@@ -12,9 +12,11 @@
 //
 
 #include "trpc/naming/common/util/loadbalance/hash/consistenthash_load_balance.h"
-#include "trpc/naming/common/util/loadbalance/hash/hash_func.h"
+#include "trpc/naming/common/common_defs.h"
+#include "trpc/naming/common/util/hash/hash_func.h"
 
 #include <arpa/inet.h>
+#include <bits/stdint-uintn.h>
 #include <netdb.h>
 #include <sys/socket.h>
 
@@ -22,6 +24,7 @@
 #include <any>
 #include <iostream>
 #include <regex>
+#include <string>
 #include <vector>
 
 #include "trpc/naming/load_balance_factory.h"
@@ -29,16 +32,20 @@
 
 namespace trpc {
 
-bool ConsistentHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
+bool ConsistentHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info,
+                                                      ConsistentHashLoadBalance::InnerEndpointInfos& endpoint_info) {
   if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
     return false;
   }
 
   const SelectorInfo* select_info = info->info;
   std::shared_lock<std::shared_mutex> lock(mutex_);
-  if (callee_router_infos_.end() == callee_router_infos_.find(select_info->name)) {
+  auto iter = callee_router_infos_.find(select_info->name);
+  if (callee_router_infos_.end() == iter) {
     return true;
   }
+
+  endpoint_info = iter->second;
 
   std::vector<TrpcEndpointInfo>& orig_endpoints = callee_router_infos_[select_info->name].endpoints;
 
@@ -98,23 +105,43 @@ int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {
     loadbalance_config_ = std::any_cast<naming::LoadBalanceSelectorConfig>(*extend_select_info);
   }
 
-  if (IsLoadBalanceInfoDiff(info)) {
-    InnerEndpointInfos endpoint_info;
+  InnerEndpointInfos old_info;
 
-    endpoint_info.endpoints.assign(info->endpoints->begin(), info->endpoints->end());
+  if (IsLoadBalanceInfoDiff(info, old_info)) {
+    InnerEndpointInfos endpoint_info;
 
     endpoint_info.hash =
         Hash(GenerateKeysAsString(select_info, loadbalance_config_.hash_args), loadbalance_config_.hash_func);
 
-    for (int i = 0; i < endpoint_info.endpoints.size(); i++) {
-      for (int j = 0; j < loadbalance_config_.hash_nodes; j++) {
-        uint64_t key =
-            Hash(endpoint_info.endpoints[i].host + std::to_string(endpoint_info.endpoints[i].port) + std::to_string(j),
-                 loadbalance_config_.hash_func);
-        endpoint_info.hashring[key] = i;
-      }
+    endpoint_info.hashring = old_info.hashring;
+
+    std::unordered_set<std::string> old_set;
+    std::unordered_map<std::string, int> new_set;
+
+    for (uint32_t i = 0; i < info->endpoints->size(); i++) {
+      new_set[info->endpoints->at(i).host + std::to_string(info->endpoints->at(i).port)] = i;
     }
 
+    for (const auto& endpoint : old_info.endpoints) {
+      old_set.insert(endpoint.host + std::to_string(endpoint.port));
+    }
+
+    for (const auto& elem : new_set) {
+      if (old_set.find(elem.first) == old_set.end()) {
+        for (uint32_t i = 0; i < loadbalance_config_.hash_nodes; i++) {
+          uint64_t key = Hash(elem.first + std::to_string(i), loadbalance_config_.hash_func);
+          endpoint_info.hashring[key] = info->endpoints->at(elem.second);
+        }
+      }
+    }
+    for (const auto& elem : old_set) {
+      if (new_set.find(elem) == new_set.end()) {
+        for (uint32_t i = 0; i < loadbalance_config_.hash_nodes; i++) {
+          uint64_t key = Hash(elem + std::to_string(i), loadbalance_config_.hash_func);
+          endpoint_info.hashring.erase(key);
+        }
+      }
+    }
     std::unique_lock<std::shared_mutex> lock(mutex_);
     callee_router_infos_[select_info->name] = endpoint_info;
   }
@@ -134,7 +161,7 @@ int ConsistentHashLoadBalance::Next(LoadBalanceResult& result) {
     return -1;
   }
 
-  std::map<std::uint64_t, int>& hashring = iter->second.hashring;
+  std::map<std::uint64_t, TrpcEndpointInfo>& hashring = iter->second.hashring;
   size_t endpoints_num = hashring.size();
   if (endpoints_num < 1) {
     TRPC_LOG_ERROR("Router info of name is empty");
@@ -147,8 +174,8 @@ int ConsistentHashLoadBalance::Next(LoadBalanceResult& result) {
     info_iter = hashring.begin();
   }
 
-  uint32_t index = info_iter->second;
-  result.result = iter->second.endpoints[index];
+  
+  result.result = info_iter->second;
   // set hash to the next value
   iter->second.hash = info_iter->first + 1;
 

@@ -21,8 +21,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "trpc/naming/common/util/loadbalance/hash/City.h"
-#include "trpc/naming/common/util/loadbalance/hash/MurmurHash3.h"
+#include "trpc/naming/common/util/hash/City.h"
+#include "trpc/naming/common/util/hash/MurmurHash3.h"
 
 namespace trpc {
 static const std::string MD5HASH = "md5";

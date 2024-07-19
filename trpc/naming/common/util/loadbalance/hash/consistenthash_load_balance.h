@@ -44,17 +44,19 @@ class ConsistentHashLoadBalance : public LoadBalance {
 
  private:
   /// @brief Check if the load balancing information is different
-  bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info);
 
   std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t> indexs);
 
   struct InnerEndpointInfos {
     std::vector<TrpcEndpointInfo> endpoints;
     std::uint64_t hash;
-    std::map<std::uint64_t, int> hashring;
+    std::map<std::uint64_t, TrpcEndpointInfo> hashring;
   };
 
   std::unordered_map<std::string, ConsistentHashLoadBalance::InnerEndpointInfos> callee_router_infos_;
+
+  bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info, ConsistentHashLoadBalance::InnerEndpointInfos& endpoint_info);
+
 
   mutable std::shared_mutex mutex_;
 

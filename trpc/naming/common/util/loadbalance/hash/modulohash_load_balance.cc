@@ -12,7 +12,7 @@
 //
 
 #include "trpc/naming/common/util/loadbalance/hash/modulohash_load_balance.h"
-#include "trpc/naming/common/util/loadbalance/hash/hash_func.h"
+#include "trpc/naming/common/util/hash/hash_func.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>

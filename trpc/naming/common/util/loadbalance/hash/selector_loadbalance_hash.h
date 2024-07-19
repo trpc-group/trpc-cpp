@@ -26,12 +26,14 @@
 #include "trpc/naming/load_balance.h"
 #include "trpc/naming/selector.h"
 
-namespace trpc {
+namespace trpc::testing {
 
 /// @brief The SelectorDirect class is a plugin that implements the Selector interface for direct service discovery.
 class TestSelectorLoadBalance : public Selector {
  public:
   explicit TestSelectorLoadBalance(const LoadBalancePtr& load_balance);
+
+  explicit TestSelectorLoadBalance()=default;
 
   /// @brief Return the name of the plugin.
   /// @return The name of the plugin.
@@ -105,4 +107,4 @@ class TestSelectorLoadBalance : public Selector {
 
 using TestSelectorLoadBalancePtr = RefPtr<TestSelectorLoadBalance>;
 
-}  // namespace trpc
+}  // namespace trpc::testing
