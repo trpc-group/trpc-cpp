@@ -1,0 +1,44 @@
+#Global configuration (required)
+global:
+  local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
+  threadmodel:
+    default:
+      # Separate model
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 4 #Number of network I/O threads.
+        handle_thread_num: 4 #Number of business processing handle threads.
+
+#Server configuration
+server:
+  app: test #Business name, such as: COS, CDB.
+  server: helloworld #Module name of the business
+  admin_port: 21111 # Admin port
+  admin_ip: 0.0.0.0 # Admin ip
+  service: #Business service, can have multiple.
+    - name: trpc.test.helloworld.Greeter #Service name, needs to be filled in according to the format, the first field is default to trpc, the second and third fields are the app and server configurations above, and the fourth field is the user-defined service_name.
+      network: tcp #Network listening type: for example: TCP, UDP.
+      ip: 0.0.0.0 #Listen ip
+      port: 12345 #Listen port
+      protocol: trpc #Service application layer protocol, for example: trpc, http.
+      accept_thread_num: 1 #Number of threads for binding ports.
+      filter:
+        - token_bucket_limiter
+
+#Plugin configuration.
+plugins:
+  log: #Log configuration
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
+        mode: 2 # 1-sync, 2-async, 3-fast
+        sinks:
+          local_file: # Local log file
+            filename: trpc.log # The name of log file
+  overload_control:
+    token_bucket_limiter:
+      capacity: 50 # Maximum token bucket count capacity. It is configured small for unit testing purposes, but users can configure it to be larger.
+      initial_token: 0 # Initial token count.
+      rate: 5 # Token production rate(count/second).
+      is_report: true # Whether to report
