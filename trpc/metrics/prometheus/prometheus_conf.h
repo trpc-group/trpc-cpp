@@ -29,6 +29,8 @@ struct PrometheusConfig {
   /// The default label attached to each RPC metrics data
   std::map<std::string, std::string> const_labels;
 
+  std::map<std::string, std::string> auth_cfg;
+
   void Display() const;
 };
 
