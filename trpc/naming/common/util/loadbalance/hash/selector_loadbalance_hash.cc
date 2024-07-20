@@ -34,7 +34,7 @@ TestSelectorLoadBalance::TestSelectorLoadBalance(const LoadBalancePtr& load_bala
 
 int TestSelectorLoadBalance::Init() noexcept {
   if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("selector", "loadbalance", loadbalance_config_)) {
-    TRPC_FMT_DEBUG("get selector domain config failed, use default value");
+    TRPC_FMT_DEBUG("get loadbalance config failed, use default value");
   }
 
   default_load_balance_ = LoadBalanceFactory::GetInstance()->Get(loadbalance_config_.load_balance_name);
