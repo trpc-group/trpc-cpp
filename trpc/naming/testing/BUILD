@@ -11,9 +11,6 @@ exports_files([
     "domain_test.yaml",
     "test_load.yaml",
     "test_load.toml",
-    "loadbalance_test.yaml",
-    "consistenthash_test.yaml",
-    "modulohash_test.yaml",
 ])
 
 cc_library(
