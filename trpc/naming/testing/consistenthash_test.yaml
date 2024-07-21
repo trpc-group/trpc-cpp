@@ -1,8 +1,0 @@
-plugins:
-  selector:
-    loadbalance:
-      load_balance_name: "trpc_consistenthash_load_balance"
-      hash_nodes: 1
-      hash_func: "murmur3"
-      hash_args: [0,1,2]
-

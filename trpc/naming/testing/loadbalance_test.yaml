@@ -1,6 +1,0 @@
-plugins:
-  selector:
-    loadbalance:
-      load_balance_name: "trpc_polling_load_balance"
-      # hash_nodes: 20
-
