@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "hash_func",
+    srcs = ["hash_func.cc"]
     hdrs = ["hash_func.h"],
     visibility = [
         "//visibility:public",
