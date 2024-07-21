@@ -21,8 +21,6 @@ namespace trpc::naming {
 
 /// @brief domain select plugin configuration
 struct LoadBalanceSelectorConfig {
-  /// @brief load balance algorithm
-  std::string load_balance_name{"trpc_polling_load_balance"};
   /// @brief hash node number when consistent hash load balance algorithm is hash
   uint32_t hash_nodes{160};
   /// @brief hash content when load balance algorithm is hash,corresponding to SelectInfo

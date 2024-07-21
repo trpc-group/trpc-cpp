@@ -22,7 +22,6 @@ template <>
 struct convert<trpc::naming::LoadBalanceSelectorConfig> {
   static YAML::Node encode(const trpc::naming::LoadBalanceSelectorConfig& config) {
     YAML::Node node;
-    node["load_balance_name"] = config.load_balance_name;
     node["hash_nodes"] = config.hash_nodes;
     node["hash_args"] = config.hash_args;
     node["hash_func"] = config.hash_func;
@@ -30,9 +29,6 @@ struct convert<trpc::naming::LoadBalanceSelectorConfig> {
   }
 
   static bool decode(const YAML::Node& node, trpc::naming::LoadBalanceSelectorConfig& config) {
-    if (node["load_balance_name"]) {
-      config.load_balance_name = node["load_balance_name"].as<std::string>();
-    }
     if (node["hash_nodes"]) {
       config.hash_nodes = node["hash_nodes"].as<uint32_t>();
     }

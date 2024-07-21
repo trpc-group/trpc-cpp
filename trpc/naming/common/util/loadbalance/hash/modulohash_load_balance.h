@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "trpc/common/config/loadbalance_naming_conf.h"
+#include "trpc/common/config/loadbalance_naming_conf_parser.h"
 #include "trpc/naming/load_balance.h"
 
 namespace trpc {
@@ -29,7 +30,7 @@ constexpr char kModuloHashLoadBalance[] = "trpc_modulohash_load_balance";
 /// @brief consistent hash load balancing plugin
 class ModuloHashLoadBalance : public LoadBalance {
  public:
-  ModuloHashLoadBalance() = default;
+  ModuloHashLoadBalance();
   ~ModuloHashLoadBalance() = default;
 
   /// @brief Get the name of the load balancing plugin
@@ -55,6 +56,8 @@ class ModuloHashLoadBalance : public LoadBalance {
   std::unordered_map<std::string, ModuloHashLoadBalance::InnerEndpointInfos> callee_router_infos_;
 
   mutable std::shared_mutex mutex_;
+
+  naming::LoadBalanceSelectorConfig loadbalance_config_;
 
   // std::unordered_map<std::string,
 };

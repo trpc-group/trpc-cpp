@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "trpc/common/config/loadbalance_naming_conf.h"
+#include "trpc/common/config/loadbalance_naming_conf_parser.h"
 #include "trpc/naming/load_balance.h"
 
 namespace trpc {
@@ -30,7 +31,7 @@ constexpr char kConsistentHashLoadBalance[] = "trpc_consistenthash_load_balance"
 /// @brief consistent hash load balancing plugin
 class ConsistentHashLoadBalance : public LoadBalance {
  public:
-  ConsistentHashLoadBalance() = default;
+  ConsistentHashLoadBalance();
   ~ConsistentHashLoadBalance() = default;
 
   /// @brief Get the name of the load balancing plugin
@@ -57,6 +58,7 @@ class ConsistentHashLoadBalance : public LoadBalance {
 
   bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info, ConsistentHashLoadBalance::InnerEndpointInfos& endpoint_info);
 
+  naming::LoadBalanceSelectorConfig loadbalance_config_;
 
   mutable std::shared_mutex mutex_;
 

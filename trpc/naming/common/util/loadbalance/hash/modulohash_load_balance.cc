@@ -26,8 +26,16 @@
 
 #include "trpc/naming/load_balance_factory.h"
 #include "trpc/util/log/logging.h"
+#include "trpc/common/config/trpc_config.h"
+
 
 namespace trpc {
+
+ModuloHashLoadBalance::ModuloHashLoadBalance(){
+  if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("loadbalance", kModuloHashLoadBalance, loadbalance_config_)) {
+    TRPC_FMT_DEBUG("get loadbalance config failed, use default value");
+  }
+}
 
 bool ModuloHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
   if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
@@ -89,16 +97,7 @@ int ModuloHashLoadBalance::Update(const LoadBalanceInfo* info) {
     return -1;
   }
 
-  naming::LoadBalanceSelectorConfig loadbalance_config_;
-
   const SelectorInfo* select_info = info->info;
-
-  const std::any* extend_select_info = select_info->extend_select_info;
-
-  // if load balance config is exist,and init it
-  if (extend_select_info != nullptr && extend_select_info->type() == typeid(naming::LoadBalanceSelectorConfig)) {
-    loadbalance_config_ = std::any_cast<naming::LoadBalanceSelectorConfig>(*extend_select_info);
-  }
 
   if (IsLoadBalanceInfoDiff(info)) {
     InnerEndpointInfos endpoint_info;
