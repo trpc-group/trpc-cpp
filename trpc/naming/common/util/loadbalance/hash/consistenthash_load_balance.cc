@@ -84,12 +84,16 @@ std::string ConsistentHashLoadBalance::GenerateKeysAsString(const SelectorInfo* 
       case 0:
         key += info->name;
       case 1:
-        key += std::to_string(static_cast<int>(info->policy));
+        if(info->context!=nullptr){
+          key += info->context->GetIp()+std::to_string(info->context->GetPort());
+        }
       case 2:
-        key += std::to_string(info->select_num);
+        key += std::to_string(static_cast<int>(info->policy));
       case 3:
-        key += info->load_balance_name;
+        key += std::to_string(info->select_num);
       case 4:
+        key += info->load_balance_name;
+      case 5:
         key += std::to_string(info->is_from_workflow);
     }
   }
