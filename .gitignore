@@ -18,4 +18,3 @@ cmake-build-debug/
 build/
 *.pb.h
 *.pb.cc
-
