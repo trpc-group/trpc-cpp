@@ -19,10 +19,3 @@ build/
 *.pb.h
 *.pb.cc
 
-async_download_src.bin
-async_upload_dst.bin
-download_dst.bin
-download_src.bin
-profiling/sysvars.data
-upload_dst.bin
-upload_src.bin
