@@ -46,10 +46,10 @@ class FixedTimeWindowOverloadController : public ServerOverloadController {
   void Destroy() override;
 
  private:
-  size_t limit_;  // 请求限额
-  std::chrono::seconds window_;  // 时间窗口大小
-  std::atomic<size_t> request_count_;  // 请求计数
-  std::chrono::steady_clock::time_point last_reset_time_;  // 上次重置时间
+  size_t limit_;  // request quota
+  std::chrono::seconds window_;  // time window size
+  std::atomic<size_t> request_count_;  
+  std::chrono::steady_clock::time_point last_reset_time_;  // Last reset time
   std::mutex mutex_;  
 };
 

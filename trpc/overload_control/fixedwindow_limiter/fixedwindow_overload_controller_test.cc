@@ -51,19 +51,18 @@ TEST_F(FixedTimeWindowOverloadControllerTest, CheckLimit) {
   context->SetRequestMsg(std::move(req_msg));
   context->SetFuncName("trpc.test.flow_control.fixedwindow_overload_controller_");
   
-   // 第一个时间窗口内的限流行为
+   // Current limiting behavior in the first time window
   for (int i = 0; i < 3; ++i) {
     ASSERT_EQ(fixedwindow_overload_controller_->BeforeSchedule(context), true);
   }
   ASSERT_EQ(fixedwindow_overload_controller_->BeforeSchedule(context), false);
 
-  // 超过限额，应该触发限流
   ASSERT_EQ(fixedwindow_overload_controller_->BeforeSchedule(context), false);
 
-   //  等待时间窗口重置
+   //  Waiting time window reset
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
- // 第二个时间窗口内的限流行为
+ // Current limiting behavior in the second time window
   for (int i = 0; i < 3; ++i) {
     ASSERT_EQ(fixedwindow_overload_controller_->BeforeSchedule(context), true);
   }

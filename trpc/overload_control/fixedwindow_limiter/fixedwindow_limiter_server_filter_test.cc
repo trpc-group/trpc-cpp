@@ -82,10 +82,9 @@ TEST_F(FixedTimeWindowServerTestFixture, Overload) {
     time_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
     if(!context->GetStatus().OK())
        rejected_count++;
-     // 模拟在时间窗口内的请求,验证时间窗口重置逻辑是否生效
+     // verify whether the time window reset logic takes effect
     //std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-    //测试过载保护逻辑是否有效
   ASSERT_TRUE(rejected_count>=10);
 
   }

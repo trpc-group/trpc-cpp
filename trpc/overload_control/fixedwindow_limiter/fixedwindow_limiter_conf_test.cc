@@ -49,7 +49,7 @@ TEST_F(FixedTimeWindowControlConfTest, EncodeDecode) {
 }
 
 TEST_F(FixedTimeWindowControlConfTest, LoadFromYAML) {
-  // 模拟一个 YAML 配置文件内容
+  // Simulate the contents of a YAML configuration file
   std::string yaml_content = R"(
 plugins:
   overload_control:
@@ -59,14 +59,11 @@ plugins:
       is_report: true
   )";
 
-  // 加载 YAML 内容
   YAML::Node config = YAML::Load(yaml_content);
 
-  // 解码配置
   trpc::overload_control::FixedTimeWindowControlConf conf;
   YAML::convert<trpc::overload_control::FixedTimeWindowControlConf>::decode(config["plugins"]["overload_control"]["fixedwindow_limter"], conf);
 
-  // 验证解码结果
   ASSERT_EQ(conf.limit, 500);
   ASSERT_EQ(conf.window_size, 2);
   ASSERT_EQ(conf.is_report, true);
