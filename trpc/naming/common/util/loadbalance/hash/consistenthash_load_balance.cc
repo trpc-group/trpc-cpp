@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -12,8 +12,6 @@
 //
 
 #include "trpc/naming/common/util/loadbalance/hash/consistenthash_load_balance.h"
-#include "trpc/naming/common/common_defs.h"
-#include "trpc/naming/common/util/hash/hash_func.h"
 
 #include <arpa/inet.h>
 #include <bits/stdint-uintn.h>
@@ -30,6 +28,8 @@
 #include "trpc/naming/load_balance_factory.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/naming/common/common_defs.h"
+#include "trpc/naming/common/util/hash/hash_func.h"
 
 
 namespace trpc {
@@ -114,6 +114,8 @@ int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {
 
   if (IsLoadBalanceInfoDiff(info, old_info)) {
     InnerEndpointInfos endpoint_info;
+
+    endpoint_info.endpoints.assign(info->endpoints->begin(), info->endpoints->end());
 
     endpoint_info.hash =
         Hash(GenerateKeysAsString(select_info, loadbalance_config_.hash_args), loadbalance_config_.hash_func);

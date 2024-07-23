@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -13,16 +13,8 @@
 
 #pragma once
 
-#include <openssl/md5.h>
-#include <atomic>
 #include <memory>
-#include <set>
-#include <shared_mutex>
 #include <string>
-#include <unordered_map>
-#include <vector>
-#include "trpc/naming/common/util/hash/City.h"
-#include "trpc/naming/common/util/hash/MurmurHash3.h"
 
 namespace trpc {
 static const std::string MD5HASH = "md5";

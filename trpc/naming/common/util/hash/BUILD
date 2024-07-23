@@ -20,7 +20,7 @@ cc_library(
 
 cc_library(
     name="MurmurHash3",
-    srcs=["MurmurHash3.cpp"],
+    srcs=["MurmurHash3.cc"],
     hdrs=["MurmurHash3.h"],
     visibility=[
         "//visibility:public",
@@ -30,7 +30,7 @@ cc_library(
 
 cc_library(
     name="City",
-    srcs=["City.cpp"],
+    srcs=["City.cc"],
     hdrs=["City.h"],
     visibility=[
         "//visibility:public",
