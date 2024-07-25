@@ -58,22 +58,22 @@ std::uint64_t CityHash(const std::string& input) {
 }
 
 std::uint64_t GetHash(const std::string& input, const std::string& hash_func) {
-  int key=HashFuncTable.find(hash_func)==HashFuncTable.end()?-1:HashFuncTable.at(hash_func);
+  int key=HashFuncTable.find(hash_func)==HashFuncTable.end()?HashFuncName::DEFAULT:HashFuncTable.at(hash_func);
   uint64_t hash=0;
   switch (key) {
-    case 0:
+    case HashFuncName::MD5:
       hash=MD5Hash(input);
       break;
-    case 1:
+    case HashFuncName::BKDR:
       hash=BKDRHash(input);
       break;
-    case 2:
+    case HashFuncName::FNV1A:
       hash=FNV1aHash(input);
       break;
-    case 3:
+    case HashFuncName::MURMUR3:
       hash=MurMurHash3(input);
       break;
-    case 4:
+    case HashFuncName::CITY:
       hash=CityHash(input);
       break;
     default:

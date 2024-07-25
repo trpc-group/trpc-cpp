@@ -19,16 +19,20 @@
 
 namespace trpc {
 
-static constexpr int HASH_NODES_MAX_INDEX=5;
+static constexpr int HASH_NODES_MAX_INDEX = 5;
 
-static const std::string MD5 = "md5";
-static const std::string BKDR = "bkdr";
-static const std::string FNV1A = "fnv1a";
-static const std::string MURMUR3 = "murmur3";
-static const std::string CITY = "city";
+enum HashFuncName {
+  DEFAULT,
+  MD5,
+  BKDR,
+  FNV1A,
+  MURMUR3,
+  CITY,
+};
 
-static const std::unordered_map<std::string, int> HashFuncTable = {
-    {MD5, 0}, {BKDR, 1}, {FNV1A, 2}, {MURMUR3, 3}, {CITY, 4},
+static const std::unordered_map<std::string, HashFuncName> HashFuncTable = {
+    {"md5", HashFuncName::MD5},         {"bkdr", HashFuncName::BKDR}, {"fnv1a", HashFuncName::FNV1A},
+    {"murmur3", HashFuncName::MURMUR3}, {"city", HashFuncName::CITY},
 };
 
 std::uint64_t MD5Hash(const std::string& input);
