@@ -31,11 +31,15 @@ constexpr char kConsistentHashLoadBalance[] = "trpc_consistenthash_load_balance"
 /// @brief consistent hash load balancing plugin
 class ConsistentHashLoadBalance : public LoadBalance {
  public:
-  ConsistentHashLoadBalance();
+  ConsistentHashLoadBalance() = default;
   ~ConsistentHashLoadBalance() = default;
 
   /// @brief Get the name of the load balancing plugin
   std::string Name() const override { return kConsistentHashLoadBalance; }
+
+  /// @brief Initialization
+  /// @return Returns 0 on success, -1 on failure
+  int Init() noexcept override;
 
   /// @brief Update the routing node information used by the load balancing
   int Update(const LoadBalanceInfo* info) override;
@@ -46,22 +50,20 @@ class ConsistentHashLoadBalance : public LoadBalance {
  private:
   /// @brief Check if the load balancing information is different
 
-  std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t> indexs);
+  bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info);
 
   struct InnerEndpointInfos {
     std::vector<TrpcEndpointInfo> endpoints;
-    std::uint64_t hash;
     std::map<std::uint64_t, TrpcEndpointInfo> hashring;
   };
 
   std::unordered_map<std::string, ConsistentHashLoadBalance::InnerEndpointInfos> callee_router_infos_;
 
-  bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info, ConsistentHashLoadBalance::InnerEndpointInfos& endpoint_info);
-
   naming::LoadBalanceSelectorConfig loadbalance_config_;
 
   mutable std::shared_mutex mutex_;
 
+  // std::unordered_map<std::string,
 };
 
 }  // namespace trpc

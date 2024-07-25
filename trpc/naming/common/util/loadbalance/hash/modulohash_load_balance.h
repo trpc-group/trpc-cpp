@@ -22,6 +22,7 @@
 
 #include "trpc/common/config/loadbalance_naming_conf.h"
 #include "trpc/common/config/loadbalance_naming_conf_parser.h"
+#include "trpc/naming/common/common_defs.h"
 #include "trpc/naming/load_balance.h"
 
 namespace trpc {
@@ -30,11 +31,15 @@ constexpr char kModuloHashLoadBalance[] = "trpc_modulohash_load_balance";
 /// @brief consistent hash load balancing plugin
 class ModuloHashLoadBalance : public LoadBalance {
  public:
-  ModuloHashLoadBalance();
+  ModuloHashLoadBalance() = default;
   ~ModuloHashLoadBalance() = default;
 
   /// @brief Get the name of the load balancing plugin
   std::string Name() const override { return kModuloHashLoadBalance; }
+
+  /// @brief Initialization
+  /// @return Returns 0 on success, -1 on failure
+  int Init() noexcept override;
 
   /// @brief Update the routing node information used by the load balancing
   int Update(const LoadBalanceInfo* info) override;
@@ -46,14 +51,7 @@ class ModuloHashLoadBalance : public LoadBalance {
   /// @brief Check if the load balancing information is different
   bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info);
 
-  std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t> indexs);
-
-  struct InnerEndpointInfos {
-    std::vector<TrpcEndpointInfo> endpoints;
-    std::uint64_t hash;
-  };
-
-  std::unordered_map<std::string, ModuloHashLoadBalance::InnerEndpointInfos> callee_router_infos_;
+  std::unordered_map<std::string, std::vector<TrpcEndpointInfo>> callee_router_infos_;
 
   mutable std::shared_mutex mutex_;
 

@@ -13,27 +13,19 @@
 
 #include "trpc/naming/common/util/hash/hash_func.h"
 
-#include <openssl/md5.h>
-#include <atomic>
-#include <memory>
+#include <bits/stdint-uintn.h>
 #include <string>
 
 #include "trpc/naming/common/util/hash/City.h"
 #include "trpc/naming/common/util/hash/MurmurHash3.h"
+#include "trpc/naming/common/util/hash/Md5.h"
 
-namespace trpc {
+namespace trpc{
 
 std::uint64_t MD5Hash(const std::string& input) {
-  std::uint8_t hash[MD5_DIGEST_LENGTH];
-
-  MD5(reinterpret_cast<const unsigned char*>(input.c_str()), input.length(), hash);
-
-  std::uint64_t res = 0;
-  for (int i = 0; i < 8; ++i) {
-    res = (res << 8) | hash[i];
-  }
-
-  return res;
+  const uint32_t seed = 131;
+  uint64_t hash=md5hash(input.c_str(), input.size(),seed);
+  return hash;
 }
 std::uint64_t BKDRHash(const std::string& input) {
   const uint64_t seed = 131;
@@ -66,17 +58,30 @@ std::uint64_t CityHash(const std::string& input) {
 }
 
 std::uint64_t GetHash(const std::string& input, const std::string& hash_func) {
-  if (hash_func == MD5HASH) {
-    return MD5Hash(input);
-  } else if (hash_func == BKDRHASH) {
-    return BKDRHash(input);
-  } else if (hash_func == CITYHASH) {
-    return FNV1aHash(input);
-  } else if (hash_func == FNV1AHASH) {
-    return FNV1aHash(input);
-  } else {
-    return MurMurHash3(input);
+  int key=HashFuncTable.find(hash_func)==HashFuncTable.end()?-1:HashFuncTable.at(hash_func);
+  uint64_t hash=0;
+  switch (key) {
+    case 0:
+      hash=MD5Hash(input);
+      break;
+    case 1:
+      hash=BKDRHash(input);
+      break;
+    case 2:
+      hash=FNV1aHash(input);
+      break;
+    case 3:
+      hash=MurMurHash3(input);
+      break;
+    case 4:
+      hash=CityHash(input);
+      break;
+    default:
+      hash=MurMurHash3(input);
+      break;
+
   }
+  return hash;
 }
 
 std::uint64_t Hash(const std::string& input, const std::string& hash_func) { return GetHash(input, hash_func); }
@@ -85,4 +90,4 @@ std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint6
   return GetHash(input, hash_func) % num;
 }
 
-}  // namespace trpc
+} // namespace trpc

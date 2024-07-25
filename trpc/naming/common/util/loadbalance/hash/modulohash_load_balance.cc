@@ -12,7 +12,6 @@
 //
 
 #include "trpc/naming/common/util/loadbalance/hash/modulohash_load_balance.h"
-#include "trpc/naming/common/util/hash/hash_func.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -24,17 +23,23 @@
 #include <regex>
 #include <vector>
 
+#include "trpc/common/config/trpc_config.h"
+#include "trpc/naming/common/common_defs.h"
+#include "trpc/naming/common/util/hash/hash_func.h"
 #include "trpc/naming/load_balance_factory.h"
 #include "trpc/util/log/logging.h"
-#include "trpc/common/config/trpc_config.h"
+#include "trpc/naming/common/util/loadbalance/hash/common.h"
 
 
 namespace trpc {
 
-ModuloHashLoadBalance::ModuloHashLoadBalance(){
+int ModuloHashLoadBalance::Init() noexcept{
   if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("loadbalance", kModuloHashLoadBalance, loadbalance_config_)) {
     TRPC_FMT_DEBUG("get loadbalance config failed, use default value");
   }
+
+  bool res=CheckLoadBalanceSelectorConfig(loadbalance_config_);
+  return res?0:-1;
 }
 
 bool ModuloHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
@@ -48,49 +53,7 @@ bool ModuloHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
     return true;
   }
 
-  std::vector<TrpcEndpointInfo>& orig_endpoints = callee_router_infos_[select_info->name].endpoints;
-
-  const std::vector<TrpcEndpointInfo>* new_endpoints = info->endpoints;
-  if (orig_endpoints.size() != new_endpoints->size()) {
-    return true;
-  }
-
-  int i = 0;
-  for (auto& var : *new_endpoints) {
-    auto orig_endpoint = orig_endpoints[i++];
-    if (orig_endpoint.host != var.host || orig_endpoint.port != var.port) {
-      return true;
-    }
-
-    if (orig_endpoint.status != var.status) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-std::string ModuloHashLoadBalance::GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t> indexs) {
-  std::string key;
-  for (int index : indexs) {
-    switch (index) {
-      case 0:
-        key += info->name;
-      case 1:
-        if(info->context!=nullptr){
-          key += info->context->GetIp()+std::to_string(info->context->GetPort());
-        }
-      case 2:
-        key += std::to_string(static_cast<int>(info->policy));
-      case 3:
-        key += std::to_string(info->select_num);
-      case 4:
-        key += info->load_balance_name;
-      case 5:
-        key += std::to_string(info->is_from_workflow);
-    }
-  }
-  return key;
+  return CheckLoadbalanceInfoDiff(callee_router_infos_[select_info->name], info->endpoints);
 }
 
 
@@ -104,15 +67,12 @@ int ModuloHashLoadBalance::Update(const LoadBalanceInfo* info) {
   const SelectorInfo* select_info = info->info;
 
   if (IsLoadBalanceInfoDiff(info)) {
-    InnerEndpointInfos endpoint_info;
 
-    endpoint_info.endpoints.assign(info->endpoints->begin(), info->endpoints->end());
-
-    endpoint_info.hash = Hash(GenerateKeysAsString(select_info, loadbalance_config_.hash_args),
-                              loadbalance_config_.hash_func, endpoint_info.endpoints.size());
+    std::vector<TrpcEndpointInfo> endpoints;
+    endpoints.assign(info->endpoints->begin(), info->endpoints->end());
 
     std::unique_lock<std::shared_mutex> lock(mutex_);
-    callee_router_infos_[select_info->name] = endpoint_info;
+    callee_router_infos_[select_info->name] = endpoints;
   }
 
   return 0;
@@ -130,18 +90,17 @@ int ModuloHashLoadBalance::Next(LoadBalanceResult& result) {
     return -1;
   }
 
-  std::vector<TrpcEndpointInfo>& endpoints = iter->second.endpoints;
+  std::vector<TrpcEndpointInfo>& endpoints = iter->second;
   size_t endpoints_num = endpoints.size();
   if (endpoints_num < 1) {
     TRPC_LOG_ERROR("Router info of name is empty");
     return -1;
   }
 
-  uint32_t index = 0;
-  uint32_t id = __sync_fetch_and_add(&iter->second.hash, 1);
-  index = id % endpoints_num;
+  uint64_t hash = Hash(GenerateKeysAsString(result.info, loadbalance_config_.hash_args), loadbalance_config_.hash_func,
+                       endpoints_num);
 
-  result.result = endpoints[index];
+  result.result = endpoints[hash];
 
   return 0;
 }
