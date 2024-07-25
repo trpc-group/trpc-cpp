@@ -19,7 +19,8 @@ server:
       network: tcp                    # Network type, Support two types: tcp/udp
       ip: 0.0.0.0                     # Service bind ip
       port: 12345                     # Service bind port
-
+      service_filters:
+        - fixedwindow_limiter
 plugins:
   log:
     default:
