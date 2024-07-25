@@ -19,6 +19,8 @@
 #include "trpc/common/trpc_app.h"
 
 #include "examples/helloworld/greeter_service.h"
+#include "trpc/common/trpc_plugin.h"
+#include "trpc/overload_control/fixedwindow_limiter/fixedwindow_limiter_server_filter.h"
 
 namespace test {
 
@@ -35,6 +37,11 @@ class HelloWorldServer : public ::trpc::TrpcApp {
 
     RegisterService(service_name, std::make_shared<GreeterServiceImpl>());
 
+    return 0;
+  }
+    int RegisterPlugins() {
+    auto server_filter = std::make_shared<trpc::overload_control::FixedTimeWindowServerFilter>();
+    trpc::TrpcPlugin::GetInstance()->RegisterServerFilter(server_filter);
     return 0;
   }
 

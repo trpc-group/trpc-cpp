@@ -22,8 +22,8 @@ server:
       port: 12345
       protocol: trpc
       accept_thread_num: 1
-      filter:
-        - fixedwindow_limiter
+      filters:
+         - fixedwindow_limiter
 
 # # Client configuration
 # client:

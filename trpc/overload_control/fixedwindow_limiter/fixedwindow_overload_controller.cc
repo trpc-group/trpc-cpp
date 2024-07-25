@@ -10,6 +10,7 @@
 // A copy of the Apache 2.0 License is included in this file.
 //
 //
+#ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 
 #include "fixedwindow_overload_controller.h"
@@ -60,3 +61,5 @@ void FixedTimeWindowOverloadController::Destroy() {
 }
 
 }  // namespace trpc::overload_control
+
+#endif
