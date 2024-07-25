@@ -63,7 +63,6 @@ class ConsistentHashLoadBalance : public LoadBalance {
 
   mutable std::shared_mutex mutex_;
 
-  // std::unordered_map<std::string,
 };
 
 }  // namespace trpc
