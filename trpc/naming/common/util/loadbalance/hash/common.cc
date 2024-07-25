@@ -19,7 +19,7 @@
 #include "trpc/naming/common/common_defs.h"
 #include "trpc/naming/common/util/hash/hash_func.h"
 
-namespace trpc{
+namespace trpc {
 std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t>& indexs) {
   std::string key;
   for (int index : indexs) {
@@ -35,19 +35,20 @@ std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t>
         }
         break;
       case 2:
-        key += info->name;
-        break;
-      case 3:
-        if(info->context!=nullptr){
+        if (info->context != nullptr) {
           key += std::to_string(info->context->GetPort());
         }
+        break;
+      case 3:
+        key += info->name;
+        break;
+
       case 4:
-        key += std::to_string(static_cast<int>(info->policy));
+        if (info->context != nullptr) {
+          key += info->context->GetCalleeName();
+        }
         break;
       case 5:
-        key += std::to_string(info->select_num);
-        break;
-      case 6:
         key += info->load_balance_name;
         break;
       default:
@@ -57,36 +58,37 @@ std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t>
   return key;
 }
 
-bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceSelectorConfig& loadbalance_config_){
-  bool res=true;
-  for(int index:loadbalance_config_.hash_args){
-    if(index<0||index>HASH_NODES_MAX_INDEX){
+bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceSelectorConfig& loadbalance_config_) {
+  bool res = true;
+  for (int index : loadbalance_config_.hash_args) {
+    if (index < 0 || index > HASH_NODES_MAX_INDEX) {
       TRPC_FMT_DEBUG("index in yaml configuration out of range, use default config");
-      res=false;
+      res = false;
       break;
     }
   }
-  if(!res){
+  if (!res) {
     // set to default value
     loadbalance_config_.hash_args.assign({0});
   }
-  if(HashFuncTable.find(loadbalance_config_.hash_func)==HashFuncTable.end()){
-    res=false;
+  if (HashFuncTable.find(loadbalance_config_.hash_func) == HashFuncTable.end()) {
+    res = false;
     TRPC_FMT_DEBUG("hash func name is invalid, use default config");
     // set to default value
-    loadbalance_config_.hash_func=MURMUR3;
+    loadbalance_config_.hash_func = MURMUR3;
   }
-  if(loadbalance_config_.hash_nodes<1){
-    res=false;
+  if (loadbalance_config_.hash_nodes < 1) {
+    res = false;
     TRPC_FMT_DEBUG("hash nodes is invalid, use default config");
     // set to default value
-    loadbalance_config_.hash_nodes=20;
+    loadbalance_config_.hash_nodes = 20;
   }
-  
+
   return res;
 }
 
-bool CheckLoadbalanceInfoDiff(const std::vector<TrpcEndpointInfo>& orig_endpoints,const std::vector<TrpcEndpointInfo>* new_endpoints){
+bool CheckLoadbalanceInfoDiff(const std::vector<TrpcEndpointInfo>& orig_endpoints,
+                              const std::vector<TrpcEndpointInfo>* new_endpoints) {
   if (orig_endpoints.size() != new_endpoints->size()) {
     return true;
   }
@@ -106,6 +108,4 @@ bool CheckLoadbalanceInfoDiff(const std::vector<TrpcEndpointInfo>& orig_endpoint
   return false;
 }
 
-
-
-}  //namespace trpc
+}  // namespace trpc
