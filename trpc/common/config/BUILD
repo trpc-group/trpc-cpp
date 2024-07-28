@@ -317,6 +317,24 @@ cc_test(
 )
 
 cc_library(
+    name = "loadbalance_naming_conf",
+    srcs = ["loadbalance_naming_conf.cc"],
+    hdrs = ["loadbalance_naming_conf.h"],
+    deps = [
+        "//trpc/util/log:logging",
+        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
+    ],
+)
+
+cc_library(
+    name = "loadbalance_naming_conf_parser",
+    hdrs = ["loadbalance_naming_conf_parser.h"],
+    deps = [
+        ":loadbalance_naming_conf",
+    ],
+)
+
+cc_library(
     name = "local_file_provider_conf",
     srcs = ["local_file_provider_conf.cc"],
     hdrs = [
