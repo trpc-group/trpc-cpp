@@ -37,6 +37,9 @@
 /*
  * 32-bit integer manipulation macros (little endian)
  */
+ 
+#pragma once
+
 #include <bits/stdint-uintn.h>
 
 #ifndef GET_ULONG_LE
