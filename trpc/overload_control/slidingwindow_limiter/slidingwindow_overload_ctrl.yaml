@@ -1,0 +1,43 @@
+#Global configuration (required)
+global:
+  local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
+  threadmodel:
+    default:
+      # Separate model
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 4 #Number of network I/O threads.
+        handle_thread_num: 4 #Number of business processing handle threads.
+
+# Server configuration
+server:
+  app: test
+  server: helloworld
+  admin_port: 21111
+  admin_ip: 0.0.0.0
+  service:
+    - name: trpc.test.helloworld.Greeter
+      network: tcp
+      ip: 0.0.0.0
+      port: 12345
+      protocol: trpc
+      accept_thread_num: 1
+      filters:
+         - fixedwindow_limiter
+
+#Plugin configuration.
+plugins:
+  log: #Log configuration
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
+        mode: 2 # 1-sync, 2-async, 3-fast
+        sinks:
+          local_file: # Local log file
+            filename: trpc.log # The name of log file
+  overload_control:
+    slidingwindow_limiter:
+      limit: 10
+      window_size: 2
+      is_report: true
