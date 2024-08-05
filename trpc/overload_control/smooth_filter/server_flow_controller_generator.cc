@@ -43,7 +43,7 @@ void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_con
     if (!func_conf.limiter.empty()) {
       std::string service_func_name = fmt::format("/{}/{}", flow_conf.service_name, func_conf.name);
       ServerOverloadControllerPtr func_controller =
-          Server_CreateFlowController(flow_conf.service_name,func_conf.limiter, flow_conf.is_report, func_conf.window_size);
+          Server_CreateFlowController(service_func_name,func_conf.limiter, flow_conf.is_report, func_conf.window_size);
       if (func_controller) {
         ServerOverloadControllerFactory::GetInstance()->Register(func_controller);
       } else {

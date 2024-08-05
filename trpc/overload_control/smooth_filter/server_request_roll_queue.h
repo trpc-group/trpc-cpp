@@ -36,6 +36,8 @@ private:
  //记录起始位置
  std::atomic<int> begin_pos_ = 0;
 
+ std::atomic<int> current_limit_ = 0;
+
  //时间槽队列
  std::vector<std::atomic<int64_t>> time_hits_;
 

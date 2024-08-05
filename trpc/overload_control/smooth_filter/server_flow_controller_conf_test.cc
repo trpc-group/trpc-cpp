@@ -22,22 +22,22 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/flow_control/flow_controller_conf.h"
+#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
 
 #include "gtest/gtest.h"
 
 namespace trpc::overload_control {
 namespace testing {
 
-TEST(FlowControlLimiterConf, All) {
-  FlowControlLimiterConf conf;
+TEST(Server_FlowControlLimiterConf, All) {
+  Server_FlowControlLimiterConf conf;
   ASSERT_EQ(conf.service_name.empty(), true);
   ASSERT_EQ(conf.service_limiter.empty(), true);
   ASSERT_EQ(conf.is_report, false);
   ASSERT_EQ(conf.window_size, 0);
   ASSERT_EQ(conf.func_limiters.size(), 0);
 
-  YAML::convert<FlowControlLimiterConf> concurr_yaml;
+  YAML::convert<Server_FlowControlLimiterConf> concurr_yaml;
 
   conf.service_name = "trpc.test.helloworld.Greeter";
   conf.service_limiter = "default(10000)";
@@ -51,7 +51,7 @@ TEST(FlowControlLimiterConf, All) {
 
   YAML::Node concurr_node = concurr_yaml.encode(conf);
 
-  FlowControlLimiterConf decode_conf;
+  Server_FlowControlLimiterConf decode_conf;
 
   ASSERT_EQ(concurr_yaml.decode(concurr_node, decode_conf), true);
 

@@ -42,7 +42,6 @@ std::vector<FilterPoint> Server_FlowControlServerFilter::GetFilterPoint() {
 }
 
 void Server_FlowControlServerFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
-  
   switch (point) {
     case FilterPoint::SERVER_PRE_SCHED_RECV_MSG: {
       OnRequest(status, context);
@@ -55,7 +54,6 @@ void Server_FlowControlServerFilter::operator()(FilterStatus& status, FilterPoin
 }
 
 void Server_FlowControlServerFilter::OnRequest(FilterStatus& status, const ServerContextPtr& context) {
-   
   if (TRPC_UNLIKELY(!context->GetStatus().OK())) {
     // If it is already a dirty request, it will not be processed further to ensure that the first error code is
     // not overwritten.
@@ -65,7 +63,6 @@ void Server_FlowControlServerFilter::OnRequest(FilterStatus& status, const Serve
   auto service_controller = ServerOverloadControllerFactory::GetInstance()->Get(context->GetCalleeName());
   // func flow controller
   auto func_controller = ServerOverloadControllerFactory::GetInstance()->Get(context->GetFuncName());
-
   if (!service_controller && !func_controller) {
     return;
   }

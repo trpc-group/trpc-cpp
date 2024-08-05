@@ -33,7 +33,7 @@
 namespace trpc::overload_control 
 {
 /// @var: 默认的限流数量 
-constexpr int32_t kDefaultNum = 5;
+constexpr int32_t kDefaultNum = 100;
 
 class SmoothLimit : public ServerOverloadController
 {
@@ -64,7 +64,7 @@ public:
 
   /// @brief 销毁线程
   void Destroy() ;
-private:
+public: //这个地方应该是private 我在test测试了 所以定义成了public
   ///@brief 检查是否超出窗口当前限流
   bool CheckLimit(const ServerContextPtr& check_param);
 
@@ -73,7 +73,7 @@ private:
 
   /// @brief 获取限流阈值
   int64_t GetMaxCounter() const  { return limit_; }
-private:
+public:
   //插件的名字
   std::string name_;
 

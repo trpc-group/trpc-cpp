@@ -78,6 +78,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "server_flow_controller_conf_test",
+    srcs = ["server_flow_controller_conf_test.cc"],
+    deps = [
+        ":server_flow_controller_conf",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "server_flow_controller_generator",
     srcs = ["server_flow_controller_generator.cc"],
@@ -98,6 +107,19 @@ cc_library(
         "//trpc/common/logging:trpc_logging",
         "//trpc/util:function",
         "//trpc/util:string_util",
+    ],
+)
+
+cc_test(
+    name = "server_flow_controller_generator_test",
+    srcs = ["server_flow_controller_generator_test.cc"],
+    deps = [
+        ":server_smooth_limit",
+        ":server_overload_controller_factory",
+        ":server_flow_controller_generator",
+        ":server_flow_controller_conf",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -126,6 +148,21 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "server_flow_controller_server_filter_test",
+    srcs = ["server_flow_controller_server_filter_test.cc"],
+    data = [
+        "//trpc/overload_control/smooth_filter:filter_test.yaml",
+    ],
+    deps = [
+        "//trpc/common:trpc_plugin",
+        ":server_overload_controller_factory",
+        ":server_flow_controller_server_filter",
+        "//trpc/codec/testing:protocol_testing",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "server_request_roll_queue",
     srcs = ["server_request_roll_queue.cc"],
@@ -139,6 +176,17 @@ cc_library(
     deps = [
         "//trpc/util/log:logging",
         ]
+)
+
+cc_test(
+    name = "server_request_roll_queue_test",
+    srcs = ["server_request_roll_queue_test.cc"],
+    deps = [
+        "//trpc/log:trpc_log",
+        ":server_request_roll_queue",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -162,6 +210,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "server_smooth_limit_test",
+    srcs = ["server_smooth_limit_test.cc"],
+    deps = [
+        ":server_smooth_limit",
+        "//trpc/codec/trpc:trpc_protocol",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "server_trick_time",
     srcs = ["server_trick_time.cc"],
@@ -174,5 +233,15 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "//trpc/util:function",
+    ],
+)
+
+cc_test(
+    name = "server_trick_time_test",
+    srcs = ["server_trick_time_test.cc"],
+    deps = [
+        ":server_trick_time",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
     ],
 )
