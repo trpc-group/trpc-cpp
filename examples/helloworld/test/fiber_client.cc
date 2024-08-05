@@ -26,27 +26,26 @@
 DEFINE_string(client_config, "trpc_cpp.yaml", "framework client_config file, --client_config=trpc_cpp.yaml");
 DEFINE_string(service_name, "trpc.test.helloworld.Greeter", "callee service name");
 
-int DoRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy) {
+int DoRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProxy>& proxy, int idx) {
   ::trpc::ClientContextPtr client_ctx = ::trpc::MakeClientContext(proxy);
   ::trpc::test::helloworld::HelloRequest req;
-  req.set_msg("fiber");
+  req.set_msg("fiber,idx=" + std::to_string(idx));
   ::trpc::test::helloworld::HelloReply rsp;
-  for(int i = 0;i<50;i++)
-  {
   ::trpc::Status status = proxy->SayHello(client_ctx, req, &rsp);
   if (!status.OK()) {
     std::cerr << "get rpc error: " << status.ErrorMessage() << std::endl;
     return -1;
   }
   std::cout << "get rsp msg: " << rsp.msg() << std::endl;
-  }
   return 0;
 }
 
 int Run() {
   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>(FLAGS_service_name);
-
-  return DoRpcCall(proxy);
+  for(int i = 1; i <= 50; i++){
+    DoRpcCall(proxy, i);
+  }
+  return 0;
 }
 
 void ParseClientConfig(int argc, char* argv[]) {
