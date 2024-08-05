@@ -87,7 +87,7 @@ public:
   bool is_report_{false};
 
   //滑动窗口中的时间槽数量
-  int32_t window_size_{kDefaultNum};
+  int32_t window_size_;
 
   //存储request的滑动窗口时间槽
   RequestRollQueue requestrollque_;
