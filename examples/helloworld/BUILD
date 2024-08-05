@@ -10,6 +10,8 @@ cc_binary(
     name = "helloworld_svr",
     srcs = ["helloworld_server.cc"],
     deps = [
+        "//trpc/overload_control/smooth_filter:server_flow_controller_server_filter",
+        "//trpc/common:trpc_plugin",
         ":greeter_service",
         ":helloworld_proto",
         "@com_github_fmtlib_fmt//:fmtlib",

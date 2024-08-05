@@ -31,12 +31,15 @@ int DoRpcCall(const std::shared_ptr<::trpc::test::helloworld::GreeterServiceProx
   ::trpc::test::helloworld::HelloRequest req;
   req.set_msg("fiber");
   ::trpc::test::helloworld::HelloReply rsp;
+  for(int i = 0;i<50;i++)
+  {
   ::trpc::Status status = proxy->SayHello(client_ctx, req, &rsp);
   if (!status.OK()) {
     std::cerr << "get rpc error: " << status.ErrorMessage() << std::endl;
     return -1;
   }
   std::cout << "get rsp msg: " << rsp.msg() << std::endl;
+  }
   return 0;
 }
 

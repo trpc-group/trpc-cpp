@@ -20,6 +20,9 @@
 
 #include "examples/helloworld/greeter_service.h"
 
+#include "trpc/common/trpc_plugin.h"
+
+#include "trpc/overload_control/smooth_filter/server_flow_controller_server_filter.h"
 namespace test {
 
 namespace helloworld {
@@ -39,6 +42,14 @@ class HelloWorldServer : public ::trpc::TrpcApp {
   }
 
   void Destroy() override {}
+
+  int RegisterPlugins() {
+  // register server-side filter
+  auto server_filter = std::make_shared<trpc::overload_control::Server_FlowControlServerFilter>();
+  trpc::TrpcPlugin::GetInstance()->RegisterServerFilter(server_filter);
+  return 0;
+  }
+
 };
 
 }  // namespace helloworld
