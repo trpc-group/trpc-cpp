@@ -11,6 +11,7 @@ exports_files([
     "domain_test.yaml",
     "test_load.yaml",
     "test_load.toml",
+    "select_load_balance.yaml"
 ])
 
 cc_library(

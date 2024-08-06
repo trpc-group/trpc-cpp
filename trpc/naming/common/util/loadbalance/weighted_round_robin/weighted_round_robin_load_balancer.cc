@@ -1,8 +1,12 @@
-#include "smooth_weighted_polling_load_balance.h"
+#include "trpc/naming/common/util/loadbalance/weighted_round_robin/weighted_round_robin_load_balancer.h"
 
 namespace trpc {
 
 int SmoothWeightedPollingLoadBalance::Update(const LoadBalanceInfo* info) {
+  if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
+    TRPC_LOG_ERROR("Endpoint info of name is empty");
+    return -1;
+  }
   std::unique_lock<std::shared_mutex> lock(mutex_);
 
   if (!IsLoadBalanceInfoDiff(info)) {
@@ -25,8 +29,23 @@ int SmoothWeightedPollingLoadBalance::Update(const LoadBalanceInfo* info) {
 }
 
 int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
-  std::shared_lock<std::shared_mutex> lock(mutex_);
+  if (nullptr == result.info) {
+    return -1;
+  }
 
+  std::shared_lock<std::shared_mutex> lock(mutex_);
+  auto iter = callee_router_infos_.find((result.info)->name);
+  if (iter == callee_router_infos_.end()) {
+    TRPC_LOG_ERROR("Router info of name " << (result.info)->name << " no found");
+    return -1;
+  }
+
+  std::vector<TrpcEndpointInfo>& endpoints = iter->second.endpoints;
+  size_t endpoints_num = endpoints.size();
+  if (endpoints_num < 1) {
+    TRPC_LOG_ERROR("Router info of name is empty");
+    return -1;
+  }
   if (callee_router_infos_.empty()) {
     return -1;
   }
@@ -46,7 +65,7 @@ int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
 
   if (selected_index != -1) {
     info.current_weights[selected_index] -= info.total_weight;
-    result.endpoint_info = info.endpoints[selected_index];
+    result.result = info.endpoints[selected_index];
     return 0;
   }
 
@@ -54,6 +73,9 @@ int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
 }
 
 bool SmoothWeightedPollingLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
+  if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
+    return false;
+  }
   const auto& existing_info = callee_router_infos_.find(info->info->name);
   if (existing_info == callee_router_infos_.end()) {
     return true;
