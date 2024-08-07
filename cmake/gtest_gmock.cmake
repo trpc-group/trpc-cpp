@@ -13,7 +13,7 @@
 
 include(FetchContent)
 
-set(GTEST_VET  1.10.0)
+set(GTEST_VET  1.11.0)
 set(GTEST_URL  https://github.com/google/googletest/archive/release-${GTEST_VET}.tar.gz)
 
 FetchContent_Declare(
