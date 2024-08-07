@@ -41,8 +41,8 @@ std::optional<T> LoadConfig(const std::string& plugin_name, const std::string& c
                             const std::any& params = nullptr) {
   std::optional<T> ret;
   // Determine the type of support
-  if constexpr (std::negation_v<T, Json::Value> && std::negation_v<T, YAML::Node> &&
-                std::negation_v<T, std::map<std::string, std::string> >) {
+  if constexpr (std::negation_v<std::is_same<T, Json::Value>> && std::negation_v<std::is_same<T, YAML::Node>> &&
+                std::negation_v<std::is_same<T, std::map<std::string, std::string>>>) {
     TRPC_LOG_ERROR("Unknown type!");
     return ret;
   }
