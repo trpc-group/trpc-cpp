@@ -51,7 +51,7 @@ class SmoothWeightedPollingLoadBalanceTest : public ::testing::Test {
 TEST_F(SmoothWeightedPollingLoadBalanceTest, TestSingleSelectionAccuracy) {
   RouterInfo info;
   info.name = "test_service";
-
+  // Initialize endpoints with different weights
   std::vector<TrpcEndpointInfo> endpoints_info;
   TrpcEndpointInfo endpoint1;
   endpoint1.host = "192.168.1.1";
@@ -107,7 +107,6 @@ TEST_F(SmoothWeightedPollingLoadBalanceTest, SelectWithWeights) {
   RouterInfo info;
   info.name = "test_service";
 
-  // Initialize endpoints with different weights
   std::vector<TrpcEndpointInfo> endpoints_info;
   TrpcEndpointInfo endpoint1;
   endpoint1.host = "192.168.1.1";
@@ -124,7 +123,6 @@ TEST_F(SmoothWeightedPollingLoadBalanceTest, SelectWithWeights) {
   info.info = endpoints_info;
   test_polling_load_balance_->SetEndpoints(&info);
 
-  // Perform multiple selections and verify the distribution
   std::unordered_map<int, int> count_map;
   for (int i = 0; i < 1000; ++i) {
     SelectorInfo select_info;
@@ -137,7 +135,6 @@ TEST_F(SmoothWeightedPollingLoadBalanceTest, SelectWithWeights) {
     count_map[selected_endpoint.port]++;
   }
 
-  // Verify the results
   EXPECT_GT(count_map[1001], 0);
   EXPECT_GT(count_map[1002], 0);
   EXPECT_EQ(count_map.size(), 2);
@@ -151,7 +148,6 @@ TEST_F(SmoothWeightedPollingLoadBalanceTest, AsyncSelectWithWeights) {
   RouterInfo info;
   info.name = "test_service";
 
-  // Initialize endpoints with different weights
   std::vector<TrpcEndpointInfo> endpoints_info;
   TrpcEndpointInfo endpoint1;
   endpoint1.host = "192.168.1.1";
@@ -168,7 +164,6 @@ TEST_F(SmoothWeightedPollingLoadBalanceTest, AsyncSelectWithWeights) {
   info.info = endpoints_info;
   test_polling_load_balance_->SetEndpoints(&info);
 
-  // Perform asynchronous selections and verify the distribution
   std::unordered_map<int, int> count_map;
   std::vector<Future<TrpcEndpointInfo>> futures;
 
@@ -199,7 +194,6 @@ TEST_F(SmoothWeightedPollingLoadBalanceTest, SelectBatchWithWeights) {
   RouterInfo info;
   info.name = "test_service";
 
-  // Initialize endpoints with different weights
   std::vector<TrpcEndpointInfo> endpoints_info;
   TrpcEndpointInfo endpoint1;
   endpoint1.host = "192.168.1.1";
