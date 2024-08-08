@@ -3,3 +3,4 @@ build --copt=-O2
 #build --copt=-g --strip=never
 build --jobs 16
 #test --cache_test_results=no --test_output=errors
+build --define trpc_include_overload_control=true
