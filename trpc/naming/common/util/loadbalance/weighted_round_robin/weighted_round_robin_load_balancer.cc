@@ -1,12 +1,26 @@
+//
+//
+// Tencent is pleased to support the open source community by making tRPC available.
+//
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
+// All rights reserved.
+//
+// If you have downloaded a copy of the tRPC source code from Tencent,
+// please note that tRPC source code is licensed under the  Apache 2.0 License,
+// A copy of the Apache 2.0 License is included in this file.
+//
+//
+
 #include "trpc/naming/common/util/loadbalance/weighted_round_robin/weighted_round_robin_load_balancer.h"
 
 namespace trpc {
 
 int SmoothWeightedPollingLoadBalance::Update(const LoadBalanceInfo* info) {
-  if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
+  if (info == nullptr || info->info == nullptr || info->endpoints == nullptr) {
     TRPC_LOG_ERROR("Endpoint info of name is empty");
     return -1;
   }
+
   std::unique_lock<std::shared_mutex> lock(mutex_);
 
   if (!IsLoadBalanceInfoDiff(info)) {
@@ -29,28 +43,25 @@ int SmoothWeightedPollingLoadBalance::Update(const LoadBalanceInfo* info) {
 }
 
 int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
-  if (nullptr == result.info) {
+  if (result.info == nullptr) {
     return -1;
   }
 
   std::shared_lock<std::shared_mutex> lock(mutex_);
-  auto iter = callee_router_infos_.find((result.info)->name);
+  auto iter = callee_router_infos_.find(result.info->name);
   if (iter == callee_router_infos_.end()) {
-    TRPC_LOG_ERROR("Router info of name " << (result.info)->name << " no found");
+    TRPC_LOG_ERROR("Router info of name " << result.info->name << " not found");
     return -1;
   }
 
-  std::vector<TrpcEndpointInfo>& endpoints = iter->second.endpoints;
+  auto& info = iter->second;
+  const auto& endpoints = info.endpoints;
   size_t endpoints_num = endpoints.size();
+
   if (endpoints_num < 1) {
     TRPC_LOG_ERROR("Router info of name is empty");
     return -1;
   }
-  if (callee_router_infos_.empty()) {
-    return -1;
-  }
-
-  auto& info = callee_router_infos_.begin()->second;
 
   int max_current_weight = -1;
   int selected_index = -1;
@@ -73,9 +84,10 @@ int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
 }
 
 bool SmoothWeightedPollingLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
-  if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
+  if (info == nullptr || info->info == nullptr || info->endpoints == nullptr) {
     return false;
   }
+
   const auto& existing_info = callee_router_infos_.find(info->info->name);
   if (existing_info == callee_router_infos_.end()) {
     return true;

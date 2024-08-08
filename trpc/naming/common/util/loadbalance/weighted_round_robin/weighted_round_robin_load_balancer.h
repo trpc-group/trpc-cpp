@@ -1,11 +1,11 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
-// please note that tRPC source code is licensed under the  Apache 2.0 License,
+// please note that tRPC source code is licensed under the Apache 2.0 License,
 // A copy of the Apache 2.0 License is included in this file.
 //
 //
@@ -29,13 +29,11 @@ constexpr char kSmoothWeightedPollingLoadBalance[] = "trpc_smooth_weighted_polli
 class SmoothWeightedPollingLoadBalance : public LoadBalance {
  public:
   SmoothWeightedPollingLoadBalance() = default;
-
-  ~SmoothWeightedPollingLoadBalance() = default;
+  ~SmoothWeightedPollingLoadBalance() override = default;
 
   std::string Name() const override { return kSmoothWeightedPollingLoadBalance; }
 
   int Update(const LoadBalanceInfo* info) override;
-
   int Next(LoadBalanceResult& result) override;
 
  private:
@@ -48,10 +46,10 @@ class SmoothWeightedPollingLoadBalance : public LoadBalance {
     std::uint32_t total_weight;
   };
 
-  std::unordered_map<std::string, SmoothWeightedPollingLoadBalance::InnerEndpointInfos> callee_router_infos_;
+  std::unordered_map<std::string, InnerEndpointInfos> callee_router_infos_;
   mutable std::shared_mutex mutex_;
 };
 
-using SmoothWeightedPollingLoadBalancePtr = RefPtr<SmoothWeightedPollingLoadBalance>;
+using SmoothWeightedPollingLoadBalancePtr = std::shared_ptr<SmoothWeightedPollingLoadBalance>;
 
 }  // namespace trpc
