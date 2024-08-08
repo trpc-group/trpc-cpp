@@ -17,8 +17,11 @@
 #include "fmt/format.h"
 
 #include "trpc/common/trpc_app.h"
+#include "trpc/common/trpc_plugin.h"
 
 #include "examples/helloworld/greeter_service.h"
+
+#include "trpc/overload_control/seconds_limiter/seconds_limiter_server_filter.h"
 
 namespace test {
 
@@ -39,6 +42,13 @@ class HelloWorldServer : public ::trpc::TrpcApp {
   }
 
   void Destroy() override {}
+
+  int RegisterPlugins() {
+    // register server-side filter
+    auto server_filter = std::make_shared<trpc::overload_control::SecondsLimiterServerFilter>();
+    trpc::TrpcPlugin::GetInstance()->RegisterServerFilter(server_filter);
+    return 0;
+  }
 };
 
 }  // namespace helloworld
