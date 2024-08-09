@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -20,19 +20,18 @@
 #include "fmt/format.h"
 
 #include "trpc/common/logging/trpc_logging.h"
-#include "server_overload_controller_factory.h"
-#include "server_smooth_limit.h"
+#include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
+#include "trpc/overload_control/smooth_filter/server_smooth_limit.h"
 #include "trpc/util/string_util.h"
 
 namespace trpc::overload_control {
 
 void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_conf) {
-  
   if (!flow_conf.service_limiter.empty()) {
-    ServerOverloadControllerPtr service_controller =
-        Server_CreateFlowController(flow_conf.service_name,flow_conf.service_limiter, flow_conf.is_report, flow_conf.window_size);
+    ServerOverloadControllerPtr service_controller = Server_CreateFlowController(
+        flow_conf.service_name, flow_conf.service_limiter, flow_conf.is_report, flow_conf.window_size);
     if (service_controller) {
-     ServerOverloadControllerFactory::GetInstance()->Register(service_controller);
+      ServerOverloadControllerFactory::GetInstance()->Register(service_controller);
     } else {
       TRPC_FMT_ERROR("create service flow control fail|service_name: {}, |service_limiter: {}", flow_conf.service_name,
                      flow_conf.service_limiter);
@@ -43,7 +42,7 @@ void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_con
     if (!func_conf.limiter.empty()) {
       std::string service_func_name = fmt::format("/{}/{}", flow_conf.service_name, func_conf.name);
       ServerOverloadControllerPtr func_controller =
-          Server_CreateFlowController(service_func_name,func_conf.limiter, flow_conf.is_report, func_conf.window_size);
+          Server_CreateFlowController(service_func_name, func_conf.limiter, flow_conf.is_report, func_conf.window_size);
       if (func_controller) {
         ServerOverloadControllerFactory::GetInstance()->Register(func_controller);
       } else {
@@ -54,7 +53,8 @@ void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_con
   }
 }
 
-ServerOverloadControllerPtr Server_CreateFlowController(const std::string &key_name,const std::string& limiter_desc, bool is_report, int32_t window_size) {
+ServerOverloadControllerPtr Server_CreateFlowController(const std::string& key_name, const std::string& limiter_desc,
+                                                        bool is_report, int32_t window_size) {
   // Format: name (maximum limit per second).
   std::string str = trpc::util::Trim(limiter_desc);
 
@@ -74,7 +74,7 @@ ServerOverloadControllerPtr Server_CreateFlowController(const std::string &key_n
 
   // The name must not be empty, and the limit number must not be empty and valid.
   std::string limiter_name = trpc::util::Trim(items[0]);
-  std::string limiter_rps = trpc::util::Trim(items[1]);  
+  std::string limiter_rps = trpc::util::Trim(items[1]);
   if (limiter_name.empty() || limiter_rps.empty()) {
     return nullptr;
   }
@@ -85,9 +85,9 @@ ServerOverloadControllerPtr Server_CreateFlowController(const std::string &key_n
   }
   // Check if the name is within the supported flow controller implementations
   if (limiter_name == LimiterDefault) {
-    return ServerOverloadControllerPtr(new SmoothLimit(key_name,max_rps, is_report, window_size));
+    return ServerOverloadControllerPtr(new SmoothLimit(key_name, max_rps, is_report, window_size));
   } else if (limiter_name == LimiterSmooth) {
-    return ServerOverloadControllerPtr(new SmoothLimit(key_name,max_rps, is_report, window_size));
+    return ServerOverloadControllerPtr(new SmoothLimit(key_name, max_rps, is_report, window_size));
   }
 
   return nullptr;

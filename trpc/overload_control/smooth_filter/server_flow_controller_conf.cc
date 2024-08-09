@@ -3,7 +3,7 @@
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
- * Copyright (C) 2023 THL A29 Limited, a Tencent company.
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@
 
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/log/trpc_log.h"
-
 
 namespace trpc::overload_control {
 
@@ -131,7 +130,6 @@ bool convert<trpc::overload_control::Server_FlowControlLimiterConf>::decode(
     config.is_report = node["is_report"].as<bool>();
   }
 
-  
   return true;
 }
 

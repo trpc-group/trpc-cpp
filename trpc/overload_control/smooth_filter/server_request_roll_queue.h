@@ -1,52 +1,68 @@
+//
+//
+// Tencent is pleased to support the open source community by making tRPC available.
+//
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
+// All rights reserved.
+//
+// If you have downloaded a copy of the tRPC source code from Tencent,
+// please note that tRPC source code is licensed under the  Apache 2.0 License,
+// A copy of the Apache 2.0 License is included in this file.
+//
+//
+
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 #pragma once
 
-#include<atomic>
-#include<vector>
+#include <atomic>
 #include <memory>
+#include <vector>
+
 #include "trpc/util/log/logging.h"
 
-/// 整个队列并没有做到严格的同步
-/// 我们通过原子变量来保证单步操作的原子性 选定内存序做优化
-/// 调用这个队列的checkpoint()时候 通过双循环来保证不会有一瞬间超过阈值
+/// The entire queue did not achieve strict synchronization
+/// Ensure the atomicity of single step operations through atomic variables Select memory sequence for optimization
+/// When calling the checkpoint() of this queue, a double loop is used to ensure that the threshold is not exceeded for
+/// a moment
 
-namespace trpc::overload_control{
-class RequestRollQueue
-{
-public:
+namespace trpc::overload_control {
+class RequestRollQueue {
+ public:
   explicit RequestRollQueue(int n_fps);
 
   virtual ~RequestRollQueue();
 
-  /// @brief 移动窗口
+  /// @brief move windows
   void NextTimeFrame();
 
-  /// @brief end添加时间数
+  /// @brief Add time count
   int64_t AddTimeHit();
 
-  /// @brief 获取smooth窗口的total_size
-  int64_t ActiveSum() const;  
+  /// @brief Get the total_size of the smooth window
+  int64_t ActiveSum() const;
 
-private:
- int WindowSize() const { return time_hits_.size() - kRedundantFramesNum; }
- 
- //begin + 1
- int NextIndex(int idx) const { return isPowOfTwo_ ? (idx + 1) & (time_hits_.size() - 1) : (idx + 1) % time_hits_.size(); }
-private:
- //记录起始位置
- std::atomic<int> begin_pos_ = 0;
+ private:
+  int WindowSize() const { return time_hits_.size() - kRedundantFramesNum; }
 
- std::atomic<int> current_limit_ = 0;
+  // begin + 1
+  int NextIndex(int idx) const {
+    return isPowOfTwo_ ? (idx + 1) & (time_hits_.size() - 1) : (idx + 1) % time_hits_.size();
+  }
 
- //时间槽队列
- std::vector<std::atomic<int64_t>> time_hits_;
+ private:
+  // Record the starting position
+  std::atomic<int> begin_pos_ = 0;
 
- //冗余位置 判断队空队满的时候
- static constexpr int kRedundantFramesNum = 1;
+  std::atomic<int> current_limit_ = 0;
 
- //判断是否能优化取余操作
- bool isPowOfTwo_;
+  // Time slot queue
+  std::vector<std::atomic<int64_t>> time_hits_;
 
+  // Redundant positions ,When judging if the team is empty or full
+  static constexpr int kRedundantFramesNum = 1;
+
+  // Determine whether the residual operation can be optimized
+  bool isPowOfTwo_;
 };
-}
+}  // namespace trpc::overload_control
 #endif

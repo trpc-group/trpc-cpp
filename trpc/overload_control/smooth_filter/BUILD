@@ -2,10 +2,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-
-
-
-
 cc_test(
     name = "server_overload_controller_factory_test",
     srcs = ["server_overload_controller_factory_test.cc"],
@@ -15,8 +11,6 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
-
-
 
 cc_library(
     name = "server_overload_controller",
@@ -49,16 +43,6 @@ cc_library(
         "//trpc/overload_control/common:overload_control_factory",
         "//trpc/overload_control:server_overload_controller",
     ],
-)
-
-cc_library(
-   name = "trpc_overload_control",
-   srcs = ["trpc_overload_control.cc"],
-   hdrs = ["trpc_overload_control.h"],
-   deps = [
-       ":server_overload_controller_factory",
-       "//trpc/filter:filter_manager",
-   ],
 )
 
 cc_library(

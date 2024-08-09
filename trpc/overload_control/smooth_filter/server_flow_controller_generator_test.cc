@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -14,28 +14,27 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
+#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
+#include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
+#include "trpc/overload_control/smooth_filter/server_smooth_limit.h"
 
 #include "gtest/gtest.h"
 
-#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
-#include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
-
-#include "trpc/overload_control/smooth_filter/server_smooth_limit.h"
 namespace trpc::overload_control {
 namespace testing {
 
 TEST(Server_CreateFlowController, All) {
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","default(1000)", true, 20) != nullptr);
-  //ASSERT_TRUE(Server_CreateFlowController("seconds(1000)", true, 0) != nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","smooth(1000)", false, -1) != nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","default(1000") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","default(1000)abc") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","default1000)") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","(1000)") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","default()") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","default(-1)") == nullptr);
-  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter","unknown(1000)") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "default(1000)", true, 20) != nullptr);
+  // ASSERT_TRUE(Server_CreateFlowController("seconds(1000)", true, 0) != nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "smooth(1000)", false, -1) != nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "default(1000") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "default(1000)abc") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "default1000)") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "(1000)") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "default()") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "default(-1)") == nullptr);
+  ASSERT_TRUE(Server_CreateFlowController("trpc.test.helloworld.Greeter", "unknown(1000)") == nullptr);
 }
 
 TEST(Server_RegisterFlowControl, All) {
@@ -81,11 +80,10 @@ TEST(Server_RegisterFlowControl, All) {
     ASSERT_TRUE(nullptr != ServerOverloadControllerFactory::GetInstance()->Get(prefix + "/SayHello"));
     ASSERT_FALSE(nullptr != ServerOverloadControllerFactory::GetInstance()->Get(prefix + "/Func1"));
     ASSERT_FALSE(nullptr != ServerOverloadControllerFactory::GetInstance()->Get(prefix + "/Func2"));
-    
+
     ServerOverloadControllerFactory::GetInstance()->Stop();
     ServerOverloadControllerFactory::GetInstance()->Destroy();
   }
-
 }
 
 }  // namespace testing

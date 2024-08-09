@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -14,12 +14,10 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #pragma once
+#include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
 
 #include "trpc/filter/filter.h"
-#include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
 #include "trpc/server/server_context.h"
-
-
 
 namespace trpc::overload_control {
 

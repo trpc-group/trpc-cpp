@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -14,6 +14,10 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #include "trpc/overload_control/smooth_filter/server_flow_controller_server_filter.h"
+#include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
+#include "trpc/overload_control/smooth_filter/server_overload_controller.h"
+#include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
+#include "trpc/overload_control/smooth_filter/server_smooth_limit.h"
 
 #include <memory>
 #include <utility>
@@ -25,11 +29,7 @@
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/common/trpc_plugin.h"
 #include "trpc/filter/filter_manager.h"
-#include "server_overload_controller.h"
-#include "server_overload_controller_factory.h"
-#include "server_flow_controller_generator.h"
 #include "trpc/server/server_context.h"
-#include "server_smooth_limit.h"
 
 namespace trpc::overload_control {
 
@@ -108,11 +108,11 @@ TEST_F(FlowControlServerFilterTestFixture, Ok) {
 
 // Scenarios where requests are intercepted after flow control is executed during testing.
 TEST_F(FlowControlServerFilterTestFixture, Overload) {
-  std::shared_ptr<ServerOverloadController> mock_control = std::make_shared<SmoothLimit>("Say",0);
+  std::shared_ptr<ServerOverloadController> mock_control = std::make_shared<SmoothLimit>("Say", 0);
   ServerOverloadControllerFactory::GetInstance()->Register(mock_control);
   MessageServerFilterPtr filter = trpc::FilterManager::GetInstance()->GetMessageServerFilter("my_overflow_control");
   Server_FlowControlServerFilter* flow_control_filter = static_cast<Server_FlowControlServerFilter*>(filter.get());
- 
+
   ServerContextPtr context = MakeServerContext();
   context->SetCalleeName("test_service");
   context->SetFuncName("Say");
@@ -125,7 +125,7 @@ TEST_F(FlowControlServerFilterTestFixture, Overload) {
   status = FilterStatus::CONTINUE;
   context->SetStatus(Status(0, ""));
 
-  std::shared_ptr<ServerOverloadController> mock_control1 = std::make_shared<SmoothLimit>("test_service/Say",0);
+  std::shared_ptr<ServerOverloadController> mock_control1 = std::make_shared<SmoothLimit>("test_service/Say", 0);
   ServerOverloadControllerFactory::GetInstance()->Register(mock_control1);
   context->SetCalleeName("test_service1");
   context->SetFuncName("test_service/Say");

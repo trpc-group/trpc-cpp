@@ -1,52 +1,61 @@
+//
+//
+// Tencent is pleased to support the open source community by making tRPC available.
+//
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
+// All rights reserved.
+//
+// If you have downloaded a copy of the tRPC source code from Tencent,
+// please note that tRPC source code is licensed under the  Apache 2.0 License,
+// A copy of the Apache 2.0 License is included in this file.
+//
+//
+
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 #pragma once
-#include<atomic>
-#include<vector>
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <thread>
+#include <vector>
 
 #include "trpc/util/function.h"
 
+namespace trpc::overload_control {
+class TickTime {
+ public:
+  /// @brief Create a timer with a specified timeout interval and callback function,
+  /// and automatically activate the timer immediately after creation.
+  /// @param timeout_us The time interval (in microseconds) triggered by the timer callback.
+  /// @param on_timer The callback function called when the scheduled time is reached.
 
+  explicit TickTime(std::chrono::microseconds timeout_us, Function<void()>&& on_timer);
 
-namespace trpc::overload_control{
-class TickTime 
-{
+  virtual ~TickTime();
 
-public:
- /// @brief 创建一个具有指定超时间隔和回调函数的定时器，并在创建后立即自动激活定时器。
- /// @param timeout_us 定时器回调触发的时间间隔（以微秒为单位）。
- /// @param on_timer 在预定时间到达时调用的回调函数。
+  void Deactivate();
 
- explicit TickTime(std::chrono::microseconds timeout_us, Function<void()>&& on_timer);
+  void Destroy();
 
- virtual ~TickTime();
+  void Stop();
 
- void Deactivate();
+  bool Init();
 
- void Destroy();
-
- void Stop();
-
- bool Init();
-
-private:
+ private:
   void Loop();
 
  private:
-
   const std::chrono::microseconds timeout_us_;
-  
-  /// @param 回调函数 定时调用NextFrame()
+
+  /// @param Callback function, calling NextFrame() at regular intervals
   const Function<void()> on_timer_;
-  
-  /// @param 控制着loop
+
+  /// @param Controlling the loop
   std::atomic<bool> active_;
-  /// @param 单独开辟线程 执行回调函数的任务
+  /// @param Task of opening a separate thread to execute callback functions
   std::thread timer_thread_;
 };
-}
+}  // namespace trpc::overload_control
 
 #endif

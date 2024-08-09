@@ -1,3 +1,15 @@
+//
+//
+// Tencent is pleased to support the open source community by making tRPC available.
+//
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
+// All rights reserved.
+//
+// If you have downloaded a copy of the tRPC source code from Tencent,
+// please note that tRPC source code is licensed under the  Apache 2.0 License,
+// A copy of the Apache 2.0 License is included in this file.
+//
+//
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 #include <chrono>
@@ -6,6 +18,7 @@
 
 #include "trpc/overload_control/smooth_filter/server_smooth_limit.h"
 #include "trpc/overload_control/common/report.h"
+
 #include "trpc/util/log/logging.h"
 
 namespace trpc::overload_control {
@@ -42,11 +55,11 @@ SmoothLimit::SmoothLimit(std::string name,int64_t limit, bool is_report, int32_t
   TRPC_ASSERT(window_size_ > 0);
 }
 
-//析构函数什么也不干 但是public里的stop方法 需要把定时任务设置为join同时让他失效
-//也就是说 用户调用destroy之前必须先stop
+//The destructor does nothing, but the stop method in public needs to set the timed task to join and make it invalid
+//The user must stop before calling destroy
 SmoothLimit::~SmoothLimit() {}
 
-//检查是否超出限流
+//Check if the current limit is exceeded
 bool SmoothLimit::CheckLimit(const ServerContextPtr& context) {
   bool ret = false;
   int64_t active_sum = requestrollque_.ActiveSum();

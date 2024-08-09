@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2024 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -13,13 +13,13 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "server_flow_controller_server_filter.h"
+#include "trpc/overload_control/smooth_filter/server_flow_controller_server_filter.h"
+#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
+#include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
 
 #include "trpc/codec/codec_helper.h"
 #include "trpc/filter/filter_manager.h"
 #include "trpc/log/trpc_log.h"
-#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
-#include "server_overload_controller_factory.h"
 #include "trpc/util/likely.h"
 
 namespace trpc::overload_control {
@@ -41,7 +41,8 @@ std::vector<FilterPoint> Server_FlowControlServerFilter::GetFilterPoint() {
   };
 }
 
-void Server_FlowControlServerFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
+void Server_FlowControlServerFilter::operator()(FilterStatus& status, FilterPoint point,
+                                                const ServerContextPtr& context) {
   switch (point) {
     case FilterPoint::SERVER_PRE_SCHED_RECV_MSG: {
       OnRequest(status, context);
@@ -66,16 +67,18 @@ void Server_FlowControlServerFilter::OnRequest(FilterStatus& status, const Serve
   if (!service_controller && !func_controller) {
     return;
   }
-   
+
   // flow control strategy
   if (service_controller && service_controller->BeforeSchedule(context)) {
-    context->SetStatus(Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
+    context->SetStatus(
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
     TRPC_FMT_ERROR_EVERY_SECOND("rejected by server haoyuflow overload , service name: {}", context->GetCalleeName());
     status = FilterStatus::REJECT;
     return;
   }
   if (func_controller && func_controller->BeforeSchedule(context)) {
-    context->SetStatus(Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
+    context->SetStatus(
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
     status = FilterStatus::REJECT;
     TRPC_FMT_ERROR_EVERY_SECOND("rejected by server haoyuflow overload , service name: {}, func name: {}",
                                 context->GetCalleeName(), context->GetFuncName());
