@@ -100,8 +100,8 @@ public:
   //Whether to record monitoring data
   bool is_report_{false};
 
-  //The number of time slots in the smooth window
-  int32_t window_size_{kDefaultNum};
+  //滑动窗口中的时间槽数量
+  int32_t window_size_;
 
   //Store the smooth window time slot for requests
   RequestRollQueue requestrollque_;
