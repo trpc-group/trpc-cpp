@@ -24,13 +24,13 @@ Before continue, you must make sure below environments are already satisfied:
 
 1. Follow [Quick Start](quick_start.md) to install the development toolkits and compile `HelloWorld` successfully.
 2. Install [trpc-cmdline](https://github.com/trpc-group/trpc-cmdline#install-trpc-cmdline) tools.
-3. Create a empty directory using `mkdir trpc-cpp-quickstart` anywhere you want, all the opeartions after will ongoing here.
+3. Create a empty directory using `mkdir trpc-cpp-tutorial` anywhere you want, all the opeartions after will ongoing here.
 
 ## Define the service
 
 First, you should give service the definition about it's service name, methods, request/response message type of each method. Luckily, you can use protobuf IDL to easily do the work.
 
-Create a subdirectory using `mkdir deps` under `trpc-cpp-quickstart` and then create a file named `message.proto`. Fill it with below request/response message type defition:
+Create a subdirectory using `mkdir deps` under `trpc-cpp-tutorial` and then create a file named `message.proto`. Fill it with below request/response message type defition:
 
 ```protobuf
 syntax = "proto3";
@@ -46,7 +46,7 @@ message ForwardReply {
 }
 ```
 
-Create a file `forward.proto` under `trpc-cpp-quickstart` directory and fill it with a `service` named `Forward`:
+Create a file `forward.proto` under `trpc-cpp-tutorial` directory and fill it with a `service` named `Forward`:
 
 ```protobuf
 service Forward {
@@ -70,7 +70,7 @@ service ForwardService {
 
 For what the `package` defintion means in both proto files, we disscuss at [terminology](https://github.com/trpc-group/trpc/blob/main/docs/en/terminology.md). In conclusion, we suggest the three-part formula `trpc.{app}.{server}`. Here, `{app}` is demo, and `{server}` is `forward`.
 
-Under `trpc-cpp-quickstart` and execute `tree .`, you will see below file structure:
+Under `trpc-cpp-tutorial` and execute `tree .`, you will see below file structure:
 
 ```shell
 .
@@ -188,7 +188,7 @@ Directory proto contains a bazel WORKSPACE file, a bazel BUILD file, and 2 proto
 
 - WORKSPACE file: Indicate the proto directory should be viewed as an independent bazel project. If you check WORKSPACE file in project root directory, you will find the proto project is imported via `local_repository`.
 - BUILD file: Use bazel rules to manage proto files which may contain complex dependency，it can be imported by `@proto//:xxx_proto` at BUILD files of server/client in forward project. Relatvie stub code files will be generated after build. Service should inherit the generated class to implment bussiness logic per RPC methods(eg. ForwardServiceServiceImpl). Client can use the generated proxy to do RPC call.
-- proto files: Contain 2 proto files: `forward.proto` depends on `deps/message.proto`. Their file structure at `trpc-cpp-quickstart` will be keeped at proto directory.
+- proto files: Contain 2 proto files: `forward.proto` depends on `deps/message.proto`. Their file structure at `trpc-cpp-tutorial` will be keeped at proto directory.
 
 ### Test
 
