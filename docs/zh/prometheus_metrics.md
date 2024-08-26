@@ -87,8 +87,8 @@ client:
 
 | 监控名 | 监控类型 | 说明 |
 | ------ | ------ | ------ |
-| rpc_client_counter_metric | Counter | 服务端收到的请求总次数 |
-| rpc_client_histogram_metric | Histogram | 服务端处理请求的耗时分布（单位：ms） |
+| rpc_client_counter_metric | Counter | 客户端发起的调用总次数 |
+| rpc_client_histogram_metric | Histogram | 客户端调用的耗时分布（单位：ms） |
 
 统计标签：
 
@@ -128,8 +128,8 @@ server:
 
 | 监控名 | 监控类型 | 说明 |
 | ------ | ------ | ------ |
-| rpc_server_counter_metric | Counter | 客户端发起的调用总次数 |
-| rpc_client_histogram_metric | Histogram | 客户端调用的耗时分布（单位：ms） |
+| rpc_server_counter_metric | Counter | 服务端收到的请求总次数 |
+| rpc_server_histogram_metric | Histogram | 服务端处理请求的耗时分布（单位：ms） |
 
 统计标签：
 
