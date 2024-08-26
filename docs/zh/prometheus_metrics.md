@@ -87,8 +87,8 @@ client:
 
 | 监控名 | 监控类型 | 说明 |
 | ------ | ------ | ------ |
-| rpc_client_counter_metric | Counter | 客户端发起的调用总次数 |
-| rpc_client_histogram_metric | Histogram | 客户端调用的耗时分布（单位：ms） |
+| rpc_server_counter_metric | Counter | 服务端收到的请求总次数 |
+| rpc_server_histogram_metric | Histogram | 服务端处理请求的耗时分布（单位：ms） |
 
 统计标签：
 
@@ -99,6 +99,7 @@ client:
 | aApp | 主调app名 |
 | aServer | 主调server名 |
 | aService | 主调service名 |
+| aIp | 主调ip地址 |
 | pApp | 被调app名 |
 | pServer | 被调server名 |
 | pService | 被调service名 |
@@ -108,6 +109,7 @@ client:
 | pConSetId | 被调所属set |
 | frame_ret_code | 调用的框架错误码 |
 | interface_ret_code | 调用的接口错误码 |
+
 
 ### 被调监控上报
 
@@ -314,7 +316,7 @@ single_metrics_info.single_attr_info.value = 1;
 
 #### 通用多维属性上报
 
-Prometheus 监控插件支持框架通用的多维属性上报方式，即通过构造 `::trpc::TrpcMultiAttrMetricsInfo` 然后使用`::trpc::metrics::MultiAttrReport`接口来上报。**Prometheus 的单维属性上报是指上报统计标签包含多个键值对的数据。**。
+Prometheus 监控插件支持框架通用的多维属性上报方式，即通过构造 `::trpc::TrpcMultiAttrMetricsInfo` 然后使用`::trpc::metrics::MultiAttrReport`接口来上报。**Prometheus 的多维属性上报是指上报统计标签包含多个键值对的数据。**。
 
 设置 `::trpc::TrpcMultiAttrMetricsInfo` 值需要注意：
 
