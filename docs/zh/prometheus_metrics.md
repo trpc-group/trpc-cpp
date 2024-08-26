@@ -87,8 +87,8 @@ client:
 
 | 监控名 | 监控类型 | 说明 |
 | ------ | ------ | ------ |
-| rpc_server_counter_metric | Counter | 服务端收到的请求总次数 |
-| rpc_server_histogram_metric | Histogram | 服务端处理请求的耗时分布（单位：ms） |
+| rpc_client_counter_metric | Counter | 服务端收到的请求总次数 |
+| rpc_client_histogram_metric | Histogram | 服务端处理请求的耗时分布（单位：ms） |
 
 统计标签：
 
@@ -126,7 +126,6 @@ server:
 
 统计数据：
 
-```mermaid
 | 监控名 | 监控类型 | 说明 |
 | ------ | ------ | ------ |
 | rpc_server_counter_metric | Counter | 服务端收到的请求总次数 |
@@ -151,7 +150,7 @@ server:
 | pConSetId | 被调所属set |
 | frame_ret_code | 调用的框架错误码 |
 | interface_ret_code | 调用的接口错误码 |
-```
+
 
 ## 属性监控上报
 
