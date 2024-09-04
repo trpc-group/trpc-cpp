@@ -29,7 +29,7 @@ Client <---> Forward <---> HelloWorld
 
 我们的第一步是使用 [protocol buffers IDL](https://protobuf.dev/overview) 定义 tRPC-Cpp *服务*、*服务方法*、*方法能处理的请求/响应消息类型*。
 
-在 `trpc-cpp-quickstart` 下创建一个子目录 `mkdir deps`，子目录里创建 `message.proto`，填充如下所示关于请求/响应消息类型的定义：
+在 `trpc-cpp-tutorial` 下创建一个子目录 `mkdir deps`，子目录里创建 `message.proto`，填充如下所示关于请求/响应消息类型的定义：
 
 ```protobuf
 syntax = "proto3";
@@ -45,7 +45,7 @@ message ForwardReply {
 }
 ```
 
-接着，在 `trpc-cpp-quickstart` 下创建 `forward.proto`，定义 `service` 名字为 `Forward`：
+接着，在 `trpc-cpp-tutorial` 下创建 `forward.proto`，定义 `service` 名字为 `Forward`：
 
 ```protobuf
 service Forward {
