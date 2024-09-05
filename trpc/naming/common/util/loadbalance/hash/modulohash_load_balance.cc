@@ -26,20 +26,19 @@
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/naming/common/common_defs.h"
 #include "trpc/naming/common/util/hash/hash_func.h"
+#include "trpc/naming/common/util/loadbalance/hash/common.h"
 #include "trpc/naming/load_balance_factory.h"
 #include "trpc/util/log/logging.h"
-#include "trpc/naming/common/util/loadbalance/hash/common.h"
-
 
 namespace trpc {
 
-int ModuloHashLoadBalance::Init() noexcept{
+int ModuloHashLoadBalance::Init() noexcept {
   if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("loadbalance", kModuloHashLoadBalance, loadbalance_config_)) {
     TRPC_FMT_DEBUG("get loadbalance config failed, use default value");
   }
 
-  bool res=CheckLoadBalanceSelectorConfig(loadbalance_config_);
-  return res?0:-1;
+  bool res = CheckLoadBalanceSelectorConfig(loadbalance_config_);
+  return res ? 0 : -1;
 }
 
 bool ModuloHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
@@ -56,7 +55,6 @@ bool ModuloHashLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
   return CheckLoadbalanceInfoDiff(callee_router_infos_[select_info->name], info->endpoints);
 }
 
-
 // Update the routing nodes used for load balancing
 int ModuloHashLoadBalance::Update(const LoadBalanceInfo* info) {
   if (nullptr == info || nullptr == info->info || nullptr == info->endpoints) {
@@ -67,7 +65,6 @@ int ModuloHashLoadBalance::Update(const LoadBalanceInfo* info) {
   const SelectorInfo* select_info = info->info;
 
   if (IsLoadBalanceInfoDiff(info)) {
-
     std::vector<TrpcEndpointInfo> endpoints;
     endpoints.assign(info->endpoints->begin(), info->endpoints->end());
 
@@ -97,8 +94,13 @@ int ModuloHashLoadBalance::Next(LoadBalanceResult& result) {
     return -1;
   }
 
-  uint64_t hash = Hash(GenerateKeysAsString(result.info, loadbalance_config_.hash_args), loadbalance_config_.hash_func,
-                       endpoints_num);
+  uint64_t hash;
+  if (result.info->context != nullptr && !result.info->context->GetHashKey().empty()) {
+    hash = std::stoull(result.info->context->GetHashKey())%endpoints_num;
+  } else {
+    hash = Hash(GenerateKeysAsString(result.info, loadbalance_config_.hash_args), loadbalance_config_.hash_func,
+                endpoints_num);
+  }
   result.result = endpoints[hash];
 
   return 0;

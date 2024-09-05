@@ -68,7 +68,6 @@ int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {
 
   const SelectorInfo* select_info = info->info;
 
-
   if (IsLoadBalanceInfoDiff(info)) {
     InnerEndpointInfos old_info;
     {
@@ -101,7 +100,7 @@ int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {
         }
       }
     }
-    
+
     for (const auto& elem : new_set) {
       if (old_set.find(elem.first) == old_set.end()) {
         for (uint32_t i = 0; i < loadbalance_config_.hash_nodes; i++) {
@@ -110,8 +109,7 @@ int ConsistentHashLoadBalance::Update(const LoadBalanceInfo* info) {
         }
       }
     }
-    
-    
+
     std::unique_lock<std::shared_mutex> lock(mutex_);
     callee_router_infos_[select_info->name] = endpoint_info;
   }
@@ -137,8 +135,12 @@ int ConsistentHashLoadBalance::Next(LoadBalanceResult& result) {
     TRPC_LOG_ERROR("Router info of name is empty");
     return -1;
   }
-
-  uint64_t hash = Hash(GenerateKeysAsString(result.info, loadbalance_config_.hash_args), loadbalance_config_.hash_func);
+  uint64_t hash;
+  if (result.info->context != nullptr && !result.info->context->GetHashKey().empty()) {
+    hash = std::stoull(result.info->context->GetHashKey());
+  } else {
+    hash = Hash(GenerateKeysAsString(result.info, loadbalance_config_.hash_args), loadbalance_config_.hash_func);
+  }
   auto info_iter = hashring.lower_bound(hash);
 
   if (info_iter == hashring.end()) {
