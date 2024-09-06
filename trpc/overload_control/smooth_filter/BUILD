@@ -148,32 +148,6 @@ cc_test(
 )
 
 cc_library(
-    name = "server_request_roll_queue",
-    srcs = ["server_request_roll_queue.cc"],
-    hdrs = ["server_request_roll_queue.h"],
-    defines = [] +
-              select({
-                  "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
-                  "//conditions:default": [],
-              }),
-    visibility = ["//visibility:private"],
-    deps = [
-        "//trpc/util/log:logging",
-        ]
-)
-
-cc_test(
-    name = "server_request_roll_queue_test",
-    srcs = ["server_request_roll_queue_test.cc"],
-    deps = [
-        "//trpc/log:trpc_log",
-        ":server_request_roll_queue",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "server_smooth_limit",
     srcs = ["server_smooth_limit.cc"],
     hdrs = ["server_smooth_limit.h"],
@@ -186,9 +160,8 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        ":server_request_roll_queue",
+        "//trpc/overload_control/flow_control:smooth_limiter",
         ":server_overload_controller",
-        ":server_trick_time",
         "//trpc/overload_control/common:report",
         "//trpc/util/log:logging",
     ],
@@ -200,31 +173,6 @@ cc_test(
     deps = [
         ":server_smooth_limit",
         "//trpc/codec/trpc:trpc_protocol",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "server_trick_time",
-    srcs = ["server_trick_time.cc"],
-    hdrs = ["server_trick_time.h"],
-    defines = [] +
-              select({
-                  "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
-                  "//conditions:default": [],
-              }),
-    visibility = ["//visibility:private"],
-    deps = [
-        "//trpc/util:function",
-    ],
-)
-
-cc_test(
-    name = "server_trick_time_test",
-    srcs = ["server_trick_time_test.cc"],
-    deps = [
-        ":server_trick_time",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
