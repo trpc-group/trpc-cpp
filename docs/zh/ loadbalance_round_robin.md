@@ -1,4 +1,3 @@
-```markdown
 # 一、平滑加权轮询负载均衡插件
 
 为了避免传统加权轮询中可能出现的负载不均衡问题，采用平滑加权轮询（Smooth Weighted Round-Robin，简称 SWRR）。该方法通常用于将请求分配到一组服务器中，以实现更均衡的负载分配。它在传统的加权轮询（Weighted Round-Robin）基础上，通过平滑处理来避免负载分配的不均匀性。
@@ -65,6 +64,5 @@ int main(int argc, char* argv[]) {
   // the business code needs to be running in the `RunInTrpcRuntime` function
   return ::trpc::RunInTrpcRuntime([]() { return Run(); });
 }
-```
 ```
 可以参考下面文档获取更多信息https://docs.qq.com/doc/DTHdBVUxybHV2ekFH
