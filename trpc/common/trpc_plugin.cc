@@ -56,6 +56,7 @@
 #include "trpc/transport/common/ssl_helper.h"
 #include "trpc/util/log/default/default_log.h"
 #include "trpc/util/net_util.h"
+#include "trpc/naming/common/util/loadbalance/trpc_load_balance.h"
 
 namespace trpc {
 

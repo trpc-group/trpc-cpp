@@ -17,14 +17,14 @@
 #include <string>
 
 #include "trpc/naming/common/util/hash/City.h"
-#include "trpc/naming/common/util/hash/MurmurHash3.h"
 #include "trpc/naming/common/util/hash/Md5.h"
+#include "trpc/naming/common/util/hash/MurmurHash3.h"
 
-namespace trpc{
+namespace trpc {
 
 std::uint64_t MD5Hash(const std::string& input) {
   const uint32_t seed = 131;
-  uint64_t hash=md5hash(input.c_str(), input.size(),seed);
+  uint64_t hash = md5hash(input.c_str(), input.size(), seed);
   return hash;
 }
 std::uint64_t BKDRHash(const std::string& input) {
@@ -57,37 +57,48 @@ std::uint64_t CityHash(const std::string& input) {
   return CityHash64WithSeed(input.c_str(), input.size(), seed);
 }
 
-std::uint64_t GetHash(const std::string& input, const std::string& hash_func) {
-  int key=HashFuncTable.find(hash_func)==HashFuncTable.end()?HashFuncName::DEFAULT:HashFuncTable.at(hash_func);
-  uint64_t hash=0;
-  switch (key) {
+std::uint64_t GetHash(const std::string& input, const HashFuncName& hash_func) {
+  uint64_t hash = 0;
+  switch (hash_func) {
     case HashFuncName::MD5:
-      hash=MD5Hash(input);
+      hash = MD5Hash(input);
       break;
     case HashFuncName::BKDR:
-      hash=BKDRHash(input);
+      hash = BKDRHash(input);
       break;
     case HashFuncName::FNV1A:
-      hash=FNV1aHash(input);
+      hash = FNV1aHash(input);
       break;
     case HashFuncName::MURMUR3:
-      hash=MurMurHash3(input);
+      hash = MurMurHash3(input);
       break;
     case HashFuncName::CITY:
-      hash=CityHash(input);
+      hash = CityHash(input);
       break;
     default:
-      hash=MurMurHash3(input);
+      hash = MurMurHash3(input);
       break;
-
   }
   return hash;
 }
 
-std::uint64_t Hash(const std::string& input, const std::string& hash_func) { return GetHash(input, hash_func); }
-
-std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num) {
-  return GetHash(input, hash_func) % num;
+std::uint64_t Hash(const std::string& input, const std::string& hash_func) { 
+  HashFuncName func=HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::DEFAULT : HashFuncTable.at(hash_func);
+  return GetHash(input, func); 
 }
 
-} // namespace trpc
+std::uint64_t Hash(const std::string& input,const HashFuncName& hash_func){
+  return GetHash(input,hash_func);
+}
+
+
+std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num) {
+  HashFuncName func=HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::DEFAULT : HashFuncTable.at(hash_func);
+  return GetHash(input, func) % num;
+}
+
+std::uint64_t Hash(const std::string& input,const HashFuncName& hash_func,uint64_t num){
+  return GetHash(input,hash_func)%num;
+}
+
+}  // namespace trpc

@@ -49,6 +49,10 @@ std::uint64_t GetHash(const std::string& input, const std::string& hash_func);
 
 std::uint64_t Hash(const std::string& input, const std::string& hash_func);
 
+std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func);
+
 std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num);
+
+std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func, uint64_t num);
 
 }  // namespace trpc
