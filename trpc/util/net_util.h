@@ -19,10 +19,10 @@
 namespace trpc::util {
 
 /// @brief Ip transfer(int to string)
-std::string Ipv4ToString(uint32_t ip, bool *ok = nullptr);
+std::string Ipv4ToString(uint32_t ip, bool* ok = nullptr);
 
 /// @brief Ip transfer(string to int)
-uint32_t StringToIpv4(const std::string &ip, bool *ok = nullptr);
+uint32_t StringToIpv4(const std::string& ip, bool* ok = nullptr);
 
 /// @brief Parse host and port
 /// @param name[in] str
@@ -35,7 +35,18 @@ uint32_t StringToIpv4(const std::string &ip, bool *ok = nullptr);
 /// @param is_ipv6[out] whether is ip v6
 /// @return True: success, False: failed
 bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6);
-
+/// @brief Parse host and port
+/// @param name[in] str
+/// Format support:
+/// 1. ipv4:port(eg: 127.0.0.1:90)
+/// 2. [ipv6]:port(eg: [::1]:90)
+/// 3. domain:port(eg: www.baidu.com:8080)
+/// @param host[out] ip or domain
+/// @param port[out] port
+/// @param is_ipv6[out] whether is ip v6
+/// @param weight[out]  weight
+/// @return True: success, False: failed
+bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6, uint32_t& weight);
 /// @brief Get ip by eth name
 std::string GetIpByEth(std::string_view eth_inf);
 

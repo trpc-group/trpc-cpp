@@ -794,7 +794,7 @@ void ConvertEndpointInfo(const std::string& ip_ports, std::vector<TrpcEndpointIn
   for (auto const& name : vec) {
     TrpcEndpointInfo endpoint;
     // add to vec_endpoint when parse endpoints successfully
-    if (util::ParseHostPort(name, endpoint.host, endpoint.port, endpoint.is_ipv6)) {
+    if (util::ParseHostPort(name, endpoint.host, endpoint.port, endpoint.is_ipv6, endpoint.weight)) {
       vec_endpoint.emplace_back(endpoint);
     }
   }

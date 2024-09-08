@@ -66,7 +66,7 @@ bool IsPortAvailable(int port) {
 
 }  // namespace
 
-std::string Ipv4ToString(uint32_t ip, bool *ok) {
+std::string Ipv4ToString(uint32_t ip, bool* ok) {
   struct in_addr src;
   src.s_addr = ip;
 
@@ -81,7 +81,7 @@ std::string Ipv4ToString(uint32_t ip, bool *ok) {
   return dst;
 }
 
-uint32_t StringToIpv4(const std::string &ip, bool *ok) {
+uint32_t StringToIpv4(const std::string& ip, bool* ok) {
   struct in_addr dst;
   int ret = inet_pton(AF_INET, ip.data(), &dst);
   if (ret == 0) {
@@ -100,8 +100,7 @@ uint32_t StringToIpv4(const std::string &ip, bool *ok) {
   return dst.s_addr;
 }
 
-bool ParseHostPort(const std::string &name, std::string &host, int &port,
-                   bool &is_ipv6) {
+bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6) {
   std::string temp_host;
   int temp_port;
   bool temp_is_ipv6;
@@ -140,9 +139,7 @@ bool ParseHostPort(const std::string &name, std::string &host, int &port,
   } else {
     // ipv4 or domain
     size_t colon = name.find(':');
-    if (colon != std::string::npos &&
-        colon < name.size() - 1 &&
-        name.find(':', colon + 1) == std::string::npos) {
+    if (colon != std::string::npos && colon < name.size() - 1 && name.find(':', colon + 1) == std::string::npos) {
       temp_host = name.substr(0, colon);
       try {
         temp_port = std::stoi(name.substr(colon + 1, name.size() - 1 - colon));
@@ -162,7 +159,75 @@ bool ParseHostPort(const std::string &name, std::string &host, int &port,
 
   return true;
 }
+bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6, uint32_t& weight) {
+  std::string temp_host;
+  int temp_port;
+  bool temp_is_ipv6;
+  uint32_t temp_weight = 0;
+  if (!name.empty() && name[0] == '[') {
+    // ipv6
+    const size_t rbracket = name.find(']', 1);
+    if (rbracket == std::string::npos) {
+      // [ipv6]:port missing ']'
+      return false;
+    }
 
+    const size_t colons = rbracket + 1;
+    if (colons >= name.size() - 1) {
+      // [ipv6]:port colons position invalid
+      return false;
+    }
+
+    if (name[colons] != ':') {
+      // [ipv6]:port missing ':'
+      return false;
+    }
+
+    temp_host = name.substr(1, rbracket - 1);
+    if (temp_host.find(':') == std::string::npos) {
+      // ipv6 invalid
+      return false;
+    }
+    try {
+      size_t weight_pos = name.find(':', colons + 1);
+      if (weight_pos != std::string::npos) {
+        temp_port = std::stoi(name.substr(colons + 1, weight_pos - (colons + 1)));
+        temp_weight = std::stoi(name.substr(weight_pos + 1));
+      } else {
+        temp_port = std::stoi(name.substr(colons + 1));
+      }
+    } catch (...) {
+      // port invalid
+      return false;
+    }
+    temp_is_ipv6 = true;
+  } else {
+    // ipv4 or domain
+    size_t colon = name.find(':');
+    if (colon != std::string::npos && colon < name.size() - 1) {
+      temp_host = name.substr(0, colon);
+      try {
+        size_t weight_pos = name.find(':', colon + 1);
+        if (weight_pos != std::string::npos && weight_pos < name.size() - 1) {
+          temp_port = std::stoi(name.substr(colon + 1, weight_pos - (colon + 1)));
+          temp_weight = std::stoi(name.substr(weight_pos + 1));
+        }
+      } catch (...) {
+        // port invalid
+        return false;
+      }
+      temp_is_ipv6 = false;
+    } else {
+      return false;
+    }
+  }
+
+  host = std::move(temp_host);
+  port = temp_port;
+  is_ipv6 = temp_is_ipv6;
+  weight = temp_weight;
+  return true;
+}
 std::string GetIpByEth(std::string_view eth_inf) {
   std::string str;
 
@@ -176,7 +241,7 @@ std::string GetIpByEth(std::string_view eth_inf) {
   ifr.ifr_name[IFNAMSIZ - 1] = 0;
 
   // if error: No such device
-  if (::ioctl(sd, SIOCGIFADDR, &ifr) < 0){
+  if (::ioctl(sd, SIOCGIFADDR, &ifr) < 0) {
     TRPC_LOG_ERROR("ioctl error: " << strerror(errno) << " eth: " << eth_inf);
     ::close(sd);
     return str;
