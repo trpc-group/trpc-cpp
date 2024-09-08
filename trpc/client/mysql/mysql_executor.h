@@ -7,7 +7,7 @@
 #include <type_traits>
 #include "trpc/client/mysql/mysql_binder.h"
 #include "trpc/client/mysql/mysql_statement.h"
-
+#include <variant>
 
 struct MYSQL_RES;
 struct MYSQL;
@@ -15,10 +15,12 @@ struct MYSQL_BIND;
 
 namespace trpc::mysql {
 
-///@brief Just specialize class MysqlResults
-class OnlyExec {
+class MysqlExecutor;
 
-};
+///@brief Just specialize class MysqlResults
+class OnlyExec {};
+
+class NativeString {};
 
 ///
 ///@brief A class used to store the results of a MySQL query executed by the MysqlConnection class.
@@ -31,23 +33,66 @@ class OnlyExec {
 ///
 template <typename... Args>
 class MysqlResults {
+
+  friend class MysqlExecutor;
 public:
 
-  MysqlResults() : affected_rows(0) {
+  MysqlResults() : affected_rows(0), error(false), has_value_(false) {
+    if constexpr (is_native_string) {
+      result_set = std::vector<std::vector<std::string>>();
+    } else {
+      result_set = std::vector<std::tuple<Args...>>();
+    }
   }
 
+  inline auto& GetResultSet() {
+    if constexpr (is_native_string) {
+        return std::get<std::vector<std::vector<std::string>>>(result_set);
+    } else {
+        return std::get<std::vector<std::tuple<Args...>>>(result_set);
+    }
+  }
+
+  
+  inline int GetResultSet(std::vector<std::vector<std::string>>& res) {
+    if(!is_native_string || !has_value_)
+      return -1;
+    res = std::move(std::get<std::vector<std::vector<std::string>>>(result_set));
+    has_value_ = false;
+    return 0;
+  }
+
+  inline int GetResultSet(std::vector<std::tuple<Args...>>& res) {
+    if(is_native_string || is_only_exec || !has_value_)
+      return -1;
+    res = std::move(std::get<std::vector<std::tuple<Args...>>>(result_set));
+    has_value_ = false;
+    return 0;
+  }
+
+
+private:
   static constexpr bool is_only_exec = std::is_same_v<std::tuple<Args...>, std::tuple<OnlyExec>>;
 
-  // Used to store query results. 
-  std::vector<std::tuple<Args...>> result_set;
+  static constexpr bool is_native_string = std::is_same_v<std::tuple<Args...>, std::tuple<NativeString>>;
 
-  // Null flags correspond to `results_set`.
+  // // Used to store query results. 
+  // std::vector<std::tuple<Args...>> tuple_result_set;
+
+  // std::vector<std::vector<std::string>> string_result_set;
+
+  std::variant<std::vector<std::tuple<Args...>>, std::vector<std::vector<std::string>>> result_set;
+
+  // Null flags
   std::vector<std::vector<uint8_t>> null_flags;
 
   std::string error_message;
-  
 
   size_t affected_rows;
+
+  bool error;
+
+  bool has_value_;
 
 };
 
@@ -89,7 +134,7 @@ class MysqlExecutor {
                 const std::string& query, const InputArgs&... args);
 
 
-
+ private:
   ///@brief Executes an SQL query and retrieves all resulting rows, storing each row as a tuple.
   ///
   ///This function executes the provided SQL query with the specified input arguments. 
@@ -108,6 +153,7 @@ class MysqlExecutor {
 
   template <typename... InputArgs>
   void QueryAll(std::vector<std::vector<std::string>>& results,
+                std::vector<std::vector<uint8_t>>& null_flags,
                 const std::string& query, const InputArgs&... args);
 
 
@@ -118,7 +164,7 @@ class MysqlExecutor {
   template <typename... InputArgs>
   int Execute(const std::string& query, const InputArgs&... args);
 
- private:
+ 
   template <typename... InputArgs>
   void BindInputArgs(std::vector<MYSQL_BIND>& params, const InputArgs&... args);
 
@@ -155,7 +201,15 @@ void MysqlExecutor::QueryAll(MysqlResults<OutputArgs...>& mysql_results,
                 const std::string& query, const InputArgs&... args) {
   static_assert(!MysqlResults<OutputArgs...>::is_only_exec, 
     "MysqlResults<OnlyExec> cannot be used with QueryAll.");
-  QueryAll(mysql_results.result_set, mysql_results.null_flags, query, args...);
+  
+  auto& result_set = mysql_results.GetResultSet();
+  
+  if constexpr (MysqlResults<OutputArgs...>::is_native_string) {
+    QueryAll(result_set, mysql_results.null_flags, query, args...);
+  } else
+    QueryAll(result_set, mysql_results.null_flags, query, args...);
+  
+  mysql_results.has_value_ = true;
 }
 
 template <typename... InputArgs>
@@ -208,6 +262,14 @@ void MysqlExecutor::QueryAll(std::vector<std::tuple<OutputArgs...>>& results,
   ExecuteStatement(output_binds, stmt);
   FetchResults(stmt, output_binds, null_flag_buffer, results, null_flags);
 
+}
+
+
+template <typename... InputArgs>
+void MysqlExecutor::QueryAll(std::vector<std::vector<std::string>>& results,
+                            std::vector<std::vector<uint8_t>>& null_flags,
+                            const std::string& query, const InputArgs&... args) {
+  std::cout << "Native String Called\n";
 }
 
 template <typename... OutputArgs>

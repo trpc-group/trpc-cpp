@@ -64,12 +64,24 @@ TEST(Connection, QueryNoArgs) {
   trpc::mysql::MysqlExecutor conn("localhost", "kosmos", "12345678", "test_db");
   trpc::mysql::MysqlResults<int, std::string, trpc::mysql::mysql_time> res;
   conn.QueryAll(res, "select id, username, created_at from users");
-  EXPECT_EQ(4, res.result_set.size());
-  EXPECT_EQ(2, std::get<0>(res.result_set[1]));
-  EXPECT_EQ("alice", std::get<1>(res.result_set[0]));
-  EXPECT_EQ(2024, std::get<2>(res.result_set[2]).mt.year);
+
+  auto& res_data = res.GetResultSet();
+  EXPECT_EQ(4, res_data.size());
+  EXPECT_EQ(2, std::get<0>(res_data[1]));
+  EXPECT_EQ("alice", std::get<1>(res_data[0]));
+  EXPECT_EQ(2024, std::get<2>(res_data[2]).mt.year);
 }
 
+
+TEST(Connection, QueryString) {
+  trpc::mysql::MysqlExecutor conn("localhost", "kosmos", "12345678", "test_db");
+  trpc::mysql::MysqlResults<trpc::mysql::NativeString> res;
+  conn.QueryAll(res, "select id, username, created_at from users");
+
+  // Not Complete yet
+  // auto& res_data = res.GetResultSet();
+  // EXPECT_EQ("alice", res_data[0][1]);
+}
 
 TEST(Connection, QueryNull) {
   trpc::mysql::MysqlExecutor conn("localhost", "kosmos", "12345678", "test_db");
@@ -86,9 +98,11 @@ TEST(Connection, QueryArgs) {
   trpc::mysql::MysqlResults<int, std::string, trpc::mysql::mysql_time> res;
   conn.QueryAll(res,
     "select id, email, created_at from users where id = ? or username = ?", 1, "carol");
-  EXPECT_EQ(2, res.result_set.size());
-  EXPECT_EQ("alice@example.com", std::get<1>(res.result_set[0]));
-  EXPECT_EQ("carol@example.com", std::get<1>(res.result_set[1]));
+  
+  auto& res_data = res.GetResultSet();
+  EXPECT_EQ(2, res_data.size());
+  EXPECT_EQ("alice@example.com", std::get<1>(res_data[0]));
+  EXPECT_EQ("carol@example.com", std::get<1>(res_data[1]));
 }
 
 TEST(Connection, Update) {
@@ -118,6 +132,7 @@ TEST(Connection, Delete) {
   conn.Execute(res, "delete from users where username = \"jack\"");
   EXPECT_EQ(1, res.affected_rows);
 }
+
 
 
 

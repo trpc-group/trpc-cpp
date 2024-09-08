@@ -22,11 +22,37 @@ cc_library(
     ]
 )
 
+cc_library(
+    name = "mysql_service_proxy",
+    srcs = ["mysql_service_proxy.cc"],
+    hdrs = ["mysql_service_proxy.h"],
+    deps = [
+        ":mysql_executor",
+        "//trpc/util/thread:thread_pool",
+        "//trpc/util/thread:latch",
+        "//trpc/coroutine:fiber",
+        "//trpc/client:service_proxy",
+        "//trpc/common/logging:trpc_logging"
+    ],
+    visibility = ["//visibility:public"]
+)
+
 cc_binary(
     name = "mysql_executor_test",
     srcs = ["mysql_executor_test.cc"],
     deps = [
         ":mysql_executor",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ]
+)
+
+cc_binary(
+    name = "mysql_service_proxy_test",
+    srcs = ["mysql_service_proxy_test.cc"],
+    deps = [
+        ":mysql_service_proxy",
+        "//trpc/client:make_client_context",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ]
