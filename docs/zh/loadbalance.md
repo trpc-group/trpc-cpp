@@ -74,4 +74,10 @@ std::uint64_t Hash(const std::string& input, const std::string& hash_func);
 //返回64位取模后的哈希值
 std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num);
 
-//input为输入的键，hash_func为选择的hash函数，支持HashFuncName::MD5,HashFuncName::BKDR,HashFuncName::CITY,HashFuncName::BKDR,HashFuncName:
+//input为输入的键，hash_func为选择的hash函数，支持HashFuncName::MD5,HashFuncName::BKDR,HashFuncName::CITY,HashFuncName::BKDR,HashFuncName:MURMUR3
+std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func);
+
+//返回64位取模值
+std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func,uint64_t num);
+
+
