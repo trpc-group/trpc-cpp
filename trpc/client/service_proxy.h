@@ -25,6 +25,7 @@
 #include "trpc/common/future/future.h"
 #include "trpc/common/status.h"
 #include "trpc/filter/client_filter_controller.h"
+#include "trpc/naming/common/common_defs.h"
 #include "trpc/runtime/threadmodel/thread_model.h"
 #include "trpc/stream/stream.h"
 #include "trpc/transport/client/client_transport.h"
@@ -181,6 +182,17 @@ class ServiceProxy {
   // 2. [ipv6]:port, as: [::1]:90
   // 3. domain:port(only applicable when the selector is 'domain'), as: www.qq.com:8080
   void SetEndpointInfo(const std::string& endpoint_info);
+  /**
+   * Updates endpoint weights based on the load balancing configuration.
+   *
+   * This function:
+   * 1. Verifies the service name and load balancing strategy.
+   * 2. Retrieves the load balance configuration.
+   * 3. Updates endpoint weights using the configuration.
+   *
+   * @param info The `RouterInfo` containing service and endpoint details.
+   */
+  void SetLoadBalanceConfig(RouterInfo& info);
 
  protected:
   ClientCodecPtr codec_;

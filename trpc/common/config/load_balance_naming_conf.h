@@ -13,11 +13,13 @@
 
 #pragma once
 #include <string>
+#include <unordered_map>
 namespace trpc::naming {
 
-/// @brief domain select plugin configuration
-struct LoadBalanceSelectorConfig {
-  std::string load_balance_name{"SmoothWeightedPollingLoadBalance"};
+struct SWRoundrobinLoadBalanceConfig {
+  // Mapping from service_name to a map of address (IP:Port) to weight
+  std::unordered_map<std::string, std::unordered_map<std::string, uint32_t>> services;
+  void Display() const;  // Function to display the contents of the struct
 };
 
 }  // namespace trpc::naming

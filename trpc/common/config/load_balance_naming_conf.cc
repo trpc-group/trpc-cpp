@@ -15,4 +15,19 @@
 
 #include "trpc/util/log/logging.h"
 
-namespace trpc::naming {}  // namespace trpc::naming
+namespace trpc::naming {
+void SWRoundrobinLoadBalanceConfig::Display() const {
+  TRPC_FMT_DEBUG("-----SWRoundrobinLoadBalanceConfig begin-------");
+
+  for (const auto& [name, service] : services) {
+    TRPC_FMT_DEBUG("Service name: {}", name);
+
+    for (const auto& [address, weight] : service) {
+      TRPC_FMT_DEBUG("  Address: {}, Weight: {}", address, weight);
+    }
+    TRPC_FMT_DEBUG("-----------------------------------------------");
+  }
+
+  TRPC_FMT_DEBUG("-----SWRoundrobinLoadBalanceConfig end---------");
+}
+}  // namespace trpc::naming

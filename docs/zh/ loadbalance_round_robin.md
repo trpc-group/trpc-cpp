@@ -35,22 +35,40 @@
 通过这个过程，可以看到虽然 A 的权重最高，但它不会在每次轮询中都被选中。随着轮询次数的增加，各节点的选择机会逐渐接近其权重比例，实现平滑的负载均衡。
 
 # 三、使用方法
-
-在客户端配置文件中，例如 `trpc_cpp_fiber.yaml`，在 `target` 配置中使用带权重的 `ip:port:weight` 格式来指定端点的方案：
+ 
+- **注入插件**：在client中配置`load_balance_name`的插件 `load_balance_name: trpc_swround_robin_loadbalance`
+- **配置权重信息**：在客户端配置文件中，在 `plugins` 配置中`loadbalance`中配置对应服务的权重信息，详情操作参考下面，
 
 ```yaml
 client:
   service:
     - name: trpc.test.helloworld.Greeter
-      target: 127.0.0.1:10000:1,127.0.0.1:20000:2,127.0.0.1:30000:3      # Fullfill ip:port list here when use `direct` selector.(such as 23.9.0.1:90:1,34.5.6.7:90:2)
+      target: 127.0.0.1:10000,127.0.0.1:20000,127.0.0.1:30000      # Fullfill ip:port list here when use `direct` selector.(such as 23.9.0.1:90,34.5.6.7:90)
       protocol: trpc                # Application layer protocol, eg: trpc/http/...
       network: tcp                  # Network type, Support two types: tcp/udp
       selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
-      load_balance_name: trpc_smooth_weighted_polling_load_balance
+      load_balance_name: trpc_swround_robin_loadbalance
+
+plugins:
+  log:
+    default:
+      - name: default
+        sinks:
+          local_file:
+            filename: trpc_fiber_client.log
+  loadbalance:         
+    trpc_swround_robin_loadbalance:                            
+      service:
+        - name: trpc.test.helloworld.Greeter
+          target:
+            - address: 127.0.0.1:10000
+              weight: 1
+            - address: 127.0.0.1:20000
+              weight: 2      
+            - address: 127.0.0.1:30000
+              weight: 3                  
 ```
-
-在客户端文件中，注册负载均衡插件，使用 `::trpc::loadbalance::Init()` 注册插件：
-
+- **注册并初始化插件** 在客户端文件中，注册负载均衡插件，使用 `::trpc::loadbalance::Init()` 注册插件：
 ```cpp
 int Run() {
   ::trpc::loadbalance::Init();
@@ -65,4 +83,9 @@ int main(int argc, char* argv[]) {
   return ::trpc::RunInTrpcRuntime([]() { return Run(); });
 }
 ```
+
+
+
+
+
 可以参考下面文档获取更多信息https://docs.qq.com/doc/DTHdBVUxybHV2ekFH

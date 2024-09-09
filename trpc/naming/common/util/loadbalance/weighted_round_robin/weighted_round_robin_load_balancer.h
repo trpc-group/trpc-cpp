@@ -23,8 +23,7 @@
 #include "trpc/naming/load_balance.h"
 
 namespace trpc {
-
-constexpr char kSWRoundRobinLoadBalance[] = "trpc_SWRound_Robin_loadbalance";
+constexpr char kSWRoundRobinLoadBalance[] = "trpc_swround_robin_loadbalance";
 
 class SWRoundRobinLoadBalance : public LoadBalance {
  public:
@@ -50,6 +49,6 @@ class SWRoundRobinLoadBalance : public LoadBalance {
   mutable std::shared_mutex mutex_;
 };
 
-using SmoothWeightedPollingLoadBalancePtr = std::shared_ptr<SWRoundRobinLoadBalance>;
+using SWRoundRobinLoadBalancePtr = std::shared_ptr<SWRoundRobinLoadBalance>;
 
 }  // namespace trpc

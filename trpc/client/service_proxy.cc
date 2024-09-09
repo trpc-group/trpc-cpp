@@ -22,6 +22,8 @@
 #include "trpc/codec/client_codec_factory.h"
 #include "trpc/codec/trpc/trpc_protocol.h"
 #include "trpc/common/config/default_value.h"
+#include "trpc/common/config/load_balance_naming_conf.h"
+#include "trpc/common/config/load_balance_naming_conf_parser.h"
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/filter/filter_manager.h"
 #include "trpc/naming/selector_factory.h"
@@ -794,7 +796,7 @@ void ConvertEndpointInfo(const std::string& ip_ports, std::vector<TrpcEndpointIn
   for (auto const& name : vec) {
     TrpcEndpointInfo endpoint;
     // add to vec_endpoint when parse endpoints successfully
-    if (util::ParseHostPort(name, endpoint.host, endpoint.port, endpoint.is_ipv6, endpoint.weight)) {
+    if (util::ParseHostPort(name, endpoint.host, endpoint.port, endpoint.is_ipv6)) {
       vec_endpoint.emplace_back(endpoint);
     }
   }
@@ -824,10 +826,42 @@ void ServiceProxy::SetEndpointInfo(const std::string& endpoint_info) {
     option_->selector_name = selector_name;
     assert(!option_->selector_name.empty());
   }
-
+  SetLoadBalanceConfig(info);
   auto selector = SelectorFactory::GetInstance()->Get(option_->selector_name);
   assert(selector != nullptr);
   selector->SetEndpoints(&info);
 }
+void ServiceProxy::SetLoadBalanceConfig(RouterInfo& info) {
+  // Early return if the service name or load balance name does not match the expected values.
+  if (!(option_->name == info.name && option_->load_balance_name == "trpc_swround_robin_loadbalance")) {
+    return;
+  }
 
+  naming::SWRoundrobinLoadBalanceConfig loadbalance_config;
+
+  // Retrieve the load balance configuration. If retrieval fails, log the failure and return.
+  if (!TrpcConfig::GetInstance()->GetPluginConfig("loadbalance", "trpc_swround_robin_loadbalance",
+                                                  loadbalance_config)) {
+    TRPC_FMT_DEBUG("Set trpc_swround_robin_loadbalance config failed");
+    return;
+  }
+
+  // Find the service configuration in the load balance config.
+  const auto service_it = loadbalance_config.services.find(option_->name);
+  if (service_it == loadbalance_config.services.end()) {
+    return;
+  }
+
+  const auto& address_weight_map = service_it->second;
+
+  // Iterate over each endpoint in the router info and update its weight based on the load balance configuration.
+  for (auto& EndpointInfo : info.info) {
+    // Construct the address string (host:port) for the current endpoint.
+    const std::string temp_addr = EndpointInfo.host + ":" + std::to_string(EndpointInfo.port);
+    const auto addr_it = address_weight_map.find(temp_addr);
+    if (addr_it != address_weight_map.end()) {
+      EndpointInfo.weight = addr_it->second;
+    }
+  }
+}
 }  // namespace trpc

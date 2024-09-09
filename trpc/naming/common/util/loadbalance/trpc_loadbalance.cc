@@ -17,14 +17,13 @@
 namespace trpc::loadbalance {
 
 bool Init() {
-  LoadBalancePtr SWeighted_polling_load_balance =
-      trpc::LoadBalanceFactory::GetInstance()->Get(kSmoothWeightedPollingLoadBalance);
-  if (SWeighted_polling_load_balance == nullptr) {
+  LoadBalancePtr swround_robin_load_balance = trpc::LoadBalanceFactory::GetInstance()->Get(kSWRoundRobinLoadBalance);
+  if (swround_robin_load_balance == nullptr) {
     // Register the default load balancer
-    SWeighted_polling_load_balance = MakeRefCounted<SmoothWeightedPollingLoadBalance>();
-    LoadBalanceFactory::GetInstance()->Register(SWeighted_polling_load_balance);
+    swround_robin_load_balance = MakeRefCounted<SWRoundRobinLoadBalance>();
+    LoadBalanceFactory::GetInstance()->Register(swround_robin_load_balance);
   }
-  SelectorPtr direct_selector = MakeRefCounted<SelectorDirect>(SWeighted_polling_load_balance);
+  SelectorPtr direct_selector = MakeRefCounted<SelectorDirect>(swround_robin_load_balance);
   SelectorFactory::GetInstance()->Register(direct_selector);
   return true;
 }
