@@ -26,7 +26,7 @@
 #include "trpc/naming/load_balance.h"
 
 namespace trpc {
-constexpr char kModuloHashLoadBalance[] = "trpc_modulohash_load_balance";
+constexpr char kModuloHashLoadBalance[] = "modulo_hash";
 
 /// @brief consistent hash load balancing plugin
 class ModuloHashLoadBalance : public LoadBalance {
