@@ -15,7 +15,7 @@
 
 namespace trpc {
 
-int SmoothWeightedPollingLoadBalance::Update(const LoadBalanceInfo* info) {
+int SWRoundRobinLoadBalance::Update(const LoadBalanceInfo* info) {
   if (info == nullptr || info->info == nullptr || info->endpoints == nullptr) {
     TRPC_LOG_ERROR("Endpoint info of name is empty");
     return -1;
@@ -42,7 +42,7 @@ int SmoothWeightedPollingLoadBalance::Update(const LoadBalanceInfo* info) {
   return 0;
 }
 
-int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
+int SWRoundRobinLoadBalance::Next(LoadBalanceResult& result) {
   if (result.info == nullptr) {
     return -1;
   }
@@ -83,7 +83,7 @@ int SmoothWeightedPollingLoadBalance::Next(LoadBalanceResult& result) {
   return -1;
 }
 
-bool SmoothWeightedPollingLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
+bool SWRoundRobinLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info) {
   if (info == nullptr || info->info == nullptr || info->endpoints == nullptr) {
     return false;
   }
