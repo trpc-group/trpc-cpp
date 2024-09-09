@@ -350,3 +350,19 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
         remote = "https://github.com/trpc-group/trpc.git",
         tag = "v{ver}".format(ver = kwargs.get("com_github_trpc_protocol_ver", "1.0.0")),
     )
+
+    # MySQL C API version and summary
+    mysql_c_api_ver = kwargs.get("mysql_c_api_ver", "8.0.18")
+    mysql_c_api_sha256 = kwargs.get("mysql_c_api_sha256", "c91970c20e9d868aa7bc90c4692b9bf1fd6ef12f604c3392b871ad4dfc04fb84")
+    mysql_c_api_urls = [
+        "https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-8.0.18-linux-glibc2.12-x86-64bit.tar.gz",
+    ]
+
+
+    http_archive(
+        name = "mysql_c_api_archive",
+        sha256 = mysql_c_api_sha256,
+        strip_prefix = "mysql-connector-c++-8.0.18-linux-glibc2.12-x86-64bit",
+        urls = mysql_c_api_urls,
+        build_file = clean_dep("//third_party/mysql:mysql.BUILD"),
+    )

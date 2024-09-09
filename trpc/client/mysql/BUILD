@@ -14,12 +14,21 @@ cc_library(
     srcs = ["mysql_executor.cc"],
     hdrs = ["mysql_executor.h", "mysql_binder.h"],
     deps = [
-        ":mysql_statement"
+        ":mysql_statement",
+        "@mysql_c_api_archive//:mysql_c_api",
     ],
     visibility = ["//visibility:public"],
-    linkopts = [
-        "-L/usr/lib/x86_64-linux-gnu -lmysqlclient -lzstd -lssl -lcrypto -lresolv -lm -pthread",
-    ]
+    linkopts = ["-lmysqlclient"]
+)
+
+cc_library(
+    name = "mysql_executor_pool",
+    srcs = ["mysql_executor_pool.cc"],
+    hdrs = ["mysql_executor_pool.h"],
+    deps = [
+        ":mysql_executor"
+    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -37,9 +46,10 @@ cc_library(
     visibility = ["//visibility:public"]
 )
 
-cc_binary(
+cc_test(
     name = "mysql_executor_test",
     srcs = ["mysql_executor_test.cc"],
+    visibility = ["//visibility:public"],
     deps = [
         ":mysql_executor",
         "@com_google_googletest//:gtest",
@@ -47,13 +57,26 @@ cc_binary(
     ]
 )
 
-cc_binary(
+cc_test(
     name = "mysql_service_proxy_test",
     srcs = ["mysql_service_proxy_test.cc"],
+        visibility = ["//visibility:public"],
     deps = [
         ":mysql_service_proxy",
         "//trpc/client:make_client_context",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ]
+)
+
+cc_test(
+    name = "mysql_executor_pool_test",
+    srcs = ["mysql_executor_pool_test.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":mysql_executor",
+        ":mysql_executor_pool",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
