@@ -5,6 +5,8 @@
 namespace trpc::mysql {
 
 MysqlServiceProxy::MysqlServiceProxy() {
+
+  // need to get option from client config
   ::trpc::ThreadPoolOption thread_pool_option;
   thread_pool_option.thread_num = 2;
   thread_pool_option.bind_core = true;

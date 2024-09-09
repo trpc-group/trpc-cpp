@@ -37,9 +37,12 @@ Status MysqlServiceProxy::Query(const ClientContextPtr& context, MysqlResults<Ou
   // Adaptive event primitive for both fiber and pthread context
   FiberEvent e;
 
-  thread_pool_->AddTask([&e, &res, &sql_str, &args...]() {
 
-    // auto conn = Manager->GetExecutor();
+  // auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
+  thread_pool_->AddTask([&e, &res, &sql_str, &args...]() {
+    
+    // Get address from `context->endpoint_info_`
+    // auto conn = Manager->GetExecutor(context);
     auto conn = std::make_unique<MysqlExecutor>("localhost", "kosmos", "12345678", "test_db");
     conn->QueryAll(res, sql_str, args...);
     // sleep(2);
@@ -47,7 +50,7 @@ Status MysqlServiceProxy::Query(const ClientContextPtr& context, MysqlResults<Ou
   });
 
   e.Wait();
-
+  // RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
   return Status();
 }
 
@@ -67,17 +70,18 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
   //   filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
   //   return exception_fut;
   // }
-
-
-  // Run Filter
+  
   thread_pool_->AddTask([p = std::move(pr), sql_str, args...]() mutable {
     MysqlResults<OutputArgs...> res;
     // sleep(1);
 
-    // auto conn = Manager->GetExecutor();
+    // Get address fro `context->endpoint_info_`
+    // auto conn = Manager->GetExecutor(context);
     auto conn = std::make_unique<MysqlExecutor>("localhost", "kosmos", "12345678", "test_db");
     conn->QueryAll(res, sql_str, args...);
+
     p.SetValue(std::move(res));
+    // p.SetException()
   });
 
   return fu.Then([context, this](Future<MysqlResults<OutputArgs...>>&& fu) {

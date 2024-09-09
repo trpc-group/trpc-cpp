@@ -26,11 +26,17 @@ class NativeString {};
 ///@brief A class used to store the results of a MySQL query executed by the MysqlConnection class.
 ///
 ///The class template parameter `Args...` is used to define the types of data stored in the result set.
+///
 ///- If `Args...` is `OnlyExec`, the class is intended for operations 
 ///  that execute without returning a result set (e.g., INSERT, UPDATE).
-///- If `Args...` includes common data types (e.g., int, std::string), 
-///  the class handles operations that return a result set.
 ///
+///- If `Args...` is `NativeString`, the class handles operations that 
+///  return a `vector<vector<string>>>` result set.
+///
+///- If `Args...` includes common data types (e.g., int, std::string), 
+///  the class handles operations that return a `vector<tuple<Args...>>` result set.
+///  Notice that the template args need to match the query field. The error handle has not been
+///  implemented yet.
 template <typename... Args>
 class MysqlResults {
 
@@ -94,6 +100,8 @@ private:
 
   bool has_value_;
 
+  //Todo: Field Type
+
 };
 
 /// @brief A MySQL connection class that wraps the MySQL C API.
@@ -124,6 +132,16 @@ class MysqlExecutor {
   ///@brief Close the mysql conection and free the MYSQL*.
   void Close();
 
+  ///@brief Executes an SQL query and retrieves all resulting rows, storing each row as a tuple.
+  ///
+  ///This function executes the provided SQL query with the specified input arguments. 
+  ///The results of the query are stored in the `results` vector, where each row is represented 
+  ///as a tuple containing the specified output types.
+  ///
+  ///@param mysql_results Each element in this vector is a tuple containing the values of a single row.
+  ///@param query The SQL query to be executed as a string which uses "?" as placeholders.
+  ///@param args The input arguments to be bound to the query placeholders.
+  ///
   template <typename... InputArgs, typename... OutputArgs>
   void QueryAll(MysqlResults<OutputArgs...>& mysql_results,
                 const std::string& query, const InputArgs&... args);
