@@ -59,7 +59,6 @@ bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& conte
     return false;
   }
   --current_token_;
-  context->SetStatus(Status());
   return true;
 }
 
