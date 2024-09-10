@@ -16,6 +16,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include "trpc/common/config/client_conf.h"
+#include "trpc/common/config/mysql_client_conf_parser.h"
 #include "trpc/common/config/redis_client_conf_parser.h"
 #include "trpc/common/config/retry_conf_parser.h"
 #include "trpc/common/config/ssl_conf_parser.h"
@@ -71,6 +72,10 @@ struct convert<trpc::ServiceProxyConfig> {
       node["redis"] = proxy_config.redis_conf;
     }
 
+    if (proxy_config.mysql_conf.enable) {
+      node["mysql"] = proxy_config.mysql_conf;
+    }
+
     node["fiber_connpool_shards"] = proxy_config.fiber_connpool_shards;
 
     return node;
@@ -97,7 +102,7 @@ struct convert<trpc::ServiceProxyConfig> {
     }
     if (node["is_reconnection"]) proxy_config.is_reconnection = node["is_reconnection"].as<bool>();
     if (node["allow_reconnect"]) proxy_config.allow_reconnect = node["allow_reconnect"].as<bool>();
-	  if (node["max_packet_size"]) proxy_config.max_packet_size = node["max_packet_size"].as<uint32_t>();
+    if (node["max_packet_size"]) proxy_config.max_packet_size = node["max_packet_size"].as<uint32_t>();
     if (node["max_conn_num"]) proxy_config.max_conn_num = node["max_conn_num"].as<uint32_t>();
     if (node["idle_time"]) proxy_config.idle_time = node["idle_time"].as<uint32_t>();
     if (node["recv_buffer_size"]) proxy_config.recv_buffer_size = node["recv_buffer_size"].as<uint32_t>();
@@ -137,6 +142,11 @@ struct convert<trpc::ServiceProxyConfig> {
     if (node["redis"]) {
       proxy_config.redis_conf = node["redis"].as<trpc::RedisClientConf>();
       proxy_config.redis_conf.enable = true;
+    }
+
+    if (node["mysql"]) {
+      proxy_config.mysql_conf = node["mysql"].as<trpc::MysqlClientConf>();
+      proxy_config.mysql_conf.enable = true;
     }
 
     if (node["fiber_connpool_shards"]) {

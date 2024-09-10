@@ -21,6 +21,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include "trpc/common/config/default_value.h"
+#include "trpc/common/config/mysql_client_conf.h"
 #include "trpc/common/config/redis_client_conf.h"
 #include "trpc/common/config/retry_conf.h"
 #include "trpc/common/config/ssl_conf.h"
@@ -161,6 +162,9 @@ struct ServiceProxyConfig {
 
   /// Redis auth config
   RedisClientConf redis_conf;
+
+  /// MySQL auth config
+  MysqlClientConf mysql_conf;
 
   /// The number of FiberConnectionPool shard groups for the idle queue.
   /// A larger value of this parameter will result in a higher allocation of connections, leading to better parallelism
