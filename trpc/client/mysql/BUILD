@@ -16,6 +16,7 @@ cc_library(
     deps = [
         ":mysql_statement",
         "@mysql_c_api_archive//:mysql_c_api",
+        "@trpc_cpp//trpc/util:time",
     ],
     visibility = ["//visibility:public"],
     linkopts = ["-lmysqlclient"]

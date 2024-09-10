@@ -8,15 +8,15 @@ namespace mysql {
 
 MysqlExecutorPool* MysqlExecutorPool::getConnectPool(const std::string& ip, unsigned short port,
                                                      const std::string& userName, const std::string& password,
-                                                     const std::string& dbName, int minSize, int maxSize, int maxIdTime,
-                                                     int timeout) {
+                                                     const std::string& dbName, int minSize, int maxSize,
+                                                     uint64_t maxIdTime, int timeout) {
   static MysqlExecutorPool pool(ip, port, userName, password, dbName, minSize, maxSize, maxIdTime, timeout);
   return &pool;
 }
 
 MysqlExecutorPool::MysqlExecutorPool(const std::string& ip, unsigned short port, const std::string& userName,
                                      const std::string& password, const std::string& dbName, int minSize, int maxSize,
-                                     int maxIdTime, int timeout)
+                                     uint64_t maxIdTime, int timeout)
     : m_ip(ip),
       m_user(userName),
       m_port(port),

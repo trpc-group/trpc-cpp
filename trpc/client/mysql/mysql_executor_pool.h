@@ -13,14 +13,14 @@ class MysqlExecutorPool {
   static MysqlExecutorPool* getConnectPool(const std::string& ip = "", unsigned short port = 0,
                                            const std::string& userName = "", const std::string& password = "",
                                            const std::string& dbName = "", int minSize = 0, int maxSize = 0,
-                                           int maxIdTime = 0, int timeout = 0);
+                                           uint64_t maxIdTime = 0, int timeout = 0);
 
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
 
   MysqlExecutorPool(const std::string& ip, unsigned short port, const std::string& userName,
-                    const std::string& password, const std::string& dbName, int minSize, int maxSize, int maxIdTime,
-                    int timeout);
+                    const std::string& password, const std::string& dbName, int minSize, int maxSize,
+                    uint64_t maxIdTime, int timeout);
 
   std::shared_ptr<MysqlExecutor> getConnection();
 
@@ -45,7 +45,7 @@ class MysqlExecutorPool {
   int m_maxSize;
 
   int m_timeout;
-  int m_maxIdTime;
+  uint64_t m_maxIdTime;
 
   std::queue<MysqlExecutor*> m_connectQ;
   std::mutex m_mutexQ;

@@ -51,12 +51,12 @@ void MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
   }
 }
 
-long long MysqlExecutor::GetAliveTime() {
-  nanoseconds res = steady_clock::now() - m_alivetime;
-  milliseconds millisec = duration_cast<milliseconds>(res);
-  return millisec.count();
+uint64_t MysqlExecutor::GetAliveTime() {
+  uint64_t now = trpc::GetSteadyMicroSeconds();
+  uint64_t alive_time = now - m_alivetime;
+  return alive_time;
 }
 
-void MysqlExecutor::RefreshAliveTime() { m_alivetime = steady_clock::now(); }
+void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMicroSeconds(); }
 
 }  // namespace trpc::mysql

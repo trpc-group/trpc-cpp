@@ -12,6 +12,7 @@ using namespace chrono;
 #include <vector>
 #include "trpc/client/mysql/mysql_binder.h"
 #include "trpc/client/mysql/mysql_statement.h"
+#include "trpc/util/time.h"
 
 struct MYSQL_RES;
 struct MYSQL;
@@ -147,7 +148,7 @@ class MysqlExecutor {
 
   void RefreshAliveTime();
 
-  long long GetAliveTime();
+  uint64_t GetAliveTime();
 
  private:
   ///@brief Executes an SQL query and retrieves all resulting rows, storing each row as a tuple.
@@ -198,7 +199,7 @@ class MysqlExecutor {
   static std::mutex mysql_mutex;
   MYSQL* mysql_;
   MYSQL_RES* res_;
-  steady_clock::time_point m_alivetime;
+  uint64_t m_alivetime;  // 初始化活跃时间
 };
 
 // template <typename... InputArgs>
