@@ -14,5 +14,8 @@ cc_library(
     deps = [
         "//trpc/naming:load_balance_factory",
         "//trpc/util/log:logging",
+        "//trpc/common/config:trpc_config",
+        "//trpc/common/config:load_balance_naming_conf_parser",
+        "//trpc/common/config:load_balance_naming_conf",
     ],
 )

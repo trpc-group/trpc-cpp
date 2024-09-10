@@ -14,11 +14,11 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <vector>
 namespace trpc::naming {
-
 struct SWRoundrobinLoadBalanceConfig {
   // Mapping from service_name to a map of address (IP:Port) to weight
-  std::unordered_map<std::string, std::unordered_map<std::string, uint32_t>> services;
+  std::unordered_map<std::string, std::vector<uint32_t>> services_weight;
   void Display() const;  // Function to display the contents of the struct
 };
 

@@ -20,41 +20,32 @@ template <>
 struct convert<trpc::naming::SWRoundrobinLoadBalanceConfig> {
   static YAML::Node encode(const trpc::naming::SWRoundrobinLoadBalanceConfig& config) {
     YAML::Node node;
-
-    for (const auto& [name, serivce] : config.services) {
+    // Iterate over each service in the config
+    for (const auto& [service_name, weights] : config.services_weight) {
       YAML::Node service_node;
-      service_node["name"] = name;
 
-      for (const auto& [address, weight] : serivce) {
-        YAML::Node target_node;
-        target_node["address"] = address;
-        target_node["weight"] = weight;
-        service_node["target"].push_back(target_node);
-      }
+      service_node["service"] = service_name;
 
-      node["service"].push_back(service_node);
+      service_node["weights"] = weights;
+
+      node.push_back(service_node);
     }
-
     return node;
   }
 
   static bool decode(const YAML::Node& node, trpc::naming::SWRoundrobinLoadBalanceConfig& config) {
-    for (const auto& service_node : node["service"]) {
-      std::unordered_map<std::string, uint32_t> service_config;
+    // Iterate over each service node in the YAML
+    for (const auto& service_node : node) {
       std::string service_name;
-      if (service_node["name"]) {
-        service_name = service_node["name"].as<std::string>();
+      if (service_node["service"]) {
+        service_name = service_node["service"].as<std::string>();
       }
 
-      if (service_node["target"]) {
-        for (const auto& target_node : service_node["target"]) {
-          std::string address = target_node["address"].as<std::string>();
-          uint32_t weight = target_node["weight"].as<uint32_t>();
-          service_config[address] = weight;
-        }
+      std::vector<uint32_t> weights;
+      if (service_node["weights"]) {
+        weights = service_node["weights"].as<std::vector<uint32_t>>();
       }
-
-      config.services[service_name] = service_config;
+      config.services_weight[service_name] = weights;
     }
 
     return true;

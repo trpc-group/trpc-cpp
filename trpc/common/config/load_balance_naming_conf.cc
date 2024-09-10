@@ -19,11 +19,10 @@ namespace trpc::naming {
 void SWRoundrobinLoadBalanceConfig::Display() const {
   TRPC_FMT_DEBUG("-----SWRoundrobinLoadBalanceConfig begin-------");
 
-  for (const auto& [name, service] : services) {
-    TRPC_FMT_DEBUG("Service name: {}", name);
-
-    for (const auto& [address, weight] : service) {
-      TRPC_FMT_DEBUG("  Address: {}, Weight: {}", address, weight);
+  for (const auto& [service_name, weights] : services_weight) {
+    TRPC_FMT_DEBUG("Service name: {}", service_name);
+    for (const auto& weight : weights) {
+      TRPC_FMT_DEBUG(" Weight: {}", weight);
     }
     TRPC_FMT_DEBUG("-----------------------------------------------");
   }

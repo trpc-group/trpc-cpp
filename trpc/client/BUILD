@@ -76,8 +76,6 @@ cc_library(
         "//trpc/codec/trpc:trpc_protocol",
         "//trpc/common/config:client_conf",
         "//trpc/common/config:default_value",
-        "//trpc/common/config:load_balance_naming_conf",
-        "//trpc/common/config:load_balance_naming_conf_parser",
         "//trpc/common/future",
         "//trpc/common:status",
         "//trpc/filter",

@@ -58,30 +58,19 @@ plugins:
             filename: trpc_fiber_client.log
   loadbalance:         
     trpc_swround_robin_loadbalance:                            
-      service:
-        - name: trpc.test.helloworld.Greeter
-          target:
-            - address: 127.0.0.1:10000
-              weight: 1
-            - address: 127.0.0.1:20000
-              weight: 2      
-            - address: 127.0.0.1:30000
-              weight: 3                  
+      - service: trpc.test.helloworld.Greeter
+        weights: [1,2,3]   
 ```
 - **注册并初始化插件** 在客户端文件中，注册负载均衡插件，使用 `::trpc::loadbalance::Init()` 注册插件：
 ```cpp
-int Run() {
-  ::trpc::loadbalance::Init();
-  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::test::helloworld::GreeterServiceProxy>(FLAGS_service_name);
-  return 0;
-}
-
 int main(int argc, char* argv[]) {
   ParseClientConfig(argc, argv);
+  ::trpc::loadbalance::Init();
   // If the business code is running in trpc pure client mode,
   // the business code needs to be running in the `RunInTrpcRuntime` function
   return ::trpc::RunInTrpcRuntime([]() { return Run(); });
 }
+
 ```
 
 

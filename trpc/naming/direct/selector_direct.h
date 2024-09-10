@@ -70,6 +70,12 @@ class SelectorDirect : public Selector {
   /// @param info The router information.
   /// @return 0 on success, -1 on failure.
   int SetEndpoints(const RouterInfo* info) override;
+  /// @brief Sets the weights for the endpoints of a service
+  /// @param service_name The name of the service for which the endpoint weights are to be set.
+  /// @param endpoints of TrpcEndpointInfo
+  /// @return 0 on success, -1 on failure (if the load balancer is not round-robin).
+
+  int SetEndpointsWeight(const std::string service_name, std::vector<TrpcEndpointInfo>& endpoints);
 
  private:
   /// @brief Gets the load balancer plugin with the specified name.
