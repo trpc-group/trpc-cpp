@@ -14,7 +14,7 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #include "trpc/overload_control/smooth_filter/server_flow_controller_server_filter.h"
-#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
+#include "trpc/overload_control/flow_control/flow_controller_conf.h"
 #include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
 
 #include "trpc/codec/codec_helper.h"
@@ -25,8 +25,8 @@
 namespace trpc::overload_control {
 
 int Server_FlowControlServerFilter::Init() {
-  std::vector<Server_FlowControlLimiterConf> flow_control_confs;
-  Server_LoadFlowControlLimiterConf(flow_control_confs);
+  std::vector<FlowControlLimiterConf> flow_control_confs;
+  LoadFlowControlLimiterConf(flow_control_confs);
   for (const auto& conf : flow_control_confs) {
     Server_RegisterFlowController(conf);
   }

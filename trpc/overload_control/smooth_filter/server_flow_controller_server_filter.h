@@ -25,7 +25,7 @@ namespace trpc::overload_control {
 class Server_FlowControlServerFilter : public MessageServerFilter {
  public:
   /// @brief Name of filter
-  std::string Name() override { return "my_overflow_control"; }
+  std::string Name() override { return "my_flow_control"; }
 
   /// @brief Initialization function.
   int Init() override;

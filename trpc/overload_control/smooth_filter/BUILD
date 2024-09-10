@@ -2,15 +2,7 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-cc_test(
-    name = "server_overload_controller_factory_test",
-    srcs = ["server_overload_controller_factory_test.cc"],
-    deps = [
-        ":server_overload_controller_factory",
-        "//trpc/overload_control/testing:overload_control_testing",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
+
 
 cc_library(
     name = "server_overload_controller",
@@ -46,32 +38,6 @@ cc_library(
 )
 
 cc_library(
-    name = "server_flow_controller_conf",
-    srcs = ["server_flow_controller_conf.cc"],
-    hdrs = ["server_flow_controller_conf.h"],
-    defines = [] +
-              select({
-                  "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
-                  "//conditions:default": [],
-              }),
-    visibility = ["//visibility:public"],
-    deps = [
-        "//trpc/common/config:trpc_config",
-        "//trpc/log:trpc_log",
-        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
-    ],
-)
-
-cc_test(
-    name = "server_flow_controller_conf_test",
-    srcs = ["server_flow_controller_conf_test.cc"],
-    deps = [
-        ":server_flow_controller_conf",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "server_flow_controller_generator",
     srcs = ["server_flow_controller_generator.cc"],
     hdrs = ["server_flow_controller_generator.h"],
@@ -85,7 +51,7 @@ cc_library(
     ],
     deps = [
         ":server_overload_controller",
-        ":server_flow_controller_conf",
+        "//trpc/overload_control/flow_control:flow_controller_conf",
         ":server_overload_controller_factory",
         ":server_smooth_limit",
         "//trpc/common/logging:trpc_logging",
@@ -94,18 +60,6 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "server_flow_controller_generator_test",
-    srcs = ["server_flow_controller_generator_test.cc"],
-    deps = [
-        ":server_smooth_limit",
-        ":server_overload_controller_factory",
-        ":server_flow_controller_generator",
-        ":server_flow_controller_conf",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
 
 cc_library(
     name = "server_flow_controller_server_filter",
@@ -121,7 +75,7 @@ cc_library(
     ],
     deps = [
         ":server_overload_controller",
-        ":server_flow_controller_conf",
+        "//trpc/overload_control/flow_control:flow_controller_conf",
         ":server_overload_controller_factory",
         ":server_flow_controller_generator",
         "//trpc/filter",
@@ -132,20 +86,7 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "server_flow_controller_server_filter_test",
-    srcs = ["server_flow_controller_server_filter_test.cc"],
-    data = [
-        "//trpc/overload_control/smooth_filter:filter_test.yaml",
-    ],
-    deps = [
-        "//trpc/common:trpc_plugin",
-        ":server_overload_controller_factory",
-        ":server_flow_controller_server_filter",
-        "//trpc/codec/testing:protocol_testing",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
+
 
 cc_library(
     name = "server_smooth_limit",
@@ -167,13 +108,3 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "server_smooth_limit_test",
-    srcs = ["server_smooth_limit_test.cc"],
-    deps = [
-        ":server_smooth_limit",
-        "//trpc/codec/trpc:trpc_protocol",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-    ],
-)

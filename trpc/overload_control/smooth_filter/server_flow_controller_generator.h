@@ -14,7 +14,7 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #pragma once
-#include "trpc/overload_control/smooth_filter/server_flow_controller_conf.h"
+#include "trpc/overload_control/flow_control/flow_controller_conf.h"
 #include "trpc/overload_control/smooth_filter/server_overload_controller.h"
 
 #include <cstdint>
@@ -29,7 +29,7 @@ constexpr char LimiterSmooth[] = "smooth";
 
 /// @brief Register the flow controller object for the service.
 /// @param flow_conf Flow control conf.
-void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_conf);
+void Server_RegisterFlowController(const FlowControlLimiterConf& flow_conf);
 
 /// @brief Service-level description string, format specification: name (maximum limit per second).
 ///        such as: default(100000), seconds(100000), smooth(100000)

@@ -13,20 +13,21 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
+
 
 #include <vector>
 
 #include "fmt/format.h"
 
-#include "trpc/common/logging/trpc_logging.h"
 #include "trpc/overload_control/smooth_filter/server_overload_controller_factory.h"
 #include "trpc/overload_control/smooth_filter/server_smooth_limit.h"
+#include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
 #include "trpc/util/string_util.h"
+#include "trpc/common/logging/trpc_logging.h"
 
 namespace trpc::overload_control {
 
-void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_conf) {
+void Server_RegisterFlowController(const FlowControlLimiterConf& flow_conf) {
   if (!flow_conf.service_limiter.empty()) {
     ServerOverloadControllerPtr service_controller = Server_CreateFlowController(
         flow_conf.service_name, flow_conf.service_limiter, flow_conf.is_report, flow_conf.window_size);
@@ -37,7 +38,6 @@ void Server_RegisterFlowController(const Server_FlowControlLimiterConf& flow_con
                      flow_conf.service_limiter);
     }
   }
-
   for (const auto& func_conf : flow_conf.func_limiters) {
     if (!func_conf.limiter.empty()) {
       std::string service_func_name = fmt::format("/{}/{}", flow_conf.service_name, func_conf.name);
@@ -85,9 +85,9 @@ ServerOverloadControllerPtr Server_CreateFlowController(const std::string& key_n
   }
   // Check if the name is within the supported flow controller implementations
   if (limiter_name == LimiterDefault) {
-    return ServerOverloadControllerPtr(new SmoothLimit(key_name, max_rps, is_report, window_size));
+    return ServerOverloadControllerPtr(new SmoothLimitOverloadController(key_name, max_rps, is_report, window_size));
   } else if (limiter_name == LimiterSmooth) {
-    return ServerOverloadControllerPtr(new SmoothLimit(key_name, max_rps, is_report, window_size));
+    return ServerOverloadControllerPtr(new SmoothLimitOverloadController(key_name, max_rps, is_report, window_size));
   }
 
   return nullptr;

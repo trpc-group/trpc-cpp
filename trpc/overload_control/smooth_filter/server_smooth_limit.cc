@@ -23,31 +23,31 @@
 
 namespace trpc::overload_control {
 
-bool SmoothLimit::Init() {
+bool SmoothLimitOverloadController::Init() {
   // nothing to do,The time thread automatically starts.
   return true;
 }
 
-bool SmoothLimit::BeforeSchedule(const ServerContextPtr& context) {
-    return smooth_limit_.CheckLimit(context);
+bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& context) {
+    return smooth_limit_->CheckLimit(context);
 }
 
-void SmoothLimit::Destroy(){
-    // nothing to do,The time thread automatically destorys.
+void SmoothLimitOverloadController::Destroy(){
+    smooth_limit_.reset();
 }
 
-void SmoothLimit::Stop(){
+void SmoothLimitOverloadController::Stop(){
     // nothing to do,The time thread automatically stops.
 };
 
-SmoothLimit::SmoothLimit(std::string name,int64_t limit, bool is_report, int32_t window_size)
+SmoothLimitOverloadController::SmoothLimitOverloadController(std::string name,int64_t limit, bool is_report, int32_t window_size)
     : name_(name),
-      smooth_limit_(limit, is_report, window_size) {
+      smooth_limit_(std::make_unique<SmoothLimiter>(limit, is_report, window_size)) {
 }
 
 //The destructor does nothing, but the stop method in public needs to set the timed task to join and make it invalid
 //The user must stop before calling destroy
-SmoothLimit::~SmoothLimit() {}
+SmoothLimitOverloadController::~SmoothLimitOverloadController() {}
 
 }  // namespace trpc::overload_control
 #endif

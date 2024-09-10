@@ -19,6 +19,7 @@
 
 #include<string>
 #include <cstdint>
+#include<memory>
 
 #include "trpc/util/function.h"
 
@@ -27,17 +28,17 @@ namespace trpc::overload_control
 /// @brief Default number of time frames per second
 static const int32_t kDefaultNumber = 100;
 
-class SmoothLimit : public ServerOverloadController
+class SmoothLimitOverloadController : public ServerOverloadController
 {
 public:
   /// @brief Initialize the sliding window current limiting plugin
   /// @param Name of plugin Current limit quantity Record monitoring logs or not Number of time slots
-  explicit SmoothLimit(std::string name,int64_t limit, bool is_report = false, int32_t window_size = kDefaultNumber);
+  explicit SmoothLimitOverloadController(std::string name,int64_t limit, bool is_report = false, int32_t window_size = kDefaultNumber);
 
   /// @note Do nothing, the entire plugin requires manual destruction of only thread resources
   /// @brief From the implementation of filter, it can be seen that before destruction
   ///the plugin's stop() and destroy() will be called first
-  ~SmoothLimit();
+  ~SmoothLimitOverloadController();
 
   /// @note Func called before onrequest() is called at the buried point location, and checkpoint() is called internally
   /// @param Context represents the storage of status within the context service name、caller name
@@ -60,7 +61,7 @@ public:
 private:
   std::string name_;
 
-  SmoothLimiter smooth_limit_;
+  std::unique_ptr<SmoothLimiter> smooth_limit_;
 };
 
 }
