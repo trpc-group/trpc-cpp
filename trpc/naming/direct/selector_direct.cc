@@ -136,6 +136,7 @@ int SelectorDirect::SetEndpoints(const RouterInfo* info) {
     TRPC_LOG_ERROR("Invalid parameter: router info is empty");
     return -1;
   }
+
   // Generate a unique id for each node, then put the node in the cache
   EndpointsInfo endpoints_info;
   endpoints_info.endpoints = info->info;
@@ -166,6 +167,7 @@ int SelectorDirect::SetEndpoints(const RouterInfo* info) {
   default_load_balance_->Update(&load_balance_info);
   return 0;
 }
+
 int SelectorDirect::SetEndpointsWeight(const std::string service_name, std::vector<TrpcEndpointInfo>& endpoints) {
   if (default_load_balance_->Name() != "trpc_swround_robin_loadbalance") {
     return -1;

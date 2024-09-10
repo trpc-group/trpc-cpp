@@ -14,27 +14,18 @@
 #include "gtest/gtest.h"
 #include "yaml-cpp/yaml.h"
 TEST(SWRoundrobinLoadBalanceConfig, load_test) {
-  // Create an instance of SWRoundrobinLoadBalanceConfig with multiple services
   trpc::naming::SWRoundrobinLoadBalanceConfig config;
 
-  // Configure serviceA with a list of weights
   config.services_weight["serviceA"] = {1, 2, 3};
-
-  // Configure serviceB with a list of weights
   config.services_weight["serviceB"] = {4, 5, 6};
-
-  // Display the original configuration (assuming a Display method exists)
   config.Display();
 
-  // Encode the configuration into YAML format
   YAML::convert<trpc::naming::SWRoundrobinLoadBalanceConfig> c;
   YAML::Node config_node = c.encode(config);
 
-  // Decode the YAML back to a SWRoundrobinLoadBalanceConfig object
   trpc::naming::SWRoundrobinLoadBalanceConfig tmp;
   ASSERT_TRUE(c.decode(config_node, tmp));
 
-  // Display the decoded configuration to verify correctness
   tmp.Display();
 
   // Check that the original and decoded configurations have the same number of services

@@ -824,8 +824,10 @@ void ServiceProxy::SetEndpointInfo(const std::string& endpoint_info) {
     option_->selector_name = selector_name;
     assert(!option_->selector_name.empty());
   }
+
   auto selector = SelectorFactory::GetInstance()->Get(option_->selector_name);
   assert(selector != nullptr);
   selector->SetEndpoints(&info);
 }
+
 }  // namespace trpc

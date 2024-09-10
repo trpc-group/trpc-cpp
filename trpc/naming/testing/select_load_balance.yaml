@@ -1,4 +1,0 @@
-plugins:
-  selector:
-    loadbalance:
-      load_balance_name: "SmoothWeightedPollingLoadBalance"

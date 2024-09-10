@@ -25,7 +25,6 @@
 #include "trpc/common/future/future.h"
 #include "trpc/common/status.h"
 #include "trpc/filter/client_filter_controller.h"
-#include "trpc/naming/common/common_defs.h"
 #include "trpc/runtime/threadmodel/thread_model.h"
 #include "trpc/stream/stream.h"
 #include "trpc/transport/client/client_transport.h"
