@@ -192,6 +192,8 @@ class MysqlExecutor {
                     std::vector<uint8_t>& null_flag_buffer, std::vector<std::tuple<OutputArgs...>>& results,
                     std::vector<std::vector<uint8_t>>& null_flags);
 
+  void FreeResult();
+
  private:
   static std::mutex mysql_mutex;
   MYSQL* mysql_;
@@ -208,6 +210,7 @@ class MysqlExecutor {
 template <typename... InputArgs, typename... OutputArgs>
 void MysqlExecutor::QueryAll(MysqlResults<OutputArgs...>& mysql_results, const std::string& query,
                              const InputArgs&... args) {
+  // FreeResult();
   static_assert(!MysqlResults<OutputArgs...>::is_only_exec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
 
   auto& result_set = mysql_results.GetResultSet();
@@ -313,6 +316,13 @@ int MysqlExecutor::Execute(const std::string& query, const InputArgs&... args) {
   size_t affected_row = mysql_affected_rows(mysql_);
 
   return affected_row;
+}
+
+void MysqlExecutor::FreeResult() {
+  if (res_) {
+    mysql_free_result(res_);
+    res_ = nullptr;
+  }
 }
 
 }  // namespace trpc::mysql

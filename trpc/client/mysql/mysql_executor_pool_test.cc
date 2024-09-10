@@ -13,7 +13,6 @@ using namespace trpc::mysql;
 namespace trpc {
 namespace testing {
 
-// 清空 person 表数据
 void clearPersonTable() {
   MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
   char sql[1024] = {0};

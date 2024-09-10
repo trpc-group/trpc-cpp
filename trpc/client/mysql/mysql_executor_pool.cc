@@ -18,14 +18,14 @@ MysqlExecutorPool::MysqlExecutorPool(const std::string& ip, unsigned short port,
                                      const std::string& password, const std::string& dbName, int minSize, int maxSize,
                                      int maxIdTime, int timeout)
     : m_ip(ip),
-      m_port(port),
       m_user(userName),
+      m_port(port),
       m_passwd(password),
       m_dbName(dbName),
       m_minSize(minSize),
       m_maxSize(maxSize),
-      m_maxIdTime(maxIdTime),
-      m_timeout(timeout) {
+      m_timeout(timeout),
+      m_maxIdTime(maxIdTime) {
   for (int i = 0; i < m_minSize; i++) {
     addConnection();
   }
@@ -77,7 +77,7 @@ void MysqlExecutorPool::addConnection() {
   const char* database = m_dbName.c_str();
   uint16_t port = static_cast<uint16_t>(m_port);
 
-  MysqlExecutor* conn = new MysqlExecutor(hostname, username, password, database);
+  MysqlExecutor* conn = new MysqlExecutor(hostname, username, password, database, port);
   conn->RefreshAliveTime();
   m_connectQ.push(conn);
 }

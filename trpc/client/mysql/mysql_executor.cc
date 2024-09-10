@@ -10,18 +10,21 @@ MysqlExecutor::MysqlExecutor(const char* const hostname, const char* const usern
   {
     std::lock_guard<std::mutex> lock(mysql_mutex);
     mysql_ = mysql_init(NULL);
-    mysql_set_character_set(mysql_, "utf8");
   }
+  mysql_set_character_set(mysql_, "utf8");
   MYSQL* ret = mysql_real_connect(mysql_, hostname, username, password, database, port, nullptr, 0);
 
   if (nullptr == ret) {
-    std::runtime_error conn_error("Connection failed.");
+    std::runtime_error conn_error("Connection failed: " + std::string(mysql_error(mysql_)));
     mysql_close(mysql_);
     throw conn_error;
   }
 }
 
-MysqlExecutor::~MysqlExecutor() { Close(); }
+MysqlExecutor::~MysqlExecutor() {
+  Close();
+  // FreeResult();
+}
 
 void MysqlExecutor::Close() {
   if (mysql_ != nullptr) {
