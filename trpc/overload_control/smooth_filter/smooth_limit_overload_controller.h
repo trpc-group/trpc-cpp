@@ -64,16 +64,15 @@ public:
 
   /// @brief Destroy thread
   void Destroy() ;
-
-  void RegisterLimit(const std::string& name,FlowControllerPtr limiter);
-
-  FlowControllerPtr GetFlowController(const std::string& name);
   
   static SmoothLimitOverloadController* GetInstance() {
     static SmoothLimitOverloadController instance;
     return &instance;
   }
+private:
+  void RegisterLimiter(const std::string& name,FlowControllerPtr limiter);
 
+  FlowControllerPtr GetLimiter(const std::string& name);
 private:
   std::unordered_map<std::string,FlowControllerPtr> smooth_limits_;
 };

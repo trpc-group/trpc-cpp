@@ -33,7 +33,7 @@ std::vector<FlowControlLimiterConf> flow_control_confs;
     FlowControllerPtr service_controller =
         CreateFlowController(flow_conf.service_limiter, flow_conf.is_report, flow_conf.window_size);
     if (service_controller) {
-      RegisterLimit(flow_conf.service_name, service_controller);
+      RegisterLimiter(flow_conf.service_name, service_controller);
     } else {
       TRPC_FMT_ERROR("create service flow control fail|service_name: {}, |service_limiter: {}", flow_conf.service_name,
                      flow_conf.service_limiter);
@@ -46,7 +46,7 @@ std::vector<FlowControlLimiterConf> flow_control_confs;
       FlowControllerPtr func_controller =
           CreateFlowController(func_conf.limiter, flow_conf.is_report, func_conf.window_size);
       if (func_controller) {
-        RegisterLimit(service_func_name, func_controller);
+        RegisterLimiter(service_func_name, func_controller);
       } else {
         TRPC_FMT_ERROR("create func flow control fail|service_name:{}|func_name:{}|limiter:{}", flow_conf.service_name,
                        func_conf.name, func_conf.limiter);
@@ -58,9 +58,9 @@ std::vector<FlowControlLimiterConf> flow_control_confs;
 }
 
 bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& context) {
-  auto service_controller = SmoothLimitOverloadController::GetInstance()->GetFlowController(context->GetCalleeName());
+  auto service_controller = SmoothLimitOverloadController::GetInstance()->GetLimiter(context->GetCalleeName());
   // func flow controller
-  auto func_controller = SmoothLimitOverloadController::GetInstance()->GetFlowController(context->GetFuncName());
+  auto func_controller = SmoothLimitOverloadController::GetInstance()->GetLimiter(context->GetFuncName());
   if (!service_controller && !func_controller) {
     return true;
   }
@@ -95,12 +95,12 @@ void SmoothLimitOverloadController::Stop(){
 SmoothLimitOverloadController::SmoothLimitOverloadController()
 {}
 
-void SmoothLimitOverloadController::RegisterLimit(const std::string& name,FlowControllerPtr limiter){
+void SmoothLimitOverloadController::RegisterLimiter(const std::string& name,FlowControllerPtr limiter){
     if(smooth_limits_.count(name) == 0)
         smooth_limits_[name] = limiter;
 }
 
-FlowControllerPtr SmoothLimitOverloadController::GetFlowController(const std::string& name) {
+FlowControllerPtr SmoothLimitOverloadController::GetLimiter(const std::string& name) {
   FlowControllerPtr ret = nullptr;
   auto iter = smooth_limits_.find(name);
   if (iter != smooth_limits_.end()) {
