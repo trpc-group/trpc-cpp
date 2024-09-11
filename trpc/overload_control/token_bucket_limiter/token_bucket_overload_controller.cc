@@ -40,7 +40,6 @@ void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf
 }
 
 void TokenBucketOverloadController::AddToken() {
-  std::unique_lock<std::mutex> lock(mutex_);
   uint64_t current_timestamp = trpc::time::GetSteadyMilliSeconds();
   uint64_t gap_timestamp = current_timestamp - last_timestamp_;
   uint32_t add_count = (uint32_t) (gap_timestamp * rate_ / 1000);
@@ -53,8 +52,8 @@ uint32_t TokenBucketOverloadController::GetToken() {
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
-  AddToken();
   std::unique_lock<std::mutex> lock(mutex_);
+  AddToken();
   if (current_token_ == 0) {
     return false;
   }
