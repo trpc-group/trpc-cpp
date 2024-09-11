@@ -2,30 +2,26 @@
 #include <stdexcept>
 #include <thread>
 #include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/common/config/mysql_client_conf.h"
 
 namespace trpc {
 namespace mysql {
 
-MysqlExecutorPool* MysqlExecutorPool::getConnectPool(const std::string& ip, unsigned short port,
-                                                     const std::string& userName, const std::string& password,
-                                                     const std::string& dbName, int minSize, int maxSize,
-                                                     uint64_t maxIdTime, int timeout) {
-  static MysqlExecutorPool pool(ip, port, userName, password, dbName, minSize, maxSize, maxIdTime, timeout);
+MysqlExecutorPool* MysqlExecutorPool::getConnectPool(const MysqlClientConf& conf) {
+  static MysqlExecutorPool pool(conf);
   return &pool;
 }
 
-MysqlExecutorPool::MysqlExecutorPool(const std::string& ip, unsigned short port, const std::string& userName,
-                                     const std::string& password, const std::string& dbName, int minSize, int maxSize,
-                                     uint64_t maxIdTime, int timeout)
-    : m_ip(ip),
-      m_user(userName),
-      m_port(port),
-      m_passwd(password),
-      m_dbName(dbName),
-      m_minSize(minSize),
-      m_maxSize(maxSize),
-      m_timeout(timeout),
-      m_maxIdTime(maxIdTime) {
+MysqlExecutorPool::MysqlExecutorPool(const MysqlClientConf& conf)
+    : m_ip(conf.ip),
+      m_user(conf.user_name),
+      m_port(std::stoi(conf.port)),
+      m_passwd(conf.password),
+      m_dbName(conf.dbname),
+      m_minSize(conf.connectpool.min_size),
+      m_maxSize(conf.connectpool.max_size),
+      m_timeout(conf.connectpool.timeout),
+      m_maxIdTime(conf.connectpool.max_idle_time) {
   for (int i = 0; i < m_minSize; i++) {
     addConnection();
   }

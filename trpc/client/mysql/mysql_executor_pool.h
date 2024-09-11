@@ -6,21 +6,17 @@
 #include <queue>
 #include <string>
 #include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/common/config/mysql_client_conf.h"
 namespace trpc {
 namespace mysql {
 class MysqlExecutorPool {
  public:
-  static MysqlExecutorPool* getConnectPool(const std::string& ip = "", unsigned short port = 0,
-                                           const std::string& userName = "", const std::string& password = "",
-                                           const std::string& dbName = "", int minSize = 0, int maxSize = 0,
-                                           uint64_t maxIdTime = 0, int timeout = 0);
+  static MysqlExecutorPool* getConnectPool(const MysqlClientConf& conf);
 
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
 
-  MysqlExecutorPool(const std::string& ip, unsigned short port, const std::string& userName,
-                    const std::string& password, const std::string& dbName, int minSize, int maxSize,
-                    uint64_t maxIdTime, int timeout);
+  MysqlExecutorPool(const MysqlClientConf& conf);
 
   std::shared_ptr<MysqlExecutor> getConnection();
 

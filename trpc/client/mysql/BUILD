@@ -27,7 +27,8 @@ cc_library(
     srcs = ["mysql_executor_pool.cc"],
     hdrs = ["mysql_executor_pool.h"],
     deps = [
-        ":mysql_executor"
+        ":mysql_executor",
+        "//trpc/common/config:mysql_client_conf"
     ],
     visibility = ["//visibility:public"],
 )

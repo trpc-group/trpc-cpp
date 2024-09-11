@@ -32,6 +32,15 @@ TEST(TrpcConfig, TestInit) {
 
   const auto& client = trpc_config->GetClientConfig();
   ASSERT_EQ(client.filters.size(), 1);
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.user_name, "root");
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.password, "abc123");
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.dbname, "test");
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.ip, "localhost");
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.port, 3306);
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.connectpool.min_size, 100);
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.connectpool.max_size, 200);
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.connectpool.max_idle_time, 500);
+  ASSERT_EQ(client.service_proxy_config[0].mysql_conf.connectpool.timeout, 200);
 }
 
 }  // namespace trpc::testing

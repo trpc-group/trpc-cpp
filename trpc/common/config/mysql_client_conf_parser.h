@@ -40,7 +40,7 @@ struct convert<trpc::MysqlClientConf> {
       mysql_conf.ip = node["ip"].as<std::string>();
     }
     if (node["port"]) {
-      mysql_conf.port = node["port"].as<std::string>();
+      mysql_conf.port = node["port"].as<uint32_t>();
     }
     if (node["enable"]) {
       mysql_conf.enable = node["enable"].as<bool>();

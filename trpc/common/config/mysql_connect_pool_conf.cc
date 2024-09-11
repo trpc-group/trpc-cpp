@@ -5,9 +5,9 @@
 namespace trpc {
 
 void MysqlConnectPoolConf::Display() const {
-  TRPC_LOG_DEBUG("minSize: " << minSize);
-  TRPC_LOG_DEBUG("maxSize: " << maxSize);
-  TRPC_LOG_DEBUG("maxIdleTime: " << maxIdleTime);
+  TRPC_LOG_DEBUG("min_size: " << min_size);
+  TRPC_LOG_DEBUG("max_size: " << max_size);
+  TRPC_LOG_DEBUG("max_idle_time: " << max_idle_time);
   TRPC_LOG_DEBUG("timeout: " << timeout);
 }
 

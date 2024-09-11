@@ -32,6 +32,21 @@ client:
       is_conn_complex: true
       target: trpc.test.helloworld.Greeter
       selector_name: test_selector
+
+      mysql:
+        user_name: "root"
+        password: "abc123"
+        dbname: "test"
+        ip: "localhost"
+        port: 3306
+        enable: true
+        connectpool:
+          min_size: 100
+          max_size: 200
+          max_idle_time: 500
+          timeout: 200
+
+        
     
   filter:
     - promethues

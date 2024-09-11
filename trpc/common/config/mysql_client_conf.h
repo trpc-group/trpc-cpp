@@ -36,7 +36,7 @@ struct MysqlClientConf {
   std::string ip;
 
   /// @brief port
-  std::string port;
+  uint32_t port;
 
   /// @brief Whether enable auth
   bool enable{true};
