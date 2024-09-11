@@ -328,5 +328,4 @@ cc_library(
         "//trpc/util/log:logging",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
-
 )
