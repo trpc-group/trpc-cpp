@@ -37,10 +37,10 @@ class MysqlExecutorPool {
   std::string m_dbName;
   unsigned short m_port;
 
-  int m_minSize;
-  int m_maxSize;
+  uint32_t m_minSize;
+  uint32_t m_maxSize;
 
-  int m_timeout;
+  uint32_t m_timeout;
   uint64_t m_maxIdTime;
 
   std::queue<MysqlExecutor*> m_connectQ;
