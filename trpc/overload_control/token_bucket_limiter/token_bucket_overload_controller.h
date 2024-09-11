@@ -69,14 +69,15 @@ private:
   // The rate(tokens/second) of token generation.
   uint64_t rate_;
 
-  // The time when the last request was successfully passed.
-  uint64_t last_request_time_;
-  std::mutex lrt_mutex_;
+  // The last time when the token was allocated.
+  uint64_t last_alloc_time_;
+  // Protect last_alloc_time_ for concurrent read/write.
+  std::mutex last_alloc_mutex_;
 
   // The time(nanoseconds) of one token generation.
-  uint64_t spend_;
-  // The maximum time(nanoseconds) required for the size of tokens to reach burst.
-  uint64_t max_elapsed_;
+  uint64_t one_token_elapsed_;
+  // The time(nanoseconds) of burst_ tokens generation.
+  uint64_t burst_elapsed_;
 
   // Nanoseconds per second, 1s = 10^9 ns
   static constexpr auto nsecs_per_sec_{static_cast<uint64_t>(1e9)};
