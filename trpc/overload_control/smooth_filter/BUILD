@@ -72,3 +72,32 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "overload_controller_filter_test",
+    srcs = ["overload_controller_filter_test.cc"],
+    data = [
+        ":filter_test.yaml",
+    ],
+    deps = [
+        ":overload_controller_filter",
+        ":smooth_limit_overload_controller",
+        "//trpc/common:trpc_plugin",
+        "//trpc/codec/testing:protocol_testing",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "smooth_limit_overload_controller_test",
+    srcs = ["overload_controller_filter_test.cc"],
+    data = [
+        ":filter_test.yaml",
+    ],
+    deps = [
+        ":overload_controller_filter",
+        ":smooth_limit_overload_controller",
+        "//trpc/common:trpc_plugin",
+        "//trpc/codec/testing:protocol_testing",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

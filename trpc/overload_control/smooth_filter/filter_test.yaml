@@ -20,7 +20,7 @@ server:
       ip: 0.0.0.0                     # Service bind ip
       port: 12345  
       filter:
-        - my_flow_control         # Service bind port
+        - server_flow_control         # Service bind port
 
 # Plugin configuration.
 plugins:
@@ -42,7 +42,7 @@ plugins:
     flow_control:
       - service_name: trpc.test.helloworld.Greeter #service name.
         is_report: true # Whether to report monitoring data.
-        service_limiter: smooth(10) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
+        service_limiter: default(10) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
         window_size: 9
         func_limiter: # Interface-level flow control.
           - name: SayHello # Method name

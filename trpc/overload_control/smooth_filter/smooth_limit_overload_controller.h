@@ -69,7 +69,7 @@ public:
     static SmoothLimitOverloadController instance;
     return &instance;
   }
-private:
+  
   void RegisterLimiter(const std::string& name,FlowControllerPtr limiter);
 
   FlowControllerPtr GetLimiter(const std::string& name);

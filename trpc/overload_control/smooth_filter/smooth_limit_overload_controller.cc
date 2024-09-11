@@ -16,7 +16,7 @@
 #include <cmath>
 #include <cstdint>
 
-#include "trpc/overload_control/smooth_filter/smooth_limits_overload_controller.h"
+#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
 #include "trpc/overload_control/common/report.h"
 #include "trpc/overload_control/flow_control/flow_controller_conf.h"
 #include "trpc/overload_control/flow_control/flow_controller_generator.h"
@@ -69,13 +69,13 @@ bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& conte
   if (service_controller && service_controller->CheckLimit(context)) {
     context->SetStatus(
         Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server haoyuflow overload , service name: {}", context->GetCalleeName());
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server server flow overload , service name: {}", context->GetCalleeName());
     return false;
   }
   if (func_controller && func_controller->CheckLimit(context)) {
     context->SetStatus(
         Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server haoyuflow overload , service name: {}, func name: {}",
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server server flow overload , service name: {}, func name: {}",
                                 context->GetCalleeName(), context->GetFuncName());
     return false;
   }
