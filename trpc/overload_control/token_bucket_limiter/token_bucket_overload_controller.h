@@ -78,6 +78,7 @@ private:
   // The maximum time(nanoseconds) required for the size of tokens to reach burst.
   uint64_t max_elapsed_;
 
+  // Nanoseconds per second, 1s = 10^9 ns
   static constexpr auto nsecs_per_sec_{static_cast<uint64_t>(1e9)};
 };
 
