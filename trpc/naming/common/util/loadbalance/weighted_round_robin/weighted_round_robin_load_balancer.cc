@@ -12,18 +12,9 @@
 //
 
 #include "trpc/naming/common/util/loadbalance/weighted_round_robin/weighted_round_robin_load_balancer.h"
-#include "trpc/common/config/load_balance_naming_conf.h"
-#include "trpc/common/config/load_balance_naming_conf_parser.h"
 #include "trpc/common/config/trpc_config.h"
 
 namespace trpc {
-int SWRoundRobinLoadBalance::Init() noexcept {
-  if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("loadbalance", kSWRoundRobinLoadBalance, loadbalanceconfig)) {
-    TRPC_FMT_DEBUG("Set trpc_swround_robin_loadbalance config failed");
-    return -1;
-  }
-  return 0;
-}
 int SWRoundRobinLoadBalance::Update(const LoadBalanceInfo* info) {
   if (info == nullptr || info->info == nullptr || info->endpoints == nullptr) {
     TRPC_LOG_ERROR("Endpoint info of name is empty");
@@ -117,18 +108,5 @@ bool SWRoundRobinLoadBalance::IsLoadBalanceInfoDiff(const LoadBalanceInfo* info)
   }
 
   return false;
-}
-int SWRoundRobinLoadBalance::SetEndpointInfoWeight(const std::string service_name,
-                                                   std::vector<TrpcEndpointInfo>& endpoints) {
-  if (loadbalanceconfig.services_weight.count(service_name) == 0) {
-    return -1;
-  }
-  if (endpoints.size() != loadbalanceconfig.services_weight[service_name].size()) {
-    return -1;
-  }
-  for (int i = 0; i < static_cast<int>(endpoints.size()); i++) {
-    endpoints[i].weight = loadbalanceconfig.services_weight[service_name][i];
-  }
-  return 0;
 }
 }  // namespace trpc

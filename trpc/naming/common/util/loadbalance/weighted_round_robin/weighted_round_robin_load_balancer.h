@@ -13,15 +13,11 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
-#include <set>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "trpc/common/config/load_balance_naming_conf.h"
-#include "trpc/common/config/load_balance_naming_conf_parser.h"
 #include "trpc/naming/load_balance.h"
 
 namespace trpc {
@@ -33,10 +29,8 @@ class SWRoundRobinLoadBalance : public LoadBalance {
   ~SWRoundRobinLoadBalance() override = default;
 
   std::string Name() const override { return kSWRoundRobinLoadBalance; }
-  int Init() noexcept override;
   int Update(const LoadBalanceInfo* info) override;
   int Next(LoadBalanceResult& result) override;
-  int SetEndpointInfoWeight(const std::string service_name, std::vector<TrpcEndpointInfo>& endpoints);
 
  private:
   bool IsLoadBalanceInfoDiff(const LoadBalanceInfo* info);
@@ -47,7 +41,6 @@ class SWRoundRobinLoadBalance : public LoadBalance {
     std::vector<int> current_weights;
     std::uint32_t total_weight;
   };
-  naming::SWRoundrobinLoadBalanceConfig loadbalanceconfig;
   std::unordered_map<std::string, InnerEndpointInfos> callee_router_infos_;
   mutable std::shared_mutex mutex_;
 };

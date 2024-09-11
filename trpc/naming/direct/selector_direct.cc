@@ -142,7 +142,6 @@ int SelectorDirect::SetEndpoints(const RouterInfo* info) {
   endpoints_info.endpoints = info->info;
 
   std::unique_lock<std::shared_mutex> uniq_lock(mutex_);
-  SetEndpointsWeight(info->name, endpoints_info.endpoints);
   auto iter = targets_map_.find(info->name);
   if (iter != targets_map_.end()) {
     // If the service name is in the cache, use the original id generator
@@ -168,11 +167,4 @@ int SelectorDirect::SetEndpoints(const RouterInfo* info) {
   return 0;
 }
 
-int SelectorDirect::SetEndpointsWeight(const std::string service_name, std::vector<TrpcEndpointInfo>& endpoints) {
-  if (default_load_balance_->Name() != "trpc_swround_robin_loadbalance") {
-    return -1;
-  }
-  SWRoundRobinLoadBalancePtr loadbalance = dynamic_pointer_cast<SWRoundRobinLoadBalance>(default_load_balance_);
-  return loadbalance->SetEndpointInfoWeight(service_name, endpoints);
-}
 }  // namespace trpc

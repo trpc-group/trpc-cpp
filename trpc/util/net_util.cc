@@ -100,10 +100,12 @@ uint32_t StringToIpv4(const std::string& ip, bool* ok) {
   return dst.s_addr;
 }
 
-bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6) {
+bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6, uint32_t& weight) {
   std::string temp_host;
   int temp_port;
   bool temp_is_ipv6;
+  uint32_t temp_weight = 0;
+  size_t weight_start;
 
   if (!name.empty() && name[0] == '[') {
     // ipv6
@@ -130,7 +132,8 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
       return false;
     }
     try {
-      temp_port = std::stoi(name.substr(colons + 1, name.size() - 1 - colons));
+      weight_start = name.find("[", colons);
+      temp_port = std::stoi(name.substr(colons + 1, weight_start - (colons + 1)));
     } catch (...) {
       // port invalid
       return false;
@@ -139,24 +142,34 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
   } else {
     // ipv4 or domain
     size_t colon = name.find(':');
-    if (colon != std::string::npos && colon < name.size() - 1 && name.find(':', colon + 1) == std::string::npos) {
-      temp_host = name.substr(0, colon);
-      try {
-        temp_port = std::stoi(name.substr(colon + 1, name.size() - 1 - colon));
-      } catch (...) {
-        // port invalid
-        return false;
-      }
-      temp_is_ipv6 = false;
-    } else {
+    if (colon == std::string::npos || colon >= name.size() - 1 || name.find(':', colon + 1) != std::string::npos) {
+      // not found port or format error
+      return false;
+    }
+    temp_host = name.substr(0, colon);
+    weight_start = name.find("[", colon);
+    try {
+      temp_port = std::stoi(name.substr(colon + 1, weight_start - (colon + 1)));
+    } catch (...) {
+      // port invalid
+      return false;
+    }
+    temp_is_ipv6 = false;
+  }
+
+  size_t weight_end = name.find(']', weight_start);
+  if (weight_start != std::string::npos && weight_end != std::string::npos && weight_start < weight_end) {
+    try {
+      temp_weight = std::stoul(name.substr(weight_start + 1, weight_end - weight_start - 1));  // 获取权重
+    } catch (...) {
+      // 权重无效
       return false;
     }
   }
-
   host = std::move(temp_host);
   port = temp_port;
   is_ipv6 = temp_is_ipv6;
-
+  weight = temp_weight;
   return true;
 }
 std::string GetIpByEth(std::string_view eth_inf) {
@@ -229,8 +242,9 @@ bool IsValidIpPorts(const std::string& ip_ports) {
   std::string host;
   int port;
   bool is_ipv6;
+  uint32_t weight;
   for (auto const& item : vec) {
-    if (!util::ParseHostPort(item, host, port, is_ipv6)) {
+    if (!util::ParseHostPort(item, host, port, is_ipv6, weight)) {
       return false;
     }
 

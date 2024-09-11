@@ -328,28 +328,3 @@ cc_library(
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )
-cc_library(
-    name = "load_balance_naming_conf",
-    srcs = ["load_balance_naming_conf.cc"],
-    hdrs = ["load_balance_naming_conf.h"],
-    deps = [
-        "//trpc/util/log:logging",
-        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
-    ],
-)
-cc_library(
-    name = "load_balance_naming_conf_parser",
-    hdrs = ["load_balance_naming_conf_parser.h"],
-    deps = [
-        ":load_balance_naming_conf",
-    ],
-)
-cc_test(
-    name = "load_balance_naming_conf_test",
-    srcs = ["load_balance_naming_conf_test.cc"],
-    deps = [
-        ":load_balance_naming_conf",
-        ":load_balance_naming_conf_parser",
-        "@com_google_googletest//:gtest_main",
-    ],
-)

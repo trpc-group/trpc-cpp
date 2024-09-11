@@ -33,8 +33,9 @@ uint32_t StringToIpv4(const std::string& ip, bool* ok = nullptr);
 /// @param host[out] ip or domain
 /// @param port[out] port
 /// @param is_ipv6[out] whether is ip v6
+/// @param weight[out] weight
 /// @return True: success, False: failed
-bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6);
+bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& is_ipv6, uint32_t& weight);
 /// @brief Get ip by eth name
 std::string GetIpByEth(std::string_view eth_inf);
 

@@ -23,7 +23,6 @@ bool Init() {
     swround_robin_load_balance = MakeRefCounted<SWRoundRobinLoadBalance>();
     LoadBalanceFactory::GetInstance()->Register(swround_robin_load_balance);
   }
-  swround_robin_load_balance->Init();
   SelectorPtr direct_selector = SelectorFactory::GetInstance()->Get("direct");
   if (direct_selector == nullptr) {
     direct_selector = MakeRefCounted<SelectorDirect>(swround_robin_load_balance);
