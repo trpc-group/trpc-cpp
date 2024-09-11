@@ -58,7 +58,10 @@ public:
 
   void Destroy() override;
 
-  uint64_t GetRemainingTokens();
+  uint64_t GetBurst();
+
+  /// @brief Calculates the remaining tokens based on the current time.
+  uint64_t GetRemainingTokens(uint64_t now);
 
 private:
   // Maximum of burst size.

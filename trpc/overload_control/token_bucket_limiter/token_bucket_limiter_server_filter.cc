@@ -76,24 +76,24 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     // not overwritten.
     return;
   }
-  // Get the current unfinished requests.
-  // uint32_t current_concurrency = FrameStats::GetInstance()->GetServerStats().GetReqConcurrency();
-  auto remaining_tokens{service_controller_->GetRemainingTokens()};
+  
+  auto now{trpc::time::GetSystemMicroSeconds()};
   bool passed{service_controller_->BeforeSchedule(context)};
   if (!passed) {
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server token bucket limiter overload control, current remaining tokens: {}", 
-			  remaining_tokens);
     context->SetStatus(
         Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server token bucket limiter overload control"));
     status = FilterStatus::REJECT;
   }
+
   // Report the result.
   if (token_bucket_conf_.is_report) {
+    auto remaining_tokens{service_controller_->GetRemainingTokens(now)};
     OverloadInfo infos;
     infos.attr_name = kOverloadctrlTokenBucketLimiter;
     infos.report_name = fmt::format("/{}/{}", context->GetCalleeName(), context->GetFuncName());
     infos.tags[kOverloadctrlPass] = (passed == true ? 1 : 0);
     infos.tags[kOverloadctrlLimited] = (passed == false ? 1 : 0);
+    infos.tags["burst"] = service_controller_->GetBurst();
 	  infos.tags["remaining_tokens"] = remaining_tokens;
     Report::GetInstance()->ReportOverloadInfo(infos);
   }

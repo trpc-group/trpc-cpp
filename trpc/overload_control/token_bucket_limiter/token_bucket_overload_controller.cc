@@ -76,8 +76,12 @@ void TokenBucketOverloadController::Destroy() {
 
 }
 
-uint64_t TokenBucketOverloadController::GetRemainingTokens() {
-  auto elapsed{trpc::time::GetSystemMicroSeconds()};
+uint64_t TokenBucketOverloadController::GetBurst() {
+  return burst;
+}
+
+uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
+  auto elapsed{now};
   {
     std::unique_lock<std::mutex> lock{lr_mutex};
     elapsed -= last_request;
