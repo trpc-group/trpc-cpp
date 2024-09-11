@@ -19,12 +19,13 @@
 #include "trpc/server/server_context.h"
 
 namespace trpc::overload_control {
+static const std::string OverloadControlFilterName = "my_flow_control";
 
 /// @brief Server-side flow control class.
 class OverloadControlFilter : public MessageServerFilter {
  public:
   /// @brief Name of filter
-  std::string Name() override { return "my_flow_control"; }
+  std::string Name() override { return OverloadControlFilterName; }
 
   /// @brief Initialization function.
   int Init() override;
