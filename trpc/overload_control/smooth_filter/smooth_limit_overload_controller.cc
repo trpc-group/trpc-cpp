@@ -58,9 +58,9 @@ std::vector<FlowControlLimiterConf> flow_control_confs;
 }
 
 bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& context) {
-  auto service_controller = SmoothLimitOverloadController::GetInstance()->GetLimiter(context->GetCalleeName());
+  auto service_controller = GetLimiter(context->GetCalleeName());
   // func flow controller
-  auto func_controller = SmoothLimitOverloadController::GetInstance()->GetLimiter(context->GetFuncName());
+  auto func_controller = GetLimiter(context->GetFuncName());
   if (!service_controller && !func_controller) {
     return true;
   }
