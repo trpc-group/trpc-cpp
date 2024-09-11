@@ -43,7 +43,7 @@
 client:
   service:
     - name: trpc.test.helloworld.Greeter
-      target: 127.0.0.1:10000(1),127.0.0.1:20000(2),127.0.0.1:30000(3)      # Fullfill ip:port[weight] list here when use `direct` selector.(such as 23.9.0.1:90[1],34.5.6.7:90[2])
+      target: 127.0.0.1:10000(1),127.0.0.1:20000(2),127.0.0.1:30000(3)      # Fullfill ip:port(weight) list here when use `direct` selector.(such as 23.9.0.1:90(1),34.5.6.7:90(2))
       protocol: trpc                # Application layer protocol, eg: trpc/http/...
       network: tcp                  # Network type, Support two types: tcp/udp
       selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
