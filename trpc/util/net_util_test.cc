@@ -114,6 +114,42 @@ TEST(ParseHostPortTest, TestValid) {
     EXPECT_EQ(10001, port);
     EXPECT_FALSE(is_ipv6);
   }
+   // ipv4:port weight
+  {
+    std::string host;
+    int port{0};
+    bool is_ipv6{false};
+    uint32_t weight;
+    EXPECT_TRUE(util::ParseHostPort("127.0.0.1:10001(10)", host, port, is_ipv6, weight));
+    EXPECT_EQ("127.0.0.1", host);
+    EXPECT_EQ(10001, port);
+    EXPECT_EQ(10, weight);
+    EXPECT_FALSE(is_ipv6);
+  }
+  // [ipv6]:port weight
+  {
+    std::string host;
+    int port{0};
+    bool is_ipv6{false};
+    uint32_t weight;
+    EXPECT_TRUE(util::ParseHostPort("[::1]:10001(1)", host, port, is_ipv6, weight));
+    EXPECT_EQ("::1", host);
+    EXPECT_EQ(10001, port);
+    EXPECT_EQ(1, weight);
+    EXPECT_TRUE(is_ipv6);
+  }
+  // domain:port weight
+  {
+    std::string host;
+    int port{0};
+    bool is_ipv6{false};
+    uint32_t weight;
+    EXPECT_TRUE(util::ParseHostPort("www.baidu.com:10001(100)", host, port, is_ipv6, weight));
+    EXPECT_EQ("www.baidu.com", host);
+    EXPECT_EQ(10001, port);
+    EXPECT_EQ(100, weight);
+    EXPECT_FALSE(is_ipv6);
+  }
 }
 
 TEST(GetIpByEthTest, TestFunction) {

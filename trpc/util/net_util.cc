@@ -132,7 +132,7 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
       return false;
     }
     try {
-      weight_start = name.find("[", colons);
+      weight_start = name.find("(", colons);
       temp_port = std::stoi(name.substr(colons + 1, weight_start - (colons + 1)));
     } catch (...) {
       // port invalid
@@ -147,7 +147,7 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
       return false;
     }
     temp_host = name.substr(0, colon);
-    weight_start = name.find("[", colon);
+    weight_start = name.find("(", colon);
     try {
       temp_port = std::stoi(name.substr(colon + 1, weight_start - (colon + 1)));
     } catch (...) {
@@ -157,7 +157,7 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
     temp_is_ipv6 = false;
   }
 
-  size_t weight_end = name.find(']', weight_start);
+  size_t weight_end = name.find(')', weight_start);
   if (weight_start != std::string::npos && weight_end != std::string::npos && weight_start < weight_end) {
     try {
       temp_weight = std::stoul(name.substr(weight_start + 1, weight_end - weight_start - 1));  
@@ -171,6 +171,7 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
   weight = temp_weight;
   return true;
 }
+
 std::string GetIpByEth(std::string_view eth_inf) {
   std::string str;
 
