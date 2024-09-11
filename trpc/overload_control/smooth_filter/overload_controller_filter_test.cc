@@ -26,8 +26,8 @@
 #include "trpc/common/trpc_plugin.h"
 #include "trpc/filter/filter_manager.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
-#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
 #include "trpc/overload_control/smooth_filter/overload_controller_filter.h"
+#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
 #include "trpc/server/server_context.h"
 
 namespace trpc::overload_control {
@@ -64,8 +64,12 @@ TEST_F(FlowControlServerFilterTestFixture, Init) {
   auto filter_name = filter.Name();
   ASSERT_EQ(filter_name, "server_flow_control");
   ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"), nullptr);  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"), nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"), nullptr);
+  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"),
+            nullptr);
+  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
+            nullptr);
+  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
+            nullptr);
 }
 
 // Scenarios where requests are not intercepted after flow control is executed during testing.

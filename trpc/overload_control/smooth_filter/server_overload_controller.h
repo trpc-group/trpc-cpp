@@ -54,7 +54,7 @@ class ServerOverloadController {
   virtual void Destroy() {}
 };
 
-using ServerOverloadControllerPtr = std::shared_ptr<ServerOverloadController>; 
+using ServerOverloadControllerPtr = std::shared_ptr<ServerOverloadController>;
 
 }  // namespace trpc::overload_control
 #endif
