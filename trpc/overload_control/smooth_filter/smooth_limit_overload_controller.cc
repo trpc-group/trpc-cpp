@@ -68,14 +68,14 @@ bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& conte
   // flow control strategy
   if (service_controller && service_controller->CheckLimit(context)) {
     context->SetStatus(
-        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server server flow overload , service name: {}", context->GetCalleeName());
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server local flow overload control"));
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server local flow overload , service name: {}", context->GetCalleeName());
     return false;
   }
   if (func_controller && func_controller->CheckLimit(context)) {
     context->SetStatus(
-        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server haoyuflow overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server server flow overload , service name: {}, func name: {}",
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server local flow overload control"));
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server local flow overload , service name: {}, func name: {}",
                                 context->GetCalleeName(), context->GetFuncName());
     return false;
   }
