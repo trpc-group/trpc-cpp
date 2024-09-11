@@ -35,7 +35,7 @@ The adaptive overload protection strategy based on concurrency utilizes a comple
 
 ## Diagram of Adaptive Overload Protection Based on Concurrency
 
-![high_percenttile_limiter](../images/../high_percenttile_limiter.png)
+![high_percenttile_limiter](../images/high_percenttile_limiter.png)
 The core component in the diagram is the `HighPercentileServerFilter`, which plays a crucial role in comparing the current concurrency requests (`concurrency_reqs`) with the dynamically calculated maximum concurrency (`max_concurrency`) to determine whether to reject the incoming request (curr_req). The `max_concurrency` is calculated based on the principles of Little's Law.
 
 ## Implementation code

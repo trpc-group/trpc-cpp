@@ -35,7 +35,7 @@ tRPC-Cpp 框架已支持：基于流量控制限流，并发请求限流，并�
 
 ## 基于并发度的自适应过载保护原理图
 
-![high_percenttile_limiter](../images/../high_percenttile_limiter.png)
+![high_percenttile_limiter](../images/high_percenttile_limiter.png)
 图中核心点就是 `HighPercentileServerFilter` ，它的主要作用是获取框架当前的并发请求数（`concurrency_reqs`）与动态计算的最大并发数（`max_concurrency`）进行比较来判断是否拒绝当前接收的新请求（`curr_req`），`max_concurrency` 是基于 little`s law 原理计算获取的。
 
 ## 实现代码
