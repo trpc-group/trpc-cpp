@@ -75,7 +75,7 @@ public:
   }
 
 private:
-  std::unordered_map<std::string,FlowControllerPtr> smooth_limit_;
+  std::unordered_map<std::string,FlowControllerPtr> smooth_limits_;
 };
 }
 #endif
