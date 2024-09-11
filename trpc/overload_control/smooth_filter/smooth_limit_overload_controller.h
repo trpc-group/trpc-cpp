@@ -16,24 +16,32 @@
 
 #include "trpc/overload_control/smooth_filter/server_overload_controller.h"
 #include "trpc/overload_control/flow_control/smooth_limiter.h"
+#include "trpc/overload_control/flow_control/flow_controller.h"
 
 #include<string>
 #include <cstdint>
 #include<memory>
+#include <unordered_map>
 
 #include "trpc/util/function.h"
 
 namespace trpc::overload_control 
 {
+static const std::string SmoothLimitOverloadControllerName = "SmoothLimitOverloadController";
+
 /// @brief Default number of time frames per second
 static const int32_t kDefaultNumber = 100;
 
 class SmoothLimitOverloadController : public ServerOverloadController
 {
 public:
+  std::string Name(){
+    return SmoothLimitOverloadControllerName;
+  }
+
   /// @brief Initialize the sliding window current limiting plugin
   /// @param Name of plugin Current limit quantity Record monitoring logs or not Number of time slots
-  explicit SmoothLimitOverloadController(std::string name,int64_t limit, bool is_report = false, int32_t window_size = kDefaultNumber);
+  explicit SmoothLimitOverloadController();
 
   /// @note Do nothing, the entire plugin requires manual destruction of only thread resources
   /// @brief From the implementation of filter, it can be seen that before destruction
@@ -47,8 +55,6 @@ public:
 
   /// @note There is no need to call funcs for burying points here
   bool AfterSchedule(const ServerContextPtr& context){return true;}
-
-  std::string Name() {return name_;}
   
   ///@brief Initialize thread resources
   bool Init();
@@ -58,12 +64,19 @@ public:
 
   /// @brief Destroy thread
   void Destroy() ;
+
+  void RegisterLimit(const std::string& name,FlowControllerPtr limiter);
+
+  FlowControllerPtr GetFlowController(const std::string& name);
+  
+  static SmoothLimitOverloadController* GetInstance() {
+    static SmoothLimitOverloadController instance;
+    return &instance;
+  }
+
 private:
-  std::string name_;
-
-  std::unique_ptr<SmoothLimiter> smooth_limit_;
+  std::unordered_map<std::string,FlowControllerPtr> smooth_limit_;
 };
-
 }
 #endif
 

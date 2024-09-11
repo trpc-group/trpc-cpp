@@ -14,7 +14,6 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #pragma once
-#include "trpc/overload_control/smooth_filter/server_flow_controller_generator.h"
 
 #include "trpc/filter/filter.h"
 #include "trpc/server/server_context.h"
@@ -22,7 +21,7 @@
 namespace trpc::overload_control {
 
 /// @brief Server-side flow control class.
-class Server_FlowControlServerFilter : public MessageServerFilter {
+class OverloadControlFilter : public MessageServerFilter {
  public:
   /// @brief Name of filter
   std::string Name() override { return "my_flow_control"; }
