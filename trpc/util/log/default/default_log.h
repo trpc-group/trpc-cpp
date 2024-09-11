@@ -113,6 +113,9 @@ class DefaultLog : public Log {
     if (!YAML::GetDefaultLoggerSinkConfig<SinkConfig>(conf.name, "sinks", sink_name, sink_config)) {
       return true;
     }
+    if (sink_config.format.empty()) {
+      sink_config.format = conf.format;
+    }
     auto sink = MakeRefCounted<Sink>();
     sink->Init(sink_config);
     // Add the new sink to the logger's sinks
