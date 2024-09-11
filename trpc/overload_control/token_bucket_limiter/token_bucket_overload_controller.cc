@@ -52,6 +52,7 @@ bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& conte
   if(last_alloc_time_ > now - one_token_elapsed_) {
       return false;
   }
+
   if(last_alloc_time_ < now - burst_elapsed_) {
     last_alloc_time_ = now - burst_elapsed_;
   }
@@ -86,8 +87,8 @@ uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
       elapsed = burst_elapsed_;
   }
 
-  auto sec{elapsed / nsecs_per_sec_};
-  auto nsec{elapsed % nsecs_per_sec_};
+  auto sec = elapsed / nsecs_per_sec_;
+  auto nsec = elapsed % nsecs_per_sec_;
   return sec * rate_ + nsec * rate_ / nsecs_per_sec_;
 }
 
