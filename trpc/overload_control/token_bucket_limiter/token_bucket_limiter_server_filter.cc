@@ -77,8 +77,8 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     return;
   }
   
-  auto now{trpc::time::GetSystemMicroSeconds()};
-  bool passed{service_controller_->BeforeSchedule(context)};
+  auto now = trpc::time::GetSystemMicroSeconds();
+  bool passed = service_controller_->BeforeSchedule(context);
   if (!passed) {
     context->SetStatus(
         Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server token bucket limiter overload control"));

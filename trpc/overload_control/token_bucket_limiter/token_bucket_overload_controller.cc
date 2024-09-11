@@ -46,13 +46,12 @@ void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
-  std::unique_lock<std::mutex> lock{last_alloc_mutex_};
+  std::unique_lock<std::mutex> lock(last_alloc_mutex_);
 
-  auto now{trpc::time::GetNanoSeconds()};
+  auto now = trpc::time::GetNanoSeconds();
   if(last_alloc_time_ > now - one_token_elapsed_) {
       return false;
   }
-
   if(last_alloc_time_ < now - burst_elapsed_) {
     last_alloc_time_ = now - burst_elapsed_;
   }
@@ -79,7 +78,7 @@ uint64_t TokenBucketOverloadController::GetBurst() {
 uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
   uint64_t elapsed;
   {
-    std::unique_lock<std::mutex> lock{last_alloc_mutex_};
+    std::unique_lock<std::mutex> lock(last_alloc_mutex_);
     elapsed = now - last_alloc_time_;
   }
 
