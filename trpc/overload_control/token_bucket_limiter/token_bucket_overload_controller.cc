@@ -33,33 +33,33 @@
 namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
-  std::unique_lock<std::mutex> lock(lr_mutex);
-  last_request = trpc::time::GetSystemNanoSeconds();
+  std::unique_lock<std::mutex> lock(lr_mutex_);
+  last_request_ = trpc::time::GetSystemNanoSeconds();
 
   return true;
 }
 
 void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf& conf) {
-  burst = conf.burst;
-  rate = conf.rate;
-  spend = nsecs_per_sec / rate;  
-  max_elapsed = burst * spend;
+  burst_ = conf.burst;
+  rate_ = conf.rate;
+  spend_ = nsecs_per_sec_ / rate_;  
+  max_elapsed_ = burst_ * spend_;
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
-  std::unique_lock<std::mutex> lock{lr_mutex};
+  std::unique_lock<std::mutex> lock{lr_mutex_};
 
   auto now{trpc::time::GetSystemNanoSeconds()};
-  auto elapsed{now - last_request};
-  if(elapsed > max_elapsed) {
-      elapsed = max_elapsed;
+  auto elapsed{now - last_request_};
+  if(elapsed > max_elapsed_) {
+      elapsed = max_elapsed_;
   }
 
-  elapsed += spend;
+  elapsed += spend_;
   if(elapsed > now) {
     return false;
   }
-  last_request = now;
+  last_request_ = now;
 
   return true;
 }
@@ -77,23 +77,23 @@ void TokenBucketOverloadController::Destroy() {
 }
 
 uint64_t TokenBucketOverloadController::GetBurst() {
-  return burst;
+  return burst_;
 }
 
 uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
   auto elapsed{now};
   {
-    std::unique_lock<std::mutex> lock{lr_mutex};
-    elapsed -= last_request;
+    std::unique_lock<std::mutex> lock{lr_mutex_};
+    elapsed -= last_request_;
   }
 
-  if(elapsed > max_elapsed) {
-      elapsed = max_elapsed;
+  if(elapsed > max_elapsed_) {
+      elapsed = max_elapsed_;
   }
 
-  auto sec{elapsed / nsecs_per_sec};
-  auto nsec{elapsed % nsecs_per_sec};
-  return sec * rate + nsec * rate / nsecs_per_sec;
+  auto sec{elapsed / nsecs_per_sec_};
+  auto nsec{elapsed % nsecs_per_sec_};
+  return sec * rate_ + nsec * rate_ / nsecs_per_sec_;
 }
 
 }  // namespace trpc::overload_control

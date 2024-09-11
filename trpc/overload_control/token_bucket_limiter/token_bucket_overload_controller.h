@@ -65,20 +65,20 @@ public:
 
 private:
   // Maximum of burst size.
-  uint64_t burst;
+  uint64_t burst_;
   // The rate(tokens/second) of token generation.
-  uint64_t rate;
+  uint64_t rate_;
 
   // The time when the last request was successfully passed.
-  uint64_t last_request;
-  std::mutex lr_mutex;
+  uint64_t last_request_;
+  std::mutex lr_mutex_;
 
   // The time(nanoseconds) of one token generation.
-  uint64_t spend;
+  uint64_t spend_;
   // The maximum time(nanoseconds) required for the size of tokens to reach burst.
-  uint64_t max_elapsed;
+  uint64_t max_elapsed_;
 
-  static constexpr auto nsecs_per_sec{static_cast<uint64_t>(1e9)};
+  static constexpr auto nsecs_per_sec_{static_cast<uint64_t>(1e9)};
 };
 
 using TokenBucketOverloadControllerPtr = std::shared_ptr<TokenBucketOverloadController>;
