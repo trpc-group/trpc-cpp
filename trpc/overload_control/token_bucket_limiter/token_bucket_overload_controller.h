@@ -70,8 +70,8 @@ private:
   uint64_t rate_;
 
   // The time when the last request was successfully passed.
-  uint64_t last_request_;
-  std::mutex lr_mutex_;
+  uint64_t last_request_time_;
+  std::mutex lrt_mutex_;
 
   // The time(nanoseconds) of one token generation.
   uint64_t spend_;

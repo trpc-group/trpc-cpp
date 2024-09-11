@@ -33,8 +33,8 @@
 namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
-  std::unique_lock<std::mutex> lock(lr_mutex_);
-  last_request_ = trpc::time::GetSystemNanoSeconds();
+  std::unique_lock<std::mutex> lock(lrt_mutex_);
+  last_request_time_ = trpc::time::GetSystemNanoSeconds();
 
   return true;
 }
@@ -47,10 +47,10 @@ void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
-  std::unique_lock<std::mutex> lock{lr_mutex_};
+  std::unique_lock<std::mutex> lock{lrt_mutex_};
 
   auto now{trpc::time::GetSystemNanoSeconds()};
-  auto elapsed{now - last_request_};
+  auto elapsed{now - last_request_time_};
   if(elapsed > max_elapsed_) {
       elapsed = max_elapsed_;
   }
@@ -59,7 +59,7 @@ bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& conte
   if(elapsed > now) {
     return false;
   }
-  last_request_ = now;
+  last_request_time_ = now;
 
   return true;
 }
@@ -83,8 +83,8 @@ uint64_t TokenBucketOverloadController::GetBurst() {
 uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
   auto elapsed{now};
   {
-    std::unique_lock<std::mutex> lock{lr_mutex_};
-    elapsed -= last_request_;
+    std::unique_lock<std::mutex> lock{lrt_mutex_};
+    elapsed -= last_request_time_;
   }
 
   if(elapsed > max_elapsed_) {
