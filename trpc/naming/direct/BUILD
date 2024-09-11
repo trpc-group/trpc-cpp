@@ -13,7 +13,6 @@ cc_library(
         "//trpc/naming:selector_factory",
         "//trpc/naming/common/util:utils_help",
         "//trpc/naming/common/util/loadbalance/polling:polling_load_balance",
-        "//trpc/naming/common/util/loadbalance/weighted_round_robin:weighted_round_robin_load_balancer",
         "//trpc/util:string_util",
         "//trpc/util/log:logging",
     ],

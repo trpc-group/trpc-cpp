@@ -18,7 +18,6 @@
 #include <utility>
 
 #include "trpc/naming/common/util/loadbalance/polling/polling_load_balance.h"
-#include "trpc/naming/common/util/loadbalance/weighted_round_robin/weighted_round_robin_load_balancer.h"
 #include "trpc/naming/load_balance_factory.h"
 #include "trpc/naming/selector_factory.h"
 #include "trpc/util/log/logging.h"

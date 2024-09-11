@@ -43,7 +43,7 @@
 client:
   service:
     - name: trpc.test.helloworld.Greeter
-      target: 127.0.0.1:10000,127.0.0.1:20000,127.0.0.1:30000      # Fullfill ip:port list here when use `direct` selector.(such as 23.9.0.1:90,34.5.6.7:90)
+      target: 127.0.0.1:10000[1],127.0.0.1:20000[2],127.0.0.1:30000[3]      # Fullfill ip:port[weight] list here when use `direct` selector.(such as 23.9.0.1:90[1],34.5.6.7:90[2])
       protocol: trpc                # Application layer protocol, eg: trpc/http/...
       network: tcp                  # Network type, Support two types: tcp/udp
       selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
@@ -55,11 +55,7 @@ plugins:
       - name: default
         sinks:
           local_file:
-            filename: trpc_fiber_client.log
-  loadbalance:         
-    trpc_swround_robin_loadbalance:                            
-      - service: trpc.test.helloworld.Greeter
-        weights: [1,2,3]   
+            filename: trpc_fiber_client.log 
 ```
 - **注册并初始化插件** 在客户端文件中，注册负载均衡插件，使用 `::trpc::loadbalance::Init()` 注册插件：
 ```cpp
