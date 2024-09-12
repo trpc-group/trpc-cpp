@@ -13,7 +13,7 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/smooth_filter/window_limit_overload_controller.h"
+#include "trpc/overload_control/window_limit_control/window_limit_overload_controller.h"
 
 #include <cmath>
 #include <chrono>

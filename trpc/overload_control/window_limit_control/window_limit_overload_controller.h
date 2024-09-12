@@ -22,7 +22,7 @@
 #include "trpc/util/function.h"
 #include "trpc/overload_control/flow_control/smooth_limiter.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
-#include "trpc/overload_control/smooth_filter/server_overload_controller.h"
+#include "trpc/overload_control/window_limit_control/server_overload_controller.h"
 
 namespace trpc::overload_control {
 const char WindowLimitOverloadControllerName[] = "WindowLimitOverloadController";
