@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -20,20 +20,19 @@
  *
  */
 
-
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #include <chrono>
 
 #include "gtest/gtest.h"
 
-#include "trpc/overload_control/token_bucket_limiter/token_bucket_overload_controller.h"
-#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
 #include "trpc/codec/testing/protocol_testing.h"
+#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
+#include "trpc/overload_control/token_bucket_limiter/token_bucket_overload_controller.h"
 
 namespace trpc::overload_control {
 namespace testing {
-	
+
 TEST(TokenBucketOverloadController, All) {
   TokenBucketLimiterControlConf tb_conf;
   tb_conf.rate = 2;
@@ -47,10 +46,9 @@ TEST(TokenBucketOverloadController, All) {
   ASSERT_TRUE(tb->BeforeSchedule(context));
   ASSERT_TRUE(tb->BeforeSchedule(context));
   ASSERT_FALSE(tb->BeforeSchedule(context));
-
 }
 
-}	// namespace testing
-}	// namespace trpc::overload_control
+}  // namespace testing
+}  // namespace trpc::overload_control
 
 #endif

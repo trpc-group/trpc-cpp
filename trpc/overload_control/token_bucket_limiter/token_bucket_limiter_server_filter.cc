@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -27,16 +27,16 @@
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/filter/filter_manager.h"
 #include "trpc/log/trpc_log.h"
-#include "trpc/util/time.h"
 #include "trpc/metrics/trpc_metrics.h"
 #include "trpc/overload_control/common/report.h"
 #include "trpc/runtime/common/stats/frame_stats.h"
+#include "trpc/util/time.h"
 
 namespace trpc::overload_control {
 
 int TokenBucketLimiterServerFilter::Init() {
   bool ok = TrpcConfig::GetInstance()->GetPluginConfig<TokenBucketLimiterControlConf>(
-    kOverloadCtrConfField, kTokenBucketLimiterName, token_bucket_conf_);
+      kOverloadCtrConfField, kTokenBucketLimiterName, token_bucket_conf_);
   if (!ok) {
     TRPC_FMT_DEBUG("TokenBucketLimiterServerFilter read config failed, will use a default config");
   }
@@ -51,9 +51,9 @@ int TokenBucketLimiterServerFilter::Init() {
 
 std::vector<FilterPoint> TokenBucketLimiterServerFilter::GetFilterPoint() {
   return {
-    FilterPoint::SERVER_PRE_SCHED_RECV_MSG,
-    // This tracking point is not used, but tracking points must be paired, so it is added here.
-    FilterPoint::SERVER_POST_SCHED_RECV_MSG,
+      FilterPoint::SERVER_PRE_SCHED_RECV_MSG,
+      // This tracking point is not used, but tracking points must be paired, so it is added here.
+      FilterPoint::SERVER_POST_SCHED_RECV_MSG,
   };
 }
 
@@ -76,7 +76,7 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     // not overwritten.
     return;
   }
-  
+
   auto now = trpc::time::GetSystemMicroSeconds();
   bool passed = service_controller_->BeforeSchedule(context);
   if (!passed) {
@@ -94,7 +94,7 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     infos.tags[kOverloadctrlPass] = (passed == true ? 1 : 0);
     infos.tags[kOverloadctrlLimited] = (passed == false ? 1 : 0);
     infos.tags["burst"] = service_controller_->GetBurst();
-	  infos.tags["remaining_tokens"] = remaining_tokens;
+    infos.tags["remaining_tokens"] = remaining_tokens;
     Report::GetInstance()->ReportOverloadInfo(infos);
   }
 }

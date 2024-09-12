@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -24,23 +24,23 @@
 
 #pragma once
 
-#include <mutex>
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <optional>
 
-#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
 #include "trpc/overload_control/server_overload_controller.h"
+#include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
 #include "trpc/server/server_context.h"
-#include "trpc/util/ref_ptr.h"
 #include "trpc/tvar/common/atomic_type.h"
+#include "trpc/util/ref_ptr.h"
 #include "trpc/util/time.h"
 
 namespace trpc::overload_control {
 
 /// @brief Overload protection controller based on token bucket algorithm.
 class TokenBucketOverloadController : public ServerOverloadController {
-public:
+ public:
   /// @brief Register the controller plugin by the config.
   void Register(const TokenBucketLimiterControlConf& conf);
 
@@ -63,7 +63,7 @@ public:
   /// @brief Calculates the remaining tokens based on the current time.
   uint64_t GetRemainingTokens(uint64_t now);
 
-private:
+ private:
   // Maximum of burst size.
   uint64_t burst_;
   // The rate(tokens/second) of token generation.

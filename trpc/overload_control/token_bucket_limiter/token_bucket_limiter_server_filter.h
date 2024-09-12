@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -25,9 +25,9 @@
 #pragma once
 
 #include "trpc/filter/filter.h"
+#include "trpc/overload_control/overload_control_defs.h"
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_conf.h"
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_overload_controller.h"
-#include "trpc/overload_control/overload_control_defs.h"
 #include "trpc/server/server_context.h"
 
 namespace trpc::overload_control {
@@ -35,7 +35,7 @@ namespace trpc::overload_control {
 /// @brief Server-side token bucket limiting class.
 /// @note Mainly limit the concurrency of requests by token bucket algorithm.
 class TokenBucketLimiterServerFilter : public MessageServerFilter {
-public:
+ public:
   /// @brief Name of filter
   std::string Name() override { return kTokenBucketLimiterName; }
 
@@ -48,11 +48,11 @@ public:
   /// @brief Execute the logic corresponding to the tracking point.
   void operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) override;
 
-private:
+ private:
   // Process requests by algorithm the result of which determine whether this request is allowed.
   void OnRequest(FilterStatus& status, const ServerContextPtr& context);
 
-private:
+ private:
   TokenBucketLimiterControlConf token_bucket_conf_;
 
   TokenBucketOverloadControllerPtr service_controller_;

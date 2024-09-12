@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -36,7 +36,7 @@ struct TokenBucketLimiterControlConf {
   uint64_t burst{1000};
   // The rate(tokens/second) of token generation.
   uint64_t rate{10};
-  // Whether to report the judgment result to the monitoring plugin.	
+  // Whether to report the judgment result to the monitoring plugin.
   bool is_report{false};
 
   /// @brief Display the value of the configuration field.

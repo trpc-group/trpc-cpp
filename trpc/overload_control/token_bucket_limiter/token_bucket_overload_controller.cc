@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -40,7 +40,7 @@ bool TokenBucketOverloadController::Init() {
 void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf& conf) {
   burst_ = conf.burst;
   rate_ = conf.rate;
-  one_token_elapsed_ = nsecs_per_sec_ / rate_;  
+  one_token_elapsed_ = nsecs_per_sec_ / rate_;
   burst_elapsed_ = burst_ * one_token_elapsed_;
 }
 
@@ -48,32 +48,24 @@ bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& conte
   std::unique_lock<std::mutex> lock(last_alloc_mutex_);
 
   auto now = trpc::time::GetSteadyNanoSeconds();
-  if(last_alloc_time_ > now - one_token_elapsed_) {
-      return false;
+  if (last_alloc_time_ > now - one_token_elapsed_) {
+    return false;
   }
 
-  if(last_alloc_time_ < now - burst_elapsed_) {
+  if (last_alloc_time_ < now - burst_elapsed_) {
     last_alloc_time_ = now - burst_elapsed_;
   }
   last_alloc_time_ += one_token_elapsed_;
   return true;
 }
 
-bool TokenBucketOverloadController::AfterSchedule(const ServerContextPtr& context) {
-  return true;
-}
+bool TokenBucketOverloadController::AfterSchedule(const ServerContextPtr& context) { return true; }
 
-void TokenBucketOverloadController::Stop() {
+void TokenBucketOverloadController::Stop() {}
 
-}
+void TokenBucketOverloadController::Destroy() {}
 
-void TokenBucketOverloadController::Destroy() {
-
-}
-
-uint64_t TokenBucketOverloadController::GetBurst() {
-  return burst_;
-}
+uint64_t TokenBucketOverloadController::GetBurst() { return burst_; }
 
 uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
   uint64_t elapsed;
@@ -82,8 +74,8 @@ uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
     elapsed = now - last_alloc_time_;
   }
 
-  if(elapsed > burst_elapsed_) {
-      elapsed = burst_elapsed_;
+  if (elapsed > burst_elapsed_) {
+    elapsed = burst_elapsed_;
   }
 
   auto sec = elapsed / nsecs_per_sec_;

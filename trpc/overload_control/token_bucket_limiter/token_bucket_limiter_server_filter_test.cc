@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -20,14 +20,13 @@
  *
  */
 
-
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_server_filter.h"
 
-#include <vector>
-#include <thread>
 #include <memory>
+#include <thread>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -41,11 +40,12 @@ namespace trpc::overload_control {
 namespace testing {
 
 class TokenBucketLimiterServerTestFixture : public ::testing::Test {
-public:
+ public:
   static void SetUpTestCase() {
-	trpc::TrpcConfig::GetInstance()->Init("./trpc/overload_control/token_bucket_limiter/token_bucket_overload_ctrl.yaml");
-	bool ret = InitTokenBucketLimiterServerFilter();
-	ASSERT_TRUE(ret);
+    trpc::TrpcConfig::GetInstance()->Init(
+        "./trpc/overload_control/token_bucket_limiter/token_bucket_overload_ctrl.yaml");
+    bool ret = InitTokenBucketLimiterServerFilter();
+    ASSERT_TRUE(ret);
   }
   static void TearDownTestCase() {}
 
@@ -56,9 +56,9 @@ public:
   }
 
   static bool InitTokenBucketLimiterServerFilter() {
-	MessageServerFilterPtr token_bucket_limiter_filter(new overload_control::TokenBucketLimiterServerFilter());
-	token_bucket_limiter_filter->Init();
-	return FilterManager::GetInstance()->AddMessageServerFilter(token_bucket_limiter_filter);
+    MessageServerFilterPtr token_bucket_limiter_filter(new overload_control::TokenBucketLimiterServerFilter());
+    token_bucket_limiter_filter->Init();
+    return FilterManager::GetInstance()->AddMessageServerFilter(token_bucket_limiter_filter);
   }
 };
 
@@ -67,7 +67,6 @@ TEST_F(TokenBucketLimiterServerTestFixture, Init) {
   ASSERT_NE(filter, nullptr);
   std::vector<FilterPoint> points = filter->GetFilterPoint();
   ASSERT_EQ(points.size(), 2);
-
 }
 
 // Test concurrency does not exceed the limit.
@@ -92,21 +91,20 @@ TEST_F(TokenBucketLimiterServerTestFixture, Overload) {
   uint32_t concurr = 100;
   std::vector<std::thread> threads;
   for (uint32_t i = 1; i <= concurr; i++) {
-    threads.emplace_back([&](){
+    threads.emplace_back([&]() {
       ServerContextPtr context = MakeServerContext();
       FilterStatus status = FilterStatus::CONTINUE;
       token_bucket_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
       if (context->GetStatus().OK() == false) {
-    	reject_count++;
-    	ASSERT_EQ(status, FilterStatus::REJECT);
+        reject_count++;
+        ASSERT_EQ(status, FilterStatus::REJECT);
       }
     });
   }
   ASSERT_TRUE(reject_count >= 30);
-
 }
 
-}	// namespace testing
-}	// namespace trpc::overload_control
+}  // namespace testing
+}  // namespace trpc::overload_control
 
 #endif

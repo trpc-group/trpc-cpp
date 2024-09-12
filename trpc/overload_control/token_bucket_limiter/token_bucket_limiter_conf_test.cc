@@ -1,5 +1,5 @@
 /*
-*
+ *
  * Tencent is pleased to support the open source community by making
  * tRPC available.
  *
@@ -33,26 +33,25 @@ TEST(TokenBucketLimiterControlConf, All) {
   ASSERT_EQ(conf.burst, 1000);
   ASSERT_EQ(conf.rate, 10);
   ASSERT_EQ(conf.is_report, false);
-  
+
   YAML::convert<TokenBucketLimiterControlConf> concurr_yaml;
-  
+
   conf.burst = 20000;
   conf.rate = 2000;
-  
+
   YAML::Node concurr_node = concurr_yaml.encode(conf);
-  
+
   TokenBucketLimiterControlConf decode_conf;
-  
+
   ASSERT_EQ(concurr_yaml.decode(concurr_node, decode_conf), true);
-  
+
   ASSERT_EQ(decode_conf.burst, 20000);
   ASSERT_EQ(decode_conf.rate, 2000);
-  
+
   decode_conf.Display();
 }
 
-}	// namespace testing
-}	// namespace trpc::overload_control
+}  // namespace testing
+}  // namespace trpc::overload_control
 
 #endif
-
