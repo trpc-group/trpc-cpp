@@ -28,7 +28,7 @@
 #include "trpc/codec/testing/protocol_testing.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
 #include "trpc/overload_control/smooth_filter/overload_controller_filter.h"
-#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
+#include "trpc/overload_control/smooth_filter/window_limit_overload_controller.h"
 
 namespace trpc::overload_control {
 
@@ -59,17 +59,17 @@ class FlowControlServerFilterTestFixture : public ::testing::Test {
 };
 
 TEST_F(FlowControlServerFilterTestFixture, Init) {
-  auto overload_control = SmoothLimitOverloadController();
+  auto overload_control = WindowLimitOverloadController();
   overload_control.Init();
   ASSERT_NE(overload_control->GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
   ASSERT_NE(overload_control->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"), nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
+  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
             nullptr);
   ASSERT_NE(overload_control->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"), nullptr);
   overload_control.Desroy();
   ASSERT_EQ(overload_control->GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
   ASSERT_EQ(overload_control->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"), nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
+  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
             nullptr);
   ASSERT_EQ(overload_control->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"), nullptr);
 }

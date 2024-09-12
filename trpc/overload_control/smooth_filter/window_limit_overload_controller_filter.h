@@ -19,13 +19,13 @@
 #include "trpc/server/server_context.h"
 
 namespace trpc::overload_control {
-const char OverloadControlFilterName[] = "server_flow_control";
+const char WindowLimitOverloadControlFilterName[] = "window_limit_control_filter";
 
 /// @brief Server-side flow control class.
-class OverloadControlFilter : public MessageServerFilter {
+class WindowLimitOverloadControlFilter : public MessageServerFilter {
  public:
   /// @brief Name of filter
-  std::string Name() override { return OverloadControlFilterName; }
+  std::string Name() override { return WindowLimitOverloadControlFilterName; }
 
   /// @brief Initialization function.
   int Init() override;

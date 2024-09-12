@@ -28,7 +28,7 @@
 #include "trpc/codec/testing/protocol_testing.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
 #include "trpc/overload_control/smooth_filter/overload_controller_filter.h"
-#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
+#include "trpc/overload_control/smooth_filter/window_limit_overload_controller.h"
 
 namespace trpc::overload_control {
 
@@ -59,22 +59,22 @@ class FlowControlServerFilterTestFixture : public ::testing::Test {
 };
 
 TEST_F(FlowControlServerFilterTestFixture, Init) {
-  auto filter = OverloadControlFilter();
+  auto filter = WindowLimitOverloadControlFilter();
   filter.Init();
   auto filter_name = filter.Name();
-  ASSERT_EQ(filter_name, "server_flow_control");
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"),
+  ASSERT_EQ(filter_name, "window_limit_control_filter");
+  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
+  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"),
             nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
+  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
             nullptr);
-  ASSERT_NE(SmoothLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
+  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
             nullptr);
 }
 
 // Scenarios where requests are not intercepted after flow control is executed during testing.
 TEST_F(FlowControlServerFilterTestFixture, Ok) {
-  auto flow_control_filter = OverloadControlFilter();
+  auto flow_control_filter = WindowLimitOverloadControlFilter();
 
   ServerContextPtr context = MakeServerContext();
 

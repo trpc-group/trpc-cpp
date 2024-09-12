@@ -13,7 +13,7 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/smooth_filter/overload_controller_filter.h"
+#include "trpc/overload_control/smooth_filter/window_limit_overload_controller_filter.h"
 
 #include "trpc/util/likely.h"
 #include "trpc/log/trpc_log.h"
@@ -21,13 +21,13 @@
 #include "trpc/filter/filter_manager.h"
 #include "trpc/overload_control/flow_control/flow_controller_conf.h"
 #include "trpc/overload_control/flow_control/flow_controller_generator.h"
-#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
+#include "trpc/overload_control/smooth_filter/window_limit_overload_controller.h"
 
 namespace trpc::overload_control {
 
-int OverloadControlFilter::Init() { return SmoothLimitOverloadController::GetInstance()->Init(); }
+int WindowLimitOverloadControlFilter::Init() { return WindowLimitOverloadController::GetInstance()->Init(); }
 
-std::vector<FilterPoint> OverloadControlFilter::GetFilterPoint() {
+std::vector<FilterPoint> WindowLimitOverloadControlFilter::GetFilterPoint() {
   return {
       FilterPoint::SERVER_PRE_SCHED_RECV_MSG,
       // This tracking point is not being used, but tracking points must be paired, so it is added here.
@@ -35,7 +35,7 @@ std::vector<FilterPoint> OverloadControlFilter::GetFilterPoint() {
   };
 }
 
-void OverloadControlFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
+void WindowLimitOverloadControlFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
   switch (point) {
     case FilterPoint::SERVER_PRE_SCHED_RECV_MSG: {
       OnRequest(status, context);
@@ -47,14 +47,14 @@ void OverloadControlFilter::operator()(FilterStatus& status, FilterPoint point, 
   }
 }
 
-void OverloadControlFilter::OnRequest(FilterStatus& status, const ServerContextPtr& context) {
+void WindowLimitOverloadControlFilter::OnRequest(FilterStatus& status, const ServerContextPtr& context) {
   if (TRPC_UNLIKELY(!context->GetStatus().OK())) {
     // If it is already a dirty request, it will not be processed further to ensure that the first error code is
     // not overwritten.
     return;
   }
   // flow control strategy
-  if (!SmoothLimitOverloadController::GetInstance()->BeforeSchedule(context)) status = FilterStatus::REJECT;
+  if (!WindowLimitOverloadController::GetInstance()->BeforeSchedule(context)) status = FilterStatus::REJECT;
 }
 
 }  // namespace trpc::overload_control

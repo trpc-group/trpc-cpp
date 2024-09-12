@@ -13,7 +13,7 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/smooth_filter/smooth_limit_overload_controller.h"
+#include "trpc/overload_control/smooth_filter/window_limit_overload_controller.h"
 
 #include <cmath>
 #include <chrono>
@@ -26,7 +26,7 @@
 
 namespace trpc::overload_control {
 
-bool SmoothLimitOverloadController::Init() {
+bool WindowLimitOverloadController::Init() {
   std::vector<FlowControlLimiterConf> flow_control_confs;
   LoadFlowControlLimiterConf(flow_control_confs);
   for (const auto& flow_conf : flow_control_confs) {
@@ -58,7 +58,7 @@ bool SmoothLimitOverloadController::Init() {
   return 0;
 }
 
-bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& context) {
+bool WindowLimitOverloadController::BeforeSchedule(const ServerContextPtr& context) {
   auto service_controller = GetLimiter(context->GetCalleeName());
   // func flow controller
   auto func_controller = GetLimiter(context->GetFuncName());
@@ -83,23 +83,23 @@ bool SmoothLimitOverloadController::BeforeSchedule(const ServerContextPtr& conte
   return true;
 }
 
-void SmoothLimitOverloadController::Destroy() {
+void WindowLimitOverloadController::Destroy() {
   for (auto smooth_limits_iter : smooth_limits_) {
     smooth_limits_iter.second.reset();
   }
 }
 
-void SmoothLimitOverloadController::Stop(){
+void WindowLimitOverloadController::Stop(){
     // nothing to do,The time thread automatically stops.
 };
 
-SmoothLimitOverloadController::SmoothLimitOverloadController() {}
+WindowLimitOverloadController::WindowLimitOverloadController() {}
 
-void SmoothLimitOverloadController::RegisterLimiter(const std::string& name, FlowControllerPtr limiter) {
+void WindowLimitOverloadController::RegisterLimiter(const std::string& name, FlowControllerPtr limiter) {
   if (smooth_limits_.count(name) == 0) smooth_limits_[name] = limiter;
 }
 
-FlowControllerPtr SmoothLimitOverloadController::GetLimiter(const std::string& name) {
+FlowControllerPtr WindowLimitOverloadController::GetLimiter(const std::string& name) {
   FlowControllerPtr ret = nullptr;
   auto iter = smooth_limits_.find(name);
   if (iter != smooth_limits_.end()) {
@@ -110,7 +110,7 @@ FlowControllerPtr SmoothLimitOverloadController::GetLimiter(const std::string& n
 
 // The destructor does nothing, but the stop method in public needs to set the timed task to join and make it invalid
 // The user must stop before calling destroy
-SmoothLimitOverloadController::~SmoothLimitOverloadController() {}
+WindowLimitOverloadController::~WindowLimitOverloadController() {}
 
 }  // namespace trpc::overload_control
 #endif
