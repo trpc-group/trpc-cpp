@@ -29,7 +29,6 @@ void Stop() {}
 
 void Destroy() {
   LoadBalanceFactory::GetInstance()->Clear();
-  SelectorFactory::GetInstance()->Clear();
 }
 
 }  // namespace trpc::loadbalance
