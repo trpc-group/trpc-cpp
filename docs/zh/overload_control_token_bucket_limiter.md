@@ -8,7 +8,7 @@ tRPC-Cpp框架目前已经实现了多种过载保护插件，本文主要是介
 
 <img src="..\images\token_bucket_limiter.png" alt="token_bucket_limiter" style="zoom: 33%;" />
 
-图中核心点就是**TokenBucketLimiter**，它维护了一个令牌桶，系统定时地在不超过令牌桶容量的情况下往令牌桶添加令牌。当一个请求**（Req）**到达时，判断当前令牌桶中是否至少拥有一个令牌**（current_token>0?）**，如果拥有令牌，则消耗一个令牌并接受请求**（Continue）**，否则拒绝请求**（Reject）**。
+图中核心点就是`TokenBucketLimiter`，它维护了一个令牌桶，系统定时地在不超过令牌桶容量的情况下往令牌桶添加令牌。当一个请求`（Req）`到达时，判断当前令牌桶中是否至少拥有一个令牌`（current_token>0?）`，如果拥有令牌，则消耗一个令牌并接受请求`（Continue）`，否则拒绝请求`（Reject）`。
 
 ## 实现代码
 
