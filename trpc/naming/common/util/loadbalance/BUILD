@@ -10,8 +10,6 @@ cc_library(
     hdrs = ["trpc_load_balance.h"],
     deps = [
         "//trpc/naming:load_balance_factory",
-        "//trpc/naming:selector_factory",
         "//trpc/naming/common/util/loadbalance/weighted_round_robin:weighted_round_robin_load_balancer",
-        "//trpc/naming/direct:selector_direct",
     ],
 )

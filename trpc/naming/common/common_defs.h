@@ -119,6 +119,8 @@ struct RouterInfo {
   std::string name;
   /// Routing information of the called service, which supports setting the ip:port method
   std::vector<TrpcEndpointInfo> info;
+  /// Name of the load balancing plugin used, default is empty
+  std::string load_balance_name;
 };
 
 /// @brief Structure representing the service routing information for external use

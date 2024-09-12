@@ -57,23 +57,3 @@ plugins:
           local_file:
             filename: trpc_fiber_client.log 
 ```
-- **selector注册**: 由于默认采用direct使用默认负载均衡插件trpc_polling_load_balance，
-需要在/troc/naming/common/util/loadbalance/trpc_load_balance.cc,中注册SelectorDirect插件
-
-```cpp
-bool Init() {
-  LoadBalancePtr swround_robin_load_balance = trpc::LoadBalanceFactory::GetInstance()->Get(kSWRoundRobinLoadBalance);
-  if (swround_robin_load_balance == nullptr) {
-    // Register the default load balancer
-    swround_robin_load_balance = MakeRefCounted<SWRoundRobinLoadBalance>();
-    LoadBalanceFactory::GetInstance()->Register(swround_robin_load_balance);
-  }
-  SelectorPtr direct_selector = SelectorFactory::GetInstance()->Get("direct");
-  if (direct_selector == nullptr) {
-    direct_selector = MakeRefCounted<SelectorDirect>(swround_robin_load_balance);
-    SelectorFactory::GetInstance()->Register(direct_selector);
-  }
-
-  return true;
-}
-```

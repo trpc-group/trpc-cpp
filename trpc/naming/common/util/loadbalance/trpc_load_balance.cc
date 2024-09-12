@@ -11,9 +11,7 @@
 //
 //
 #include "trpc/naming/common/util/loadbalance/weighted_round_robin/weighted_round_robin_load_balancer.h"
-#include "trpc/naming/direct/selector_direct.h"
 #include "trpc/naming/load_balance_factory.h"
-#include "trpc/naming/selector_factory.h"
 
 namespace trpc::loadbalance {
 
@@ -24,12 +22,6 @@ bool Init() {
     swround_robin_load_balance = MakeRefCounted<SWRoundRobinLoadBalance>();
     LoadBalanceFactory::GetInstance()->Register(swround_robin_load_balance);
   }
-  SelectorPtr direct_selector = SelectorFactory::GetInstance()->Get("direct");
-  if (direct_selector == nullptr) {
-    direct_selector = MakeRefCounted<SelectorDirect>(swround_robin_load_balance);
-    SelectorFactory::GetInstance()->Register(direct_selector);
-  }
-
   return true;
 }
 
