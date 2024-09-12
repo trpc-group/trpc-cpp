@@ -42,26 +42,14 @@ server:
       ip: 0.0.0.0                     # Service bind ip
       port: 12345  
       filter:
-        - window_limit_control_filter         # Service bind port
+        - window_limiter         # Service bind port
 
 # Plugin configuration.
 plugins:
-  log: # Log configuration
-    default:
-      - name: default
-        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
-        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
-        mode: 2 # 1-sync, 2-async, 3-fast
-        sinks:
-          stdout: # Console output
-            min_level: 2
-            format: "[%Y-%m-%d %H:%M:%S.%e] [%l] %v"
-            mode: 1
-          local_file: # Local log file
-            filename: /home/ubuntu/myrpc/trpc-cpp/examples/helloworld/conf/test.log # The name of log file
+  prometheus:
 
   window_limit_overload_control:
-    window_limit_control_filter:
+    window_limiter:
       - service_name: trpc.test.helloworld.Greeter #service name.
         is_report: true # Whether to report monitoring data.
         service_limiter: default(10) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
@@ -73,12 +61,11 @@ plugins:
           - name: SayHelloAgain # Method name
             limiter: smooth(5) # Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
             window_size: 9
-
 ```
 
 配置关键点如下：
 
-- window_limit_control_filter  ：流量控制过载保护器的名称
+- window_limiter  ：流量控制过载保护器的名称
 - service_name：流量控制对应的服务名称
 - service_limiter：指定服务名 `service_name` 下的服务级流控算法；这里配置 `default(100000)` 介绍如下：
   - `default`（等同 `seconds`）：表示此处选择了固定窗口流量控制算法
