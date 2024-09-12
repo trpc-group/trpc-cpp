@@ -19,7 +19,7 @@
 #include "trpc/server/server_context.h"
 
 namespace trpc::overload_control {
-static const std::string OverloadControlFilterName = "server_flow_control";
+const char OverloadControlFilterName[] = "server_flow_control";
 
 /// @brief Server-side flow control class.
 class OverloadControlFilter : public MessageServerFilter {

@@ -14,22 +14,22 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 #pragma once
 
-#include "trpc/overload_control/flow_control/flow_controller.h"
-#include "trpc/overload_control/flow_control/smooth_limiter.h"
 #include "trpc/overload_control/smooth_filter/server_overload_controller.h"
 
-#include <cstdint>
 #include <memory>
 #include <string>
+#include <cstdint>
 #include <unordered_map>
 
 #include "trpc/util/function.h"
+#include "trpc/overload_control/flow_control/smooth_limiter.h"
+#include "trpc/overload_control/flow_control/flow_controller.h"
 
 namespace trpc::overload_control {
-static const std::string SmoothLimitOverloadControllerName = "SmoothLimitOverloadController";
+const char SmoothLimitOverloadControllerName[] = "SmoothLimitOverloadController";
 
 /// @brief Default number of time frames per second
-static const int32_t kDefaultNumber = 100;
+constexpr int32_t kDefaultNumber = 100;
 
 class SmoothLimitOverloadController : public ServerOverloadController {
  public:
