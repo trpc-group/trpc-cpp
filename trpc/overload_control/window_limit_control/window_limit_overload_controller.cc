@@ -19,16 +19,18 @@
 #include <chrono>
 #include <cstdint>
 
+#include "trpc/log/trpc_log.h"
 #include "trpc/util/log/logging.h"
+#include "trpc/common/config/trpc_config.h"
 #include "trpc/overload_control/common/report.h"
-#include "trpc/overload_control/flow_control/flow_controller_conf.h"
+#include "trpc/overload_control/overload_control_defs.h"
 #include "trpc/overload_control/flow_control/flow_controller_generator.h"
 
 namespace trpc::overload_control {
 
 bool WindowLimitOverloadController::Init() {
   std::vector<FlowControlLimiterConf> flow_control_confs;
-  LoadFlowControlLimiterConf(flow_control_confs);
+  LoadWindowLimitControlConf(flow_control_confs);
   for (const auto& flow_conf : flow_control_confs) {
     if (!flow_conf.service_limiter.empty()) {
       FlowControllerPtr service_controller =
@@ -90,7 +92,7 @@ void WindowLimitOverloadController::Destroy() {
   smooth_limits_.clear();
 }
 
-void WindowLimitOverloadController::Stop(){
+void WindowLimitOverloadController::Stop() {
     // nothing to do,The time thread automatically stops.
 };
 
@@ -112,6 +114,18 @@ FlowControllerPtr WindowLimitOverloadController::GetLimiter(const std::string& n
 // The destructor does nothing, but the stop method in public needs to set the timed task to join and make it invalid
 // The user must stop before calling destroy
 WindowLimitOverloadController::~WindowLimitOverloadController() {}
+
+void WindowLimitOverloadController::LoadWindowLimitControlConf(std::vector<FlowControlLimiterConf>& flow_control_confs) {
+  YAML::Node flow_control_nodes;
+  FlowControlLimiterConf flow_control_conf;
+  if (ConfigHelper::GetInstance()->GetConfig({"plugins", kWindowLimitOverloadCtrConfField, kWindowLimitControlName},
+                                             flow_control_nodes)) {
+    for (const auto& node : flow_control_nodes) {
+      auto flow_control_conf = node.as<FlowControlLimiterConf>();
+      flow_control_confs.emplace_back(std::move(flow_control_conf));
+    }
+  }
+}
 
 }  // namespace trpc::overload_control
 #endif

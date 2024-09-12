@@ -23,11 +23,16 @@
 #include "trpc/util/function.h"
 #include "trpc/overload_control/flow_control/smooth_limiter.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
+#include "trpc/overload_control/flow_control/flow_controller_conf.h"
 #include "trpc/overload_control/window_limit_control/server_overload_controller.h"
 
 namespace trpc::overload_control {
-  
-const char WindowLimitOverloadControllerName[] = "WindowLimitOverloadController";
+
+constexpr char WindowLimitOverloadControllerName[] = "WindowLimitOverloadController";
+
+constexpr char kWindowLimitOverloadCtrConfField[] = "window_limit_overload_control";
+
+constexpr char kWindowLimitControlName[] = "window_limit_control_filter";
 
 /// @brief Default number of time frames per second
 constexpr int32_t kDefaultNumber = 100;
@@ -72,6 +77,8 @@ class WindowLimitOverloadController : public ServerOverloadController {
 
   FlowControllerPtr GetLimiter(const std::string& name);
 
+  void LoadWindowLimitControlConf(std::vector<FlowControlLimiterConf>& flow_control_confs);
+ 
  private:
   std::unordered_map<std::string, FlowControllerPtr> smooth_limits_;
 };

@@ -60,8 +60,8 @@ plugins:
           local_file: # Local log file
             filename: /home/ubuntu/myrpc/trpc-cpp/examples/helloworld/conf/test.log # The name of log file
 
-  overload_control:
-    flow_control:
+  window_limit_overload_control:
+    window_limit_control_filter:
       - service_name: trpc.test.helloworld.Greeter #service name.
         is_report: true # Whether to report monitoring data.
         service_limiter: default(10) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
@@ -116,7 +116,7 @@ class HelloWorldServer : public ::trpc::TrpcApp {
   // ...
   int RegisterPlugins() {
   // register server-side filter
-  auto server_filter = std::make_shared<trpc::overload_control::OverloadControlFilter>();
+  auto server_filter = std::make_shared<trpc::overload_control::WindowLimitOverloadControlFilter>();
   trpc::TrpcPlugin::GetInstance()->RegisterServerFilter(server_filter);
   return 0;
   }
