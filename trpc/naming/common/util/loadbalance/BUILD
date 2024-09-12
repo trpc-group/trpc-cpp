@@ -5,9 +5,9 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "trpc_loadbalance",
-    srcs = ["trpc_loadbalance.cc"],
-    hdrs = ["trpc_loadbalance.h"],
+    name = "trpc_load_balance",
+    srcs = ["trpc_load_balance.cc"],
+    hdrs = ["trpc_load_balance.h"],
     deps = [
         "//trpc/naming:load_balance_factory",
         "//trpc/naming:selector_factory",

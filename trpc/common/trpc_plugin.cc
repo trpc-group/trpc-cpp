@@ -55,6 +55,7 @@
 #include "trpc/transport/common/ssl_helper.h"
 #include "trpc/util/log/default/default_log.h"
 #include "trpc/util/net_util.h"
+#include "trpc/naming/common/util/loadbalance/trpc_load_balance.h"
 
 namespace trpc {
 
@@ -81,6 +82,7 @@ int TrpcPlugin::RegisterPlugins() {
   TRPC_ASSERT(metrics::Init());
   TRPC_ASSERT(tracing::Init());
   TRPC_ASSERT(telemetry::Init());
+  TRPC_ASSERT(loadbalance::Init());
   TRPC_ASSERT(naming::Init());
 
   TRPC_ASSERT(overload_control::Init());

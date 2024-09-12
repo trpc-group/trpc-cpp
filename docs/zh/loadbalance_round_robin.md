@@ -36,7 +36,7 @@
 
 # 三、使用方法
  
-- **注入插件**：在client中配置`load_balance_name`的插件 `load_balance_name: trpc_swround_robin_loadbalance`
+- **注入插件**：在client中配置`load_balance_name`的插件 `load_balance_name: swround_robin`
 - **配置权重信息**：在客户端配置文件中，在 `plugins` 配置中`loadbalance`中配置对应服务的权重信息，详情操作参考下面，
 
 ```yaml
@@ -47,7 +47,7 @@ client:
       protocol: trpc                # Application layer protocol, eg: trpc/http/...
       network: tcp                  # Network type, Support two types: tcp/udp
       selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
-      load_balance_name: trpc_swround_robin_loadbalance
+      load_balance_name: swround_robin 
 
 plugins:
   log:
@@ -57,14 +57,23 @@ plugins:
           local_file:
             filename: trpc_fiber_client.log 
 ```
-- **注册并初始化插件** 在客户端文件中，注册负载均衡插件，使用 `::trpc::loadbalance::Init()` 注册插件：
-```cpp
-int main(int argc, char* argv[]) {
-  ParseClientConfig(argc, argv);
-  ::trpc::loadbalance::Init();
-  // If the business code is running in trpc pure client mode,
-  // the business code needs to be running in the `RunInTrpcRuntime` function
-  return ::trpc::RunInTrpcRuntime([]() { return Run(); });
-}
+- **selector注册**: 由于默认采用direct使用默认负载均衡插件trpc_polling_load_balance，
+需要在/troc/naming/common/util/loadbalance/trpc_load_balance.cc,中注册SelectorDirect插件
 
+```cpp
+bool Init() {
+  LoadBalancePtr swround_robin_load_balance = trpc::LoadBalanceFactory::GetInstance()->Get(kSWRoundRobinLoadBalance);
+  if (swround_robin_load_balance == nullptr) {
+    // Register the default load balancer
+    swround_robin_load_balance = MakeRefCounted<SWRoundRobinLoadBalance>();
+    LoadBalanceFactory::GetInstance()->Register(swround_robin_load_balance);
+  }
+  SelectorPtr direct_selector = SelectorFactory::GetInstance()->Get("direct");
+  if (direct_selector == nullptr) {
+    direct_selector = MakeRefCounted<SelectorDirect>(swround_robin_load_balance);
+    SelectorFactory::GetInstance()->Register(direct_selector);
+  }
+
+  return true;
+}
 ```
