@@ -16,11 +16,8 @@ cc_library(
     ],
     deps = [
         ":window_limit_overload_controller",
-        "//trpc/filter",
         "//trpc/filter:filter_manager",
-        "//trpc/log:trpc_log",
         "//trpc/overload_control/flow_control:flow_controller_conf",
-        "//trpc/overload_control/flow_control:flow_controller_generator",
         "//trpc/server:server_context",
         "//trpc/util:likely",
     ],
@@ -47,8 +44,6 @@ cc_library(
         "//trpc/overload_control/flow_control:smooth_limiter",
         "//trpc/common/config:trpc_config",
         "//trpc/log:trpc_log",
-        "//trpc/overload_control:overload_control_defs",
-        "//trpc/util/log:logging",
     ],
 )
 

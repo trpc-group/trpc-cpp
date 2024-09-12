@@ -62,14 +62,7 @@ TEST_F(FlowControlServerFilterTestFixture, Init) {
   auto filter = WindowLimitOverloadControlFilter();
   filter.Init();
   auto filter_name = filter.Name();
-  ASSERT_EQ(filter_name, "window_limit_control_filter");
-  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
-  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHello"),
-            nullptr);
-  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
-            nullptr);
-  ASSERT_NE(WindowLimitOverloadController::GetInstance()->GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
-            nullptr);
+  ASSERT_EQ(filter_name, "window_limiter");
 }
 
 // Scenarios where requests are not intercepted after flow control is executed during testing.

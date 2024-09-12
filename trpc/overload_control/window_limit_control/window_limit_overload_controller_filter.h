@@ -17,14 +17,17 @@
 
 #include "trpc/filter/filter.h"
 #include "trpc/server/server_context.h"
+#include "trpc/overload_control/window_limit_control/window_limit_overload_controller.h"
 
 namespace trpc::overload_control {
 
-constexpr char WindowLimitOverloadControlFilterName[] = "window_limit_control_filter";
+constexpr char WindowLimitOverloadControlFilterName[] = "window_limiter";
 
 /// @brief Server-side flow control class.
 class WindowLimitOverloadControlFilter : public MessageServerFilter {
  public:
+  WindowLimitOverloadControlFilter();
+
   /// @brief Name of filter
   std::string Name() override { return WindowLimitOverloadControlFilterName; }
 
@@ -40,6 +43,8 @@ class WindowLimitOverloadControlFilter : public MessageServerFilter {
  private:
   // Process requests by algorithm the result of which determine whether this request is allowed.
   void OnRequest(FilterStatus& status, const ServerContextPtr& context);
+
+  std::unique_ptr<WindowLimitOverloadController> controller_;
 };
 
 }  // namespace trpc::overload_control

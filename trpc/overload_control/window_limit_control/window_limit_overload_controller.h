@@ -68,16 +68,9 @@ class WindowLimitOverloadController : public ServerOverloadController {
   /// @brief Destroy thread
   void Destroy();
 
-  static WindowLimitOverloadController* GetInstance() {
-    static WindowLimitOverloadController instance;
-    return &instance;
-  }
-
   void RegisterLimiter(const std::string& name, FlowControllerPtr limiter);
 
   FlowControllerPtr GetLimiter(const std::string& name);
-
-  void LoadWindowLimitControlConf(std::vector<FlowControlLimiterConf>& flow_control_confs);
  
  private:
   std::unordered_map<std::string, FlowControllerPtr> smooth_limits_;
