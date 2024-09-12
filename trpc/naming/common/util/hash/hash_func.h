@@ -30,7 +30,7 @@ enum HashFuncName {
   kCity,
 };
 
-static const std::unordered_map<std::string, HashFuncName> HashFuncTable = {
+static const std::unordered_map<std::string, HashFuncName> kHashFuncTable = {
     {"md5", HashFuncName::kMd5},         {"bkdr", HashFuncName::kBkdr}, {"fnv1a", HashFuncName::kFnv1a},
     {"murmur3", HashFuncName::kMurmur3}, {"city", HashFuncName::kCity},
 };

@@ -84,7 +84,7 @@ std::uint64_t GetHash(const std::string& input, const HashFuncName& hash_func) {
 
 std::uint64_t Hash(const std::string& input, const std::string& hash_func) {
   HashFuncName func =
-      HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::kDefault : HashFuncTable.at(hash_func);
+      kHashFuncTable.find(hash_func) == kHashFuncTable.end() ? HashFuncName::kDefault : kHashFuncTable.at(hash_func);
   return GetHash(input, func);
 }
 
@@ -92,7 +92,7 @@ std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func) { re
 
 std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num) {
   HashFuncName func =
-      HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::kDefault : HashFuncTable.at(hash_func);
+      kHashFuncTable.find(hash_func) == kHashFuncTable.end() ? HashFuncName::kDefault : kHashFuncTable.at(hash_func);
   return GetHash(input, func) % num;
 }
 
