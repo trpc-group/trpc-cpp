@@ -32,7 +32,7 @@ constexpr char WindowLimitOverloadControllerName[] = "WindowLimitOverloadControl
 
 constexpr char kWindowLimitOverloadCtrConfField[] = "window_limit_overload_control";
 
-constexpr char kWindowLimitControlName[] = "window_limit_control_filter";
+constexpr char kWindowLimitControlName[] = "window_limiter";
 
 /// @brief Default number of time frames per second
 constexpr int32_t kDefaultNumber = 100;

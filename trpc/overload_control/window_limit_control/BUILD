@@ -16,7 +16,7 @@ cc_library(
     ],
     deps = [
         ":window_limit_overload_controller",
-        "//trpc/filter:filter_manager",
+        "//trpc/filter:filter",
         "//trpc/overload_control/flow_control:flow_controller_conf",
         "//trpc/server:server_context",
         "//trpc/util:likely",

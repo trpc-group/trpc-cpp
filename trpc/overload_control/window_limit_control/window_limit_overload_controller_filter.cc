@@ -16,7 +16,6 @@
 #include "trpc/overload_control/window_limit_control/window_limit_overload_controller_filter.h"
 
 #include "trpc/util/likely.h"
-#include "trpc/filter/filter_manager.h"
 #include "trpc/overload_control/flow_control/flow_controller_conf.h"
 
 namespace trpc::overload_control {
