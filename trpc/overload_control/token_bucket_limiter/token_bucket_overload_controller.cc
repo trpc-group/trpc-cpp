@@ -28,8 +28,6 @@
 
 #include "trpc/log/trpc_log.h"
 
-// using namespace std::literals;
-
 namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
