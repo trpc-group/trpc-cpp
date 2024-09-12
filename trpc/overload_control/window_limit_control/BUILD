@@ -3,22 +3,6 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "server_overload_controller",
-    hdrs = ["server_overload_controller.h"],
-    defines = [] +
-              select({
-                  "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
-                  "//conditions:default": [],
-              }),
-    visibility = [
-        "//visibility:public",
-    ],
-    deps = [
-        "//trpc/server:server_context",
-    ],
-)
-
-cc_library(
     name = "window_limit_overload_controller_filter",
     srcs = ["window_limit_overload_controller_filter.cc"],
     hdrs = ["window_limit_overload_controller_filter.h"],
@@ -31,7 +15,6 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        ":server_overload_controller",
         ":window_limit_overload_controller",
         "//trpc/filter",
         "//trpc/filter:filter_manager",
@@ -56,7 +39,7 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        ":server_overload_controller",
+        "//trpc/overload_control:server_overload_controller",
         "//trpc/overload_control/common:report",
         "//trpc/overload_control/flow_control:flow_controller",
         "//trpc/overload_control/flow_control:flow_controller_conf",
