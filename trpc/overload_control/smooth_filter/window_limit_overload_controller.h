@@ -14,8 +14,6 @@
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 #pragma once
 
-#include "trpc/overload_control/smooth_filter/server_overload_controller.h"
-
 #include <memory>
 #include <string>
 #include <cstdint>
@@ -24,6 +22,7 @@
 #include "trpc/util/function.h"
 #include "trpc/overload_control/flow_control/smooth_limiter.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
+#include "trpc/overload_control/smooth_filter/server_overload_controller.h"
 
 namespace trpc::overload_control {
 const char WindowLimitOverloadControllerName[] = "WindowLimitOverloadController";
