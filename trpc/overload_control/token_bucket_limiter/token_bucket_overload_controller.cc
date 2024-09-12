@@ -33,7 +33,6 @@
 namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
-  std::unique_lock<std::mutex> lock(last_alloc_mutex_);
   last_alloc_time_ = trpc::time::GetSteadyNanoSeconds();
   return true;
 }
