@@ -43,25 +43,25 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-		":token_bucket_limiter_conf",
+        ":token_bucket_limiter_conf",
         "//trpc/log:trpc_log",
-		"//trpc/tvar/common:atomic_type",
         "//trpc/overload_control:overload_control_defs",
         "//trpc/overload_control:server_overload_controller",
+        "//trpc/tvar/common:atomic_type",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )
 
 cc_test(
-	name = "token_bucket_overload_controller_test",
-	srcs = ["token_bucket_overload_controller_test.cc"],
-	deps = [
+    name = "token_bucket_overload_controller_test",
+    srcs = ["token_bucket_overload_controller_test.cc"],
+    deps = [
         ":token_bucket_limiter_conf",
-		":token_bucket_overload_controller",
+        ":token_bucket_overload_controller",
         "//trpc/codec/testing:protocol_testing",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-	],
+    ],
 )
 
 cc_library(
@@ -76,7 +76,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":token_bucket_limiter_conf",
-		":token_bucket_overload_controller",
+        ":token_bucket_overload_controller",
         "//trpc/common/config:trpc_config",
         "//trpc/filter",
         "//trpc/filter:filter_manager",
@@ -92,13 +92,13 @@ cc_library(
 )
 
 cc_test(
-	name = "token_bucket_limiter_server_filter_test",
-	srcs = ["token_bucket_limiter_server_filter_test.cc"],
-	data = ["token_bucket_overload_ctrl.yaml"],
-	deps = [
-		":token_bucket_limiter_server_filter",
+    name = "token_bucket_limiter_server_filter_test",
+    srcs = ["token_bucket_limiter_server_filter_test.cc"],
+    data = ["token_bucket_overload_ctrl.yaml"],
+    deps = [
+        ":token_bucket_limiter_server_filter",
         "//trpc/codec/testing:protocol_testing",
         "//trpc/common/config:trpc_config",
         "@com_google_googletest//:gtest_main",
-	],
+    ],
 )
