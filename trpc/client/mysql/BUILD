@@ -71,13 +71,24 @@ cc_test(
     ]
 )
 
+filegroup(
+    name = "test_yaml_files",
+    srcs = glob([
+        "testing/*.yaml",
+    ]),
+)
+
 cc_test(
     name = "mysql_executor_pool_test",
     srcs = ["mysql_executor_pool_test.cc"],
+    data = [
+        ":test_yaml_files"
+    ],
     visibility = ["//visibility:public"],
     deps = [
         ":mysql_executor",
         ":mysql_executor_pool",
+        "//trpc/common/config:trpc_config",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

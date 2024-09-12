@@ -15,14 +15,14 @@ MysqlExecutorPool* MysqlExecutorPool::getConnectPool(const MysqlClientConf& conf
 MysqlExecutorPool::MysqlExecutorPool(const MysqlClientConf& conf)
     : m_ip(conf.ip),
       m_user(conf.user_name),
-      m_port(std::stoi(conf.port)),
       m_passwd(conf.password),
       m_dbName(conf.dbname),
+      m_port(conf.port),
       m_minSize(conf.connectpool.min_size),
       m_maxSize(conf.connectpool.max_size),
       m_timeout(conf.connectpool.timeout),
       m_maxIdTime(conf.connectpool.max_idle_time) {
-  for (int i = 0; i < m_minSize; i++) {
+  for (uint32_t i = 0; i < m_minSize; i++) {
     addConnection();
   }
   std::thread producer(&MysqlExecutorPool::produceConnection, this);
