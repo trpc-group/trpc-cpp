@@ -115,7 +115,7 @@ void TestMget(std::shared_ptr<trpc::redis::RedisServiceProxy>& proxy) {
     // Redis-Server return error
     std::cout << "Fiber call redis mget command fail, error msg:" << reply.GetString() << std::endl;
   } else {
-    // Success
+    // Success 
     std::cout << "Fiber call redis mget command success, reply:" << reply.GetArray().at(0).GetString() << ","
               << reply.GetArray().at(1).GetString() << std::endl;
   }
