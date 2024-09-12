@@ -39,17 +39,12 @@ void RegisterInnerSelector() {
     polling_load_balance = MakeRefCounted<PollingLoadBalance>();
     LoadBalanceFactory::GetInstance()->Register(polling_load_balance);
   }
-  SelectorPtr domain_selector = SelectorFactory::GetInstance()->Get("domain");
-  if (domain_selector == nullptr) {
-    domain_selector = MakeRefCounted<SelectorDomain>(polling_load_balance);
-    SelectorFactory::GetInstance()->Register(domain_selector);
-  }
 
-  SelectorPtr direct_selector = SelectorFactory::GetInstance()->Get("direct");
-  if (direct_selector == nullptr) {
-    direct_selector = MakeRefCounted<SelectorDirect>(polling_load_balance);
-    SelectorFactory::GetInstance()->Register(direct_selector);
-  }
+  SelectorPtr domain_selector = MakeRefCounted<SelectorDomain>(polling_load_balance);
+  SelectorFactory::GetInstance()->Register(domain_selector);
+
+  SelectorPtr direct_selector = MakeRefCounted<SelectorDirect>(polling_load_balance);
+  SelectorFactory::GetInstance()->Register(direct_selector);
 
   // Because other plugins are registered using the direct/domain selector filter,
   // so direct and domain selector filter need to be registered when naming module is initialized
