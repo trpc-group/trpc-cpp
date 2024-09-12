@@ -11,8 +11,8 @@ build --define trpc_include_overload_control=true
 ```
 单元测试
 ```
-bazel test //trpc/overload_control/smooth_filter:window_limit_overload_controller_filter_test 
-bazel test //trpc/overload_control/smooth_filter:window_limit_overload_controller_test
+bazel test //trpc/overload_control/window_limit_control:window_limit_overload_controller_filter_test 
+bazel test //trpc/overload_control/window_limit_control:window_limit_overload_controller_test
 
 ```
 

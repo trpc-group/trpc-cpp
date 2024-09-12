@@ -44,7 +44,7 @@ class MockFlowControl : public FlowController {
 class FlowControlServerFilterTestFixture : public ::testing::Test {
  public:
   static void SetUpTestCase() {
-    trpc::TrpcConfig::GetInstance()->Init("./trpc/overload_control/smooth_filter/filter_test.yaml");
+    trpc::TrpcConfig::GetInstance()->Init("./trpc/overload_control/window_limit_control/filter_test.yaml");
     trpc::TrpcPlugin::GetInstance()->RegisterPlugins();
   }
 
