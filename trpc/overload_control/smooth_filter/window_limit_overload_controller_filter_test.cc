@@ -12,8 +12,8 @@
 //
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
+#include "trpc/overload_control/smooth_filter/window_limit_overload_controller_filter.h"
 
-#include "trpc/overload_control/flow_control/flow_controller_server_filter.h"
 
 #include <memory>
 #include <utility>
@@ -27,7 +27,7 @@
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/codec/testing/protocol_testing.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
-#include "trpc/overload_control/smooth_filter/overload_controller_filter.h"
+#include "trpc/overload_control/flow_control/flow_controller_server_filter.h"
 #include "trpc/overload_control/smooth_filter/window_limit_overload_controller.h"
 
 namespace trpc::overload_control {
