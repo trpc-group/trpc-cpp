@@ -34,14 +34,14 @@
 
 // These notices must be retained in any copies of any part of this
 // documentation and/or software.
-#include "trpc/naming/common/util/hash/Md5.h"
+#include "trpc/naming/common/util/hash/md5.h"
 
 #include <bits/stdint-uintn.h>
 #include <memory.h>
 /*
  * MD5 context setup
  */
-void md5_starts(md5_context* ctx) {
+void Md5Starts(Md5Context* ctx) {
   ctx->total[0] = 0;
   ctx->total[1] = 0;
 
@@ -51,7 +51,7 @@ void md5_starts(md5_context* ctx) {
   ctx->state[3] = 0x10325476;
 }
 
-static void md5_process(md5_context* ctx, unsigned char data[64]) {
+static void Md5Process(Md5Context* ctx, unsigned char data[64]) {
   unsigned long X[16], A, B, C, D;
 
   GET_ULONG_LE(X[0], data, 0);
@@ -177,7 +177,7 @@ static void md5_process(md5_context* ctx, unsigned char data[64]) {
 /*
  * MD5 process buffer
  */
-void md5_update(md5_context* ctx, unsigned char* input, int ilen) {
+void Md5Update(Md5Context* ctx, unsigned char* input, int ilen) {
   int fill;
   unsigned long left;
 
@@ -193,14 +193,14 @@ void md5_update(md5_context* ctx, unsigned char* input, int ilen) {
 
   if (left && ilen >= fill) {
     memcpy((void*)(ctx->buffer + left), (void*)input, fill);
-    md5_process(ctx, ctx->buffer);
+    Md5Process(ctx, ctx->buffer);
     input += fill;
     ilen -= fill;
     left = 0;
   }
 
   while (ilen >= 64) {
-    md5_process(ctx, input);
+    Md5Process(ctx, input);
     input += 64;
     ilen -= 64;
   }
@@ -217,7 +217,7 @@ static const unsigned char md5_padding[64] = {0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 /*
  * MD5 final digest
  */
-void md5_finish(md5_context* ctx, unsigned char output[16]) {
+void Md5Finish(Md5Context* ctx, unsigned char output[16]) {
   unsigned long last, padn;
   unsigned long high, low;
   unsigned char msglen[8];
@@ -231,8 +231,8 @@ void md5_finish(md5_context* ctx, unsigned char output[16]) {
   last = ctx->total[0] & 0x3F;
   padn = (last < 56) ? (56 - last) : (120 - last);
 
-  md5_update(ctx, (unsigned char*)md5_padding, padn);
-  md5_update(ctx, msglen, 8);
+  Md5Update(ctx, (unsigned char*)md5_padding, padn);
+  Md5Update(ctx, msglen, 8);
 
   PUT_ULONG_LE(ctx->state[0], output, 0);
   PUT_ULONG_LE(ctx->state[1], output, 4);
@@ -243,30 +243,30 @@ void md5_finish(md5_context* ctx, unsigned char output[16]) {
 /*
  * output = MD5( input buffer )
  */
-void md5(unsigned char* input, int ilen, unsigned char output[16]) {
-  md5_context ctx;
+void Md5(unsigned char* input, int ilen, unsigned char output[16]) {
+  Md5Context ctx;
 
-  md5_starts(&ctx);
-  md5_update(&ctx, input, ilen);
-  md5_finish(&ctx, output);
+  Md5Starts(&ctx);
+  Md5Update(&ctx, input, ilen);
+  Md5Finish(&ctx, output);
 
-  memset(&ctx, 0, sizeof(md5_context));
+  memset(&ctx, 0, sizeof(Md5Context));
 }
 
-unsigned int md5hash(const void* input, int len, unsigned int /*seed*/) {
+unsigned int Md5Hash_32(const void* input, int len, unsigned int /*seed*/) {
   unsigned int hash[4];
 
-  md5((unsigned char*)input, len, (unsigned char*)hash);
+  Md5((unsigned char*)input, len, (unsigned char*)hash);
 
   // return hash[0] ^ hash[1] ^ hash[2] ^ hash[3];
 
   return hash[0];
 }
 
-void md5_32(const void* key, int len, uint32_t /*seed*/, void* out) {
+void Md5_32(const void* key, int len, uint32_t /*seed*/, void* out) {
   unsigned int hash[4];
 
-  md5((unsigned char*)key, len, (unsigned char*)hash);
+  Md5((unsigned char*)key, len, (unsigned char*)hash);
 
   *(uint32_t*)out = hash[0];
 }

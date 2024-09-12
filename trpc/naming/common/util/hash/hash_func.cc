@@ -16,18 +16,18 @@
 #include <bits/stdint-uintn.h>
 #include <string>
 
-#include "trpc/naming/common/util/hash/City.h"
-#include "trpc/naming/common/util/hash/Md5.h"
-#include "trpc/naming/common/util/hash/MurmurHash3.h"
+#include "trpc/naming/common/util/hash/city.h"
+#include "trpc/naming/common/util/hash/md5.h"
+#include "trpc/naming/common/util/hash/murmurhash3.h"
 
 namespace trpc {
 
 std::uint64_t MD5Hash(const std::string& input) {
   const uint32_t seed = 131;
-  uint64_t hash = md5hash(input.c_str(), input.size(), seed);
+  uint64_t hash = Md5Hash_32(input.c_str(), input.size(), seed);
   return hash;
 }
-std::uint64_t BKDRHash(const std::string& input) {
+std::uint64_t BkdrHash(const std::string& input) {
   const uint64_t seed = 131;
   uint64_t hash = 0;
   for (char ch : input) {
@@ -35,7 +35,7 @@ std::uint64_t BKDRHash(const std::string& input) {
   }
   return hash;
 }
-std::uint64_t FNV1aHash(const std::string& input) {
+std::uint64_t Fnv1aHash(const std::string& input) {
   const uint64_t fnv_prime = 0x811C9DC5;
   size_t hash = 0;
   for (char ch : input) {
@@ -45,7 +45,7 @@ std::uint64_t FNV1aHash(const std::string& input) {
   return hash;
 }
 
-std::uint64_t MurMurHash3(const std::string& input) {
+std::uint64_t MurmurHash3(const std::string& input) {
   uint32_t seed = 42;
   uint64_t hash[2];
   MurmurHash3_x64_128(input.c_str(), input.size(), seed, hash);
@@ -60,45 +60,44 @@ std::uint64_t CityHash(const std::string& input) {
 std::uint64_t GetHash(const std::string& input, const HashFuncName& hash_func) {
   uint64_t hash = 0;
   switch (hash_func) {
-    case HashFuncName::MD5:
-      hash = MD5Hash(input);
+    case HashFuncName::kMd5:
+      hash = Md5Hash(input);
       break;
-    case HashFuncName::BKDR:
-      hash = BKDRHash(input);
+    case HashFuncName::kBkdr:
+      hash = BkdrHash(input);
       break;
-    case HashFuncName::FNV1A:
-      hash = FNV1aHash(input);
+    case HashFuncName::kFnv1a:
+      hash = Fnv1aHash(input);
       break;
-    case HashFuncName::MURMUR3:
-      hash = MurMurHash3(input);
+    case HashFuncName::kMurmur3:
+      hash = MurmurHash3(input);
       break;
-    case HashFuncName::CITY:
+    case HashFuncName::kCity:
       hash = CityHash(input);
       break;
     default:
-      hash = MurMurHash3(input);
+      hash = MurmurHash3(input);
       break;
   }
   return hash;
 }
 
-std::uint64_t Hash(const std::string& input, const std::string& hash_func) { 
-  HashFuncName func=HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::DEFAULT : HashFuncTable.at(hash_func);
-  return GetHash(input, func); 
+std::uint64_t Hash(const std::string& input, const std::string& hash_func) {
+  HashFuncName func =
+      HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::kDefault : HashFuncTable.at(hash_func);
+  return GetHash(input, func);
 }
 
-std::uint64_t Hash(const std::string& input,const HashFuncName& hash_func){
-  return GetHash(input,hash_func);
-}
-
+std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func) { return GetHash(input, hash_func); }
 
 std::uint64_t Hash(const std::string& input, const std::string& hash_func, uint64_t num) {
-  HashFuncName func=HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::DEFAULT : HashFuncTable.at(hash_func);
+  HashFuncName func =
+      HashFuncTable.find(hash_func) == HashFuncTable.end() ? HashFuncName::kDefault : HashFuncTable.at(hash_func);
   return GetHash(input, func) % num;
 }
 
-std::uint64_t Hash(const std::string& input,const HashFuncName& hash_func,uint64_t num){
-  return GetHash(input,hash_func)%num;
+std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func, uint64_t num) {
+  return GetHash(input, hash_func) % num;
 }
 
 }  // namespace trpc

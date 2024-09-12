@@ -19,29 +19,29 @@
 
 namespace trpc {
 
-static constexpr int HASH_NODES_MAX_INDEX = 5;
+static constexpr int kHashNodesMaxIndex = 5;
 
 enum HashFuncName {
-  DEFAULT,
-  MD5,
-  BKDR,
-  FNV1A,
-  MURMUR3,
-  CITY,
+  kDefault,
+  kMd5,
+  kBkdr,
+  kFnv1a,
+  kMurmur3,
+  kCity,
 };
 
 static const std::unordered_map<std::string, HashFuncName> HashFuncTable = {
-    {"md5", HashFuncName::MD5},         {"bkdr", HashFuncName::BKDR}, {"fnv1a", HashFuncName::FNV1A},
-    {"murmur3", HashFuncName::MURMUR3}, {"city", HashFuncName::CITY},
+    {"md5", HashFuncName::kMd5},         {"bkdr", HashFuncName::kBkdr}, {"fnv1a", HashFuncName::kFnv1a},
+    {"murmur3", HashFuncName::kMurmur3}, {"city", HashFuncName::kCity},
 };
 
-std::uint64_t MD5Hash(const std::string& input);
+std::uint64_t Md5Hash(const std::string& input);
 
-std::uint64_t BKDRHash(const std::string& input);
+std::uint64_t BkdrHash(const std::string& input);
 
-std::uint64_t FNV1aHash(const std::string& input);
+std::uint64_t Fnv1aHash(const std::string& input);
 
-std::uint64_t MurMurHash3(const std::string& input);
+std::uint64_t MurmurHash3(const std::string& input);
 
 std::uint64_t CityHash(const std::string& input);
 

@@ -96,7 +96,7 @@ int ModuloHashLoadBalance::Next(LoadBalanceResult& result) {
 
   uint64_t hash;
   if (result.info->context != nullptr && !result.info->context->GetHashKey().empty()) {
-    hash = std::stoull(result.info->context->GetHashKey())%endpoints_num;
+    hash = std::stoull(result.info->context->GetHashKey()) % endpoints_num;
   } else {
     hash = Hash(GenerateKeysAsString(result.info, loadbalance_config_.hash_args), loadbalance_config_.hash_func,
                 endpoints_num);

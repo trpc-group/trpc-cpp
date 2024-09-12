@@ -61,7 +61,7 @@ std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t>
 bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceSelectorConfig& loadbalance_config_) {
   bool res = true;
   for (int index : loadbalance_config_.hash_args) {
-    if (index < 0 || index > HASH_NODES_MAX_INDEX) {
+    if (index < 0 || index > kHashNodesMaxIndex) {
       TRPC_FMT_DEBUG("index in yaml configuration out of range, use default config");
       res = false;
       break;
@@ -75,7 +75,7 @@ bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceSelectorConfig& loadbalan
     res = false;
     TRPC_FMT_DEBUG("hash func name is invalid, use default config");
     // set to default value
-    loadbalance_config_.hash_func = MURMUR3;
+    loadbalance_config_.hash_func = "murmur3";
   }
   if (loadbalance_config_.hash_nodes < 1) {
     res = false;

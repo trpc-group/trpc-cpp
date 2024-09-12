@@ -9,16 +9,15 @@
 // please note that tRPC source code is licensed under the  Apache 2.0 License,
 // A copy of the Apache 2.0 License is included in this file.
 //
-//tRPC is licensed under the Apache 2.0 License, and includes source codes from
-//the following components:
-//1. smhasher
+// tRPC is licensed under the Apache 2.0 License, and includes source codes from
+// the following components:
+// 1. smhasher
 //
 //-----------------------------------------------------------------------------
 // MurmurHash3 was written by Austin Appleby, and is placed in the public
 // domain. The author hereby disclaims copyright to this source code.
 
-#ifndef _MURMURHASH3_H_
-#define _MURMURHASH3_H_
+#pragma once
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros
@@ -48,5 +47,3 @@ void MurmurHash3_x86_128(const void* key, int len, uint32_t seed, void* out);
 void MurmurHash3_x64_128(const void* key, int len, uint32_t seed, void* out);
 
 //-----------------------------------------------------------------------------
-
-#endif  // _MURMURHASH3_H_

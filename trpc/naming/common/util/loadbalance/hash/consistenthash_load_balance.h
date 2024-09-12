@@ -59,10 +59,9 @@ class ConsistentHashLoadBalance : public LoadBalance {
 
   std::unordered_map<std::string, ConsistentHashLoadBalance::InnerEndpointInfos> callee_router_infos_;
 
-  naming::LoadBalanceSelectorConfig loadbalance_config_;
+  naming::LoadBalanceConfig loadbalance_config_;
 
   mutable std::shared_mutex mutex_;
-
 };
 
 }  // namespace trpc

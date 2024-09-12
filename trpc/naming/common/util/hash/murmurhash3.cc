@@ -9,9 +9,9 @@
 // please note that tRPC source code is licensed under the  Apache 2.0 License,
 // A copy of the Apache 2.0 License is included in this file.
 //
-//tRPC is licensed under the Apache 2.0 License, and includes source codes from
-//the following components:
-//1. smhasher
+// tRPC is licensed under the Apache 2.0 License, and includes source codes from
+// the following components:
+// 1. smhasher
 //
 //-----------------------------------------------------------------------------
 // MurmurHash3 was written by Austin Appleby, and is placed in the public
@@ -22,7 +22,7 @@
 // compile and run any of them on any platform, but your performance with the
 // non-native version will be less than optimal.
 
-#include "trpc/naming/common/util/hash/MurmurHash3.h"
+#include "trpc/naming/common/util/hash/murmurhash3.h"
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros

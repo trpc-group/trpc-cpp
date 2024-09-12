@@ -55,7 +55,7 @@ class ModuloHashLoadBalance : public LoadBalance {
 
   mutable std::shared_mutex mutex_;
 
-  naming::LoadBalanceSelectorConfig loadbalance_config_;
+  naming::LoadBalanceConfig loadbalance_config_;
 
   // std::unordered_map<std::string,
 };

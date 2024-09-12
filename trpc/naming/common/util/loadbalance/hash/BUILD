@@ -12,13 +12,13 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        "//trpc/naming:load_balance_factory",
-        "//trpc/util/log:logging",
-        "//trpc/naming/common/util/hash:hash_func",
         "//trpc/common/config:loadbalance_naming_conf",
         "//trpc/common/config:loadbalance_naming_conf_parser",
         "//trpc/common/config:trpc_config",
+        "//trpc/naming:load_balance_factory",
+        "//trpc/naming/common/util/hash:hash_func",
         "//trpc/naming/common/util/loadbalance/hash:common",
+        "//trpc/util/log:logging",
     ],
 )
 
@@ -30,13 +30,13 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        "//trpc/naming:load_balance_factory",
-        "//trpc/util/log:logging",
-        "//trpc/naming/common/util/hash:hash_func",
         "//trpc/common/config:loadbalance_naming_conf",
         "//trpc/common/config:loadbalance_naming_conf_parser",
         "//trpc/common/config:trpc_config",
+        "//trpc/naming:load_balance_factory",
+        "//trpc/naming/common/util/hash:hash_func",
         "//trpc/naming/common/util/loadbalance/hash:common",
+        "//trpc/util/log:logging",
     ],
 )
 
@@ -48,9 +48,8 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        "//trpc/naming/common:common_defs",
         "//trpc/common/config:loadbalance_naming_conf",
+        "//trpc/naming/common:common_defs",
         "//trpc/naming/common/util/hash:hash_func",
     ],
 )
-

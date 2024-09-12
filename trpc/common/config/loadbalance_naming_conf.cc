@@ -17,7 +17,7 @@
 
 namespace trpc::naming {
 
-void LoadBalanceSelectorConfig::Display() const {
+void LoadBalanceConfig::Display() const {
   TRPC_FMT_DEBUG("-----LoadBalanceSelectorConfig begin-------");
 
   TRPC_FMT_DEBUG("hash_nodes:{}", hash_nodes);

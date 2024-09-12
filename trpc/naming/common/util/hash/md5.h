@@ -37,7 +37,7 @@
 /*
  * 32-bit integer manipulation macros (little endian)
  */
- 
+
 #pragma once
 
 #include <bits/stdint-uintn.h>
@@ -69,14 +69,14 @@ typedef struct {
 
   unsigned char ipad[64]; /*!< HMAC: inner padding        */
   unsigned char opad[64]; /*!< HMAC: outer padding        */
-} md5_context;
+} Md5Context;
 
 /**
  * \brief          MD5 context setup
  *
  * \param ctx      context to be initialized
  */
-void md5_starts(md5_context* ctx);
+void Md5Starts(Md5Context* ctx);
 
 /**
  * \brief          MD5 process buffer
@@ -85,7 +85,7 @@ void md5_starts(md5_context* ctx);
  * \param input    buffer holding the  data
  * \param ilen     length of the input data
  */
-void md5_update(md5_context* ctx, unsigned char* input, int ilen);
+void Md5Update(Md5Context* ctx, unsigned char* input, int ilen);
 
 /**
  * \brief          MD5 final digest
@@ -93,7 +93,7 @@ void md5_update(md5_context* ctx, unsigned char* input, int ilen);
  * \param ctx      MD5 context
  * \param output   MD5 checksum result
  */
-void md5_finish(md5_context* ctx, unsigned char output[16]);
+void Md5Finish(Md5Context* ctx, unsigned char output[16]);
 
 /**
  * \brief          Output = MD5( input buffer )
@@ -102,8 +102,8 @@ void md5_finish(md5_context* ctx, unsigned char output[16]);
  * \param ilen     length of the input data
  * \param output   MD5 checksum result
  */
-void md5(unsigned char* input, int ilen, unsigned char output[16]);
+void Md5(unsigned char* input, int ilen, unsigned char output[16]);
 
-unsigned int md5hash(const void* input, int len, unsigned int /*seed*/);
+unsigned int Md5Hash_32(const void* input, int len, unsigned int /*seed*/);
 
-void md5_32(const void* key, int len, uint32_t /*seed*/, void* out);
+void Md5_32(const void* key, int len, uint32_t /*seed*/, void* out);
