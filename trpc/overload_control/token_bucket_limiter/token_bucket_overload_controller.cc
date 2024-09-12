@@ -34,7 +34,7 @@ namespace trpc::overload_control {
 
 bool TokenBucketOverloadController::Init() {
   std::unique_lock<std::mutex> lock(last_alloc_mutex_);
-  last_alloc_time_ = trpc::time::GetNanoSeconds();
+  last_alloc_time_ = trpc::time::GetSteadyNanoSeconds();
   return true;
 }
 
@@ -48,7 +48,7 @@ void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {
   std::unique_lock<std::mutex> lock(last_alloc_mutex_);
 
-  auto now = trpc::time::GetNanoSeconds();
+  auto now = trpc::time::GetSteadyNanoSeconds();
   if(last_alloc_time_ > now - one_token_elapsed_) {
       return false;
   }
