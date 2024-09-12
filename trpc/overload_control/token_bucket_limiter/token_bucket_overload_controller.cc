@@ -44,7 +44,6 @@ void TokenBucketOverloadController::AddToken() {
   uint64_t gap_timestamp = current_timestamp - last_timestamp_;
   uint32_t add_count = (uint32_t) (gap_timestamp * rate_ / 1000);
   current_token_ = std::min(current_token_ + add_count, capacity_);
-  last_timestamp_ = current_timestamp;
 }
 
 uint32_t TokenBucketOverloadController::GetToken() {
@@ -58,6 +57,7 @@ bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& conte
     return false;
   }
   --current_token_;
+  last_timestamp_ = trpc::time::GetSteadyMilliSeconds();
   return true;
 }
 
