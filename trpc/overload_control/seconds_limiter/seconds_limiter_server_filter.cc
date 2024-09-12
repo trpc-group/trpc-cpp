@@ -15,21 +15,18 @@
 
 #include "trpc/overload_control/seconds_limiter/seconds_limiter_server_filter.h"
 
-#include "trpc/codec/codec_helper.h"
 #include "trpc/filter/filter_manager.h"
 #include "trpc/log/trpc_log.h"
-#include "trpc/overload_control/seconds_limiter/seconds_limiter_conf.h"
-#include "trpc/overload_control/seconds_limiter/seconds_overload_controller_factory.h"
-#include "trpc/util/likely.h"
+#include "trpc/overload_control/flow_control/flow_controller_conf.h"
+#include "trpc/overload_control/seconds_limiter/seconds_overload_controller.h"
 
 namespace trpc::overload_control {
 
 int SecondsLimiterServerFilter::Init() {
-  std::vector<SecondsLimiterConf> seconds_limiter_confs;
-  LoadSecondsLimiterConf(seconds_limiter_confs);
-  for (const auto& conf : seconds_limiter_confs) {
-    RegisterSecondsOverloadController(conf);
-  }
+  std::vector<FlowControlLimiterConf> seconds_limiter_confs;
+  LoadFlowControlLimiterConf(seconds_limiter_confs);
+  seconds_overload_controller_ = std::make_shared<SecondsOverloadController>();
+  seconds_overload_controller_->Init(seconds_limiter_confs);
   return 0;
 }
 
@@ -59,28 +56,10 @@ void SecondsLimiterServerFilter::OnRequest(FilterStatus& status, const ServerCon
     // not overwritten.
     return;
   }
-  // ServiceImpl flow controller
-  auto service_controller = SecondsOverloadControllerFactory::GetInstance()->Get(context->GetCalleeName());
-  // func flow controller
-  auto func_controller = SecondsOverloadControllerFactory::GetInstance()->Get(context->GetFuncName());
-  if (!service_controller && !func_controller) {
-    return;
-  }
-
-  // flow control strategy
-  if (service_controller && service_controller->BeforeSchedule(context)) {
-    context->SetStatus(Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server flow overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server flow overload , service name: {}", context->GetCalleeName());
+  if (seconds_overload_controller_->BeforeSchedule(context)) {
     status = FilterStatus::REJECT;
-    return;
   }
-  if (func_controller && func_controller->BeforeSchedule(context)) {
-    context->SetStatus(Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server flow overload control"));
-    status = FilterStatus::REJECT;
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server flow overload , service name: {}, func name: {}",
-                                context->GetCalleeName(), context->GetFuncName());
-    return;
-  }
+  return;
 }
 
 }  // namespace trpc::overload_control

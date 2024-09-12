@@ -16,8 +16,8 @@
 #pragma once
 
 #include "trpc/filter/filter.h"
-#include "trpc/overload_control/seconds_limiter/seconds_limiter_generator.h"
 #include "trpc/overload_control/overload_control_defs.h"
+#include "trpc/overload_control/seconds_limiter/seconds_overload_controller.h"
 #include "trpc/server/server_context.h"
 
 namespace trpc::overload_control {
@@ -40,6 +40,9 @@ class SecondsLimiterServerFilter : public MessageServerFilter {
  private:
   // Process requests by algorithm the result of which determine whether this request is allowed.
   void OnRequest(FilterStatus& status, const ServerContextPtr& context);
+
+ private:
+  SecondsOverloadControllerPtr seconds_overload_controller_;
 };
 
 }  // namespace trpc::overload_control

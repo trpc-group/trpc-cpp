@@ -1,58 +1,54 @@
 #Global configuration (required)
 global:
-  local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
-  coroutine: #Coroutine configuration.
-    enable: false #false: means not using coroutine; true: means using coroutine.
   threadmodel:
-    default:
-      # Separate model
-      - instance_name: default_instance
-        io_handle_type: separate
-        io_thread_num: 4 #Number of network I/O threads.
-        handle_thread_num: 4 #Number of business processing handle threads.
+    fiber:                            # Use Fiber(m:n coroutine) threadmodel
+      - instance_name: fiber_instance # Need to be unique if you config multiple fiber threadmodel instances
+        # Fiber worker thread num
+        # If not specified, will use number of cores on the machine.
+        # In a Numa architecture, the workers will be automatically grouped (8-15 cores per group),
+        # while in Uma architecture, they will not be grouped.
+        concurrency_hint: 8
 
-#Server configuration
 server:
-  app: test #Business name, such as: COS, CDB.
-  server: helloworld #Module name of the business
-  admin_port: 21111 # Admin port
-  admin_ip: 0.0.0.0 # Admin ip
-  service: #Business service, can have multiple.
-    - name: trpc.test.helloworld.Greeter #Service name, needs to be filled in according to the format, the first field is default to trpc, the second and third fields are the app and server configurations above, and the fourth field is the user-defined service_name.
-      protocol: trpc #Service application layer protocol, for example: trpc, http.
-      network: tcp #Network listening type: for example: TCP, UDP.
-      ip: 0.0.0.0 #Listen ip
-      port: 10001 ##Listen port
-      accept_thread_num: 1 #Number of threads for binding ports.
+  app: test
+  server: helloworld
+  admin_port: 8888                    # Start server with admin service which can manage service
+  admin_ip: 0.0.0.0
+  service:
+    - name: trpc.test.helloworld.Greeter
+      protocol: trpc                  # Application layer protocol, eg: trpc/http/...
+      network: tcp                    # Network type, Support two types: tcp/udp
+      ip: 0.0.0.0                     # Service bind ip
+      port: 12345  
       filter:
-        - seconds_limiter
+        - seconds_limiter         # Service bind port
 
-#Plugin configuration.
+# Plugin configuration.
 plugins:
-  log: #Log configuration
+  log: # Log configuration
     default:
       - name: default
         min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
         format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
         mode: 2 # 1-sync, 2-async, 3-fast
         sinks:
+          stdout: # Console output
+            min_level: 2
+            format: "[%Y-%m-%d %H:%M:%S.%e] [%l] %v"
+            mode: 1
           local_file: # Local log file
             filename: trpc.log # The name of log file
+
   overload_control:
-    seconds_limiter:
+    flow_control:
       - service_name: trpc.test.helloworld.Greeter #service name.
         is_report: true # Whether to report monitoring data.
-        service_limiter: default(100000) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-        func_limiter: #Interface-level flow control.
-          - name: SayHello ##Method name
-            limiter: seconds(100000) #Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-          - name: Route #Method name
-            limiter: seconds(100000) #Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-      - service_name: trpc.test.flow.Greeter #service name.
-        is_report: true # Whether to report monitoring data.
-        service_limiter: seconds(20000) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-        func_limiter: #Interface-level flow control.
-          - name: SayHello1 ##Method name
-            limiter: default(100000) #Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-          - name: Route1 #Method name
-            limiter: seconds(10000) #Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
+        service_limiter: default(1) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
+        window_size: 10
+        func_limiter: # Interface-level flow control.
+          - name: SayHello # Method name
+            limiter: seconds(2) # Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
+            window_size: 10
+          - name: Route # Method name
+            limiter: default(2) # Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
+            window_size: 10

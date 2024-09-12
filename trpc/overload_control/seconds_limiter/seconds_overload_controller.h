@@ -16,26 +16,26 @@
 #pragma once
 
 #include <string>
+
+#include "trpc/overload_control/flow_control/flow_controller_conf.h"
 #include "trpc/overload_control/flow_control/seconds_limiter.h"
 #include "trpc/overload_control/server_overload_controller.h"
 
 namespace trpc::overload_control {
-
-constexpr int32_t DefaultSecondsWindowSize = 10;
+static const char SecondsOverloadControllerName[] = "SecondsOverloadController";
+using SecondsLimiterPtr = std::shared_ptr<SecondsLimiter>;
 
 /// @brief Overload controller using fixed window algorithm
 class SecondsOverloadController : public ServerOverloadController {
  public:
-  using SecondsLimiterPtr = std::shared_ptr<SecondsLimiter>;
+  SecondsOverloadController() {}
 
-  SecondsOverloadController(std::string name, int64_t limit, bool is_report = false,
-                            int32_t window_size = DefaultSecondsWindowSize);
   /// @brief Name of this controller.
-  std::string Name() { return name_; };
+  std::string Name() { return SecondsOverloadControllerName; };
 
   /// @brief Initialize controller.
   /// @return bool true: succ; false: failed
-  bool Init() { return true; };
+  bool Init(const std::vector<FlowControlLimiterConf>& flow_confs);
 
   /// @brief Whether this request should be rejeted.
   ///        When reject this request, you should also set status with error code TRPC_SERVER_OVERLOAD_ERR
@@ -56,9 +56,19 @@ class SecondsOverloadController : public ServerOverloadController {
   /// @brief Destroy resources of controller.
   void Destroy() override;
 
- private:
-  std::string name_;
-  SecondsLimiterPtr seconds_limiter_;
+  // private:
+  /// @brief Registering a seconds limiter.
+  /// @param name Name of seconds limiter
+  /// @param limiter seconds limiter
+  void Register(const std::string& name, const SecondsLimiterPtr& limiter);
+
+  /// @brief Get a seconds limiter by name
+  /// @param name Search name.
+  /// @return Smart pointer of seconds limiter
+  SecondsLimiterPtr GetLimiter(const std::string& name);
+
+  // Store seconds limiter
+  std::unordered_map<std::string, SecondsLimiterPtr> limiter_map_;
 };
 
 using SecondsOverloadControllerPtr = std::shared_ptr<SecondsOverloadController>;

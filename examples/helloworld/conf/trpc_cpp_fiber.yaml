@@ -41,7 +41,7 @@ plugins:
           local_file: # Local log file
             filename: /trpc/test.log # The name of log file
   overload_control:
-    seconds_limiter:
+    flow_control:
       - service_name: trpc.test.helloworld.Greeter #service name.
         is_report: true # Whether to report monitoring data.
         service_limiter: default(20) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.

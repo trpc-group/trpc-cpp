@@ -15,12 +15,13 @@
 
 #include "trpc/overload_control/seconds_limiter/seconds_overload_controller.h"
 
-#include <memory>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "trpc/codec/trpc/trpc_protocol.h"
+#include "trpc/overload_control/flow_control/flow_controller_conf.h"
 
 namespace trpc::overload_control {
 namespace testing {
@@ -28,9 +29,26 @@ namespace testing {
 class SecondsOverloadControllerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    second_controller_ = std::make_shared<trpc::overload_control::SecondsOverloadController>(
-        "trpc.test.flow_control.second_controller", 3, true);
-    second_controller_->Init();
+    second_controller_ = std::make_shared<trpc::overload_control::SecondsOverloadController>();
+    std::vector<FlowControlLimiterConf> flow_confs;
+    FlowControlLimiterConf flow_conf;
+
+    flow_conf.service_name = "trpc.test.helloworld.Greeter";
+
+    FuncLimiterConfig func_limiter_conf1;
+    func_limiter_conf1.name = "Func1";
+    func_limiter_conf1.limiter = "seconds(1)";
+
+    FuncLimiterConfig func_limiter_conf2;
+    func_limiter_conf2.name = "Func2";
+    func_limiter_conf2.limiter = "default(2)";
+
+    flow_conf.service_limiter = "default(3)";
+    flow_conf.func_limiters.push_back(func_limiter_conf1);
+    flow_conf.func_limiters.push_back(func_limiter_conf2);
+
+    flow_confs.push_back(flow_conf);
+    second_controller_->Init(flow_confs);
   }
 
   void TearDown() override {
@@ -42,21 +60,11 @@ class SecondsOverloadControllerTest : public ::testing::Test {
   std::shared_ptr<SecondsOverloadController> second_controller_;
 };
 
-TEST(SecondsOverloadController, Contruct) {
-  SecondsOverloadController second_controller("1", 100, true, 0);
-  SecondsOverloadController second_controller1("2", 100, false, -1);
-  SecondsOverloadController second_controller2("3", 100, true, 100);
-  ASSERT_TRUE(true);
-  second_controller1.Init();
-  ServerContextPtr context = MakeRefCounted<ServerContext>();
-  ASSERT_EQ(second_controller1.BeforeSchedule(context), false);
-}
-
 TEST_F(SecondsOverloadControllerTest, CheckLimit) {
   ServerContextPtr context = MakeRefCounted<ServerContext>();
   ProtocolPtr req_msg = std::make_shared<TrpcRequestProtocol>();
   context->SetRequestMsg(std::move(req_msg));
-  context->SetFuncName("trpc.test.flow_control.seconds_controller");
+  context->SetCalleeName("trpc.test.helloworld.Greeter");
 
   ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
   ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
@@ -66,6 +74,18 @@ TEST_F(SecondsOverloadControllerTest, CheckLimit) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
+  ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
+  ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
+  ASSERT_EQ(second_controller_->BeforeSchedule(context), true);
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  context->SetFuncName("/trpc.test.helloworld.Greeter/Func1");
+
+  ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
+  ASSERT_EQ(second_controller_->BeforeSchedule(context), true);
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  context->SetFuncName("/trpc.test.helloworld.Greeter/Func2");
   ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
   ASSERT_EQ(second_controller_->BeforeSchedule(context), false);
   ASSERT_EQ(second_controller_->BeforeSchedule(context), true);
