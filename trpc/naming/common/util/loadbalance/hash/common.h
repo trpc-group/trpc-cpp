@@ -24,7 +24,7 @@ namespace trpc {
 
 std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t>& indexs);
 
-bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceSelectorConfig& loadbalance_config_);
+bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceConfig& loadbalance_config_);
 
 bool CheckLoadbalanceInfoDiff(const std::vector<TrpcEndpointInfo>& orig_endpoints,
                               const std::vector<TrpcEndpointInfo>* new_endpoints);

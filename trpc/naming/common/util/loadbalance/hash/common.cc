@@ -58,7 +58,7 @@ std::string GenerateKeysAsString(const SelectorInfo* info, std::vector<uint32_t>
   return key;
 }
 
-bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceSelectorConfig& loadbalance_config_) {
+bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceConfig& loadbalance_config_) {
   bool res = true;
   for (int index : loadbalance_config_.hash_args) {
     if (index < 0 || index > kHashNodesMaxIndex) {

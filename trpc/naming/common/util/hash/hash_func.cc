@@ -22,7 +22,7 @@
 
 namespace trpc {
 
-std::uint64_t MD5Hash(const std::string& input) {
+std::uint64_t Md5Hash(const std::string& input) {
   const uint32_t seed = 131;
   uint64_t hash = Md5Hash_32(input.c_str(), input.size(), seed);
   return hash;
