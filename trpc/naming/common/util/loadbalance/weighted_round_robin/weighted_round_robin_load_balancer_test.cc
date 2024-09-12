@@ -17,10 +17,10 @@
 
 #include "gtest/gtest.h"
 
-#include "trpc/naming/direct/selector_direct.h"
 #include "trpc/codec/trpc/trpc_client_codec.h"
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/naming/common/util/loadbalance/weighted_round_robin/weighted_round_robin_load_balancer.h"
+#include "trpc/naming/direct/selector_direct.h"
 #include "trpc/runtime/common/periphery_task_scheduler.h"
 namespace trpc {
 
@@ -39,7 +39,6 @@ class SWRoundRobinLoadBalanceTest : public ::testing::Test {
   void TearDown() override {
     test_polling_load_balance_->Stop();
     test_polling_load_balance_->Destroy();
-
     PeripheryTaskScheduler::GetInstance()->Stop();
     PeripheryTaskScheduler::GetInstance()->Join();
   }
@@ -81,8 +80,9 @@ TEST_F(SWRoundRobinLoadBalanceTest, SelectWithWeights) {
     select_info.name = "test_service";
     TrpcEndpointInfo selected_endpoint;
     test_polling_load_balance_->Select(&select_info, &selected_endpoint);
-    EXPECT_TRUE(selected_endpoint.host == "192.168.1.1" || selected_endpoint.host == "192.168.1.2"||selected_endpoint.host == "192.168.1.3");
-    EXPECT_TRUE(selected_endpoint.port == 10000 || selected_endpoint.port == 20000||selected_endpoint.port == 30000);
+    EXPECT_TRUE(selected_endpoint.host == "192.168.1.1" || selected_endpoint.host == "192.168.1.2" ||
+                selected_endpoint.host == "192.168.1.3");
+    EXPECT_TRUE(selected_endpoint.port == 10000 || selected_endpoint.port == 20000 || selected_endpoint.port == 30000);
     EXPECT_TRUE(selected_endpoint.id != kInvalidEndpointId);
     count_map[selected_endpoint.port]++;
   }
@@ -90,12 +90,12 @@ TEST_F(SWRoundRobinLoadBalanceTest, SelectWithWeights) {
   EXPECT_GT(count_map[10000], 0);
   EXPECT_GT(count_map[20000], 0);
   EXPECT_GT(count_map[30000], 0);
-  EXPECT_EQ(count_map.size(),3);
+  EXPECT_EQ(count_map.size(), 3);
 
   // Check the proportion of selections
-  float weight_ratio1 = 20.0 / 10.0;  
-  float weight_ratio2 = 30.0 / 10.0;  
-  float weight_ratio3 = 30.0 / 20.0;  
+  float weight_ratio1 = 20.0 / 10.0;
+  float weight_ratio2 = 30.0 / 10.0;
+  float weight_ratio3 = 30.0 / 20.0;
   EXPECT_NEAR(count_map[20000] / float(count_map[10000]), weight_ratio1, 0.1);
   EXPECT_NEAR(count_map[30000] / float(count_map[10000]), weight_ratio2, 0.1);
   EXPECT_NEAR(count_map[30000] / float(count_map[20000]), weight_ratio3, 0.1);

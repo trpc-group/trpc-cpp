@@ -66,7 +66,7 @@ bool IsPortAvailable(int port) {
 
 }  // namespace
 
-std::string Ipv4ToString(uint32_t ip, bool *ok) {
+std::string Ipv4ToString(uint32_t ip, bool* ok) {
   struct in_addr src;
   src.s_addr = ip;
 
@@ -81,7 +81,7 @@ std::string Ipv4ToString(uint32_t ip, bool *ok) {
   return dst;
 }
 
-uint32_t StringToIpv4(const std::string &ip, bool *ok) {
+uint32_t StringToIpv4(const std::string& ip, bool* ok) {
   struct in_addr dst;
   int ret = inet_pton(AF_INET, ip.data(), &dst);
   if (ret == 0) {
@@ -160,7 +160,7 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
   size_t weight_end = name.find(')', weight_start);
   if (weight_start != std::string::npos && weight_end != std::string::npos && weight_start < weight_end) {
     try {
-      temp_weight = std::stoul(name.substr(weight_start + 1, weight_end - weight_start - 1));  
+      temp_weight = std::stoul(name.substr(weight_start + 1, weight_end - weight_start - 1));
     } catch (...) {
       return false;
     }
@@ -185,7 +185,7 @@ std::string GetIpByEth(std::string_view eth_inf) {
   ifr.ifr_name[IFNAMSIZ - 1] = 0;
 
   // if error: No such device
-  if (::ioctl(sd, SIOCGIFADDR, &ifr) < 0){
+  if (::ioctl(sd, SIOCGIFADDR, &ifr) < 0) {
     TRPC_LOG_ERROR("ioctl error: " << strerror(errno) << " eth: " << eth_inf);
     ::close(sd);
     return str;

@@ -15,6 +15,7 @@
 #include "trpc/common/config/trpc_config.h"
 
 namespace trpc {
+
 int SWRoundRobinLoadBalance::Update(const LoadBalanceInfo* info) {
   if (info == nullptr || info->info == nullptr || info->endpoints == nullptr) {
     TRPC_LOG_ERROR("Endpoint info of name is empty");

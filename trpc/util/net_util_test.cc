@@ -23,7 +23,7 @@ namespace trpc::testing {
 class NetUtilTestValid : public ::testing::TestWithParam<std::string> {};
 
 TEST_P(NetUtilTestValid, test) {
-  const std::string &ipstr = GetParam();
+  const std::string& ipstr = GetParam();
 
   bool ok = false;
   auto ipint = util::StringToIpv4(ipstr, &ok);
@@ -37,12 +37,12 @@ TEST_P(NetUtilTestValid, test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(test, NetUtilTestValid,
-                        ::testing::Values("0.0.0.0", "1.1.1.1", "59.56.54.51", "255.255.255.255"));
+                         ::testing::Values("0.0.0.0", "1.1.1.1", "59.56.54.51", "255.255.255.255"));
 
 class NetUtilTestInvalid : public ::testing::TestWithParam<std::string> {};
 
 TEST_P(NetUtilTestInvalid, test) {
-  const std::string &ipstr = GetParam();
+  const std::string& ipstr = GetParam();
 
   bool ok = true;
   auto ipint = util::StringToIpv4(ipstr, &ok);
@@ -51,13 +51,13 @@ TEST_P(NetUtilTestInvalid, test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(test, NetUtilTestInvalid,
-                        ::testing::Values("", "-1.1.1.1", "0.0.0", "1.1..1", "1.1.1.1.",
-                                          "255.255.255.256", "256.0.0.1"));
+                         ::testing::Values("", "-1.1.1.1", "0.0.0", "1.1..1", "1.1.1.1.", "255.255.255.256",
+                                           "256.0.0.1"));
 
 class ParseHostPortInvalid : public ::testing::TestWithParam<std::string> {};
 
 TEST_P(ParseHostPortInvalid, Ipv4Host) {
-  const std::string &name = GetParam();
+  const std::string& name = GetParam();
   std::string host;
   int port{0};
   bool is_ipv6{false};
@@ -69,16 +69,15 @@ TEST_P(ParseHostPortInvalid, Ipv4Host) {
 }
 
 INSTANTIATE_TEST_SUITE_P(TestIpv4Invalid, ParseHostPortInvalid,
-                        ::testing::Values("127.0.0.1:abc", "127.0.0.1 10001",
-                                          "127.0.0.1:", "127.0.0.1"));
+                         ::testing::Values("127.0.0.1:abc", "127.0.0.1 10001", "127.0.0.1:", "127.0.0.1"));
 
 INSTANTIATE_TEST_SUITE_P(TestIpv6Invalid, ParseHostPortInvalid,
-                        ::testing::Values("[::1:10001", "::1]:10001", "[::1]:abc", "[::1] 10001",
-                                          "[::1]:", "[::1]", "::1"));
+                         ::testing::Values("[::1:10001", "::1]:10001", "[::1]:abc", "[::1] 10001", "[::1]:", "[::1]",
+                                           "::1"));
 
 INSTANTIATE_TEST_SUITE_P(TestDomainInvalid, ParseHostPortInvalid,
-                        ::testing::Values("www.baidu.com:abc", "www.baidu.com 10001",
-                                          "www.baidu.com:", "www.baidu.com"));
+                         ::testing::Values("www.baidu.com:abc", "www.baidu.com 10001",
+                                           "www.baidu.com:", "www.baidu.com"));
 
 TEST(ParseHostPortTest, TestValid) {
   // ipv4:port
@@ -114,7 +113,7 @@ TEST(ParseHostPortTest, TestValid) {
     EXPECT_EQ(10001, port);
     EXPECT_FALSE(is_ipv6);
   }
-   // ipv4:port weight
+  // ipv4:port weight
   {
     std::string host;
     int port{0};
