@@ -12,7 +12,6 @@ server:
       ip: 0.0.0.0 #Listen ip
       port: 12345 #Listen port
       protocol: trpc #Service application layer protocol, for example: trpc, http.
-      accept_thread_num: 1 #Number of threads for binding ports.
       filter:
         - token_bucket_limiter
 
