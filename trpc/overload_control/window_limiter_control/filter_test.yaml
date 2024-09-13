@@ -24,21 +24,6 @@ server:
 
 # Plugin configuration.
 plugins:
-  prometheus:
-    log: # Log configuration
-      default:
-        - name: default
-          min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
-          format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
-          mode: 2 # 1-sync, 2-async, 3-fast
-          sinks:
-            stdout: # Console output
-              min_level: 2
-              format: "[%Y-%m-%d %H:%M:%S.%e] [%l] %v"
-              mode: 1
-            local_file: # Local log file
-              filename: /home/ubuntu/myrpc/trpc-cpp/examples/helloworld/conf/test.log # The name of log file
-
   overload_control:
     window_limiter:
       - service_name: trpc.test.helloworld.Greeter #service name.
