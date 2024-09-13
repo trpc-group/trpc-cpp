@@ -27,15 +27,6 @@ server:
 
 #Plugin configuration.
 plugins:
-  log: #Log configuration
-    default:
-      - name: default
-        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
-        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v" # Output of all sinks in the log instance.
-        mode: 2 # 1-sync, 2-async, 3-fast
-        sinks:
-          local_file: # Local log file
-            filename: trpc.log # The name of log file
   overload_control:
     token_bucket_limiter:
       burst: 50 # Maximum of burst size. It is configured small for unit testing purposes, but users can configure it to be larger.
