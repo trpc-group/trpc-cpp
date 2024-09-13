@@ -28,7 +28,7 @@ namespace trpc::overload_control {
 void LoadWindowLimitControlConf(std::vector<FlowControlLimiterConf>& flow_control_confs) {
   YAML::Node flow_control_nodes;
   FlowControlLimiterConf flow_control_conf;
-  if (ConfigHelper::GetInstance()->GetConfig({"plugins", kWindowLimiterOverloadCtrConfField, kWindowLimiterControlName},
+  if (ConfigHelper::GetInstance()->GetConfig({"plugins", kOverloadCtrConfField, kWindowLimiterControlName},
                                              flow_control_nodes)) {
     for (const auto& node : flow_control_nodes) {
       auto flow_control_conf = node.as<FlowControlLimiterConf>();
@@ -108,7 +108,9 @@ void WindowLimiterOverloadController::Stop() {
 WindowLimiterOverloadController::WindowLimiterOverloadController() {}
 
 void WindowLimiterOverloadController::RegisterLimiter(const std::string& name, FlowControllerPtr limiter) {
-  if (smooth_limits_.count(name) == 0) smooth_limits_[name] = limiter;
+  if (smooth_limits_.count(name) == 0) {
+    smooth_limits_[name] = limiter;
+  }
 }
 
 FlowControllerPtr WindowLimiterOverloadController::GetLimiter(const std::string& name) {

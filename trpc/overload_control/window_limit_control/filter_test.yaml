@@ -39,7 +39,7 @@ plugins:
             local_file: # Local log file
               filename: /home/ubuntu/myrpc/trpc-cpp/examples/helloworld/conf/test.log # The name of log file
 
-  window_limiter_overload_control:
+  overload_control:
     window_limiter:
       - service_name: trpc.test.helloworld.Greeter #service name.
         is_report: true # Whether to report monitoring data.

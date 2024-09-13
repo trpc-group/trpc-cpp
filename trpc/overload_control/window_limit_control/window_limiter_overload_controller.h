@@ -29,11 +29,11 @@
 
 namespace trpc::overload_control {
 
-constexpr char WindowLimiterOverloadControllerName[] = "WindowLimiterOverloadController";
+constexpr char kWindowLimiterOverloadControllerName[] = "WindowLimiterOverloadController";
 
 class WindowLimiterOverloadController : public ServerOverloadController {
  public:
-  std::string Name() { return WindowLimiterOverloadControllerName; }
+  std::string Name() { return kWindowLimiterOverloadControllerName; }
 
   /// @brief Initialize the sliding window current limiting plugin
   /// @param Name of plugin Current limit quantity Record monitoring logs or not Number of time slots
