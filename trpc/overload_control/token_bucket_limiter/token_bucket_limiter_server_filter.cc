@@ -75,7 +75,7 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     return;
   }
 
-  auto now = trpc::time::GetSystemMicroSeconds();
+  auto now = trpc::time::GetSteadyNanoSeconds();
   bool passed = service_controller_->BeforeSchedule(context);
   if (!passed) {
     context->SetStatus(
