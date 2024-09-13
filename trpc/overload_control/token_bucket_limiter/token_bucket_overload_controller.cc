@@ -37,13 +37,17 @@ void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf
   capacity_ = conf.capacity;
   current_token_ = conf.initial_token;
   rate_ = conf.rate;
+  interval_ = 1000 / rate_;
 }
 
 void TokenBucketOverloadController::AddToken() {
   uint64_t current_timestamp = trpc::time::GetSteadyMilliSeconds();
   uint64_t gap_timestamp = current_timestamp - last_timestamp_;
-  uint32_t add_count = (uint32_t) (gap_timestamp * rate_ / 1000);
+  uint32_t add_count = (uint32_t) (gap_timestamp / interval_);
   current_token_ = std::min(current_token_ + add_count, capacity_);
+  if (add_count > 0) {
+    last_timestamp_ = (current_timestamp / interval_) * interval_;
+  }
 }
 
 uint32_t TokenBucketOverloadController::GetToken() {

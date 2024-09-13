@@ -66,7 +66,8 @@ private:
 
 private:
   uint32_t capacity_;       ///< Capacity of token bucket.
-  uint32_t rate_;           ///< The rate of adding tokens (per second)
+  uint32_t rate_;           ///< The rate of adding tokens (per second).
+  uint32_t interval_;       ///< The time interval of add token (millisecond).
   uint32_t current_token_;  ///< Current token count in token bucket.
   uint64_t last_timestamp_; ///< The timestamp(millisecond) of when the token was last added.
   std::mutex mutex_;        ///< Lock to protect current_token_.
