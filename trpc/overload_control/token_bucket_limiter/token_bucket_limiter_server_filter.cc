@@ -38,8 +38,8 @@ int TokenBucketLimiterServerFilter::Init() {
   }
   token_bucket_conf_.Display();
 
-  service_controller_ = std::make_shared<TokenBucketOverloadController>();
-  service_controller_->Register(token_bucket_conf_);
+  service_controller_ = std::make_shared<TokenBucketOverloadController>(token_bucket_conf_.burst, token_bucket_conf_.rate);
+  // service_controller_->Register(token_bucket_conf_);
   service_controller_->Init();
 
   return 0;

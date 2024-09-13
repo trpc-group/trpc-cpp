@@ -28,16 +28,15 @@
 
 namespace trpc::overload_control {
 
+TokenBucketOverloadController::TokenBucketOverloadController(uint64_t burst, uint64_t rate)
+    : burst_(burst), rate_(std::max(rate, min_rate_)) {
+  one_token_elapsed_ = nsecs_per_sec_ / rate_;
+  burst_elapsed_ = burst_ * one_token_elapsed_;
+}
+
 bool TokenBucketOverloadController::Init() {
   last_alloc_time_ = trpc::time::GetSteadyNanoSeconds();
   return true;
-}
-
-void TokenBucketOverloadController::Register(const TokenBucketLimiterControlConf& conf) {
-  burst_ = conf.burst;
-  rate_ = conf.rate;
-  one_token_elapsed_ = nsecs_per_sec_ / rate_;
-  burst_elapsed_ = burst_ * one_token_elapsed_;
 }
 
 bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& context) {

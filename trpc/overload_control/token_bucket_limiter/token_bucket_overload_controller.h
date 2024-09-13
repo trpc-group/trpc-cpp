@@ -40,8 +40,7 @@ namespace trpc::overload_control {
 /// @brief Overload protection controller based on token bucket algorithm.
 class TokenBucketOverloadController : public ServerOverloadController {
  public:
-  /// @brief Register the controller plugin by the config.
-  void Register(const TokenBucketLimiterControlConf& conf);
+  explicit TokenBucketOverloadController(uint64_t burst, uint64_t rate);
 
   /// @brief Name of controller
   std::string Name() override { return "TokenBucketOverloadController"; };
@@ -78,8 +77,11 @@ class TokenBucketOverloadController : public ServerOverloadController {
   // The time(nanoseconds) of burst_ tokens generation.
   uint64_t burst_elapsed_;
 
+  // Minimum generation rate
+  static constexpr uint64_t min_rate_ = 1;
+
   // Nanoseconds per second, 1s = 10^9 ns
-  static constexpr auto nsecs_per_sec_{static_cast<uint64_t>(1e9)};
+  static constexpr auto nsecs_per_sec_ = static_cast<uint64_t>(1e9);
 };
 
 using TokenBucketOverloadControllerPtr = std::shared_ptr<TokenBucketOverloadController>;
