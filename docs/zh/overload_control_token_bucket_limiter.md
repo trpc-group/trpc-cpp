@@ -12,7 +12,44 @@ tRPC-Cpp 框架应用于高并发的场景中，需要进行过载保护 ，以�
 
 ## 实现代码
 
- 框架的过载保护实现方式是基于[过滤器](./filter.md)，为了保证尽可能早进行限流保护；该过滤器会埋点在请求入队前，具体埋点实现如下：
+如上图所示，令牌桶的实现似乎是这样：
+
+维护一个定时器 Timer 和令牌桶对象 Bucket。Timer 以固定频率 `rate` 向 Bucket 存放 `token`，当  `token` 数量达到 `burst` 的时候， `token` 数不再增加；当请求到达的时候，减扣  `token`；当 `token` 数量为 0 时，拒绝请求。
+
+上述做法虽然很直观，但是实现复杂，且效率低下，存在空跑维护  `token` 的情况。
+
+针对上述问题，tRPC-Cpp 采用两种优化方式：
+
+- 惰性求值
+
+  所谓惰性求值是指在真正使用  `token` 的时候计算当前  `token` 的数量。基本思路如下：根据当前时间 `now` 与上一次分配令牌的时间 `last_alloc_time` 之差 `elapsed` 可以推算出桶内剩余令牌的数量 `token_cnt`。
+
+  已知生成令牌的速度 `rate`（tokens/s），可求其倒数得到 `one_token_elapsed` （s/token），即生成一个令牌所需要的时间，根据  `burst` 可求出装满令牌桶所需时间为 `burst_elapsed` 。
+
+  当  `elapsed` ≥ `burst_elapsed` 时，桶内剩余令牌数量 `token_cnt` 为  `burst` ；当 `elapsed` < `burst_elapsed` 时， `token_cnt` 为 `elapsed` /  `one_token_elapsed` 。
+
+- 以时间为计算单位，而不是令牌
+
+  根据上面的推导不难看出，在每次请求的时候都需要将  `elapsed` 映射为令牌数 `token_cnt`，需要做除法运算。此外，为了保证并发安全，我们需要锁来同时保护 `token_cnt ` 和 `last_alloc_time` 两个变量。 `token_cnt ` 和 `last_alloc_time` 存在简单的数学关系，实际上只需要维护 `last_alloc_time` 就可以了。在实现的时候也可以尽量减小锁的粒度。
+
+  我们不妨以时间为单位分析：
+
+  ![token_bucket_limiter](../images/analysis_of_token_availability_interval.svg)
+
+  通过三个时间点 `now - burst_elapsed`、`now - one_token_elapsed`、`now` 将时间区间分为 4 个部分：
+
+  - 当  `last_alloc_time` 处于黄色区域时，说明令牌早已满了，可以接收请求， `last_alloc_time` 应被视为  `now - burst_elapsed` 更新
+  - 当  `last_alloc_time` 处于绿色区域时，说明令牌没满，可以接收请求， `last_alloc_time` 正常更新
+  - 当  `last_alloc_time` 处于红色区域时，说明令牌不足1个，拒绝该请求
+  - 当  `last_alloc_time` 处于白色区域时，异常情况，拒绝该请求
+
+所谓更新是指在  `last_alloc_time` 的基础上增加 `one_token_elapsed`，表示消费一个令牌。
+
+统一单位带来的好处是：避免时间和令牌数的相互转换，不光有性能开销（乘除运算），数据类型选择不当可能会导致溢出或者精度丢失。
+
+源码参考：[token_bucket_overload_controller](../../trpc/overload_control/token_bucket_limiter/token_bucket_overload_controller.cc)
+
+框架的过载保护实现方式是基于[过滤器](./filter.md)，为了保证尽可能早进行限流保护；该过滤器会埋点在请求入队前，具体埋点实现如下：
 
   ```cpp
 std::vector<FilterPoint> ConcurrencyLimiterServerFilter::GetFilterPoint() {
