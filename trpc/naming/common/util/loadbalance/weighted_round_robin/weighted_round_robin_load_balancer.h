@@ -43,7 +43,7 @@ class SWRoundRobinLoadBalance : public LoadBalance {
     std::uint32_t total_weight;
   };
   std::unordered_map<std::string, InnerEndpointInfos> callee_router_infos_;
-  mutable std::shared_mutex mutex_;
+  std::shared_mutex mutex_;
 };
 
 using SWRoundRobinLoadBalancePtr = RefPtr<SWRoundRobinLoadBalance>;

@@ -809,7 +809,7 @@ void ServiceProxy::SetEndpointInfo(const std::string& endpoint_info) {
 
   RouterInfo info;
   info.name = GetServiceName();
-  info.load_balance_name=option_->load_balance_name;
+  info.load_balance_name = option_->load_balance_name;
   ConvertEndpointInfo(endpoint_info, info.info);
   if (info.info.size() <= 0) {
     TRPC_LOG_ERROR("Service endpoint info of " << GetServiceName()
