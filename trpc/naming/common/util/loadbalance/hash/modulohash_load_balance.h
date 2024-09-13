@@ -53,7 +53,7 @@ class ModuloHashLoadBalance : public LoadBalance {
 
   std::unordered_map<std::string, std::vector<TrpcEndpointInfo>> callee_router_infos_;
 
-  mutable std::shared_mutex mutex_;
+  std::shared_mutex mutex_;
 
   naming::LoadBalanceConfig loadbalance_config_;
 

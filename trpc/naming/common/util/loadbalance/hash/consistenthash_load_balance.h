@@ -61,7 +61,7 @@ class ConsistentHashLoadBalance : public LoadBalance {
 
   naming::LoadBalanceConfig loadbalance_config_;
 
-  mutable std::shared_mutex mutex_;
+  std::shared_mutex mutex_;
 };
 
 }  // namespace trpc
