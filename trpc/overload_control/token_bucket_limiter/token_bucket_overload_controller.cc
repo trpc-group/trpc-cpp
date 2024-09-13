@@ -61,7 +61,6 @@ bool TokenBucketOverloadController::BeforeSchedule(const ServerContextPtr& conte
     return false;
   }
   --current_token_;
-  last_timestamp_ = trpc::time::GetSteadyMilliSeconds();
   return true;
 }
 
