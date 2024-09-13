@@ -84,7 +84,7 @@ class TokenBucketOverloadController : public ServerOverloadController {
   static constexpr auto nsecs_per_sec_ = static_cast<uint64_t>(1e9);
 };
 
-using TokenBucketOverloadControllerPtr = std::shared_ptr<TokenBucketOverloadController>;
+using TokenBucketOverloadControllerPtr = std::unique_ptr<TokenBucketOverloadController>;
 
 }  // namespace trpc::overload_control
 
