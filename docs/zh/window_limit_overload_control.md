@@ -67,7 +67,7 @@ class HelloWorldServer : public ::trpc::TrpcApp {
   // ...
   int RegisterPlugins() {
   // register server-side filter
-  auto server_filter = std::make_shared<trpc::overload_control::WindowLimitOverloadControlFilter>();
+  auto server_filter = std::make_shared<trpc::overload_control::WindowLimiterOverloadControlFilter>();
   trpc::TrpcPlugin::GetInstance()->RegisterServerFilter(server_filter);
   return 0;
   }
