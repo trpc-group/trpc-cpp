@@ -1,13 +1,6 @@
 #Global configuration (required)
 global:
   local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
-  threadmodel:
-    default:
-      # Separate model
-      - instance_name: default_instance
-        io_handle_type: separate
-        io_thread_num: 4 #Number of network I/O threads.
-        handle_thread_num: 4 #Number of business processing handle threads.
 
 #Server configuration
 server:
