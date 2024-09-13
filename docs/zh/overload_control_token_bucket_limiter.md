@@ -104,24 +104,12 @@ build --define trpc_include_overload_control=true
 令牌桶过滤器配置如下（详细配置参考：[token_bucket_overload_ctrl.yaml](../../trpc/overload_control/token_bucket_limiter/token_bucket_overload_ctrl.yaml)）：
 
 ```yaml
-#Global configuration (required)
-global:
-  local_ip: 0.0.0.0 #Local IP, used for: not affecting the normal operation of the framework, used to obtain the local IP from the framework configuration.
-
-#Server configuration
 server:
-  app: test #Business name, such as: COS, CDB.
-  server: helloworld #Module name of the business
-  service: #Business service, can have multiple.
-    - name: trpc.test.helloworld.Greeter #Service name, needs to be filled in according to the format, the first field is default to trpc, the second and third fields are the app and server configurations above, and the fourth field is the user-defined service_name.
-      network: tcp #Network listening type: for example: TCP, UDP.
-      ip: 0.0.0.0 #Listen ip
-      port: 12345 #Listen port
-      protocol: trpc #Service application layer protocol, for example: trpc, http.
-      filter:
-        - token_bucket_limiter
+  service:
+    - name: trpc.test.helloworld.Greeter
+       filter:
+         - token_bucket_limiter
 
-#Plugin configuration.
 plugins:
   overload_control:
     token_bucket_limiter:
