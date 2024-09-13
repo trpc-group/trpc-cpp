@@ -95,10 +95,10 @@ bool WindowLimiterOverloadController::BeforeSchedule(const ServerContextPtr& con
 }
 
 void WindowLimiterOverloadController::Destroy() {
-  for (auto smooth_limits_iter : smooth_limits_) {
-    smooth_limits_iter.second.reset();
+  for (auto window_limiters_iter : window_limiters_) {
+    window_limiters_iter.second.reset();
   }
-  smooth_limits_.clear();
+  window_limiters_.clear();
 }
 
 void WindowLimiterOverloadController::Stop() {
@@ -108,15 +108,15 @@ void WindowLimiterOverloadController::Stop() {
 WindowLimiterOverloadController::WindowLimiterOverloadController() {}
 
 void WindowLimiterOverloadController::RegisterLimiter(const std::string& name, FlowControllerPtr limiter) {
-  if (smooth_limits_.count(name) == 0) {
-    smooth_limits_[name] = limiter;
+  if (window_limiters_.count(name) == 0) {
+    window_limiters_[name] = limiter;
   }
 }
 
 FlowControllerPtr WindowLimiterOverloadController::GetLimiter(const std::string& name) {
   FlowControllerPtr ret = nullptr;
-  auto iter = smooth_limits_.find(name);
-  if (iter != smooth_limits_.end()) {
+  auto iter = window_limiters_.find(name);
+  if (iter != window_limiters_.end()) {
     ret = iter->second;
   }
   return ret;

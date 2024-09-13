@@ -68,7 +68,7 @@ class WindowLimiterOverloadController : public ServerOverloadController {
   FlowControllerPtr GetLimiter(const std::string& name);
  
  private:
-  std::unordered_map<std::string, FlowControllerPtr> smooth_limits_;
+  std::unordered_map<std::string, FlowControllerPtr> window_limiters_;
 };
 }  // namespace trpc::overload_control
 #endif
