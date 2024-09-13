@@ -15,7 +15,7 @@ build --define trpc_include_overload_control=true
 ```
 # Plugin configuration.
 plugins:
-  window_limit_overload_control:
+  window_limiter_overload_control:
     window_limiter:
       - service_name: xxxx
         is_report: xxxx
