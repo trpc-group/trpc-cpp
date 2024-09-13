@@ -76,7 +76,6 @@ cc_library(
         ":token_bucket_overload_controller",
         "//trpc/filter",
         "//trpc/log:trpc_log",
-        "//trpc/metrics:trpc_metrics",
         "//trpc/overload_control:overload_control_defs",
         "//trpc/overload_control/common:report",
         "//trpc/runtime/common/stats:frame_stats",
