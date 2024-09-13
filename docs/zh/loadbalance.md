@@ -17,12 +17,6 @@ client:
       load_balance_name: consistent_hash   
 
 plugins:
-  log:
-    default:
-      - name: default
-        sinks:
-          local_file:
-            filename: trpc_fiber_client.
   loadbalance:
     consistent_hash:
       hash_nodes: 20		 
