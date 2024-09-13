@@ -13,8 +13,6 @@ global:
 server:
   app: test #Business name, such as: COS, CDB.
   server: helloworld #Module name of the business
-  admin_port: 21111 # Admin port
-  admin_ip: 0.0.0.0 # Admin ip
   service: #Business service, can have multiple.
     - name: trpc.test.helloworld.Greeter #Service name, needs to be filled in according to the format, the first field is default to trpc, the second and third fields are the app and server configurations above, and the fourth field is the user-defined service_name.
       network: tcp #Network listening type: for example: TCP, UDP.
