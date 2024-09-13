@@ -27,8 +27,6 @@ bool Init() {
 
 void Stop() {}
 
-void Destroy() {
-  LoadBalanceFactory::GetInstance()->Clear();
-}
+void Destroy() { LoadBalanceFactory::GetInstance()->Clear(); }
 
 }  // namespace trpc::loadbalance

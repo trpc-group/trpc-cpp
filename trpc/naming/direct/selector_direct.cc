@@ -164,8 +164,7 @@ int SelectorDirect::SetEndpoints(const RouterInfo* info) {
   load_balance_info.endpoints = &endpoints_info.endpoints;
   auto lb = GetLoadBalance(info->load_balance_name);
   if (lb->Update(&load_balance_info)) {
-    std::string error_str = "Do load balance of " + info->name + " failed";
-    TRPC_FMT_ERROR(error_str);
+    TRPC_FMT_ERROR("Loadbalance {} update failed.", info->name);
     return -1;
   }
   return 0;

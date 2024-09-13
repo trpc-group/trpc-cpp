@@ -105,7 +105,7 @@ bool ParseHostPort(const std::string& name, std::string& host, int& port, bool& 
   int temp_port;
   bool temp_is_ipv6;
   uint32_t temp_weight = 0;
-  size_t weight_start=0;
+  size_t weight_start = 0;
 
   if (!name.empty() && name[0] == '[') {
     // ipv6
