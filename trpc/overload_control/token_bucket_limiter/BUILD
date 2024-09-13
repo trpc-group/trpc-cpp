@@ -44,10 +44,8 @@ cc_library(
     ],
     deps = [
         ":token_bucket_limiter_conf",
-        "//trpc/log:trpc_log",
         "//trpc/overload_control:overload_control_defs",
         "//trpc/overload_control:server_overload_controller",
-        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )
 
