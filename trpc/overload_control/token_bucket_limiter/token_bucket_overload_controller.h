@@ -77,7 +77,7 @@ class TokenBucketOverloadController : public ServerOverloadController {
   // The time(nanoseconds) of burst_ tokens generation.
   uint64_t burst_elapsed_;
 
-  // Minimum generation rate
+  // Minimum rate(tokens/second) of token generation.
   static constexpr uint64_t min_rate_ = 1;
 
   // Nanoseconds per second, 1s = 10^9 ns
