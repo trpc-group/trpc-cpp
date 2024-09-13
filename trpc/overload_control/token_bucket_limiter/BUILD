@@ -76,7 +76,6 @@ cc_library(
     deps = [
         ":token_bucket_limiter_conf",
         ":token_bucket_overload_controller",
-        "//trpc/common/config:trpc_config",
         "//trpc/filter",
         "//trpc/log:trpc_log",
         "//trpc/metrics:trpc_metrics",

@@ -24,7 +24,6 @@
 
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_limiter_server_filter.h"
 
-#include "trpc/common/config/trpc_config.h"
 #include "trpc/log/trpc_log.h"
 #include "trpc/metrics/trpc_metrics.h"
 #include "trpc/overload_control/common/report.h"
