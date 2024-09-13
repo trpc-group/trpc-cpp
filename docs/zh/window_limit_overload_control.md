@@ -14,17 +14,22 @@ build --define trpc_include_overload_control=true
 服务端流量控制配置如下（详细配置参考：[flow_test.yaml](../../trpc/overload_control/flow_control/flow_test.yaml)）：
 ```
 # Plugin configuration.
+server:
+  service:
+    - name: trpc.test.helloworld.Greeter
+      filter:
+        - window_limiter
 plugins:
   overload_control:
     window_limiter:
-      - service_name: xxxx
-        is_report: xxxx
-        service_limiter: xxxx
-        window_size: xxxx
+      - service_name: trpc.test.helloworld.Greeter
+        is_report: true
+        service_limiter: smooth(5)
+        window_size: 100
         func_limiter: 
-          - name: xxxx
-            limiter: xxxx
-            window_size: xxxx
+          - name: SayHello
+            limiter: default(5)
+            window_size: 100
 ```
 
 配置关键点如下：
