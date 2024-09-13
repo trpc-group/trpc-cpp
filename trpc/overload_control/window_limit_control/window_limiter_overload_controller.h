@@ -21,6 +21,7 @@
 #include <unordered_map>
 
 #include "trpc/util/function.h"
+#include "trpc/overload_control/overload_control_defs.h"
 #include "trpc/overload_control/flow_control/smooth_limiter.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
 #include "trpc/overload_control/flow_control/flow_controller_conf.h"
@@ -28,27 +29,20 @@
 
 namespace trpc::overload_control {
 
-constexpr char WindowLimitOverloadControllerName[] = "WindowLimitOverloadController";
+constexpr char WindowLimiterOverloadControllerName[] = "WindowLimiterOverloadController";
 
-constexpr char kWindowLimitOverloadCtrConfField[] = "window_limit_overload_control";
-
-constexpr char kWindowLimitControlName[] = "window_limiter";
-
-/// @brief Default number of time frames per second
-constexpr int32_t kDefaultNumber = 100;
-
-class WindowLimitOverloadController : public ServerOverloadController {
+class WindowLimiterOverloadController : public ServerOverloadController {
  public:
-  std::string Name() { return WindowLimitOverloadControllerName; }
+  std::string Name() { return WindowLimiterOverloadControllerName; }
 
   /// @brief Initialize the sliding window current limiting plugin
   /// @param Name of plugin Current limit quantity Record monitoring logs or not Number of time slots
-  explicit WindowLimitOverloadController();
+  explicit WindowLimiterOverloadController();
 
   /// @note Do nothing, the entire plugin requires manual destruction of only thread resources
   /// @brief From the implementation of filter, it can be seen that before destruction
   /// the plugin's stop() and destroy() will be called first
-  ~WindowLimitOverloadController();
+  ~WindowLimiterOverloadController();
 
   /// @note Func called before onrequest() is called at the buried point location, and checkpoint() is called internally
   /// @param Context represents the storage of status within the context service name、caller name
@@ -68,6 +62,7 @@ class WindowLimitOverloadController : public ServerOverloadController {
   /// @brief Destroy thread
   void Destroy();
 
+ private:
   void RegisterLimiter(const std::string& name, FlowControllerPtr limiter);
 
   FlowControllerPtr GetLimiter(const std::string& name);

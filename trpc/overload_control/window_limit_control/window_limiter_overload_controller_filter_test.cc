@@ -13,7 +13,7 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/window_limit_control/window_limit_overload_controller.h"
+#include "trpc/overload_control/window_limit_control/window_limiter_overload_controller_filter.h"
 
 #include <memory>
 #include <utility>
@@ -22,13 +22,13 @@
 #include "gtest/gtest.h"
 
 #include "trpc/common/trpc_plugin.h"
-#include "trpc/filter/filter_manager.h"
 #include "trpc/server/server_context.h"
+#include "trpc/filter/filter_manager.h"
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/codec/testing/protocol_testing.h"
 #include "trpc/overload_control/flow_control/flow_controller.h"
 #include "trpc/overload_control/flow_control/flow_controller_server_filter.h"
-#include "trpc/overload_control/window_limit_control/window_limit_overload_controller_filter.h"
+#include "trpc/overload_control/window_limit_control/window_limiter_overload_controller.h"
 
 namespace trpc::overload_control {
 
@@ -44,7 +44,7 @@ class MockFlowControl : public FlowController {
 class FlowControlServerFilterTestFixture : public ::testing::Test {
  public:
   static void SetUpTestCase() {
-    trpc::TrpcConfig::GetInstance()->Init("./trpc/overload_control/window_limit_control/filter_test.yaml");
+    trpc::TrpcConfig::GetInstance()->Init("./trpc/overload_control/window_limiter_control/filter_test.yaml");
     trpc::TrpcPlugin::GetInstance()->RegisterPlugins();
   }
 
@@ -59,19 +59,41 @@ class FlowControlServerFilterTestFixture : public ::testing::Test {
 };
 
 TEST_F(FlowControlServerFilterTestFixture, Init) {
-  auto overload_control = WindowLimitOverloadController();
-  overload_control.Init();
-  ASSERT_NE(overload_control.GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
-  ASSERT_NE(overload_control.GetLimiter("/trpc.test.helloworld.Greeter/SayHello"), nullptr);
-  ASSERT_NE(overload_control.GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
-            nullptr);
-  ASSERT_NE(overload_control.GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"), nullptr);
-  overload_control.Destroy();
-  ASSERT_EQ(overload_control.GetLimiter("trpc.test.helloworld.Greeter"), nullptr);
-  ASSERT_EQ(overload_control.GetLimiter("/trpc.test.helloworld.Greeter/SayHello"), nullptr);
-  ASSERT_EQ(overload_control.GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"),
-            nullptr);
-  ASSERT_EQ(overload_control.GetLimiter("/trpc.test.helloworld.Greeter/SayHelloAgain"), nullptr);
+  auto filter = WindowLimiterOverloadControlFilter();
+  filter.Init();
+  auto filter_name = filter.Name();
+  ASSERT_EQ(filter_name, "window_limiter");
+}
+
+// Scenarios where requests are not intercepted after flow control is executed during testing.
+TEST_F(FlowControlServerFilterTestFixture, Ok) {
+  auto flow_control_filter = WindowLimiterOverloadControlFilter();
+
+  ServerContextPtr context = MakeServerContext();
+
+  context->SetFuncName("Say");
+
+  FilterStatus status = FilterStatus::CONTINUE;
+  flow_control_filter.operator()(status, FilterPoint::SERVER_POST_RECV_MSG, context);
+  ASSERT_EQ(context->GetStatus().OK(), true);
+  ASSERT_EQ(status, FilterStatus::CONTINUE);
+
+  // dirty request
+  context->SetStatus(Status(-1, ""));
+  flow_control_filter.operator()(status, FilterPoint::SERVER_POST_RECV_MSG, context);
+  ASSERT_EQ(context->GetStatus().OK(), false);
+
+  context->SetStatus(Status(0, ""));
+  // service_->SetName("trpc.test.helloworld.Greeter");
+  context->SetFuncName("SayHello");
+  // Flow control is executed
+  flow_control_filter.operator()(status, FilterPoint::SERVER_POST_RECV_MSG, context);
+  ASSERT_EQ(context->GetStatus().OK(), true);
+  ASSERT_EQ(status, FilterStatus::CONTINUE);
+
+  // Testing invalid tracking points.
+  flow_control_filter.operator()(status, FilterPoint::SERVER_PRE_SEND_MSG, context);
+  ASSERT_EQ(status, FilterStatus::CONTINUE);
 }
 
 }  // namespace testing

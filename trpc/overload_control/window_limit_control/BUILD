@@ -3,9 +3,9 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "window_limit_overload_controller_filter",
-    srcs = ["window_limit_overload_controller_filter.cc"],
-    hdrs = ["window_limit_overload_controller_filter.h"],
+    name = "window_limiter_overload_controller_filter",
+    srcs = ["window_limiter_overload_controller_filter.cc"],
+    hdrs = ["window_limiter_overload_controller_filter.h"],
     defines = [] +
               select({
                   "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
@@ -15,7 +15,7 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        ":window_limit_overload_controller",
+        ":window_limiter_overload_controller",
         "//trpc/filter:filter",
         "//trpc/overload_control/flow_control:flow_controller_conf",
         "//trpc/server:server_context",
@@ -24,9 +24,9 @@ cc_library(
 )
 
 cc_library(
-    name = "window_limit_overload_controller",
-    srcs = ["window_limit_overload_controller.cc"],
-    hdrs = ["window_limit_overload_controller.h"],
+    name = "window_limiter_overload_controller",
+    srcs = ["window_limiter_overload_controller.cc"],
+    hdrs = ["window_limiter_overload_controller.h"],
     defines = [] +
               select({
                   "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
@@ -36,6 +36,7 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
+        "//trpc/overload_control:overload_control_defs",
         "//trpc/overload_control:server_overload_controller",
         "//trpc/overload_control/common:report",
         "//trpc/overload_control/flow_control:flow_controller",
@@ -48,14 +49,14 @@ cc_library(
 )
 
 cc_test(
-    name = "window_limit_overload_controller_filter_test",
-    srcs = ["window_limit_overload_controller_filter_test.cc"],
+    name = "window_limiter_overload_controller_filter_test",
+    srcs = ["window_limiter_overload_controller_filter_test.cc"],
     data = [
         ":filter_test.yaml",
     ],
     deps = [
-        ":window_limit_overload_controller",
-        ":window_limit_overload_controller_filter",
+        ":window_limiter_overload_controller",
+        ":window_limiter_overload_controller_filter",
         "//trpc/codec/testing:protocol_testing",
         "//trpc/common:trpc_plugin",
         "@com_google_googletest//:gtest_main",
@@ -63,14 +64,14 @@ cc_test(
 )
 
 cc_test(
-    name = "window_limit_overload_controller_test",
-    srcs = ["window_limit_overload_controller_test.cc"],
+    name = "window_limiter_overload_controller_test",
+    srcs = ["window_limiter_overload_controller_test.cc"],
     data = [
         ":filter_test.yaml",
     ],
     deps = [
-        ":window_limit_overload_controller",
-        ":window_limit_overload_controller_filter",
+        ":window_limiter_overload_controller",
+        ":window_limiter_overload_controller_filter",
         "//trpc/codec/testing:protocol_testing",
         "//trpc/common:trpc_plugin",
         "@com_google_googletest//:gtest_main",

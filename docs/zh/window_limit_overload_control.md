@@ -9,58 +9,22 @@
 ```sh
 build --define trpc_include_overload_control=true
 ```
-单元测试
-```
-bazel test //trpc/overload_control/window_limit_control:window_limit_overload_controller_filter_test 
-bazel test //trpc/overload_control/window_limit_control:window_limit_overload_controller_test
-
-```
-
 ## 配置文件
 
 服务端流量控制配置如下（详细配置参考：[flow_test.yaml](../../trpc/overload_control/flow_control/flow_test.yaml)）：
 ```
-global:
-  threadmodel:
-    fiber:                            # Use Fiber(m:n coroutine) threadmodel
-      - instance_name: fiber_instance # Need to be unique if you config multiple fiber threadmodel instances
-        # Fiber worker thread num
-        # If not specified, will use number of cores on the machine.
-        # In a Numa architecture, the workers will be automatically grouped (8-15 cores per group),
-        # while in Uma architecture, they will not be grouped.
-        concurrency_hint: 8
-
-server:
-  app: test
-  server: helloworld
-  admin_port: 8888                    # Start server with admin service which can manage service
-  admin_ip: 0.0.0.0
-  service:
-    - name: trpc.test.helloworld.Greeter
-      protocol: trpc                  # Application layer protocol, eg: trpc/http/...
-      network: tcp                    # Network type, Support two types: tcp/udp
-      ip: 0.0.0.0                     # Service bind ip
-      port: 12345  
-      filter:
-        - window_limiter         # Service bind port
-
 # Plugin configuration.
 plugins:
-  prometheus:
-
   window_limit_overload_control:
     window_limiter:
-      - service_name: trpc.test.helloworld.Greeter #service name.
-        is_report: true # Whether to report monitoring data.
-        service_limiter: default(10) #Service-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-        window_size: 9
-        func_limiter: # Interface-level flow control.
-          - name: SayHello # Method name
-            limiter: smooth(5) # Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-            window_size: 9
-          - name: SayHelloAgain # Method name
-            limiter: smooth(5) # Interface-level flow control limiter, standard format: name (maximum limit per second), empty for no limit.
-            window_size: 9
+      - service_name: xxxx
+        is_report: xxxx
+        service_limiter: xxxx
+        window_size: xxxx
+        func_limiter: 
+          - name: xxxx
+            limiter: xxxx
+            window_size: xxxx
 ```
 
 配置关键点如下：

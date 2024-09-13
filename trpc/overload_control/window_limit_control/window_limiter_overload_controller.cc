@@ -13,13 +13,12 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/window_limit_control/window_limit_overload_controller.h"
+#include "trpc/overload_control/window_limit_control/window_limiter_overload_controller.h"
 
 #include <cmath>
 #include <chrono>
 #include <cstdint>
 
-#include "trpc/log/trpc_log.h"
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/overload_control/common/report.h"
 #include "trpc/overload_control/flow_control/flow_controller_generator.h"
@@ -29,7 +28,7 @@ namespace trpc::overload_control {
 void LoadWindowLimitControlConf(std::vector<FlowControlLimiterConf>& flow_control_confs) {
   YAML::Node flow_control_nodes;
   FlowControlLimiterConf flow_control_conf;
-  if (ConfigHelper::GetInstance()->GetConfig({"plugins", kWindowLimitOverloadCtrConfField, kWindowLimitControlName},
+  if (ConfigHelper::GetInstance()->GetConfig({"plugins", kWindowLimiterOverloadCtrConfField, kWindowLimiterControlName},
                                              flow_control_nodes)) {
     for (const auto& node : flow_control_nodes) {
       auto flow_control_conf = node.as<FlowControlLimiterConf>();
@@ -38,7 +37,7 @@ void LoadWindowLimitControlConf(std::vector<FlowControlLimiterConf>& flow_contro
   }
 }
 
-bool WindowLimitOverloadController::Init() {
+bool WindowLimiterOverloadController::Init() {
   std::vector<FlowControlLimiterConf> flow_control_confs;
   LoadWindowLimitControlConf(flow_control_confs);
   for (const auto& flow_conf : flow_control_confs) {
@@ -70,7 +69,7 @@ bool WindowLimitOverloadController::Init() {
   return 0;
 }
 
-bool WindowLimitOverloadController::BeforeSchedule(const ServerContextPtr& context) {
+bool WindowLimiterOverloadController::BeforeSchedule(const ServerContextPtr& context) {
   auto service_controller = GetLimiter(context->GetCalleeName());
   // func flow controller
   auto func_controller = GetLimiter(context->GetFuncName());
@@ -95,24 +94,24 @@ bool WindowLimitOverloadController::BeforeSchedule(const ServerContextPtr& conte
   return true;
 }
 
-void WindowLimitOverloadController::Destroy() {
+void WindowLimiterOverloadController::Destroy() {
   for (auto smooth_limits_iter : smooth_limits_) {
     smooth_limits_iter.second.reset();
   }
   smooth_limits_.clear();
 }
 
-void WindowLimitOverloadController::Stop() {
+void WindowLimiterOverloadController::Stop() {
     // nothing to do,The time thread automatically stops.
 };
 
-WindowLimitOverloadController::WindowLimitOverloadController() {}
+WindowLimiterOverloadController::WindowLimiterOverloadController() {}
 
-void WindowLimitOverloadController::RegisterLimiter(const std::string& name, FlowControllerPtr limiter) {
+void WindowLimiterOverloadController::RegisterLimiter(const std::string& name, FlowControllerPtr limiter) {
   if (smooth_limits_.count(name) == 0) smooth_limits_[name] = limiter;
 }
 
-FlowControllerPtr WindowLimitOverloadController::GetLimiter(const std::string& name) {
+FlowControllerPtr WindowLimiterOverloadController::GetLimiter(const std::string& name) {
   FlowControllerPtr ret = nullptr;
   auto iter = smooth_limits_.find(name);
   if (iter != smooth_limits_.end()) {
@@ -123,7 +122,7 @@ FlowControllerPtr WindowLimitOverloadController::GetLimiter(const std::string& n
 
 // The destructor does nothing, but the stop method in public needs to set the timed task to join and make it invalid
 // The user must stop before calling destroy
-WindowLimitOverloadController::~WindowLimitOverloadController() {}
+WindowLimiterOverloadController::~WindowLimiterOverloadController() {}
 
 }  // namespace trpc::overload_control
 #endif

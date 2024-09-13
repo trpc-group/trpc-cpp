@@ -13,18 +13,18 @@
 
 #ifdef TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL
 
-#include "trpc/overload_control/window_limit_control/window_limit_overload_controller_filter.h"
+#include "trpc/overload_control/window_limit_control/window_limiter_overload_controller_filter.h"
 
 #include "trpc/util/likely.h"
 #include "trpc/overload_control/flow_control/flow_controller_conf.h"
 
 namespace trpc::overload_control {
 
-int WindowLimitOverloadControlFilter::Init() { return controller_->Init(); }
+int WindowLimiterOverloadControlFilter::Init() { return controller_->Init(); }
 
-WindowLimitOverloadControlFilter::WindowLimitOverloadControlFilter(): controller_(std::make_unique<WindowLimitOverloadController>()) {}
+WindowLimiterOverloadControlFilter::WindowLimiterOverloadControlFilter(): controller_(std::make_unique<WindowLimiterOverloadController>()) {}
 
-std::vector<FilterPoint> WindowLimitOverloadControlFilter::GetFilterPoint() {
+std::vector<FilterPoint> WindowLimiterOverloadControlFilter::GetFilterPoint() {
   return {
       FilterPoint::SERVER_PRE_SCHED_RECV_MSG,
       // This tracking point is not being used, but tracking points must be paired, so it is added here.
@@ -32,7 +32,7 @@ std::vector<FilterPoint> WindowLimitOverloadControlFilter::GetFilterPoint() {
   };
 }
 
-void WindowLimitOverloadControlFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
+void WindowLimiterOverloadControlFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
   switch (point) {
     case FilterPoint::SERVER_PRE_SCHED_RECV_MSG: {
       OnRequest(status, context);
@@ -44,7 +44,7 @@ void WindowLimitOverloadControlFilter::operator()(FilterStatus& status, FilterPo
   }
 }
 
-void WindowLimitOverloadControlFilter::OnRequest(FilterStatus& status, const ServerContextPtr& context) {
+void WindowLimiterOverloadControlFilter::OnRequest(FilterStatus& status, const ServerContextPtr& context) {
   if (TRPC_UNLIKELY(!context->GetStatus().OK())) {
     // If it is already a dirty request, it will not be processed further to ensure that the first error code is
     // not overwritten.
