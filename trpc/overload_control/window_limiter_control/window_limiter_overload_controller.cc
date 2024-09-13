@@ -15,8 +15,8 @@
 
 #include "trpc/overload_control/window_limiter_control/window_limiter_overload_controller.h"
 
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 
 #include "trpc/common/config/trpc_config.h"
@@ -47,7 +47,7 @@ bool WindowLimiterOverloadController::Init() {
       if (service_controller) {
         RegisterLimiter(flow_conf.service_name, service_controller);
       } else {
-        TRPC_FMT_ERROR("create service window limit control fail|service_name: {}, |service_limiter: {}",
+        TRPC_FMT_ERROR("create service window limiter control fail|service_name: {}, |service_limiter: {}",
                        flow_conf.service_name, flow_conf.service_limiter);
       }
     }
@@ -60,7 +60,7 @@ bool WindowLimiterOverloadController::Init() {
         if (func_controller) {
           RegisterLimiter(service_func_name, func_controller);
         } else {
-          TRPC_FMT_ERROR("create func window limit control fail|service_name:{}|func_name:{}|limiter:{}",
+          TRPC_FMT_ERROR("create func window limiter control fail|service_name:{}|func_name:{}|limiter:{}",
                          flow_conf.service_name, func_conf.name, func_conf.limiter);
         }
       }
@@ -80,14 +80,15 @@ bool WindowLimiterOverloadController::BeforeSchedule(const ServerContextPtr& con
   // flow control strategy
   if (service_controller && service_controller->CheckLimit(context)) {
     context->SetStatus(
-        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server window limit overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server window limit overload , service name: {}", context->GetCalleeName());
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server window limiter overload control"));
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server window limiter overload , service name: {}",
+                                context->GetCalleeName());
     return false;
   }
   if (func_controller && func_controller->CheckLimit(context)) {
     context->SetStatus(
-        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server window limit overload control"));
-    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server window limit overload , service name: {}, func name: {}",
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server window limiter overload control"));
+    TRPC_FMT_ERROR_EVERY_SECOND("rejected by server window limiter overload , service name: {}, func name: {}",
                                 context->GetCalleeName(), context->GetFuncName());
     return false;
   }
@@ -101,7 +102,7 @@ void WindowLimiterOverloadController::Destroy() {
   window_limiters_.clear();
 }
 
-void WindowLimiterOverloadController::Stop() {
+void WindowLimiterOverloadController::Stop(){
     // nothing to do,The time thread automatically stops.
 };
 

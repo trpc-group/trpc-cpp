@@ -15,14 +15,15 @@
 
 #include "trpc/overload_control/window_limiter_control/window_limiter_overload_controller_filter.h"
 
-#include "trpc/util/likely.h"
 #include "trpc/overload_control/flow_control/flow_controller_conf.h"
+#include "trpc/util/likely.h"
 
 namespace trpc::overload_control {
 
 int WindowLimiterOverloadControlFilter::Init() { return controller_->Init(); }
 
-WindowLimiterOverloadControlFilter::WindowLimiterOverloadControlFilter(): controller_(std::make_unique<WindowLimiterOverloadController>()) {}
+WindowLimiterOverloadControlFilter::WindowLimiterOverloadControlFilter()
+    : controller_(std::make_unique<WindowLimiterOverloadController>()) {}
 
 std::vector<FilterPoint> WindowLimiterOverloadControlFilter::GetFilterPoint() {
   return {
@@ -32,7 +33,8 @@ std::vector<FilterPoint> WindowLimiterOverloadControlFilter::GetFilterPoint() {
   };
 }
 
-void WindowLimiterOverloadControlFilter::operator()(FilterStatus& status, FilterPoint point, const ServerContextPtr& context) {
+void WindowLimiterOverloadControlFilter::operator()(FilterStatus& status, FilterPoint point,
+                                                    const ServerContextPtr& context) {
   switch (point) {
     case FilterPoint::SERVER_PRE_SCHED_RECV_MSG: {
       OnRequest(status, context);
