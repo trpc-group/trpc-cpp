@@ -37,7 +37,11 @@
 # 三、使用方法
  
 - **注入插件**：在client中配置`load_balance_name`的插件 `load_balance_name: swround_robin`
-- **配置权重信息**：在客户端配置文件中，在 `plugins` 配置中`loadbalance`中配置对应服务的权重信息，详情操作参考下面，
+- **配置权重信息**：你可以在每个service的 target 字段中配置权重信息，格式为 ip:port(weight)，用于指定不同目标服务器的 IP 地址、端口和对应的权重。例如：
+  - **IPv4 示例**
+    - 127.0.0.1:8888(2) ,表示 IP 地址为 127.0.0.1，端口为 8888，权重为 2。
+  - **IPv6 示例**
+    - [::1]:8888(1)，表示 IP 地址为 ::1（IPv6 回环地址），端口为 8888，权重为 1。
 
 ```yaml
 client:
@@ -48,12 +52,4 @@ client:
       network: tcp                  # Network type, Support two types: tcp/udp
       selector_name: direct         # Selector plugin, default `direct`, it is used when you want to access via ip:port
       load_balance_name: swround_robin 
-
-plugins:
-  log:
-    default:
-      - name: default
-        sinks:
-          local_file:
-            filename: trpc_fiber_client.log 
 ```
