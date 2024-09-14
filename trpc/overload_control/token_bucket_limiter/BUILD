@@ -46,6 +46,7 @@ cc_library(
         ":token_bucket_limiter_conf",
         "//trpc/overload_control:overload_control_defs",
         "//trpc/overload_control:server_overload_controller",
+        "//trpc/overload_control/common:report",
     ],
 )
 
@@ -93,6 +94,7 @@ cc_test(
         ":token_bucket_limiter_server_filter",
         "//trpc/codec/testing:protocol_testing",
         "//trpc/common/config:trpc_config",
+        "//trpc/filter:filter_manager",
         "@com_google_googletest//:gtest_main",
     ],
 )

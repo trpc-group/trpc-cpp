@@ -40,7 +40,7 @@ namespace trpc::overload_control {
 /// @brief Overload protection controller based on token bucket algorithm.
 class TokenBucketOverloadController : public ServerOverloadController {
  public:
-  explicit TokenBucketOverloadController(uint64_t burst, uint64_t rate);
+  explicit TokenBucketOverloadController(uint64_t burst, uint64_t rate, bool is_report);
 
   /// @brief Name of controller
   std::string Name() override { return "TokenBucketOverloadController"; };
@@ -56,16 +56,13 @@ class TokenBucketOverloadController : public ServerOverloadController {
 
   void Destroy() override;
 
-  uint64_t GetBurst();
-
-  /// @brief Calculates the remaining tokens based on the current time.
-  uint64_t GetRemainingTokens(uint64_t now);
-
  private:
   // Maximum of burst size.
   uint64_t burst_;
   // The rate(tokens/second) of token generation.
   uint64_t rate_;
+  // Whether to report monitoring data.
+  bool is_report_;
 
   // The last time when the token was allocated.
   uint64_t last_alloc_time_;

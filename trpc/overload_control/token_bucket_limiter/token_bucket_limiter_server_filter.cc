@@ -38,8 +38,8 @@ int TokenBucketLimiterServerFilter::Init() {
   }
   token_bucket_conf_.Display();
 
-  service_controller_ = std::make_unique<TokenBucketOverloadController>(token_bucket_conf_.burst, token_bucket_conf_.rate);
-  // service_controller_->Register(token_bucket_conf_);
+  service_controller_ = std::make_unique<TokenBucketOverloadController>(
+      token_bucket_conf_.burst, token_bucket_conf_.rate, token_bucket_conf_.is_report);
   service_controller_->Init();
 
   return 0;
@@ -73,7 +73,6 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
     return;
   }
 
-  auto now = trpc::time::GetSteadyNanoSeconds();
   bool passed = service_controller_->BeforeSchedule(context);
   if (!passed) {
     context->SetStatus(
@@ -83,14 +82,11 @@ void TokenBucketLimiterServerFilter::OnRequest(FilterStatus& status, const Serve
 
   // Report the result.
   if (token_bucket_conf_.is_report) {
-    auto remaining_tokens{service_controller_->GetRemainingTokens(now)};
     OverloadInfo infos;
     infos.attr_name = kOverloadctrlTokenBucketLimiter;
     infos.report_name = fmt::format("/{}/{}", context->GetCalleeName(), context->GetFuncName());
     infos.tags[kOverloadctrlPass] = (passed == true ? 1 : 0);
     infos.tags[kOverloadctrlLimited] = (passed == false ? 1 : 0);
-    infos.tags["burst"] = service_controller_->GetBurst();
-    infos.tags["remaining_tokens"] = remaining_tokens;
     Report::GetInstance()->ReportOverloadInfo(infos);
   }
 }
