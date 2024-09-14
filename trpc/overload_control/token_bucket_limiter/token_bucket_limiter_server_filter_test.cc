@@ -89,18 +89,17 @@ TEST_F(TokenBucketLimiterServerTestFixture, Overload) {
 
   uint32_t reject_count = 0;
   uint32_t concurr = 100;
-  std::vector<std::thread> threads;
-  for (uint32_t i = 1; i <= concurr; i++) {
-    threads.emplace_back([&]() {
-      ServerContextPtr context = MakeServerContext();
-      FilterStatus status = FilterStatus::CONTINUE;
-      token_bucket_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
-      if (context->GetStatus().OK() == false) {
-        reject_count++;
-        ASSERT_EQ(status, FilterStatus::REJECT);
-      }
-    });
+
+  for (uint32_t i = 0; i <= concurr; i++) {
+    ServerContextPtr context = MakeServerContext();
+    FilterStatus status = FilterStatus::CONTINUE;
+    token_bucket_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
+    if (context->GetStatus().OK() == false) {
+      reject_count++;
+      ASSERT_EQ(status, FilterStatus::REJECT);
+    }
   }
+
   ASSERT_TRUE(reject_count >= 30);
 }
 
