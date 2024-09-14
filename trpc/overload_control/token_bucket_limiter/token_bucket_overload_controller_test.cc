@@ -42,9 +42,9 @@ TEST(TokenBucketOverloadController, All) {
       std::make_unique<TokenBucketOverloadController>(tb_conf.burst, tb_conf.rate, tb_conf.is_report);
   ASSERT_TRUE(tb->Init() == true);
 
-  std::chrono::milliseconds timespan(1000); 
+  std::chrono::milliseconds timespan(1000);
   std::this_thread::sleep_for(timespan);
-  
+
   auto context = MakeRefCounted<ServerContext>();
   context->SetRequestMsg(std::make_shared<trpc::testing::TestProtocol>());
 
