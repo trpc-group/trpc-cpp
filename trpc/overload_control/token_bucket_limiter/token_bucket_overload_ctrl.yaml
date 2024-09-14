@@ -1,8 +1,8 @@
 server:
   service:
     - name: trpc.test.helloworld.Greeter
-       filter:
-         - token_bucket_limiter
+      filter:
+        - token_bucket_limiter
 
 plugins:
   overload_control:

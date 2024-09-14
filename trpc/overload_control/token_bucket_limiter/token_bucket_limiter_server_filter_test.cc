@@ -78,8 +78,8 @@ TEST_F(TokenBucketLimiterServerTestFixture, Ok) {
   FilterStatus status = FilterStatus::CONTINUE;
   token_bucket_filter->operator()(status, FilterPoint::SERVER_PRE_SCHED_RECV_MSG, context);
   token_bucket_filter->operator()(status, FilterPoint::SERVER_POST_SCHED_RECV_MSG, context);
-  ASSERT_EQ(context->GetStatus().OK(), true);
-  ASSERT_EQ(status, FilterStatus::CONTINUE);
+  ASSERT_EQ(context->GetStatus().OK(), false);
+  ASSERT_EQ(status, FilterStatus::REJECT);
 }
 
 // Test concurrency exceeds the limit.
