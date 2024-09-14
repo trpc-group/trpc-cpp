@@ -82,22 +82,6 @@ void TokenBucketOverloadController::Stop() {}
 
 void TokenBucketOverloadController::Destroy() {}
 
-// uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
-//   uint64_t elapsed;
-//   {
-//     std::unique_lock<std::mutex> lock(last_alloc_mutex_);
-//     elapsed = now - last_alloc_time_;
-//   }
-
-//   if (elapsed > burst_elapsed_) {
-//     elapsed = burst_elapsed_;
-//   }
-
-//   auto sec = elapsed / nsecs_per_sec_;
-//   auto nsec = elapsed % nsecs_per_sec_;
-//   return sec * rate_ + nsec * rate_ / nsecs_per_sec_;
-// }
-
 }  // namespace trpc::overload_control
 
 #endif
