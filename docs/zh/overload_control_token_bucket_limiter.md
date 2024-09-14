@@ -51,24 +51,25 @@ tRPC-Cpp 框架应用于高并发的场景中，需要进行过载保护 ，以�
 
   所谓更新 `last_alloc_time` 是指在 `last_alloc_time` 的基础上增加 `one_token_elapsed`，表示消费一个令牌。
 
-  统一计算单位带来的好处是：避免时间和剩余令牌数之间相互转换，不光有性能开销（乘除运算），计算单位和数据类型选取不当可能会导致溢出或者精度丢失。tRPC-Cpp 实现了将当前时间转换为剩余令牌数的方法，仅在设置 report 的时候启用：
+  统一计算单位带来的好处是：避免时间和剩余令牌数之间相互转换，不光有性能开销（乘除运算），计算单位和数据类型选取不当可能会导致溢出或者精度丢失。tRPC-Cpp 实现了将当前时间转换为剩余令牌数的处理，仅在设置 report 的时候启用：
 
   ```c++
-  uint64_t TokenBucketOverloadController::GetRemainingTokens(uint64_t now) {
-    uint64_t elapsed;
-    {
-      std::unique_lock<std::mutex> lock(last_alloc_mutex_);
-      elapsed = now - last_alloc_time_;
-    }
-  
+  if (is_report_) {
+    auto elapsed = now - last_alloc_time;
     if (elapsed > burst_elapsed_) {
       elapsed = burst_elapsed_;
     }
-  
-    // 防止溢出的处理
+    // 防溢出处理
     auto sec = elapsed / nsecs_per_sec_;
     auto nsec = elapsed % nsecs_per_sec_;
-    return sec * rate_ + nsec * rate_ / nsecs_per_sec_;
+    auto remaining_tokens = sec * rate_ + nsec * rate_ / nsecs_per_sec_;
+  
+    OverloadInfo infos;
+    infos.attr_name = kOverloadctrlTokenBucketLimiter;
+    infos.report_name = context->GetFuncName();
+    infos.tags["burst"] = burst_;
+    infos.tags["remaining_tokens"] = remaining_tokens;
+    Report::GetInstance()->ReportOverloadInfo(infos);
   }
   ```
 
@@ -107,8 +108,8 @@ build --define trpc_include_overload_control=true
 server:
   service:
     - name: trpc.test.helloworld.Greeter
-       filter:
-         - token_bucket_limiter
+      filter:
+        - token_bucket_limiter
 
 plugins:
   overload_control:
