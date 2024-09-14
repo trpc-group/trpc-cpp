@@ -37,14 +37,20 @@ TEST(TokenBucketOverloadController, All) {
   TokenBucketLimiterControlConf tb_conf;
   tb_conf.rate = 2;
   tb_conf.burst = 100;
-  TokenBucketOverloadControllerPtr tb = std::make_shared<TokenBucketOverloadController>();
-  tb->Register(tb_conf);
+  tb_conf.is_report = true;
+  TokenBucketOverloadControllerPtr tb =
+      std::make_unique<TokenBucketOverloadController>(tb_conf.burst, tb_conf.rate, tb_conf.is_report);
   ASSERT_TRUE(tb->Init() == true);
+
+  std::chrono::milliseconds timespan(1000); 
+  std::this_thread::sleep_for(timespan);
+  
   auto context = MakeRefCounted<ServerContext>();
   context->SetRequestMsg(std::make_shared<trpc::testing::TestProtocol>());
+
   ASSERT_TRUE(tb->BeforeSchedule(context));
   ASSERT_TRUE(tb->BeforeSchedule(context));
-  ASSERT_TRUE(tb->BeforeSchedule(context));
+  ASSERT_FALSE(tb->BeforeSchedule(context));
   ASSERT_FALSE(tb->BeforeSchedule(context));
 }
 
