@@ -24,7 +24,6 @@
 
 #include "trpc/overload_control/token_bucket_limiter/token_bucket_overload_controller.h"
 
-#include "trpc/log/trpc_log.h"
 #include "trpc/overload_control/common/report.h"
 
 namespace trpc::overload_control {
