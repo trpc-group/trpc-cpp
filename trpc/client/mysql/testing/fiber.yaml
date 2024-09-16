@@ -41,8 +41,8 @@ client:
         port: 3306
         enable: true
         connectpool:
-          min_size: 100
-          max_size: 200
+          min_size: 2
+          max_size: 5
           max_idle_time: 500
           timeout: 200
 

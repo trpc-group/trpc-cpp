@@ -11,7 +11,7 @@ namespace trpc {
 namespace mysql {
 class MysqlExecutorPool {
  public:
-  static MysqlExecutorPool* getConnectPool(const MysqlClientConf& conf);
+  // static MysqlExecutorPool* getConnectPool(const MysqlClientConf& conf);
 
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;

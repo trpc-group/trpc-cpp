@@ -1,3 +1,7 @@
+
+
+
+
 #include "trpc/client/mysql/mysql_executor_pool.h"
 #include <stdexcept>
 #include <thread>
@@ -6,6 +10,11 @@
 
 namespace trpc {
 namespace mysql {
+
+MysqlExecutorPool* MysqlExecutorPool::getConnectPool(const MysqlClientConf& conf) {
+  static MysqlExecutorPool pool(conf);
+  return &pool;
+}
 
 MysqlExecutorPool::MysqlExecutorPool(const MysqlClientConf& conf)
     : m_ip(conf.ip),
@@ -37,7 +46,7 @@ MysqlExecutorPool::~MysqlExecutorPool() {
 void MysqlExecutorPool::produceConnection() {
   while (true) {
     std::unique_lock<std::mutex> locker(m_mutexQ);
-    while (m_connectQ.size() >= static_cast<size_t>(m_maxSize)) {
+    while (m_connectQ.size() >= static_cast<size_t>(m_minSize)) {
       m_cond_produce.wait(locker);
     }
     addConnection();
@@ -92,3 +101,4 @@ std::shared_ptr<MysqlExecutor> MysqlExecutorPool::getConnection() {
 
 }  // namespace mysql
 }  // namespace trpc
+

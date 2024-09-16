@@ -4,9 +4,11 @@
 namespace trpc {
 namespace mysql {
 
+// 静态成员变量定义
 std::unordered_map<std::string, std::unique_ptr<MysqlExecutorPool>> MysqlExecutorPoolManager::pools_;
 std::mutex MysqlExecutorPoolManager::mutex_;
 
+// 获取指定配置的连接池
 MysqlExecutorPool* MysqlExecutorPoolManager::getPool(const MysqlClientConf& conf) {
   std::string pool_key = generatePoolKey(conf);
 
@@ -14,10 +16,12 @@ MysqlExecutorPool* MysqlExecutorPoolManager::getPool(const MysqlClientConf& conf
 
   auto it = pools_.find(pool_key);
   if (it != pools_.end()) {
+    std::cout << "查找成功" << std::endl;
     return it->second.get();
   }
 
   auto pool = std::make_unique<MysqlExecutorPool>(conf);
+  std::cout << "新建成功" << std::endl;
   MysqlExecutorPool* pool_ptr = pool.get();
   pools_[pool_key] = std::move(pool);
   return pool_ptr;
