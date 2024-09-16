@@ -1,7 +1,6 @@
 #include "trpc/client/mysql/mysql_service_proxy.h"
 #include "mysql_service_proxy.h"
 #include "trpc/common/config/mysql_client_conf.h"
-
 namespace trpc::mysql {
 
 MysqlServiceProxy::MysqlServiceProxy() {
@@ -13,8 +12,8 @@ MysqlServiceProxy::MysqlServiceProxy() {
   thread_pool_->Start();
 
   // init the mysql connection pool accord the config
-  MysqlClientConf mysql_conf = GetServiceProxyOption()->mysql_conf;
-  conn_pool_ = MysqlExecutorPool::getConnectPool(mysql_conf);
+  // MysqlClientConf mysql_conf = GetServiceProxyOption()->mysql_conf;
+  // conn_pool_ = MysqlExecutorPool::getConnectPool(mysql_conf);
 }
 
 }  // namespace trpc::mysql

@@ -3,34 +3,15 @@ global:
     fiber:
       - instance_name: fiber_instance
 
-server:
-  app: Test
-  server: HelloWorldServer
-  admin_port: 8888
-  admin_ip: 0.0.0.0
-  registry_name: test_registry
-  service:
-    - name: trpc.test.helloworld.Greeter
-      network: tcp
-      ip: 0.0.0.0
-      port: 10001
-      protocol: trpc
-      max_conn_num: 10000
-      queue_timeout: 5000
-      idle_time: 60000
-      max_packet_size: 10000000
-  filter:
-    - promethues
-
 client:
   service:
-    - name: trpc.test.helloworld.Greeter
+    - name: mysql_server
       protocol: trpc
       timeout: 1000
       network: tcp
       conn_type: long
       is_conn_complex: true
-      target: trpc.test.helloworld.Greeter
+      target: 127.0.0.1:3306
       selector_name: test_selector
 
       mysql:
@@ -52,7 +33,12 @@ client:
     - promethues
 
 plugins:
-  registry:
-    test_registry:
-  selector:
-    test_selector:
+  log:
+    default:
+      - name: default
+        min_level: 2 # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          local_file:
+            eol: true
+            filename: mysql_fiber_client.log

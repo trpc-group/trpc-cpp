@@ -33,16 +33,14 @@ DEFINE_string(client_config, "fiber_client_client_config.yaml", "trpc cpp framew
 
 void TestQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
-  auto proxy = std::make_shared<trpc::mysql::MysqlServiceProxy>();
   trpc::mysql::MysqlResults<int, std::string> res;
-  proxy->Query(ptr, res, "select id, username from users where id = ?", 1);
+  proxy->Query(ctx, res, "select id, username from users where id = ?", 1);
   auto& res_data = res.GetResultSet();
-  std::cout << res_data << std::endl;
 }
 
-int Run() { 
-    auto proxy = trpc::GetTrpcClient()->GetProxy<trpc::redis::MysqlServiceProxy>("mysql_server"); 
-    TestQuery(proxy);
+int Run() {
+  auto proxy = trpc::GetTrpcClient()->GetProxy<trpc::mysql::MysqlServiceProxy>("mysql_server");
+  TestQuery(proxy);
 }
 
 void ParseClientConfig(int argc, char* argv[]) {

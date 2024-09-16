@@ -48,6 +48,7 @@ void ServiceProxyManager::SetOptionFromConfig(const ServiceProxyConfig& proxy_co
   option->load_balance_type = GetLoadBalanceType(proxy_conf.load_balance_type);
 
   option->redis_conf = proxy_conf.redis_conf;
+  option->mysql_conf = proxy_conf.mysql_conf;
   // Set SSL/TLS config for client.
   option->ssl_config = proxy_conf.ssl_config;
   option->support_pipeline = proxy_conf.support_pipeline;
@@ -67,7 +68,7 @@ void ServiceProxyManager::SetOptionDefaultValue(const std::string& name, std::sh
   if (option->name_space.empty()) {
     option->name_space = TrpcConfig::GetInstance()->GetGlobalConfig().env_namespace;
   }
-  
+
   // If callee_name is not set, set it to name of proxy.
   if (option->callee_name.empty()) {
     option->callee_name = name;

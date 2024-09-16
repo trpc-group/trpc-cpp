@@ -28,7 +28,7 @@ class MysqlServiceProxy : public ServiceProxy {
 
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
-  MysqlExecutorPool* conn_pool_{nullptr};
+  // MysqlExecutorPool* conn_pool_{nullptr};
 };
 
 template <typename... OutputArgs, typename... InputArgs>
@@ -41,8 +41,8 @@ Status MysqlServiceProxy::Query(const ClientContextPtr& context, MysqlResults<Ou
   thread_pool_->AddTask([&e, &res, &sql_str, &args...]() {
     // Get address from `context->endpoint_info_`
     // auto conn = Manager->GetExecutor(context);
-    // auto conn = std::make_unique<MysqlExecutor>("localhost", "kosmos", "12345678", "test_db");
-    shared_ptr<MysqlExecutor> conn = conn_pool_->getConnection();
+    auto conn = std::make_unique<MysqlExecutor>("localhost", "root", "abc123", "test");
+    // shared_ptr<MysqlExecutor> conn = conn_pool_->getConnection();
 
     // sleep(2);
     e.Set();
@@ -77,7 +77,7 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
 
     // Get address fro `context->endpoint_info_`
     // auto conn = Manager->GetExecutor(context);
-    auto conn = std::make_unique<MysqlExecutor>("localhost", "kosmos", "12345678", "test_db");
+    auto conn = std::make_unique<MysqlExecutor>("localhost", "root", "abc123", "test");
     conn->QueryAll(res, sql_str, args...);
 
     p.SetValue(std::move(res));

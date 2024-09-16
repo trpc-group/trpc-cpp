@@ -39,6 +39,7 @@ cc_library(
     hdrs = ["mysql_service_proxy.h"],
     deps = [
         ":mysql_executor",
+        ":mysql_executor_pool",
         "//trpc/util/thread:thread_pool",
         "//trpc/util/thread:latch",
         "//trpc/coroutine:fiber",
@@ -46,6 +47,17 @@ cc_library(
         "//trpc/common/logging:trpc_logging"
     ],
     visibility = ["//visibility:public"]
+)
+
+cc_library(
+    name = "mysql_executor_pool_manager",
+    srcs = ["mysql_executor_pool_manager.cc"],
+    hdrs = ["mysql_executor_pool_manager.h"],
+    deps = [
+        ":mysql_executor_pool",
+        "//trpc/common/config:mysql_client_conf"
+    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
@@ -88,6 +100,22 @@ cc_test(
     deps = [
         ":mysql_executor",
         ":mysql_executor_pool",
+        "//trpc/common/config:trpc_config",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "mysql_executor_pool_manager_test",
+    srcs = ["mysql_executor_pool_manager_test.cc"],
+    data = [
+        ":test_yaml_files"
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":mysql_executor",
+        ":mysql_executor_pool_manager",
         "//trpc/common/config:trpc_config",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",

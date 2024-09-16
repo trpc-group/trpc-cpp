@@ -193,7 +193,7 @@ class MysqlExecutor {
                     std::vector<uint8_t>& null_flag_buffer, std::vector<std::tuple<OutputArgs...>>& results,
                     std::vector<std::vector<uint8_t>>& null_flags);
 
-  void FreeResult();
+  // void FreeResult();
 
  private:
   static std::mutex mysql_mutex;
@@ -319,11 +319,11 @@ int MysqlExecutor::Execute(const std::string& query, const InputArgs&... args) {
   return affected_row;
 }
 
-void MysqlExecutor::FreeResult() {
-  if (res_) {
-    mysql_free_result(res_);
-    res_ = nullptr;
-  }
-}
+// void MysqlExecutor::FreeResult() {
+//   if (res_) {
+//     mysql_free_result(res_);
+//     res_ = nullptr;
+//   }
+// }
 
 }  // namespace trpc::mysql

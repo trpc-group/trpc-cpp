@@ -49,6 +49,23 @@ void SetOutputByValidInput(const RedisClientConf& input, RedisClientConf& output
   SetOutputByValidInput<std::uint32_t>(db, output.db);
 }
 
+void SetOutputByValidInput(const MysqlClientConf& input, MysqlClientConf& output) {
+  auto enable = GetValidInput<bool>(input.enable, false);
+  SetOutputByValidInput<bool>(enable, output.enable);
+
+  auto password = GetValidInput<std::string>(input.password, "");
+  SetOutputByValidInput<std::string>(password, output.password);
+
+  auto user_name = GetValidInput<std::string>(input.user_name, "");
+  SetOutputByValidInput<std::string>(user_name, output.user_name);
+
+  auto dbname = GetValidInput<std::string>(input.dbname, "");
+  SetOutputByValidInput<std::string>(dbname, output.dbname);
+
+  auto connectpool = GetValidInput<MysqlConnectPoolConf>(input.connectpool, MysqlConnectPoolConf{});
+  SetOutputByValidInput<MysqlConnectPoolConf>(connectpool, output.connectpool);
+}
+
 void SetOutputByValidInput(const ClientSslConfig& input, ClientSslConfig& output) {
   auto enable = GetValidInput<bool>(input.enable, false);
   SetOutputByValidInput<bool>(enable, output.enable);
@@ -200,6 +217,7 @@ void SetSpecifiedOption(const ServiceProxyOption* option_ptr, const std::shared_
   SetOutputByValidInput(option_ptr->service_filters, option->service_filters);
   SetOutputByValidInput(option_ptr->proxy_callback, option->proxy_callback);
   SetOutputByValidInput(option_ptr->redis_conf, option->redis_conf);
+  SetOutputByValidInput(option_ptr->mysql_conf, option->mysql_conf);
   SetOutputByValidInput(option_ptr->ssl_config, option->ssl_config);
 
   auto support_pipeline = GetValidInput<bool>(option_ptr->support_pipeline, kDefaultSupportPipeline);

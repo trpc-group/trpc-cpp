@@ -18,6 +18,9 @@ struct MysqlConnectPoolConf {
 
   // Display method to output connection pool configuration details
   void Display() const;
+
+  // Comparison operator
+  bool operator==(const MysqlConnectPoolConf& other) const;
 };
 
 }  // namespace trpc
