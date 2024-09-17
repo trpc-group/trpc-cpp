@@ -41,7 +41,7 @@ namespace trpc::overload_control {
 /// @brief Overload protection controller based on token bucket algorithm.
 class SlidingWindowOverloadController : public ServerOverloadController {
  public:
-  explicit SlidingWindowOverloadController(int64_t limit, int32_t window_size, bool is_report);
+  explicit SlidingWindowOverloadController(int64_t limit, bool is_report);
 
   /// @brief Name of controller
   std::string Name() override { return "SlidingWindowOverloadController"; };

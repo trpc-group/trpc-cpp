@@ -38,8 +38,8 @@ int SlidingWindowLimiterServerFilter::Init() {
   }
   sliding_window_conf_.Display();
 
-  service_controller_ = std::make_unique<SlidingWindowOverloadController>(
-      sliding_window_conf_.limit, sliding_window_conf_.window_size, sliding_window_conf_.is_report);
+  service_controller_ =
+      std::make_unique<SlidingWindowOverloadController>(sliding_window_conf_.limit, sliding_window_conf_.is_report);
 
   return 0;
 }

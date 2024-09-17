@@ -31,13 +31,11 @@ namespace testing {
 TEST(SlidingWindowLimiterControlConf, All) {
   SlidingWindowLimiterControlConf conf;
   ASSERT_EQ(conf.limit, 1000);
-  ASSERT_EQ(conf.window_size, 100);
   ASSERT_EQ(conf.is_report, false);
 
   YAML::convert<SlidingWindowLimiterControlConf> concurr_yaml;
 
   conf.limit = 20000;
-  conf.window_size = 2000;
 
   YAML::Node concurr_node = concurr_yaml.encode(conf);
 
@@ -46,7 +44,6 @@ TEST(SlidingWindowLimiterControlConf, All) {
   ASSERT_EQ(concurr_yaml.decode(concurr_node, decode_conf), true);
 
   ASSERT_EQ(decode_conf.limit, 20000);
-  ASSERT_EQ(decode_conf.window_size, 2000);
 
   decode_conf.Display();
 }

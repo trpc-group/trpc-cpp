@@ -32,7 +32,6 @@ void SlidingWindowLimiterControlConf::Display() const {
   TRPC_FMT_DEBUG("----------SlidingWindowLimiterControlConf---------------");
 
   TRPC_FMT_DEBUG("limit: {}", limit);
-  TRPC_FMT_DEBUG("window_size: {}", window_size);
   TRPC_FMT_DEBUG("is_report: {}", is_report);
 }
 }  // namespace trpc::overload_control
@@ -44,7 +43,6 @@ YAML::Node convert<trpc::overload_control::SlidingWindowLimiterControlConf>::enc
   YAML::Node node;
 
   node["limit"] = config.limit;
-  node["window_size"] = config.window_size;
   node["is_report"] = config.is_report;
 
   return node;
@@ -54,9 +52,6 @@ bool convert<trpc::overload_control::SlidingWindowLimiterControlConf>::decode(
     const YAML::Node& node, trpc::overload_control::SlidingWindowLimiterControlConf& config) {
   if (node["limit"]) {
     config.limit = node["limit"].as<int64_t>();
-  }
-  if (node["window_size"]) {
-    config.window_size = node["window_size"].as<int32_t>();
   }
   if (node["is_report"]) {
     config.is_report = node["is_report"].as<bool>();

@@ -26,8 +26,8 @@
 
 namespace trpc::overload_control {
 
-SlidingWindowOverloadController::SlidingWindowOverloadController(int64_t limit, int32_t window_size, bool is_report)
-    : smooth_limter_(std::make_unique<SmoothLimiter>(limit, is_report, window_size)) {}
+SlidingWindowOverloadController::SlidingWindowOverloadController(int64_t limit, bool is_report)
+    : smooth_limter_(std::make_unique<SmoothLimiter>(limit, is_report)) {}
 
 bool SlidingWindowOverloadController::Init() { return true; }
 

@@ -34,8 +34,6 @@ namespace trpc::overload_control {
 struct SlidingWindowLimiterControlConf {
   // Maximum number of requests per second.
   int64_t limit{1000};
-  // Window size
-  int32_t window_size{100};
   // Whether to report the judgment result to the monitoring plugin.
   bool is_report{false};
 

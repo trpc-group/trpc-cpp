@@ -36,9 +36,7 @@ namespace testing {
 TEST(SlidingWindowOverloadController, All) {
   SlidingWindowLimiterControlConf tb_conf;
   tb_conf.limit = 2;
-  tb_conf.window_size = 3;
-  SlidingWindowOverloadControllerPtr tb =
-      std::make_unique<SlidingWindowOverloadController>(tb_conf.limit, tb_conf.window_size, false);
+  SlidingWindowOverloadControllerPtr tb = std::make_unique<SlidingWindowOverloadController>(tb_conf.limit, false);
   ASSERT_TRUE(tb->Init() == true);
   auto context = MakeRefCounted<ServerContext>();
   context->SetRequestMsg(std::make_shared<trpc::testing::TestProtocol>());

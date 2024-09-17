@@ -29,5 +29,4 @@ plugins:
   overload_control:
     sliding_window_limiter:
       limit: 20 # Maximum number of requests per second. It is configured small for unit testing purposes, but users can configure it to be larger.
-      window_size: 3 # Window size
       is_report: true # Whether to report
