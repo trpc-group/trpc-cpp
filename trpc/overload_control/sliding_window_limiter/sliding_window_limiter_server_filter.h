@@ -32,8 +32,8 @@
 
 namespace trpc::overload_control {
 
-/// @brief Server-side token bucket limiting class.
-/// @note Mainly limit the concurrency of requests by token bucket algorithm.
+/// @brief Server-side sliding window limiting class.
+/// @note Mainly limit the concurrency of requests by sliding window algorithm.
 class SlidingWindowLimiterServerFilter : public MessageServerFilter {
  public:
   /// @brief Name of filter

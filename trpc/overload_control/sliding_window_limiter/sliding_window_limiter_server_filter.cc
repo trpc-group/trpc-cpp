@@ -75,7 +75,7 @@ void SlidingWindowLimiterServerFilter::OnRequest(FilterStatus& status, const Ser
   bool passed = service_controller_->BeforeSchedule(context);
   if (!passed) {
     context->SetStatus(
-        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server token bucket limiter overload control"));
+        Status(TrpcRetCode::TRPC_SERVER_OVERLOAD_ERR, 0, "rejected by server sliding window limiter overload control"));
     status = FilterStatus::REJECT;
   }
 
