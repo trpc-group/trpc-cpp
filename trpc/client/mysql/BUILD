@@ -40,6 +40,9 @@ cc_library(
     deps = [
         ":mysql_executor",
         ":mysql_executor_pool",
+        ":mysql_executor_pool_manager",
+        "//trpc/client:service_proxy_option",
+        "//trpc/util/string:string_util",
         "//trpc/util/thread:thread_pool",
         "//trpc/util/thread:latch",
         "//trpc/coroutine:fiber",
@@ -84,6 +87,7 @@ cc_test(
         visibility = ["//visibility:public"],
     deps = [
         ":mysql_service_proxy",
+        ":mysql_executor_pool_manager",
         "//trpc/client:make_client_context",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",

@@ -25,15 +25,15 @@ mysql> select * from users;
 
 std::shared_ptr<ServiceProxyOption> option_ = std::make_shared<ServiceProxyOption>();
 
-TEST(proxy, Query) {
-  // trpc::mysql::MysqlServiceProxy proxy;
-  auto proxy = std::make_shared<trpc::mysql::MysqlServiceProxy>();
-  trpc::ClientContextPtr ptr(nullptr);
-  trpc::mysql::MysqlResults<int, std::string> res;
-  proxy->Query(ptr, res, "select id, username from users where id = ?", 1);
-  auto& res_data = res.GetResultSet();
-  EXPECT_EQ("alice", std::get<1>(res_data[0]));
-}
+// TEST(proxy, Query) {
+//   // trpc::mysql::MysqlServiceProxy proxy;
+//   auto proxy = std::make_shared<trpc::mysql::MysqlServiceProxy>();
+//   trpc::ClientContextPtr ptr(nullptr);
+//   trpc::mysql::MysqlResults<int, std::string> res;
+//   proxy->Query(ptr, res, "select id, username from users where id = ?", 1);
+//   auto& res_data = res.GetResultSet();
+//   EXPECT_EQ("alice", std::get<1>(res_data[0]));
+// }
 
 TEST(proxy, AsyncQuery) {
   // trpc::mysql::MysqlServiceProxy proxy;

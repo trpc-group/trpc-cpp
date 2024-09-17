@@ -27,9 +27,13 @@ class MysqlServiceProxy : public ServiceProxy {
   Future<MysqlResults<OutputArgs...>> AsyncQuery(const ClientContextPtr& context, const std::string& sql_str,
                                                  const InputArgs&... args);
 
+  void ServiceOptionToMysqlConfig();
+  bool SplitAddressPort(const std::string& address, std::string& ip, uint32_t& port);
+
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
-  std::unique_ptr<MysqlExecutorPoolManager> pool_manager_;
+  // std::unique_ptr<MysqlExecutorPoolManager> pool_manager_;
+  std::vector<MysqlClientConf*> vec_;
 };
 
 template <typename... OutputArgs, typename... InputArgs>
@@ -37,13 +41,9 @@ Status MysqlServiceProxy::Query(const ClientContextPtr& context, MysqlResults<Ou
                                 const std::string& sql_str, const InputArgs&... args) {
   // Adaptive event primitive for both fiber and pthread context
   FiberEvent e;
-
   // auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  thread_pool_->AddTask([&e, &res, &sql_str, &args...]() {
-    // Get address from `context->endpoint_info_`
-    // auto conn = Manager->GetExecutor(context);
-    auto conn = std::make_unique<MysqlExecutor>("localhost", "root", "abc123", "test");
-    // shared_ptr<MysqlExecutor> conn = conn_pool_->getConnection();
+  thread_pool_->AddTask([this, &e, &res, &sql_str, &args...]() {
+    auto conn = MysqlExecutorPoolManager::getPool(vec_[0])->getConnection();
 
     // sleep(2);
     e.Set();
@@ -76,8 +76,7 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
     MysqlResults<OutputArgs...> res;
     // sleep(1);
 
-    // Get address fro `context->endpoint_info_`
-    // auto conn = Manager->GetExecutor(context);
+    // Get address from `context->endpoint_info_`
     auto conn = std::make_unique<MysqlExecutor>("localhost", "root", "abc123", "test");
     conn->QueryAll(res, sql_str, args...);
 
