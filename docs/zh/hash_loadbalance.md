@@ -1,10 +1,10 @@
-# 负载均衡插件使用
+# 哈希负载均衡插件使用
 
-## 使用负载均衡插件
+## 使用哈希负载均衡插件
 
-要使用负载均衡插件，需在yaml配置文件client:service:load_balance_name 下设置负载均衡插件名字，并在plugins:loadbalance下配置对应插件的相关配置。
+要使用哈希负载均衡插件，需在yaml配置文件client:service:load_balance_name 下设置哈希负载均衡插件名字，并在plugins:loadbalance下配置对应插件的相关配置。
 
-以下是一个在yaml配置文件使用负载均衡插件的例子。
+以下是一个在yaml配置文件使用哈希负载均衡插件的例子。
 
 ```
 client:
@@ -28,13 +28,11 @@ plugins:
 
 若没有在client端设置load_balance_name, 默认采用轮询负载均衡插件（trpc_polling_load_balance)，轮询负载均衡插件不需要在plugins下进行配置。
 
-## 负载均衡插件配置
-
-### 哈希负载均衡插件
+## 哈希负载均衡插件
 
 如果用户在client端设置了hash值，将采用用户提供的hash值来进行路由选择。否则将使用插件的配置来生成hash值（生成hash值的函数见 哈希函数使用 章节）
 
-#### 一致性哈希负载均衡插件（consistent_hash)
+### 一致性哈希负载均衡插件（consistent_hash)
 
 以下配置值为默认值，若没对插件进行配置，将采用下面的默认值
 
@@ -47,7 +45,7 @@ plugins:
           hash_func: murmur3  #支持murmur3，city，md5，bkdr，fnv1a
 ```
 
-#### 取模哈希负载均衡插件（modulo_hash)
+### 取模哈希负载均衡插件（modulo_hash)
 
 以下配置值为默认值，若没对插件进行配置，将采用下面的默认值
 
@@ -59,7 +57,7 @@ plugins:
           hash_func: murmur3
 ```
 
-#### 哈希函数使用
+### 哈希函数使用
 
 在哈希负载均衡插件中使用的哈希函数的定义在文件/trpc/naming/common/util/hash/hash_func.h
 
@@ -81,5 +79,3 @@ std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func);
 std::uint64_t Hash(const std::string& input, const HashFuncName& hash_func,uint64_t num);
 
 ```
-
-### 其他负载均衡插件
