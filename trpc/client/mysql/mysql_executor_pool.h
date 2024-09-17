@@ -6,7 +6,7 @@
 #include <queue>
 #include <string>
 #include "trpc/client/mysql/mysql_executor.h"
-#include "trpc/common/config/mysql_client_conf.h"
+#include "trpc/client/mysql/mysql_service_config.h"
 namespace trpc {
 namespace mysql {
 class MysqlExecutorPool {
@@ -16,7 +16,7 @@ class MysqlExecutorPool {
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
 
-  MysqlExecutorPool(const MysqlClientConf& conf);
+  MysqlExecutorPool(const MysqlClientConf* conf);
 
   std::shared_ptr<MysqlExecutor> getConnection();
 
@@ -45,7 +45,6 @@ class MysqlExecutorPool {
 
   std::queue<MysqlExecutor*> m_connectQ;
   std::mutex m_mutexQ;
-  // std::condition_variable m_cond;
   std::condition_variable m_cond_produce;
   std::condition_variable m_cond_consume;
 };

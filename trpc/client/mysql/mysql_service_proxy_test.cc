@@ -35,21 +35,21 @@ TEST(proxy, Query) {
   EXPECT_EQ("alice", std::get<1>(res_data[0]));
 }
 
-// TEST(proxy, AsyncQuery) {
-//   // trpc::mysql::MysqlServiceProxy proxy;
-//   auto proxy = std::make_shared<trpc::mysql::MysqlServiceProxy>();
-//   trpc::ClientContextPtr ptr(nullptr);
-//   auto res = proxy->AsyncQuery<int, std::string>(ptr, "select id, username from users where id = ?", 1)
-//                  .Then([](trpc::Future<trpc::mysql::MysqlResults<int, std::string>>&& f) {
-//                    if (f.IsReady()) {
-//                      std::vector<std::tuple<int, std::string>> res_data;
-//                      f.GetValue0().GetResultSet(res_data);
-//                      EXPECT_EQ("alice", std::get<1>(res_data[0]));
-//                    }
-//                    return trpc::MakeReadyFuture<>();
-//                  });
+TEST(proxy, AsyncQuery) {
+  // trpc::mysql::MysqlServiceProxy proxy;
+  auto proxy = std::make_shared<trpc::mysql::MysqlServiceProxy>();
+  trpc::ClientContextPtr ptr(nullptr);
+  auto res = proxy->AsyncQuery<int, std::string>(ptr, "select id, username from users where id = ?", 1)
+                 .Then([](trpc::Future<trpc::mysql::MysqlResults<int, std::string>>&& f) {
+                   if (f.IsReady()) {
+                     std::vector<std::tuple<int, std::string>> res_data;
+                     f.GetValue0().GetResultSet(res_data);
+                     EXPECT_EQ("alice", std::get<1>(res_data[0]));
+                   }
+                   return trpc::MakeReadyFuture<>();
+                 });
 
-//   ::trpc::future::BlockingGet(std::move(res));
-// }
+  ::trpc::future::BlockingGet(std::move(res));
+}
 
 }  // namespace trpc::testing

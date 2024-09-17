@@ -28,7 +28,7 @@ cc_library(
     hdrs = ["mysql_executor_pool.h"],
     deps = [
         ":mysql_executor",
-        "//trpc/common/config:mysql_client_conf"
+        ":mysql_service_config",
     ],
     visibility = ["//visibility:public"],
 )
@@ -59,6 +59,13 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "mysql_service_config",
+    hdrs = ["mysql_service_config.h"],
+    visibility = ["//visibility:public"],
+)
+
 
 cc_test(
     name = "mysql_executor_test",
@@ -100,6 +107,7 @@ cc_test(
     deps = [
         ":mysql_executor",
         ":mysql_executor_pool_manager",
+        ":mysql_service_config",
         "//trpc/common/config:trpc_config",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",

@@ -2,21 +2,21 @@
 #include <stdexcept>
 #include <thread>
 #include "trpc/client/mysql/mysql_executor.h"
-#include "trpc/common/config/mysql_client_conf.h"
+#include "trpc/client/mysql/mysql_service_config.h"
 
 namespace trpc {
 namespace mysql {
 
-MysqlExecutorPool::MysqlExecutorPool(const MysqlClientConf& conf)
-    : m_ip(conf.ip),
-      m_user(conf.user_name),
-      m_passwd(conf.password),
-      m_dbName(conf.dbname),
-      m_port(conf.port),
-      m_minSize(conf.connectpool.min_size),
-      m_maxSize(conf.connectpool.max_size),
-      m_timeout(conf.connectpool.timeout),
-      m_maxIdTime(conf.connectpool.max_idle_time) {
+MysqlExecutorPool::MysqlExecutorPool(const MysqlClientConf* conf)
+    : m_ip(conf->ip),
+      m_user(conf->user_name),
+      m_passwd(conf->password),
+      m_dbName(conf->dbname),
+      m_port(conf->port),
+      m_minSize(conf->connectpool.min_size),
+      m_maxSize(conf->connectpool.max_size),
+      m_timeout(conf->connectpool.timeout),
+      m_maxIdTime(conf->connectpool.max_idle_time) {
   for (uint32_t i = 0; i < m_minSize; i++) {
     addConnection();
   }

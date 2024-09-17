@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <string>
 
-#include "trpc/common/config/mysql_connect_pool_conf.h"
+// #include "trpc/common/config/mysql_connect_pool_conf.h"
 #include "yaml-cpp/yaml.h"
 namespace trpc {
 
@@ -32,17 +32,17 @@ struct MysqlClientConf {
   /// @brief db name
   std::string dbname;
 
-  /// @brief ip
-  std::string ip;
+  // target
+  // /// @brief ip
+  // std::string ip;
 
-  /// @brief port
-  uint32_t port;
+  // /// @brief port
+  // uint32_t port;
 
   /// @brief Whether enable auth
   bool enable{true};
 
-  /// @brief mysql connect pool config
-  MysqlConnectPoolConf connectpool;
+  uint32_t min_size{0};
 
   void Display() const;
 };

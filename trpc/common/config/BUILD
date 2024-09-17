@@ -127,32 +127,31 @@ cc_library(
     ],
 )
 
-# new add: mysql config and mysql connect pool config
-cc_library(
-    name = "mysql_connect_pool_conf",
-    srcs = ["mysql_connect_pool_conf.cc"],
-    hdrs = ["mysql_connect_pool_conf.h"],
-    deps = [
-        "//trpc/util/log:logging",
-        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
-    ],
-)
+# # new add: mysql config and mysql connect pool config
+# cc_library(
+#     name = "mysql_connect_pool_conf",
+#     srcs = ["mysql_connect_pool_conf.cc"],
+#     hdrs = ["mysql_connect_pool_conf.h"],
+#     deps = [
+#         "//trpc/util/log:logging",
+#         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
+#     ],
+# )
 
-cc_library(
-    name = "mysql_connect_pool_conf_parser",
-    hdrs = ["mysql_connect_pool_conf_parser.h"],
-    deps = [
-        ":mysql_connect_pool_conf",
-        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
-    ],
-)
+# cc_library(
+#     name = "mysql_connect_pool_conf_parser",
+#     hdrs = ["mysql_connect_pool_conf_parser.h"],
+#     deps = [
+#         ":mysql_connect_pool_conf",
+#         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
+#     ],
+# )
 
 cc_library(
     name = "mysql_client_conf",
     srcs = ["mysql_client_conf.cc"],
     hdrs = ["mysql_client_conf.h"],
     deps = [
-        ":mysql_connect_pool_conf",
         "//trpc/util/log:logging",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
@@ -163,7 +162,6 @@ cc_library(
     hdrs = ["mysql_client_conf_parser.h"],
     deps = [
         ":mysql_client_conf",
-        ":mysql_connect_pool_conf_parser",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )

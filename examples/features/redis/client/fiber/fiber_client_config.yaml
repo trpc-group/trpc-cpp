@@ -19,7 +19,7 @@ client:
       # support_pipeline: true
       redis:
         # if backend Redis Server enable authentication
-        password: xxx
+        password: 
 
 plugins:
   log:

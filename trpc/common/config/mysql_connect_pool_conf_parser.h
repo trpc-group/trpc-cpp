@@ -12,9 +12,9 @@ struct convert<trpc::MysqlConnectPoolConf> {
   static YAML::Node encode(const trpc::MysqlConnectPoolConf& pool_conf) {
     YAML::Node node;
     node["min_size"] = pool_conf.min_size;
-    node["max_size"] = pool_conf.max_size;
-    node["max_idle_time"] = pool_conf.max_idle_time;
-    node["timeout"] = pool_conf.timeout;
+    // node["max_size"] = pool_conf.max_size;
+    // node["max_idle_time"] = pool_conf.max_idle_time;
+    // node["timeout"] = pool_conf.timeout;
     return node;
   }
 
@@ -23,15 +23,15 @@ struct convert<trpc::MysqlConnectPoolConf> {
     if (node["min_size"]) {
       pool_conf.min_size = node["min_size"].as<uint32_t>();
     }
-    if (node["max_size"]) {
-      pool_conf.max_size = node["max_size"].as<uint32_t>();
-    }
-    if (node["max_idle_time"]) {
-      pool_conf.max_idle_time = node["max_idle_time"].as<uint32_t>();
-    }
-    if (node["timeout"]) {
-      pool_conf.timeout = node["timeout"].as<uint32_t>();
-    }
+    // if (node["max_size"]) {
+    //   pool_conf.max_size = node["max_size"].as<uint32_t>();
+    // }
+    // if (node["max_idle_time"]) {
+    //   pool_conf.max_idle_time = node["max_idle_time"].as<uint32_t>();
+    // }
+    // if (node["timeout"]) {
+    //   pool_conf.timeout = node["timeout"].as<uint32_t>();
+    // }
     return true;
   }
 };

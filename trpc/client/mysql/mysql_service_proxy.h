@@ -2,6 +2,7 @@
 
 #include "trpc/client/mysql/mysql_executor.h"
 #include "trpc/client/mysql/mysql_executor_pool.h"
+#include "trpc/client/mysql/mysql_executor_pool_manager.h"
 #include "trpc/client/service_proxy.h"
 #include "trpc/coroutine/fiber_event.h"
 #include "trpc/util/thread/latch.h"
@@ -28,7 +29,7 @@ class MysqlServiceProxy : public ServiceProxy {
 
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
-  // MysqlExecutorPool* conn_pool_{nullptr};
+  std::unique_ptr<MysqlExecutorPoolManager> pool_manager_;
 };
 
 template <typename... OutputArgs, typename... InputArgs>

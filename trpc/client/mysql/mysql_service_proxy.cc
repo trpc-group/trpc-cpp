@@ -11,9 +11,7 @@ MysqlServiceProxy::MysqlServiceProxy() {
   thread_pool_ = std::make_unique<::trpc::ThreadPool>(std::move(thread_pool_option));
   thread_pool_->Start();
 
-  // init the mysql connection pool accord the config
-  // MysqlClientConf mysql_conf = GetServiceProxyOption()->mysql_conf;
-  // conn_pool_ = MysqlExecutorPool::getConnectPool(mysql_conf);
+  pool_manager_ = std::make_unique<MysqlExecutorPoolManager>();
 }
 
 }  // namespace trpc::mysql

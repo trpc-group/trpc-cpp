@@ -1,7 +1,7 @@
 #pragma once
 
 #include "trpc/common/config/mysql_client_conf.h"
-#include "trpc/common/config/mysql_connect_pool_conf_parser.h"
+// #include "trpc/common/config/mysql_connect_pool_conf_parser.h"
 #include "yaml-cpp/yaml.h"
 
 namespace YAML {
@@ -15,12 +15,10 @@ struct convert<trpc::MysqlClientConf> {
     node["user_name"] = mysql_conf.user_name;
     node["password"] = mysql_conf.password;
     node["dbname"] = mysql_conf.dbname;
-    node["ip"] = mysql_conf.ip;
-    node["port"] = mysql_conf.port;
     node["enable"] = mysql_conf.enable;
 
     // 编码 connectpool 部分
-    node["connectpool"] = mysql_conf.connectpool;
+    node["min_size"] = mysql_conf.min_size;
 
     return node;
   }
@@ -36,18 +34,12 @@ struct convert<trpc::MysqlClientConf> {
     if (node["dbname"]) {
       mysql_conf.dbname = node["dbname"].as<std::string>();
     }
-    if (node["ip"]) {
-      mysql_conf.ip = node["ip"].as<std::string>();
-    }
-    if (node["port"]) {
-      mysql_conf.port = node["port"].as<uint32_t>();
-    }
     if (node["enable"]) {
       mysql_conf.enable = node["enable"].as<bool>();
     }
 
-    if (node["connectpool"]) {
-      mysql_conf.connectpool = node["connectpool"].as<trpc::MysqlConnectPoolConf>();
+    if (node["min_size"]) {
+      mysql_conf.min_size = node["min_size"].as<uint32_t>();
     }
 
     return true;
