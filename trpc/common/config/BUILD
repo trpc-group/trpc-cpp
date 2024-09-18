@@ -65,9 +65,9 @@ cc_library(
     srcs = ["default_log_conf_parser.cc"],
     hdrs = ["default_log_conf_parser.h"],
     deps = [
-        ":default_value",
         ":config_helper",
         ":default_log_conf_h",
+        ":default_value",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )
@@ -313,6 +313,24 @@ cc_test(
         ":domain_naming_conf",
         ":domain_naming_conf_parser",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "loadbalance_naming_conf",
+    srcs = ["loadbalance_naming_conf.cc"],
+    hdrs = ["loadbalance_naming_conf.h"],
+    deps = [
+        "//trpc/util/log:logging",
+        "@com_github_jbeder_yaml_cpp//:yaml-cpp",
+    ],
+)
+
+cc_library(
+    name = "loadbalance_naming_conf_parser",
+    hdrs = ["loadbalance_naming_conf_parser.h"],
+    deps = [
+        ":loadbalance_naming_conf",
     ],
 )
 

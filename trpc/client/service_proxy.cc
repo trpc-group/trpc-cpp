@@ -794,7 +794,7 @@ void ConvertEndpointInfo(const std::string& ip_ports, std::vector<TrpcEndpointIn
   for (auto const& name : vec) {
     TrpcEndpointInfo endpoint;
     // add to vec_endpoint when parse endpoints successfully
-    if (util::ParseHostPort(name, endpoint.host, endpoint.port, endpoint.is_ipv6)) {
+    if (util::ParseHostPort(name, endpoint.host, endpoint.port, endpoint.is_ipv6, endpoint.weight)) {
       vec_endpoint.emplace_back(endpoint);
     }
   }
@@ -809,6 +809,7 @@ void ServiceProxy::SetEndpointInfo(const std::string& endpoint_info) {
 
   RouterInfo info;
   info.name = GetServiceName();
+  info.load_balance_name = option_->load_balance_name;
   ConvertEndpointInfo(endpoint_info, info.info);
   if (info.info.size() <= 0) {
     TRPC_LOG_ERROR("Service endpoint info of " << GetServiceName()
