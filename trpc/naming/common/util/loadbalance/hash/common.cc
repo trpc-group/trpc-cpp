@@ -71,7 +71,7 @@ bool CheckLoadBalanceSelectorConfig(naming::LoadBalanceConfig& loadbalance_confi
     // set to default value
     loadbalance_config_.hash_args.assign({0});
   }
-  if (HashFuncTable.find(loadbalance_config_.hash_func) == HashFuncTable.end()) {
+  if (kHashFuncTable.find(loadbalance_config_.hash_func) == kHashFuncTable.end()) {
     res = false;
     TRPC_FMT_DEBUG("hash func name is invalid, use default config");
     // set to default value
