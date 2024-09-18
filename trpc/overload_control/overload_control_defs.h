@@ -79,6 +79,15 @@ constexpr char kOverloadctrlThrottler[] = "overloadctrl_throttler";
 /// @brief Key for request priority in trpc framework.
 constexpr char kTransinfoKeyTrpcPriority[] = "trpc-priority";
 
+/// @brief Window limiter control name.
+constexpr char kWindowLimiterControlName[] = "window_limiter";
+
+/// @brief Name of overload protection limiter based on token bucket.
+constexpr char kTokenBucketLimiterName[] = "token_bucket_limiter";
+
+/// @brief Name of monitoring dimensions for request-based concurrent overload protection rate limiter.
+constexpr char kOverloadctrlTokenBucketLimiter[] = "overloadctrl_token_bucket_limiter";
+
 /// @brief Name of overload protection limiter in fixed window algorithm.
 constexpr char kFixedWindowLimiterName[] = "fixed_window_limiter";
 
