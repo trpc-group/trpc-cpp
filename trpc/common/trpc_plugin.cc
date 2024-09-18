@@ -35,6 +35,7 @@
 #ifdef TRPC_BUILD_INCLUDE_RPCZ
 #include "trpc/rpcz/collector.h"
 #endif
+#include "trpc/naming/common/util/loadbalance/trpc_load_balance.h"
 #include "trpc/overload_control/trpc_overload_control.h"
 #include "trpc/runtime/common/periphery_task_scheduler.h"
 #include "trpc/runtime/common/runtime_info_report/runtime_info_reporter.h"
@@ -81,6 +82,7 @@ int TrpcPlugin::RegisterPlugins() {
   TRPC_ASSERT(metrics::Init());
   TRPC_ASSERT(tracing::Init());
   TRPC_ASSERT(telemetry::Init());
+  TRPC_ASSERT(loadbalance::Init());
   TRPC_ASSERT(naming::Init());
 
   TRPC_ASSERT(overload_control::Init());
