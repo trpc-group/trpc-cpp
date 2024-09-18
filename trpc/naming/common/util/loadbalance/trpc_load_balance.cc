@@ -23,13 +23,14 @@
 namespace trpc::loadbalance {
 
 bool Init() {
+  bool res = true;
+
   LoadBalancePtr swround_robin_load_balance = trpc::LoadBalanceFactory::GetInstance()->Get(kSWRoundRobinLoadBalance);
   if (swround_robin_load_balance == nullptr) {
     // Register the default load balancer
     swround_robin_load_balance = MakeRefCounted<SWRoundRobinLoadBalance>();
     LoadBalanceFactory::GetInstance()->Register(swround_robin_load_balance);
   }
-  bool res = true;
 
   // Registers default loadbalance plugins which provided by the framework.
   LoadBalancePtr polling_load_balance = trpc::LoadBalanceFactory::GetInstance()->Get(kPollingLoadBalance);
