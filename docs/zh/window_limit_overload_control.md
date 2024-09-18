@@ -23,7 +23,7 @@ plugins:
   overload_control:
     window_limiter:
       - service_name: trpc.test.helloworld.Greeter
-        is_report: true
+        is_report: false
         service_limiter: smooth(5)
         window_size: 100
         func_limiter: 
@@ -42,7 +42,7 @@ plugins:
 - func_limiter：指定服务名 `service_name` 下的接口级流控策略；每个服务可以存在多个接口，每个接口可以选择不同的流量控制算法，介绍如下：
   - `name`：接口名称，如：`SayHello` 和 `Route`
   - `limiter`：指定接口流控算法，例如：`Route` 配置了滑动窗口（smooth）算法，最大 QPS 是 80000
-- is_report：是否上报监控数据到监控插件，**注意，该配置必须与监控插件一起使用(例如配置：plugins->metrics->prometheus，则会上报到 prometheus 上)，如果没有配置监控插件，该选项无意义**，不同流量控制算法监控数据分别如下：
+- is_report：是否上报监控数据到监控插件，默认设置成不上报 **注意，该配置必须与监控插件一起使用(例如配置：plugins->metrics->prometheus，则会上报到 prometheus 上)，如果没有配置监控插件，该选项无意义**，不同流量控制算法监控数据分别如下：
   - seconds：
     - `SecondsLimiter`：流控算法名称，用于检查配置和程序中执行的流量控制算法是否一致
     - `/{callee_name}/{method}`：监控名称格式，由被调服务(callee_name)和方法名(method)组成，例如：`/trpc.test.helloworld.Greeter/SayHello`
