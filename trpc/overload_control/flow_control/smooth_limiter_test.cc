@@ -70,8 +70,9 @@ TEST_F(SmoothLimiterTest, Overload) {
   context->SetRequestMsg(std::move(req_msg));
   context->SetFuncName("trpc.test.flow_control.smooth_limiter");
 
+  ASSERT_EQ(smooth_limiter_->GetMaxCounter(), 3);
   for (int i{0}; i < 4; ++i) {
-    ASSERT_EQ(smooth_limiter_->GetMaxCounter(), 3);
+    ASSERT_EQ(smooth_limiter_->GetCurrCounter(), 0);
     ASSERT_EQ(smooth_limiter_->CheckLimit(context), false);
     ASSERT_EQ(smooth_limiter_->CheckLimit(context), false);
     ASSERT_EQ(smooth_limiter_->GetCurrCounter(), 2);
