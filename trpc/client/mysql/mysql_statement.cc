@@ -3,37 +3,44 @@
 
 namespace trpc::mysql {
 
-MysqlStatement::MysqlStatement(const std::string& sql, MYSQL* conn) 
-                :mysql_stmt_(nullptr) {
-  mysql_stmt_ = mysql_stmt_init(conn);
-  if (mysql_stmt_ == nullptr) {
-      std::runtime_error conn_error("Mysql prepared statement init failed.");
-      throw conn_error;
-  }
-
-  if(mysql_stmt_prepare(mysql_stmt_, sql.c_str(), sql.length()) != 0) {
-    std::string msg = "Mysql prepared statement create failed. ";
-    std::string msg_error(mysql_error(conn));
-    msg.append(msg_error);
-    std::runtime_error conn_error(msg);
-    CloseStatement();
-    throw conn_error;
-  }
-
-  field_count_ = mysql_stmt_field_count(mysql_stmt_);
-
+MysqlStatement::MysqlStatement(MYSQL* conn)
+                :mysql_stmt_(nullptr), mysql_(conn), field_count_(0) {
 }
 
-MysqlStatement::~MysqlStatement() {
-  CloseStatement();
-}
 
-void MysqlStatement::CloseStatement() {
+bool MysqlStatement::CloseStatement() {
   if(mysql_stmt_ != nullptr) {
-    mysql_stmt_free_result(mysql_stmt_);
+    if(!mysql_stmt_free_result(mysql_stmt_))
+      return false;
     mysql_stmt_close(mysql_stmt_);
     mysql_stmt_ = nullptr;
   }
+
+  return true;
+}
+
+bool MysqlStatement::Init(const std::string& sql) {
+  mysql_stmt_ = mysql_stmt_init(mysql_);
+  if (mysql_stmt_ == nullptr)
+    return false;
+
+  if(mysql_stmt_prepare(mysql_stmt_, sql.c_str(), sql.length()) != 0)
+    return false;
+
+  field_count_ = mysql_stmt_field_count(mysql_stmt_);
+  params_count_ = mysql_stmt_param_count(mysql_stmt_);
+  return true;
+}
+
+std::string MysqlStatement::GetErrorMessage() {
+  if(mysql_stmt_ != nullptr)
+    return std::string(mysql_stmt_error(mysql_stmt_));
+  return "";
+}
+
+bool MysqlStatement::BindParam(std::vector<MYSQL_BIND> &bind_list) {
+
+  return mysql_stmt_bind_param(mysql_stmt_, bind_list.data()) == 0? true : false;
 }
 
 

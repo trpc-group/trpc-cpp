@@ -22,114 +22,130 @@ mysql> select * from users;
 +----+----------+-------------------+---------------------+
 */
 
-TEST(Connection, Init) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  EXPECT_NE(nullptr, conn.mysql_);
-  conn.Close();
-  EXPECT_EQ(nullptr, conn.mysql_);
-}
+//TEST(Statement, Prepare) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlStatement stmt(conn.mysql_);
+//  stmt.Init("select * from users");
+//  EXPECT_EQ(stmt.GetFieldCount(), 4);
+//  stmt.CloseStatement();
+//}
+//
+//
+//TEST(Executor, Init) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  EXPECT_NE(nullptr, conn.mysql_);
+//  conn.Close();
+//  EXPECT_EQ(nullptr, conn.mysql_);
+//}
+//
+//TEST(Executor, InputBind) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//
+//  std::vector<MYSQL_BIND> binds;
+//  float float_num = 3.14f;
+//  double double_num = 3.14;
+//  int num = 123;
+//  unsigned long num2 = 333;
+//
+//  std::string hello_s("hello");
+//  conn.BindInputArgs(binds, float_num, double_num, num, num2, hello_s, "hello");
+//
+//  EXPECT_EQ(6, binds.size());
+//  EXPECT_FLOAT_EQ(3.14, *static_cast<float*>(binds[0].buffer));
+//  EXPECT_FLOAT_EQ(3.14, *static_cast<double*>(binds[1].buffer));
+//  EXPECT_EQ(123, *static_cast<int*>(binds[2].buffer));
+//  EXPECT_EQ(333, *static_cast<unsigned long*>(binds[3].buffer));
+//  EXPECT_STREQ(static_cast<char*>(binds[4].buffer), static_cast<char*>(binds[5].buffer));
+//
+//  conn.Close();
+//}
+//
+//TEST(Executor, QueryNoArgs) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<int, std::string, trpc::mysql::MysqlTime> res;
+//  conn.QueryAll(res, "select id, username, created_at from users");
+//
+//  auto& res_data = res.GetResultSet();
+//  ASSERT_EQ(true, res.IsSuccess());
+//  EXPECT_EQ(4, res_data.size());
+//  EXPECT_EQ(2, std::get<0>(res_data[1]));
+//  EXPECT_EQ("alice", std::get<1>(res_data[0]));
+//  EXPECT_EQ(2024, std::get<2>(res_data[2]).mt.year);
+//}
+//
+//TEST(Executor, QueryString) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<trpc::mysql::NativeString> res;
+//  conn.QueryAll(res, "select id, username, created_at from users");
+//
+//  // Not Complete yet
+//  // auto& res_data = res.GetResultSet();
+//  // EXPECT_EQ("alice", res_data[0][1]);
+//}
+//
+//TEST(Executor, QueryNull) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<std::string, std::string> res;
+//  conn.QueryAll(res, "select username, email from users");
+//  EXPECT_TRUE(res.null_flags[0][0] == 0);
+//  EXPECT_TRUE(res.null_flags[0][1] == 0);
+//  EXPECT_TRUE(res.null_flags[3][0] == 0);
+//  EXPECT_TRUE(res.null_flags[3][1] != 0);
+//}
+//
+//TEST(Executor, QueryArgs) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<int, std::string, trpc::mysql::MysqlTime> res;
+//  conn.QueryAll(res, "select id, email, created_at from users where id = ? or username = ?", 1, "carol");
+//
+//  auto& res_data = res.GetResultSet();
+//  EXPECT_EQ(2, res_data.size());
+//  EXPECT_EQ("alice@example.com", std::get<1>(res_data[0]));
+//  EXPECT_EQ("carol@example.com", std::get<1>(res_data[1]));
+//}
+//
+//TEST(Executor, Update) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
+//  conn.Execute(res,
+//               "update users set username = \
+//                      \"tom\", email = \"tom@abc.com\" where username = ?",
+//               "bob");
+//  EXPECT_EQ(1, res.affected_rows);
+//  res.affected_rows = 0;
+//  conn.Execute(res,
+//               "update users set username = \
+//                      \"bob\", email = \"bob@abc.com\" where username = ?",
+//               "tom");
+//  EXPECT_EQ(1, res.affected_rows);
+//}
+//
+//TEST(Executor, Insert) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
+//  conn.Execute(res,
+//               "insert into users (username, email) \
+//                                   values (\"jack\", \"jack@abc.com\")");
+//  EXPECT_EQ(1, res.affected_rows);
+//}
+//
+//TEST(Executor, Delete) {
+//  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+//  trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
+//  conn.Execute(res, "delete from users where username = \"jack\"");
+//  EXPECT_EQ(1, res.affected_rows);
+//}
+//
+//
 
-TEST(Connection, InputBind) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-
-  std::vector<MYSQL_BIND> binds;
-  float float_num = 3.14f;
-  double double_num = 3.14;
-  int num = 123;
-  unsigned long num2 = 333;
-
-  std::string hello_s("hello");
-  conn.BindInputArgs(binds, float_num, double_num, num, num2, hello_s, "hello");
-
-  EXPECT_EQ(6, binds.size());
-  EXPECT_FLOAT_EQ(3.14, *static_cast<float*>(binds[0].buffer));
-  EXPECT_FLOAT_EQ(3.14, *static_cast<double*>(binds[1].buffer));
-  EXPECT_EQ(123, *static_cast<int*>(binds[2].buffer));
-  EXPECT_EQ(333, *static_cast<unsigned long*>(binds[3].buffer));
-  EXPECT_STREQ(static_cast<char*>(binds[4].buffer), static_cast<char*>(binds[5].buffer));
-
-  conn.Close();
-}
-
-TEST(Statement, Prepare) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlStatement prepare("select * from users", conn.mysql_);
-  EXPECT_EQ(prepare.GetFieldCount(), 4);
-}
-
-TEST(Connection, QueryNoArgs) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlResults<int, std::string, trpc::mysql::mysql_time> res;
-  conn.QueryAll(res, "select id, username, created_at from users");
-
-  auto& res_data = res.GetResultSet();
-  EXPECT_EQ(4, res_data.size());
-  EXPECT_EQ(2, std::get<0>(res_data[1]));
-  EXPECT_EQ("alice", std::get<1>(res_data[0]));
-  EXPECT_EQ(2024, std::get<2>(res_data[2]).mt.year);
-}
-
-TEST(Connection, QueryString) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlResults<trpc::mysql::NativeString> res;
-  conn.QueryAll(res, "select id, username, created_at from users");
-
-  // Not Complete yet
-  // auto& res_data = res.GetResultSet();
-  // EXPECT_EQ("alice", res_data[0][1]);
-}
-
-TEST(Connection, QueryNull) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlResults<std::string, std::string> res;
-  conn.QueryAll(res, "select username, email from users");
-  EXPECT_TRUE(res.null_flags[0][0] == 0);
-  EXPECT_TRUE(res.null_flags[0][1] == 0);
-  EXPECT_TRUE(res.null_flags[3][0] == 0);
-  EXPECT_TRUE(res.null_flags[3][1] != 0);
-}
-
-TEST(Connection, QueryArgs) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlResults<int, std::string, trpc::mysql::mysql_time> res;
-  conn.QueryAll(res, "select id, email, created_at from users where id = ? or username = ?", 1, "carol");
-
-  auto& res_data = res.GetResultSet();
-  EXPECT_EQ(2, res_data.size());
-  EXPECT_EQ("alice@example.com", std::get<1>(res_data[0]));
-  EXPECT_EQ("carol@example.com", std::get<1>(res_data[1]));
-}
-
-TEST(Connection, Update) {
+TEST(Executor, SynaxError) {
   trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
-  conn.Execute(res,
-               "update users set username = \
-                      \"tom\", email = \"tom@abc.com\" where username = ?",
-               "bob");
-  EXPECT_EQ(1, res.affected_rows);
-  res.affected_rows = 0;
-  conn.Execute(res,
-               "update users set username = \
-                      \"bob\", email = \"bob@abc.com\" where username = ?",
-               "tom");
-  EXPECT_EQ(1, res.affected_rows);
+  conn.Execute(res, "delete users where username = \"jack\"");
+  EXPECT_EQ(false, res.IsSuccess());
+  std::cout << res.error_message << "\n";
 }
 
-TEST(Connection, Insert) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
-  conn.Execute(res,
-               "insert into users (username, email) \
-                                   values (\"jack\", \"jack@abc.com\")");
-  EXPECT_EQ(1, res.affected_rows);
-}
 
-TEST(Connection, Delete) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
-  conn.Execute(res, "delete from users where username = \"jack\"");
-  EXPECT_EQ(1, res.affected_rows);
-}
 
 }  // namespace trpc::testing

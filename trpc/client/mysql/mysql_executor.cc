@@ -33,22 +33,22 @@ void MysqlExecutor::Close() {
   }
 }
 
-void MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
-  if (mysql_stmt_bind_result(statement.STMTPointer(), output_binds.data()) != 0) {
-    throw std::runtime_error(mysql_stmt_error(statement.STMTPointer()));
-  }
+bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
+  if (mysql_stmt_bind_result(statement.STMTPointer(), output_binds.data()) != 0)
+    return false;
 
   if (mysql_stmt_execute(statement.STMTPointer()) != 0) {
-    // std::cout << mysql_stmt_errno(statement.STMTPointer()) << std::endl;
-    throw std::runtime_error(mysql_stmt_error(statement.STMTPointer()));
+    return false;
   }
+
+  return true;
 }
 
-void MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
-  if (mysql_stmt_execute(statement.STMTPointer()) != 0) {
-    // std::cout << mysql_stmt_errno(statement.STMTPointer()) << std::endl;
-    throw std::runtime_error(mysql_stmt_error(statement.STMTPointer()));
-  }
+bool MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
+  if (mysql_stmt_execute(statement.STMTPointer()) != 0)
+    return false;
+
+  return true;
 }
 
 uint64_t MysqlExecutor::GetAliveTime() {
@@ -58,5 +58,12 @@ uint64_t MysqlExecutor::GetAliveTime() {
 }
 
 void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMicroSeconds(); }
+
+void MysqlExecutor::FreeResult() {
+  if (res_) {
+    mysql_free_result(res_);
+    res_ = nullptr;
+  }
+}
 
 }  // namespace trpc::mysql

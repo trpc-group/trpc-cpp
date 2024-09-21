@@ -15,11 +15,32 @@ namespace trpc::mysql {
 // Wrap the MYSQL_TIME
 // ***********
 
-struct mysql_time
+class MysqlTime
 {
+ public:
   MYSQL_TIME mt;
 };
 
+class MysqlBlob {
+ public:
+  MysqlBlob() = default;
+
+  MysqlBlob(const MysqlBlob& other)  = default;
+
+  MysqlBlob(MysqlBlob&& other) noexcept : data_(std::move(other.data_)) {}
+
+  explicit MysqlBlob(const std::string& data) : data_(data) {}
+
+  explicit MysqlBlob(std::string&& data) noexcept : data_(std::move(data)) {}
+
+  MysqlBlob(const char* data, std::size_t length) : data_(data, length) {}
+
+
+  const std::string& data() const { return data_; }
+
+ private:
+  std::string data_;
+};
 
 
 
@@ -49,8 +70,8 @@ DEFINE_MYSQL_TYPE_SPECIALIZATION(int64_t, MYSQL_TYPE_LONGLONG, false)
 DEFINE_MYSQL_TYPE_SPECIALIZATION(uint64_t, MYSQL_TYPE_LONGLONG, true)
 DEFINE_MYSQL_TYPE_SPECIALIZATION(float, MYSQL_TYPE_FLOAT, false)
 DEFINE_MYSQL_TYPE_SPECIALIZATION(double, MYSQL_TYPE_DOUBLE, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(mysql_time, MYSQL_TYPE_DATETIME, true)
-
+DEFINE_MYSQL_TYPE_SPECIALIZATION(MysqlTime, MYSQL_TYPE_DATETIME, true)
+//DEFINE_MYSQL_TYPE_SPECIALIZATION(MysqlBlob, MYSQL_TYPE_BLOB, true)
 
 // ***********
 // Input Bind
@@ -66,25 +87,7 @@ inline void StepInputBind(MYSQL_BIND& bind, const T& value) {
   bind.is_null = 0;
 }
 
-// template <>
-// inline MYSQL_BIND StepInputBind(const int& value) {
-//     MYSQL_BIND bind;
-//     bind.buffer_type = MYSQL_TYPE_LONG;
-//     bind.buffer = BIND_POINTER_CAST(&value);
-//     bind.is_unsigned = 0;
-//     bind.is_null = 0;
-//     return bind;
-// }
 
-// template <>
-// inline MYSQL_BIND StepInputBind(const double& value) {
-//     MYSQL_BIND bind;
-//     bind.buffer_type = MYSQL_TYPE_DOUBLE;
-//     bind.buffer = BIND_POINTER_CAST(&value);
-//     bind.is_unsigned = 0;
-//     bind.is_null = 0;
-//     return bind;
-// }
 
 template <>
 inline void StepInputBind(MYSQL_BIND& bind, const std::string& value) {
