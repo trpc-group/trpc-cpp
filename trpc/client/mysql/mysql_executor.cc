@@ -66,4 +66,21 @@ void MysqlExecutor::FreeResult() {
   }
 }
 
+std::string MysqlExecutor::ConvertPlaceholders(const std::string &sql) {
+  std::string result;
+  size_t len = sql.length();
+
+  for (size_t i = 0; i < len; ++i) {
+    if (sql[i] == '?' && (i == 0 || sql[i - 1] != '\\')) {
+      result += "{}";
+    } else {
+      result += sql[i];
+    }
+  }
+
+  return result;
+}
+
+
+
 }  // namespace trpc::mysql

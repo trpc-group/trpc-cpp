@@ -17,6 +17,7 @@ cc_library(
         ":mysql_statement",
         "@mysql_c_api_archive//:mysql_c_api",
         "@trpc_cpp//trpc/util:time",
+        "//trpc/util:string_util"
     ],
     visibility = ["//visibility:public"],
     linkopts = ["-lmysqlclient"]
@@ -76,6 +77,7 @@ cc_test(
     visibility = ["//visibility:public"],
     deps = [
         ":mysql_executor",
+        "//trpc/util:random",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ]

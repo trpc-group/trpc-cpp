@@ -23,6 +23,8 @@ public:
 
   unsigned int GetFieldCount() { return field_count_; }
 
+  unsigned long GetParamsCount() { return params_count_; }
+
   MYSQL_STMT* STMTPointer() { return mysql_stmt_; }
 
   bool IsValid() { return mysql_stmt_ == nullptr; }

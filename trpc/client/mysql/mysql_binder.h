@@ -18,8 +18,22 @@ namespace trpc::mysql {
 class MysqlTime
 {
  public:
+  //Todo: Friendly constructor
+  MysqlTime() {
+    mt.year = 2024;
+    mt.month = 1;
+    mt.day = 1;
+    mt.hour = 0;
+    mt.minute = 0;
+    mt.second = 0;
+    mt.second_part = 0;
+    mt.time_type = MYSQL_TIMESTAMP_DATETIME;
+    mt.neg = 0;
+  }
+
   MYSQL_TIME mt;
 };
+
 
 class MysqlBlob {
  public:
@@ -29,14 +43,39 @@ class MysqlBlob {
 
   MysqlBlob(MysqlBlob&& other) noexcept : data_(std::move(other.data_)) {}
 
+
   explicit MysqlBlob(const std::string& data) : data_(data) {}
 
   explicit MysqlBlob(std::string&& data) noexcept : data_(std::move(data)) {}
 
   MysqlBlob(const char* data, std::size_t length) : data_(data, length) {}
 
+  MysqlBlob& operator=(const MysqlBlob& other) {
+    if (this != &other) {
+      data_ = other.data_;
+    }
+    return *this;
+  }
 
-  const std::string& data() const { return data_; }
+  MysqlBlob& operator=(MysqlBlob&& other) noexcept {
+    if (this != &other) {
+      data_ = std::move(other.data_);
+    }
+    return *this;
+  }
+
+  bool operator==(const MysqlBlob& other) const {
+    return data_ == other.data_;
+  }
+
+
+  const char* data_ptr() const {
+    return data_.data();
+  }
+
+  size_t size() const {
+    return data_.size();
+  }
 
  private:
   std::string data_;
@@ -84,7 +123,16 @@ inline void StepInputBind(MYSQL_BIND& bind, const T& value) {
   bind.buffer_type = MysqlType<T>::value;
   bind.buffer = BIND_POINTER_CAST(&value);
   bind.is_unsigned = MysqlType<T>::is_unsigned;
-  bind.is_null = 0;
+}
+
+template <>
+inline void StepInputBind(MYSQL_BIND& bind, const MysqlBlob& value) {
+  std::memset(&bind, 0, sizeof(bind));
+  bind.buffer_type = MYSQL_TYPE_BLOB;
+  bind.buffer = BIND_POINTER_CAST(value.data_ptr());
+  bind.buffer_length = value.size();
+  bind.length = &bind.buffer_length;
+  bind.is_unsigned = false;
 }
 
 
@@ -96,8 +144,7 @@ inline void StepInputBind(MYSQL_BIND& bind, const std::string& value) {
   bind.buffer = const_cast<char*>(value.c_str());
   bind.buffer_length = value.length();
   bind.length = &bind.buffer_length;
-  bind.is_unsigned = 0;
-  bind.is_null = 0;
+  bind.is_unsigned = false;
 }
 
 template <>
@@ -107,8 +154,7 @@ inline void StepInputBind(MYSQL_BIND& bind, const char* const& value) {
   bind.buffer = BIND_POINTER_CAST(value);
   bind.buffer_length = std::strlen(value);
   bind.length = &bind.buffer_length;
-  bind.is_unsigned = 0;
-  bind.is_null = 0;
+  bind.is_unsigned = false;
 }
 
 inline void StepInputBind(MYSQL_BIND& bind, const char* value) {
@@ -117,8 +163,7 @@ inline void StepInputBind(MYSQL_BIND& bind, const char* value) {
   bind.buffer = BIND_POINTER_CAST(value);
   bind.buffer_length = std::strlen(value);
   bind.length = &bind.buffer_length;
-  bind.is_unsigned = 0;
-  bind.is_null = 0;
+  bind.is_unsigned = false;
 }
 
 
@@ -162,6 +207,18 @@ inline void StepOutputBind<std::string>(MYSQL_BIND& bind, std::vector<std::byte>
   bind.buffer_length = buffer.size();
 }
 
+template <>
+inline void StepOutputBind<MysqlBlob>(MYSQL_BIND& bind, std::vector<std::byte>& buffer, uint8_t& null_flag) {
+  bind.buffer_type = MYSQL_TYPE_BLOB;
+  if (buffer.empty()) {
+    buffer.resize(32);
+  }
+  bind.buffer = buffer.data();
+  bind.is_null = reinterpret_cast<bool*>(&null_flag);
+  bind.buffer_length = buffer.size();
+}
+
+
 
 
 template <typename... OutputArgs>
@@ -187,6 +244,12 @@ template <>
 inline void StepTupleSet(std::string& value, const MYSQL_BIND& bind) {
   if((*bind.is_null) == 0)
     value.assign(static_cast<const char*>(bind.buffer), *(bind.length));
+}
+
+template <>
+inline void StepTupleSet(MysqlBlob& value, const MYSQL_BIND& bind) {
+  if((*bind.is_null) == 0)
+    value = MysqlBlob(static_cast<const char*>(bind.buffer), *(bind.length));
 }
 
 template <typename... OutputArgs>

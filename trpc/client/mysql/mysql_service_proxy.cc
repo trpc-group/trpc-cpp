@@ -13,7 +13,7 @@ MysqlServiceProxy::MysqlServiceProxy() {
   thread_pool_option.bind_core = true;
   thread_pool_ = std::make_unique<::trpc::ThreadPool>(std::move(thread_pool_option));
   thread_pool_->Start();
-  ServiceOptionToMysqlConfig();
+//  ServiceOptionToMysqlConfig();
 }
 
 void MysqlServiceProxy::ServiceOptionToMysqlConfig() {
