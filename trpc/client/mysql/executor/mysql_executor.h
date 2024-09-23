@@ -8,122 +8,14 @@
 #include <type_traits>
 #include <variant>
 #include <vector>
-#include "trpc/client/mysql/mysql_binder.h"
-#include "trpc/client/mysql/mysql_statement.h"
+#include "trpc/client/mysql/executor/mysql_binder.h"
+#include "trpc/client/mysql/executor/mysql_statement.h"
+#include "trpc/client/mysql/executor/mysql_results.h"
 #include "trpc/util/time.h"
 #include "trpc/util/string_util.h"
 
-struct MYSQL_RES;
-struct MYSQL;
-struct MYSQL_BIND;
 
 namespace trpc::mysql {
-
-class MysqlExecutor;
-
-///@brief Just specialize class MysqlResults
-class OnlyExec {};
-
-class NativeString {};
-
-
-class MysqlResultsOption {
- public:
-  bool use_string_view = false;
-
-  size_t dynamic_buffer_init_size = 64;
-};
-
-
-///
-///@brief A class used to store the results of a MySQL query executed by the MysqlConnection class.
-///
-/// The class template parameter `Args...` is used to define the types of data stored in the result set.
-///
-///- If `Args...` is `OnlyExec`, the class is intended for operations
-///  that execute without returning a result set (e.g., INSERT, UPDATE).
-///
-///- If `Args...` is `NativeString`, the class handles operations that
-///  return a `vector<vector<string>>>` result set.
-///
-///- If `Args...` includes common data types (e.g., int, std::string),
-///  the class handles operations that return a `vector<tuple<Args...>>` result set.
-///  The template args need to match the query field.  Notice that in this case, it will use
-///  prepare statement to execute SQL.
-template <typename... Args>
-class MysqlResults {
-  friend class MysqlExecutor;
-
- public:
-  MysqlResults() : affected_rows(0), has_value_(false) {
-    if constexpr (is_native_string) {
-      result_set = std::vector<std::vector<std::string>>();
-    } else {
-      result_set = std::vector<std::tuple<Args...>>();
-    }
-  }
-
-  MysqlResults(const MysqlResultsOption& option) : MysqlResults() {
-    option_ = option;
-  }
-
-
-  inline auto& GetResultSet() {
-    if constexpr (is_native_string) {
-      return std::get<std::vector<std::vector<std::string>>>(result_set);
-    } else {
-      return std::get<std::vector<std::tuple<Args...>>>(result_set);
-    }
-  }
-
-  inline int GetResultSet(std::vector<std::vector<std::string>>& res) {
-    if (!is_native_string || !has_value_) return -1;
-    res = std::move(std::get<std::vector<std::vector<std::string>>>(result_set));
-    has_value_ = false;
-    return 0;
-  }
-
-  inline int GetResultSet(std::vector<std::tuple<Args...>>& res) {
-    if (is_native_string || is_only_exec || !has_value_) return -1;
-    res = std::move(std::get<std::vector<std::tuple<Args...>>>(result_set));
-    has_value_ = false;
-    return 0;
-  }
-
-  std::vector<std::vector<uint8_t>>& GetNullFlag() { return null_flags; }
-
-  const MysqlResultsOption& GetOption() { return option_; }
-
-  size_t GetAffectedRows() { return affected_rows; }
-
-  bool IsSuccess() { return error_message.empty(); }
-
-  void Clear() { null_flags.clear(); error_message.clear(); has_value_ = false; GetResultSet().clear(); }
-
- private:
-  static constexpr bool is_only_exec = std::is_same_v<std::tuple<Args...>, std::tuple<OnlyExec>>;
-
-  static constexpr bool is_native_string = std::is_same_v<std::tuple<Args...>, std::tuple<NativeString>>;
-
-  MysqlResultsOption option_;
-
-  std::variant<std::vector<std::tuple<Args...>>, std::vector<std::vector<std::string>>> result_set;
-
-  // Null flags
-  std::vector<std::vector<uint8_t>> null_flags;
-
-  std::string error_message;
-
-  size_t affected_rows;
-
-//  bool error;
-
-  bool has_value_;
-
-  // Todo: Field Type
-};
-
-
 
 
 
@@ -246,12 +138,15 @@ class MysqlExecutor {
   template <typename... InputArgs>
   bool QueryAllInternal(MysqlResults<NativeString>& mysql_results, const std::string& query, const InputArgs&... args);
 
+  template <typename... InputArgs>
+  bool QueryAllInternal(MysqlResults<IterMode>& mysql_results, const std::string& query, const InputArgs&... args);
+
   ///@brief Executes an SQL
   ///@param query The SQL query to be executed as a string which uses "?" as placeholders.
   ///@param args The input arguments to be bound to the query placeholders.
   ///@return Affected rows.
   template <typename... InputArgs>
-  int ExecuteInternal(const std::string& query, std::string& error_message, const InputArgs&... args);
+  size_t ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results, const InputArgs&... args);
 
   template <typename... InputArgs>
   void BindInputArgs(std::vector<MYSQL_BIND>& params, const InputArgs&... args);
@@ -269,12 +164,6 @@ class MysqlExecutor {
   template <typename... OutputArgs>
   bool FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
 
-
-
-  template<typename... Args>
-  std::string FormatQuery(const std::string& query, const Args&... args) {
-    return fmt::format(query, wrapWithQuotesIfString(args)...); // 自动为字符串参数添加引号
-  }
 
   std::string ConvertPlaceholders(const std::string& sql);
 
@@ -334,7 +223,8 @@ bool MysqlExecutor::QueryAll(MysqlResults<OutputArgs...>& mysql_results, const s
 
 template <typename... InputArgs>
 bool MysqlExecutor::Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args) {
-  mysql_results.affected_rows = ExecuteInternal(query, mysql_results.error_message, args...);
+  size_t affected_rows = ExecuteInternal(query, mysql_results, args...);
+  mysql_results.SetAffectedRows(affected_rows);
   return true;
 }
 
@@ -414,6 +304,31 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
   return true;
 }
 
+
+template <typename... InputArgs>
+bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result,
+                                     const std::string& query,
+                                     const InputArgs&... args) {
+  std::string query_str = Formatter::FormatQuery(ConvertPlaceholders(query), args...);
+  MYSQL_ROW row;
+  auto& results = mysql_result.GetResultSet();
+
+  if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
+    mysql_result.SetErrorMessage(mysql_error(mysql_));
+    return false;
+  }
+
+  res_ = mysql_store_result(mysql_);
+  if (res_ == nullptr) {
+    mysql_result.SetErrorMessage(mysql_error(mysql_));
+    return false;
+  }
+
+  mysql_result.SetRawMysqlRes(res_);
+
+  return true;
+}
+
 template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result,
                                      const std::string& query,
@@ -423,13 +338,13 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result,
   auto& results = mysql_result.GetResultSet();
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
-    mysql_result.error_message =  mysql_error(mysql_);
+    mysql_result.SetErrorMessage(mysql_error(mysql_));
     return false;
   }
 
   res_ = mysql_store_result(mysql_);
   if (res_ == nullptr) {
-    mysql_result.error_message =  mysql_error(mysql_);
+    mysql_result.SetErrorMessage(mysql_error(mysql_));
     return false;
   }
 
@@ -438,14 +353,14 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result,
   while ((row = mysql_fetch_row(res_)) != nullptr) {
     unsigned long *lengths;
     results.emplace_back();
-    mysql_result.null_flags.emplace_back(num_fields, false);
+    mysql_result.GetNullFlag().emplace_back(num_fields, false);
     lengths = mysql_fetch_lengths(res_);
 
     for(unsigned long i = 0; i < num_fields; i++) {
       if(row[i])
         results.back().emplace_back(row[i], lengths[i]);
       else {
-        mysql_result.null_flags.back()[i] = true;
+        mysql_result.GetNullFlag().back()[i] = true;
         results.back().emplace_back("");
       }
     }
@@ -511,25 +426,25 @@ bool MysqlExecutor::FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs.
 }
 
 template <typename... InputArgs>
-int MysqlExecutor::ExecuteInternal(const std::string& query, std::string& error_message, const InputArgs&... args) {
+size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results, const InputArgs&... args) {
   MysqlStatement stmt(mysql_);
   std::vector<MYSQL_BIND> input_binds;
 
   if(!stmt.Init(query)) {
-    error_message = stmt.GetErrorMessage();
+    mysql_results.SetErrorMessage(stmt.GetErrorMessage());
     stmt.CloseStatement();
     return false;
   }
   BindInputArgs(input_binds, args...);
 
   if (!stmt.BindParam(input_binds)) {
-    error_message = stmt.GetErrorMessage();
+    mysql_results.SetErrorMessage(stmt.GetErrorMessage());
     stmt.CloseStatement();
     return false;
   }
 
   if(!ExecuteStatement(stmt)) {
-    error_message = stmt.GetErrorMessage();
+    mysql_results.SetErrorMessage(stmt.GetErrorMessage());
     stmt.CloseStatement();
     return false;
   }

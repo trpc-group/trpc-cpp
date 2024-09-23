@@ -1,7 +1,7 @@
 #include "trpc/client/mysql/mysql_executor_pool.h"
 #include <stdexcept>
 #include <thread>
-#include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/client/mysql/executor/mysql_executor.h"
 #include "trpc/client/mysql/mysql_service_config.h"
 
 namespace trpc {

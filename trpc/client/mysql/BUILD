@@ -2,33 +2,14 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-cc_library(
-    name = "mysql_statement",
-    srcs = ["mysql_statement.cc"],
-    hdrs = ["mysql_statement.h"],
-    visibility = ["//visibility:public"]
-)
 
-cc_library(
-    name = "mysql_executor",
-    srcs = ["mysql_executor.cc"],
-    hdrs = ["mysql_executor.h", "mysql_binder.h"],
-    deps = [
-        ":mysql_statement",
-        "@mysql_c_api_archive//:mysql_c_api",
-        "@trpc_cpp//trpc/util:time",
-        "//trpc/util:string_util"
-    ],
-    visibility = ["//visibility:public"],
-    linkopts = ["-lmysqlclient"]
-)
 
 cc_library(
     name = "mysql_executor_pool",
     srcs = ["mysql_executor_pool.cc"],
     hdrs = ["mysql_executor_pool.h"],
     deps = [
-        ":mysql_executor",
+        "//trpc/client/mysql/executor:mysql_executor",
         ":mysql_service_config",
     ],
     visibility = ["//visibility:public"],
@@ -39,7 +20,7 @@ cc_library(
     srcs = ["mysql_service_proxy.cc"],
     hdrs = ["mysql_service_proxy.h"],
     deps = [
-        ":mysql_executor",
+        "//trpc/client/mysql/executor:mysql_executor",
         ":mysql_executor_pool",
         ":mysql_executor_pool_manager",
         "//trpc/client:service_proxy_option",
@@ -71,17 +52,7 @@ cc_library(
 )
 
 
-cc_test(
-    name = "mysql_executor_test",
-    srcs = ["mysql_executor_test.cc"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":mysql_executor",
-        "//trpc/util:random",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-    ]
-)
+
 
 cc_test(
     name = "mysql_service_proxy_test",
@@ -111,7 +82,7 @@ cc_test(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":mysql_executor",
+        "//trpc/client/mysql/executor:mysql_executor",
         ":mysql_executor_pool_manager",
         ":mysql_service_config",
         "//trpc/common/config:trpc_config",

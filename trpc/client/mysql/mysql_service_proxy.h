@@ -1,6 +1,6 @@
 #pragma once
 
-#include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/client/mysql/executor/mysql_executor.h"
 #include "trpc/client/mysql/mysql_executor_pool.h"
 #include "trpc/client/mysql/mysql_executor_pool_manager.h"
 #include "trpc/client/service_proxy.h"

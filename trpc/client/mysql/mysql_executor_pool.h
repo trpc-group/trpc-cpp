@@ -5,7 +5,7 @@
 #include <mutex>
 #include <queue>
 #include <string>
-#include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/client/mysql/executor/mysql_executor.h"
 #include "trpc/client/mysql/mysql_service_config.h"
 namespace trpc {
 namespace mysql {

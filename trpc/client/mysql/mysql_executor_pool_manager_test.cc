@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/client/mysql/executor/mysql_executor.h"
 #include "trpc/client/mysql/mysql_executor_pool.h"
 #include "trpc/client/mysql/mysql_service_config.h"
 #include "trpc/common/config/trpc_config.h"
