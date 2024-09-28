@@ -20,7 +20,7 @@
 
 #include "trpc/client/service_proxy_option.h"
 #include "trpc/common/config/mysql_client_conf.h"
-#include "trpc/common/config/mysql_connect_pool_conf.h"
+//#include "trpc/common/config/mysql_connect_pool_conf.h"
 #include "trpc/common/config/redis_client_conf.h"
 #include "trpc/common/config/ssl_conf.h"
 

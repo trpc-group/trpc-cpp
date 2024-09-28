@@ -29,8 +29,8 @@ bool MySQLClientCodec::FillRequest(const ClientContextPtr& context, const Protoc
 
 bool MySQLClientCodec::FillResponse(const ClientContextPtr& context, const ProtocolPtr& in, void* out) { return true; }
 
-ProtocolPtr MySQLClientCodec::CreateRequestPtr() { return nullptr; }
+ProtocolPtr MySQLClientCodec::CreateRequestPtr() { return std::make_shared<MySQLRequestProtocol>(); }
 
-ProtocolPtr MySQLClientCodec::CreateResponsePtr() { return nullptr; }
+ProtocolPtr MySQLClientCodec::CreateResponsePtr() { return std::make_shared<MySQLResponseProtocol>(); }
 
 }  // namespace trpc

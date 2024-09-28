@@ -86,6 +86,7 @@ cc_library(
         "//trpc/codec/trpc:trpc_client_codec",
         "//trpc/codec/trpc:trpc_server_codec",
         #"//trpc/codec/trpc_http:trpc_http_server_codec",
+        "//trpc/codec/mysql:mysql_client_codec"
     ],
 )
 

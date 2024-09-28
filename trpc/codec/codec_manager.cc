@@ -31,6 +31,9 @@
 #include "trpc/codec/grpc/grpc_client_codec.h"
 #include "trpc/codec/grpc/grpc_server_codec.h"
 
+// codec mysql
+#include "trpc/codec/mysql/mysql_client_codec.h"
+
 namespace trpc::codec {
 
 bool Init() {
@@ -68,6 +71,8 @@ bool Init() {
   ret = InitCodecPlugins<RedisClientCodec>();
   TRPC_ASSERT(ret);
 
+  ret = InitCodecPlugins<MySQLClientCodec>();
+  TRPC_ASSERT(ret);
   return ret;
 }
 

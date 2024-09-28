@@ -62,8 +62,8 @@ void SetOutputByValidInput(const MysqlClientConf& input, MysqlClientConf& output
   auto dbname = GetValidInput<std::string>(input.dbname, "");
   SetOutputByValidInput<std::string>(dbname, output.dbname);
 
-  auto connectpool = GetValidInput<MysqlConnectPoolConf>(input.connectpool, MysqlConnectPoolConf{});
-  SetOutputByValidInput<MysqlConnectPoolConf>(connectpool, output.connectpool);
+//  auto connectpool = GetValidInput<MysqlConnectPoolConf>(input.connectpool, MysqlConnectPoolConf{});
+//  SetOutputByValidInput<MysqlConnectPoolConf>(connectpool, output.connectpool);
 }
 
 void SetOutputByValidInput(const ClientSslConfig& input, ClientSslConfig& output) {

@@ -32,17 +32,19 @@ struct MysqlClientConf {
   /// @brief db name
   std::string dbname;
 
-  // target
-  // /// @brief ip
-  // std::string ip;
+  // Minimum number of connections in the pool
+  uint32_t min_size{0};
 
-  // /// @brief port
-  // uint32_t port;
+  // Maximum number of connections in the pool
+  uint32_t max_size{0};
+
+  // Maximum idle time for connections
+  uint64_t max_idle_time{0};
+
 
   /// @brief Whether enable auth
   bool enable{true};
 
-  uint32_t min_size{0};
 
   void Display() const;
 };

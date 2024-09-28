@@ -310,8 +310,6 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result,
                                      const std::string& query,
                                      const InputArgs&... args) {
   std::string query_str = Formatter::FormatQuery(ConvertPlaceholders(query), args...);
-  MYSQL_ROW row;
-  auto& results = mysql_result.GetResultSet();
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
     mysql_result.SetErrorMessage(mysql_error(mysql_));

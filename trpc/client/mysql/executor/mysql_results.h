@@ -135,6 +135,7 @@ class MysqlResultsOption {
 ///  the MySQL type in the table, it will be an undefined behaviour and will not raise an error message.
 template<typename... Args>
 class MysqlResults {
+  friend class MysqlExecutor;
  private:
   static constexpr bool is_only_exec = std::is_same_v<std::tuple<Args...>, std::tuple<OnlyExec>>;
 
@@ -147,6 +148,12 @@ class MysqlResults {
   MysqlResults();
 
   explicit MysqlResults(const MysqlResultsOption &option);
+
+  MysqlResults(MysqlResults&& other) noexcept;
+
+  MysqlResults& operator=(MysqlResults&& other) noexcept;
+
+  MysqlResults(const MysqlResults& other) = delete;
 
   ~MysqlResults();
 
@@ -208,7 +215,7 @@ class MysqlResults {
 
 
   template <typename T = void, typename = std::enable_if_t<is_iter_mode, T>>
-  MysqlRowIterator begin() {
+  MysqlRowIterator begin() const {
     mysql_data_seek(mysql_res_, 0);
     MYSQL_ROW row = mysql_fetch_row(mysql_res_);
     unsigned long* lengths = mysql_fetch_lengths(mysql_res_);
@@ -216,7 +223,7 @@ class MysqlResults {
   }
 
 
-  MysqlRowIterator end() {
+  MysqlRowIterator end() const {
     return MysqlRowIterator(mysql_res_, nullptr, nullptr, mysql_num_rows(mysql_res_));
   }
 
@@ -243,6 +250,47 @@ class MysqlResults {
 
   // Todo: Field Type
 };
+
+template<typename... Args>
+MysqlResults<Args...>& MysqlResults<Args...>::operator=(MysqlResults &&other) noexcept {
+  if (this != &other) {
+    option_ = std::move(other.option_);
+    result_set = std::move(other.result_set);
+    null_flags = std::move(other.null_flags);
+    error_message = std::move(other.error_message);
+    affected_rows = other.affected_rows;
+    has_value_ = other.has_value_;
+    mysql_res_ = other.mysql_res_;
+
+    other.mysql_res_ = nullptr;
+  }
+  return *this;
+}
+
+//template<typename... Args>
+//MysqlResults<Args...>::MysqlResults(const MysqlResults &other) {
+//  option_ = other.option_;
+//  result_set = other.result_set;
+//  null_flags = other.null_flags;
+//  error_message = other.error_message;
+//  affected_rows = other.affected_rows;
+//  has_value_ = other.has_value_;
+//  mysql_res_ = nullptr; // 处理指针，根据需要克隆资源
+//}
+
+template<typename... Args>
+MysqlResults<Args...>::MysqlResults(MysqlResults&& other) noexcept
+        : option_(std::move(other.option_)),
+          result_set(std::move(other.result_set)),
+          null_flags(std::move(other.null_flags)),
+          error_message(std::move(other.error_message)),
+          affected_rows(other.affected_rows),
+          has_value_(other.has_value_),
+          mysql_res_(other.mysql_res_)
+{
+  other.mysql_res_ = nullptr;
+}
+
 
 template<typename... Args>
 void MysqlResults<Args...>::SetRawMysqlRes(MYSQL_RES* res) {
