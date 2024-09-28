@@ -34,8 +34,7 @@ void MysqlExecutor::Close() {
 }
 
 bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
-  if (mysql_stmt_bind_result(statement.STMTPointer(), output_binds.data()) != 0)
-    return false;
+  if (mysql_stmt_bind_result(statement.STMTPointer(), output_binds.data()) != 0) return false;
 
   if (mysql_stmt_execute(statement.STMTPointer()) != 0) {
     return false;
@@ -45,8 +44,7 @@ bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, Mysq
 }
 
 bool MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
-  if (mysql_stmt_execute(statement.STMTPointer()) != 0)
-    return false;
+  if (mysql_stmt_execute(statement.STMTPointer()) != 0) return false;
 
   return true;
 }
@@ -66,7 +64,7 @@ void MysqlExecutor::FreeResult() {
   }
 }
 
-std::string MysqlExecutor::ConvertPlaceholders(const std::string &sql) {
+std::string MysqlExecutor::ConvertPlaceholders(const std::string& sql) {
   std::string result;
   size_t len = sql.length();
 
@@ -81,6 +79,19 @@ std::string MysqlExecutor::ConvertPlaceholders(const std::string &sql) {
   return result;
 }
 
+bool MysqlExecutor::IsConnectionValid() {
+  if (!mysql_) {
+    return false;  // No MySQL connection initialized
+  }
 
+  // Check connection state using mysql_ping()
+  if (mysql_ping(mysql_) != 0) {
+    // Failed to ping MySQL server (connection is invalid)
+    return false;
+  }
+
+  // Connection is valid
+  return true;
+}
 
 }  // namespace trpc::mysql

@@ -1,18 +1,18 @@
 #pragma once
 
 #include <condition_variable>
+#include <list>  // Add ThreadLocal support
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
+#include <thread>  // Add ThreadLocal support
 #include "trpc/client/mysql/executor/mysql_executor.h"
 #include "trpc/client/mysql/mysql_service_config.h"
 #include "trpc/transport/common/transport_message_common.h"
 
-
 namespace trpc {
 namespace mysql {
-
 
 struct MysqlExecutorPoolOption {
   // Connection pool configuration parameters
@@ -33,7 +33,7 @@ class MysqlExecutorPool {
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
 
-//  MysqlExecutorPool(const MysqlClientConf* conf);
+  //  MysqlExecutorPool(const MysqlClientConf* conf);
 
   MysqlExecutorPool(const MysqlExecutorPoolOption& option, const NodeAddr& node_addr);
 
@@ -46,7 +46,8 @@ class MysqlExecutorPool {
 
   // 连接池操作
   void ProduceExcutor();
-  void RecycleExcutor();
+  void RecycleExcutorThread();
+  void RecycleExecutor(MysqlExecutor* executor);
   void AddExecutor();
 
  private:
@@ -66,6 +67,9 @@ class MysqlExecutorPool {
   std::mutex m_mutexQ;
   std::condition_variable m_cond_produce;
   std::condition_variable m_cond_consume;
+
+  // ThreadLocal storage for connection lists
+  static thread_local std::list<MysqlExecutor*>* thread_local_executors_;
 };
 }  // namespace mysql
 }  // namespace trpc
