@@ -7,9 +7,6 @@
 namespace trpc {
 namespace mysql {
 
-// Define thread_local_executors_ as a pointer
-thread_local std::list<MysqlExecutor*>* MysqlExecutorPool::thread_local_executors_ = nullptr;
-
 MysqlExecutorPool::MysqlExecutorPool(const MysqlExecutorPoolOption& option, const NodeAddr& node_addr)
     : m_user_(option.user_name),
       m_passwd_(option.password),
@@ -22,7 +19,7 @@ MysqlExecutorPool::MysqlExecutorPool(const MysqlExecutorPoolOption& option, cons
     AddExecutor();
   }
   std::thread producer(&MysqlExecutorPool::ProduceExcutor, this);
-  std::thread recycler(&MysqlExecutorPool::RecycleExcutorThread, this);
+  std::thread recycler(&MysqlExecutorPool::RecycleExcutor, this);
   producer.detach();
   recycler.detach();
 }
@@ -46,7 +43,7 @@ void MysqlExecutorPool::ProduceExcutor() {
   }
 }
 
-void MysqlExecutorPool::RecycleExcutorThread() {
+void MysqlExecutorPool::RecycleExcutor() {
   while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::lock_guard<std::mutex> locker(m_mutexQ);
@@ -91,8 +88,23 @@ std::shared_ptr<MysqlExecutor> MysqlExecutorPool::GetExecutor() {
   return connptr;
 }
 
-void MysqlExecutorPool::RecycleExecutor(MysqlExecutor* executor) {
-  thread_local_executors_->push_back(executor);  // Store in thread-local storage
+void MysqlExecutorPool::ReconnectWithBackoff(MysqlExecutor* executor) {
+  int attempt = 0;
+  int max_attempts = 5;
+  int delay = 100;
+
+  while (attempt < max_attempts) {
+    if (executor->Reconnect()) {
+      return;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    delay = std::min(delay * 2, 30000);
+    attempt++;
+  }
+
+  // 
+  HandleClusterUnavailable();
 }
 
 }  // namespace mysql

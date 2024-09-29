@@ -1,31 +1,14 @@
 #pragma once
 
 #include <condition_variable>
-#include <list>  // Add ThreadLocal support
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
-#include <thread>  // Add ThreadLocal support
-#include "trpc/client/mysql/executor/mysql_executor.h"
+#include "trpc/client/mysql/mysql_executor.h"
 #include "trpc/client/mysql/mysql_service_config.h"
-#include "trpc/transport/common/transport_message_common.h"
-
 namespace trpc {
 namespace mysql {
-
-struct MysqlExecutorPoolOption {
-  // Connection pool configuration parameters
-  uint32_t min_size{0};       // Minimum number of connections in the pool
-  uint32_t max_size{0};       // Maximum number of connections in the pool
-  uint64_t max_idle_time{0};  // Maximum idle time for connections
-  uint32_t timeout{0};        // Timeout for acquiring a connection from the pool
-
-  std::string db_name;
-  std::string user_name;
-  std::string password;
-};
-
 class MysqlExecutorPool {
  public:
   // static MysqlExecutorPool* getConnectPool(const MysqlClientConf& conf);
@@ -33,43 +16,43 @@ class MysqlExecutorPool {
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
 
-  //  MysqlExecutorPool(const MysqlClientConf* conf);
+  MysqlExecutorPool(const MysqlClientConf* conf);
 
-  MysqlExecutorPool(const MysqlExecutorPoolOption& option, const NodeAddr& node_addr);
-
-  std::shared_ptr<MysqlExecutor> GetExecutor();
+  std::shared_ptr<MysqlExecutor> getConnection();
 
   ~MysqlExecutorPool();
+
+  void Destory();
+
+  void ReconnectWithBackoff(MysqlExecutor* executor);
 
  private:
   MysqlExecutorPool() = default;
 
   // 连接池操作
-  void ProduceExcutor();
-  void RecycleExcutorThread();
-  void RecycleExecutor(MysqlExecutor* executor);
-  void AddExecutor();
+  void produceConnection();
+  void recycleConnection();
+  void addConnection();
 
  private:
-  std::string m_ip_;
-  std::string m_user_;
-  std::string m_passwd_;
-  std::string m_dbname_;
-  unsigned short m_port_;
+  std::string m_ip;
+  std::string m_user;
+  std::string m_passwd;
+  std::string m_dbName;
+  unsigned short m_port;
 
-  uint32_t m_min_size_;
-  uint32_t m_max_size_;
+  uint32_t m_minSize;
+  uint32_t m_maxSize;
 
-  uint32_t m_timeout_;
-  uint64_t m_max_idle_time_;
+  uint32_t m_timeout;
+  uint64_t m_maxIdTime;
+
+  uint64_t m_recycleInterval;
 
   std::queue<MysqlExecutor*> m_connectQ;
   std::mutex m_mutexQ;
   std::condition_variable m_cond_produce;
   std::condition_variable m_cond_consume;
-
-  // ThreadLocal storage for connection lists
-  static thread_local std::list<MysqlExecutor*>* thread_local_executors_;
 };
 }  // namespace mysql
 }  // namespace trpc

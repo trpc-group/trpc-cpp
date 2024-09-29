@@ -33,6 +33,8 @@ class MysqlServiceProxy : public ServiceProxy {
   // pool_manager_ only can be init after the service option is set.
   bool InitManager();
 
+  Status GetExecutorAndCheck(const ClientContextPtr& context, MysqlExecutor*& conn);
+
  protected:
   void SetServiceProxyOptionInner(const std::shared_ptr<ServiceProxyOption>& option) override;
 
@@ -40,7 +42,6 @@ class MysqlServiceProxy : public ServiceProxy {
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
   std::unique_ptr<MysqlExecutorPoolManager> pool_manager_;
   std::atomic<bool> pool_manager_inited_{false};
-  //  std::vector<MysqlClientConf*> vec_;
 };
 
 template <typename... OutputArgs, typename... InputArgs>
@@ -108,6 +109,30 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
     RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
     return MakeReadyFuture<MysqlResults<OutputArgs...>>(std::move(mysql_res));
   });
+}
+
+template <typename... OutputArgs>
+Status GetExecutorAndCheck(const ClientContextPtr& context, MysqlExecutor*& conn) {
+  NodeAddr node_addr;
+  node_addr.ip = context->GetIp();
+  node_addr.port = context->GetPort();
+
+  // Get the MysqlExecutorPool associated with the node address.
+  auto pool = this->pool_manager_->Get(node_addr);
+  if (!pool) {
+    // If pool retrieval fails, return an error status with HTTP 500 (Internal Server Error).
+    return Status(trpc::http::kInternalServerError, "Failed to get MysqlExecutorPool for the given node address.");
+  }
+
+  // Retrieve the MysqlExecutor from the pool.
+  conn = pool->GetExecutor();
+  if (!conn) {
+    // If executor retrieval fails, return an error status with HTTP 500 (Internal Server Error).
+    return Status(trpc::http::kInternalServerError, "Failed to get MysqlExecutor for the given node address.");
+  }
+
+  // Return success status with HTTP 200 (OK).
+  return Status(trpc::http::kOk, "MysqlExecutor retrieved successfully.");
 }
 
 }  // namespace trpc::mysql

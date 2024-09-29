@@ -60,6 +60,7 @@ class MysqlExecutor {
     // Indicate which column variable-length data. It will be used in MysqlExecutro::FetchTruncatedResults.
     // Only variable-length data column may be truncated.
     std::vector<size_t> dynamic_buffer_index;
+
    private:
     size_t dynamic_buffer_size_;
 
@@ -118,6 +119,10 @@ class MysqlExecutor {
   /// @return true if the connection is valid, false otherwise.
   bool IsConnectionValid();
 
+  bool Reconnect();
+
+  void StartReconnectAsync();
+
  private:
   template <typename... InputArgs, typename... OutputArgs>
   bool QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results, const std::string& query, const InputArgs&... args);
@@ -160,6 +165,12 @@ class MysqlExecutor {
   MYSQL* mysql_;
   MYSQL_RES* res_;
   uint64_t m_alivetime;  // 初始化活跃时间
+
+  std::string hostname_;
+  std::string username_;
+  std::string password_;
+  std::string database_;
+  uint16_t port_;
 };
 
 template <typename... OutputArgs>
