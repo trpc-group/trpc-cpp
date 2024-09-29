@@ -57,10 +57,13 @@ Status MysqlServiceProxy::Query(const ClientContextPtr& context, MysqlResults<Ou
   }
 
   thread_pool_->AddTask([this, &context, &e, &res, &sql_str, &args...]() {
-    NodeAddr node_addr;
-    node_addr.ip = context->GetIp();
-    node_addr.port = context->GetPort();
-    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
+    MysqlExecutor* conn = nullptr;
+    Status status = GetExecutorAndCheck(context, conn);
+    if (!status.OK()) {
+      res.SetErrorMessage(status.ErrorMessage());
+      e.Set();
+      return;
+    }
     conn->QueryAll(res, sql_str, args...);
     e.Set();
   });
@@ -90,12 +93,13 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
 
   thread_pool_->AddTask([p = std::move(pr), this, context, sql_str, args...]() mutable {
     MysqlResults<OutputArgs...> res;
-    NodeAddr node_addr;
-    node_addr.ip = context->GetIp();
-    node_addr.port = context->GetPort();
-    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
+    MysqlExecutor* conn = nullptr;
+    Status status = GetExecutorAndCheck(context, conn);
+    if (!status.Ok()) {
+      p.SetException(CommonException(status.ErrorMessage()));
+      return;
+    }
     conn->QueryAll(res, sql_str, args...);
-
     p.SetValue(std::move(res));
     // p.SetException()
   });
@@ -111,28 +115,24 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
   });
 }
 
-template <typename... OutputArgs>
 Status GetExecutorAndCheck(const ClientContextPtr& context, MysqlExecutor*& conn) {
   NodeAddr node_addr;
   node_addr.ip = context->GetIp();
   node_addr.port = context->GetPort();
 
-  // Get the MysqlExecutorPool associated with the node address.
+  // 从连接池管理器中获取连接池
   auto pool = this->pool_manager_->Get(node_addr);
   if (!pool) {
-    // If pool retrieval fails, return an error status with HTTP 500 (Internal Server Error).
-    return Status(trpc::http::kInternalServerError, "Failed to get MysqlExecutorPool for the given node address.");
+    return Status(-1, "Failed to get MysqlExecutorPool for the given node address.");
   }
 
-  // Retrieve the MysqlExecutor from the pool.
+  // 从连接池中获取执行器
   conn = pool->GetExecutor();
   if (!conn) {
-    // If executor retrieval fails, return an error status with HTTP 500 (Internal Server Error).
-    return Status(trpc::http::kInternalServerError, "Failed to get MysqlExecutor for the given node address.");
+    return Status(-1, "Failed to get MysqlExecutor for the given node address.");
   }
 
-  // Return success status with HTTP 200 (OK).
-  return Status(trpc::http::kOk, "MysqlExecutor retrieved successfully.");
+  return Status();  // 正常返回，Status默认为成功状态（ret_和func_ret_都为0）
 }
 
 }  // namespace trpc::mysql
