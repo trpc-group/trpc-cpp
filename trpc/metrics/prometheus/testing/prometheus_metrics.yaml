@@ -8,3 +8,8 @@ plugins:
       const_labels:
         key1: value1
         key2: value2
+      push_mode:
+        enabled: true
+        gateway_url: "http://localhost:9091"
+        job_name: "test_job"
+        push_interval_seconds: 2

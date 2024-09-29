@@ -44,6 +44,11 @@ plugins:
       const_labels:
         const_key1: const_value1
         const_key2: const_value2
+      push_mode:
+        enabled: true
+        gateway_url: "http://pushgateway:9091"
+        job_name: "test_job"
+        push_interval_seconds: 2
   log:
     default:
       - name: default

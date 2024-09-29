@@ -71,7 +71,7 @@ class Plugin : public RefCounted<Plugin> {
 
   /// @brief Stop the runtime environment of the plugin
   virtual void Stop() noexcept {}
-
+  
   /// @brief destroy plugin internal resources
   virtual void Destroy() noexcept {}
 

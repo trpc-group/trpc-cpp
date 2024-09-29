@@ -80,6 +80,19 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
             urls = zlib_urls,
         )
 
+
+    http_archive(
+    name = "com_github_curl",
+    build_file = "@com_github_jupp0r_prometheus_cpp//bazel:curl.BUILD",
+    sha256 = "01ae0c123dee45b01bbaef94c0bc00ed2aec89cb2ee0fd598e0d302a6b5e0a98",
+    strip_prefix = "curl-7.69.1",
+    urls = [
+        "https://curl.haxx.se/download/curl-7.69.1.tar.gz",
+        "https://github.com/curl/curl/releases/download/curl-7_69_1/curl-7.69.1.tar.gz",
+        ],
+    )
+
+
     # com_github_google_snappy
     com_github_google_snappy_ver = kwargs.get("com_github_google_snappy_ver", "1.1.8")
     com_github_google_snappy_sha256 = kwargs.get("com_github_google_snappy_sha256", "16b677f07832a612b0836178db7f374e414f94657c138e6993cbfc5dcc58651f")
