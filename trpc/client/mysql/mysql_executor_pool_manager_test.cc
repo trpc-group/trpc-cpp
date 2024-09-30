@@ -12,7 +12,7 @@
 using namespace std;
 using namespace std::chrono;
 using namespace trpc::mysql;
-using MysqlClientConf = trpc::mysql::MysqlClientConf;
+using MysqlClientConf = trpc::mysql::MysqlExecutorPoolOption;
 
 namespace trpc {
 namespace testing {
@@ -25,28 +25,23 @@ void clearPersonTable() {
   conn.Execute(res, sql);
 }
 
-trpc::mysql::MysqlClientConf* readMysqlClientConf() {
+trpc::mysql::MysqlExecutorPoolOption* readMysqlClientConf() {
   trpc::TrpcConfig* trpc_config = trpc::TrpcConfig::GetInstance();
   trpc_config->Init("./trpc/client/mysql/testing/fiber.yaml");
   const auto& client = trpc_config->GetClientConfig();
-  trpc::mysql::MysqlClientConf* conf = new trpc::mysql::MysqlClientConf;
+  trpc::mysql::MysqlExecutorPoolOption* conf = new trpc::mysql::MysqlExecutorPoolOption;
   conf->user_name = client.service_proxy_config[0].mysql_conf.user_name;
   conf->password = client.service_proxy_config[0].mysql_conf.password;
   conf->dbname = client.service_proxy_config[0].mysql_conf.dbname;
-  conf->enable = client.service_proxy_config[0].mysql_conf.enable;
-  conf->connectpool.min_size = client.service_proxy_config[0].mysql_conf.min_size;
-  conf->connectpool.max_size = client.service_proxy_config[0].max_conn_num;
-  conf->connectpool.max_idle_time = client.service_proxy_config[0].idle_time;
-  conf->connectpool.timeout = client.service_proxy_config[0].timeout;
+  conf->min_size = client.service_proxy_config[0].mysql_conf.min_size;
+  conf->max_size = client.service_proxy_config[0].max_conn_num;
+  conf->max_idle_time = client.service_proxy_config[0].idle_time;
+  conf->timeout = client.service_proxy_config[0].timeout;
   std::string target = client.service_proxy_config[0].target;
   std::size_t pos = target.find(':');
   std::string ip = target.substr(0, pos);
   std::string port_str = target.substr(pos + 1);
   uint32_t port = static_cast<uint32_t>(std::stoul(port_str));
-
-  conf->ip = ip;
-  conf->port = port;
-
   return conf;
 }
 

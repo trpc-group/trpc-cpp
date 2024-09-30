@@ -4,9 +4,7 @@
 namespace trpc {
 namespace mysql {
 
-MysqlExecutorPoolManager::MysqlExecutorPoolManager(MysqlExecutorPoolOption &&option) {
-  option_ = std::move(option);
-}
+MysqlExecutorPoolManager::MysqlExecutorPoolManager(MysqlExecutorPoolOption&& option) { option_ = std::move(option); }
 
 MysqlExecutorPool* MysqlExecutorPoolManager::Get(const NodeAddr& node_addr) {
   const int len = 64;
@@ -31,7 +29,6 @@ MysqlExecutorPool* MysqlExecutorPoolManager::Get(const NodeAddr& node_addr) {
 
   return executor_pool;
 }
-
 
 MysqlExecutorPool* MysqlExecutorPoolManager::CreateExecutorPool(const NodeAddr& node_addr) {
   MysqlExecutorPool* new_pool = new MysqlExecutorPool(option_, node_addr);

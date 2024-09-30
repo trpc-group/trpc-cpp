@@ -5,8 +5,9 @@
 #include <mutex>
 #include <queue>
 #include <string>
-#include "trpc/client/mysql/mysql_executor.h"
+#include "trpc/client/mysql/executor/mysql_executor.h"
 #include "trpc/client/mysql/mysql_service_config.h"
+#include "trpc/transport/common/transport_message_common.h"
 namespace trpc {
 namespace mysql {
 class MysqlExecutorPool {
@@ -16,9 +17,9 @@ class MysqlExecutorPool {
   MysqlExecutorPool(const MysqlExecutorPool& obj) = delete;
   MysqlExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
 
-  MysqlExecutorPool(const MysqlClientConf* conf);
+  MysqlExecutorPool(const MysqlExecutorPoolOption& option, const NodeAddr& node_addr);
 
-  std::shared_ptr<MysqlExecutor> getConnection();
+  std::shared_ptr<MysqlExecutor> GetExecutor();
 
   ~MysqlExecutorPool();
 
@@ -30,29 +31,29 @@ class MysqlExecutorPool {
   MysqlExecutorPool() = default;
 
   // 连接池操作
-  void produceConnection();
-  void recycleConnection();
-  void addConnection();
+  void ProduceExcutor();
+  void RecycleExcutor();
+  void AddExecutor();
 
  private:
-  std::string m_ip;
-  std::string m_user;
-  std::string m_passwd;
-  std::string m_dbName;
-  unsigned short m_port;
+  std::string m_ip_;
+  std::string m_user_;
+  std::string m_passwd_;
+  std::string m_db_name_;
+  unsigned short m_port_;
 
-  uint32_t m_minSize;
-  uint32_t m_maxSize;
+  uint32_t m_min_size_;
+  uint32_t m_max_size_;
 
-  uint32_t m_timeout;
-  uint64_t m_maxIdTime;
+  uint32_t m_timeout_;
+  uint64_t m_max_idle_time_;
 
-  uint64_t m_recycleInterval;
+  uint64_t m_recycle_interval_;
 
-  std::queue<MysqlExecutor*> m_connectQ;
-  std::mutex m_mutexQ;
-  std::condition_variable m_cond_produce;
-  std::condition_variable m_cond_consume;
+  std::queue<MysqlExecutor*> m_connectQ_;
+  std::mutex m_mutexQ_;
+  std::condition_variable m_cond_produce_;
+  std::condition_variable m_cond_consume_;
 };
 }  // namespace mysql
 }  // namespace trpc

@@ -36,7 +36,8 @@ void MysqlExecutor::Close() {
 
 bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
   if (!IsConnectionValid()) {
-    std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(/* connection parameters */);
+    std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
+        hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
 
     if (!temp_conn->IsConnectionValid()) {
       StartReconnectAsync();
@@ -56,7 +57,8 @@ bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, Mysq
 
 bool MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
   if (!IsConnectionValid()) {
-    std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(/* connection parameters */);
+    std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
+        hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
 
     if (!temp_conn->IsConnectionValid()) {
       StartReconnectAsync();

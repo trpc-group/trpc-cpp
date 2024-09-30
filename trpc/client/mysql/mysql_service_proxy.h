@@ -95,7 +95,7 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
     MysqlResults<OutputArgs...> res;
     MysqlExecutor* conn = nullptr;
     Status status = GetExecutorAndCheck(context, conn);
-    if (!status.Ok()) {
+    if (!status.OK()) {
       p.SetException(CommonException(status.ErrorMessage()));
       return;
     }
