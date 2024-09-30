@@ -6,13 +6,14 @@
 #include "trpc/client/mysql/mysql_executor_pool.h"
 #include "trpc/client/mysql/mysql_service_config.h"
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/transport/common/transport_message_common.h"
 
 #include "gtest/gtest.h"
 
 using namespace std;
 using namespace std::chrono;
 using namespace trpc::mysql;
-using MysqlClientConf = trpc::mysql::MysqlExecutorPoolOption;
+using MysqlExecutorPoolOption = trpc::mysql::MysqlExecutorPoolOption;
 
 namespace trpc {
 namespace testing {
@@ -45,6 +46,23 @@ trpc::mysql::MysqlExecutorPoolOption* readMysqlClientConf() {
   return conf;
 }
 
+trpc::mysql::MysqlExecutorPool* initManager() {
+  trpc::TrpcConfig* trpc_config = trpc::TrpcConfig::GetInstance();
+  trpc_config->Init("./trpc/client/mysql/testing/fiber.yaml");
+  const auto& client = trpc_config->GetClientConfig();
+
+  trpc::mysql::MysqlExecutorPoolOption* conf = trpc::testing::readMysqlClientConf();
+  trpc::mysql::MysqlExecutorPoolManager manager(std::move(*conf));
+  std::string target = client.service_proxy_config[0].target;
+  NodeAddr addr;
+  std::size_t pos = target.find(':');
+  addr.ip = target.substr(0, pos);
+  std::string port_str = target.substr(pos + 1);
+  addr.port = static_cast<uint16_t>(std::stoul(port_str));
+  MysqlExecutorPool* pool = manager.Get(addr);
+  return pool;
+}
+
 void op1(int begin, int end) {
   for (int i = begin; i < end; i++) {
     MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
@@ -57,7 +75,7 @@ void op1(int begin, int end) {
 
 void op2(MysqlExecutorPool* pool, int begin, int end) {
   for (int i = begin; i < end; i++) {
-    shared_ptr<MysqlExecutor> conn = pool->getConnection();
+    shared_ptr<MysqlExecutor> conn = pool->GetExecutor();
     char sql[1024] = {0};
     sprintf(sql, "insert into person values(%d, 18, 'man', 'starry')", i);
     MysqlResults<trpc::mysql::OnlyExec> res;
@@ -77,8 +95,7 @@ TEST(PerformanceTest, SingleThreadedWithoutPool) {
 
 TEST(PerformanceTest, SingleThreadedWithPool) {
   clearPersonTable();  // 清空 person 表数据
-  trpc::mysql::MysqlClientConf* conf = readMysqlClientConf();
-  MysqlExecutorPool* pool = MysqlExecutorPoolManager::getPool(conf);
+  MysqlExecutorPool* pool = initManager();
   steady_clock::time_point begin = steady_clock::now();
   op2(pool, 0, 500);
   steady_clock::time_point end = steady_clock::now();
@@ -106,8 +123,7 @@ TEST(PerformanceTest, MultiThreadedWithoutPool) {
 
 TEST(PerformanceTest, MultiThreadedWithPool) {
   clearPersonTable();  // 清空 person 表数据
-  trpc::mysql::MysqlClientConf* conf = readMysqlClientConf();
-  MysqlExecutorPool* pool = MysqlExecutorPoolManager::getPool(conf);
+  MysqlExecutorPool* pool = initManager();
   steady_clock::time_point begin = steady_clock::now();
   thread t1(op2, pool, 0, 100);
   thread t2(op2, pool, 100, 200);

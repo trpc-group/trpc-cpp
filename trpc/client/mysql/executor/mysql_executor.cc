@@ -130,4 +130,13 @@ bool MysqlExecutor::Reconnect() {
   return true;
 }
 
+bool MysqlExecutor::IsConnectionValid() {
+  std::lock_guard<std::mutex> lock(mysql_mutex);
+  if (mysql_ != nullptr && mysql_ping(mysql_) == 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 }  // namespace trpc::mysql

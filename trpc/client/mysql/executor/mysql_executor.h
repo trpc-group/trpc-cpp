@@ -115,8 +115,6 @@ class MysqlExecutor {
 
   uint64_t GetAliveTime();
 
-  /// @brief Check if the MySQL connection is valid by executing a simple query.
-  /// @return true if the connection is valid, false otherwise.
   bool IsConnectionValid();
 
   bool Reconnect();

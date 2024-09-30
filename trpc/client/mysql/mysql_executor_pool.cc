@@ -14,7 +14,9 @@ MysqlExecutorPool::MysqlExecutorPool(const MysqlExecutorPoolOption& option, cons
       m_min_size_(option.min_size),
       m_max_size_(option.max_size),
       m_timeout_(option.timeout),
-      m_max_idle_time_(option.max_idle_time) {
+      m_max_idle_time_(option.max_idle_time),
+      m_ip_(node_addr.ip),
+      m_port_(node_addr.port) {
   for (uint32_t i = 0; i < m_min_size_; i++) {
     AddExecutor();
   }

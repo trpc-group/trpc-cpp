@@ -13,6 +13,8 @@ MysqlServiceProxy::MysqlServiceProxy() {
   thread_pool_option.bind_core = true;
   thread_pool_ = std::make_unique<::trpc::ThreadPool>(std::move(thread_pool_option));
   thread_pool_->Start();
+
+  InitManager();
 }
 
 // void MysqlServiceProxy::ServiceOptionToMysqlConfig() {
@@ -83,6 +85,24 @@ void MysqlServiceProxy::Destroy() {
 void MysqlServiceProxy::SetServiceProxyOptionInner(const std::shared_ptr<ServiceProxyOption>& option) {
   ServiceProxy::SetServiceProxyOptionInner(option);
   InitManager();
+}
+
+Status MysqlServiceProxy::GetExecutorAndCheck(const ClientContextPtr& context, MysqlExecutor*& conn) {
+  NodeAddr node_addr;
+  node_addr.ip = context->GetIp();
+  node_addr.port = context->GetPort();
+  auto pool = pool_manager_->Get(node_addr);
+  if (!pool) {
+    return Status(-1, "Failed to get MysqlExecutorPool for the given node address.");
+  }
+
+  std::shared_ptr<MysqlExecutor> executor_ptr = pool->GetExecutor();
+  if (!executor_ptr) {
+    return Status(-1, "Failed to get MysqlExecutor for the given node address.");
+  }
+  conn = executor_ptr.get();
+
+  return Status();
 }
 
 }  // namespace trpc::mysql

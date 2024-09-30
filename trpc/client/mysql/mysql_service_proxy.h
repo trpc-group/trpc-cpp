@@ -115,24 +115,4 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
   });
 }
 
-Status GetExecutorAndCheck(const ClientContextPtr& context, MysqlExecutor*& conn) {
-  NodeAddr node_addr;
-  node_addr.ip = context->GetIp();
-  node_addr.port = context->GetPort();
-
-  // 从连接池管理器中获取连接池
-  auto pool = this->pool_manager_->Get(node_addr);
-  if (!pool) {
-    return Status(-1, "Failed to get MysqlExecutorPool for the given node address.");
-  }
-
-  // 从连接池中获取执行器
-  conn = pool->GetExecutor();
-  if (!conn) {
-    return Status(-1, "Failed to get MysqlExecutor for the given node address.");
-  }
-
-  return Status();  // 正常返回，Status默认为成功状态（ret_和func_ret_都为0）
-}
-
 }  // namespace trpc::mysql
