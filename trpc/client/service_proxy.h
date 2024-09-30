@@ -65,10 +65,10 @@ class ServiceProxy {
   const ClientCodecPtr& GetClientCodec() { return codec_; }
 
   /// @brief Stop used resources by service proxy (thread-safe).
-  void Stop();
+  virtual void Stop();
 
   /// @brief Destroy used resources by service proxy (thread-safe).
-  void Destroy();
+  virtual void Destroy();
 
   /// @brief Pre-allocate a connection, used for scenarios that require fixed connections for data transmission
   /// (thread-safe).
@@ -118,6 +118,12 @@ class ServiceProxy {
   ///        in the options for non-direct connection models.
   const std::string& GetServiceName();
 
+  // Collect statistics on the service proxy and report them to the tvar.
+  void ProxyStatistics(const ClientContextPtr& ctx);
+
+  // Used to determine if the request has timed out. Returns true if timed out, false if normal.
+  bool CheckTimeout(const ClientContextPtr& context);
+
   /// @brief Use the proxy option parameters to set the context.
   void FillClientContext(const ClientContextPtr& context);
 
@@ -131,15 +137,15 @@ class ServiceProxy {
   /// @note Subclasses can implement transport by overriding this method themselves.
   virtual void InitTransport();
 
+  /// @brief Init the derived class members if need. It will be called after SetServiceProxyOptionInner.
+  virtual void InitOtherMembers();
+
  private:
   // Init the service routing name by config
   void InitServiceNameInfo();
 
   // Check if the tvar variable required for statistical has been created, and create it if it has not been created.
   void PrepareStatistics(const std::string& service_name);
-
-  // Collect statistics on the service proxy and report them to the tvar.
-  void ProxyStatistics(const ClientContextPtr& ctx);
 
   // Determine if pipeline is supported.
   bool SupportPipeline(const std::shared_ptr<ServiceProxyOption>& option);
@@ -168,9 +174,6 @@ class ServiceProxy {
   // Init the used selector filter, to ensure compatibility with filters that use selector_name to specify the selector
   // plugin.
   void InitSelectorFilter();
-
-  // Used to determine if the request has timed out. Returns true if timed out, false if normal.
-  bool CheckTimeout(const ClientContextPtr& context);
 
   // Error handling, it will set error information to context.
   void HandleError(const ClientContextPtr& context, int ret, std::string&& err_msg);

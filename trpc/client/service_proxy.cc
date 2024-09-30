@@ -678,6 +678,8 @@ void ServiceProxy::ProxyStatistics(const ClientContextPtr& ctx) {
   }
 }
 
+void ServiceProxy::InitOtherMembers() {}
+
 bool ServiceProxy::SelectTarget(const ClientContextPtr& context) {
   FilterStatus status = FilterStatus::REJECT;
   auto selector_filter = FilterManager::GetInstance()->GetMessageClientFilter(option_->selector_name);
@@ -830,5 +832,6 @@ void ServiceProxy::SetEndpointInfo(const std::string& endpoint_info) {
   assert(selector != nullptr);
   selector->SetEndpoints(&info);
 }
+
 
 }  // namespace trpc

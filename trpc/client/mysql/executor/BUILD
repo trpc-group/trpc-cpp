@@ -6,7 +6,8 @@ cc_library(
     name = "mysql_statement",
     srcs = ["mysql_statement.cc"],
     hdrs = ["mysql_statement.h"],
-    visibility = ["//visibility:public"]
+    visibility = ["//visibility:public"],
+#    deps = ["@mysql_c_api_archive//:mysql_c_api"]
 )
 
 

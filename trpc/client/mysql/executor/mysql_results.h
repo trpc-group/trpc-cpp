@@ -13,9 +13,12 @@
 
 namespace trpc::mysql {
 
+
+/// @brief This is an abstract representation of a row pointer and does not contain any actual data.
+/// Therefore, MysqlResult<IterMode> will not create or store MysqlRow instances.
+/// The operator* of MysqlRowIterator does not return a reference to MysqlRow.
 class MysqlRow {
  public:
-
 
   class MysqlFieldIterator {
    public:
@@ -136,7 +139,7 @@ class MysqlResultsOption {
 template<typename... Args>
 class MysqlResults {
   friend class MysqlExecutor;
- private:
+ public:
   static constexpr bool is_only_exec = std::is_same_v<std::tuple<Args...>, std::tuple<OnlyExec>>;
 
   static constexpr bool is_native_string = std::is_same_v<std::tuple<Args...>, std::tuple<NativeString>>;
@@ -155,6 +158,9 @@ class MysqlResults {
 
   MysqlResults(const MysqlResults& other) = delete;
 
+  MysqlResults& operator=(const  MysqlResults&) = delete;
+
+
   ~MysqlResults();
 
   void SetRawMysqlRes(MYSQL_RES* res);
@@ -169,11 +175,11 @@ class MysqlResults {
 
   const MysqlResultsOption &GetOption();
 
-  size_t GetAffectedRows();
+  size_t GetAffectedRows() const;
 
   size_t SetAffectedRows(size_t n_rows);
 
-  bool IsSuccess();
+  bool IsSuccess() const;
 
   void Clear();
 
@@ -182,7 +188,6 @@ class MysqlResults {
   std::string &SetErrorMessage(const std::string &message);
 
   std::string &SetErrorMessage(std::string &&message);
-
 
   class MysqlRowIterator {
    public:
@@ -199,7 +204,7 @@ class MysqlResults {
 
 
     MysqlRow operator*() {
-      return MysqlRow(mysql_fetch_fields(result_), row_, lengths_, mysql_num_fields(result_));
+      return {mysql_fetch_fields(result_), row_, lengths_, mysql_num_fields(result_)};
     }
 
     bool operator!=(const MysqlRowIterator& other) const {
@@ -233,14 +238,11 @@ class MysqlResults {
 
   std::variant<std::vector<std::tuple<Args...>>, std::vector<std::vector<std::string>>> result_set;
 
-  // Null flags
   std::vector<std::vector<uint8_t>> null_flags;
 
   std::string error_message;
 
   size_t affected_rows;
-
-//  bool error;
 
   bool has_value_;
 
@@ -266,17 +268,6 @@ MysqlResults<Args...>& MysqlResults<Args...>::operator=(MysqlResults &&other) no
   }
   return *this;
 }
-
-//template<typename... Args>
-//MysqlResults<Args...>::MysqlResults(const MysqlResults &other) {
-//  option_ = other.option_;
-//  result_set = other.result_set;
-//  null_flags = other.null_flags;
-//  error_message = other.error_message;
-//  affected_rows = other.affected_rows;
-//  has_value_ = other.has_value_;
-//  mysql_res_ = nullptr; // 处理指针，根据需要克隆资源
-//}
 
 template<typename... Args>
 MysqlResults<Args...>::MysqlResults(MysqlResults&& other) noexcept
@@ -369,7 +360,7 @@ template<typename... Args>
 const MysqlResultsOption &MysqlResults<Args...>::GetOption() { return option_; }
 
 template<typename... Args>
-size_t MysqlResults<Args...>::GetAffectedRows() { return affected_rows; }
+size_t MysqlResults<Args...>::GetAffectedRows() const { return affected_rows; }
 
 template<typename... Args>
 size_t MysqlResults<Args...>::SetAffectedRows(size_t n_rows) {
@@ -378,7 +369,7 @@ size_t MysqlResults<Args...>::SetAffectedRows(size_t n_rows) {
 }
 
 template<typename... Args>
-bool MysqlResults<Args...>::IsSuccess() { return error_message.empty(); }
+bool MysqlResults<Args...>::IsSuccess() const { return error_message.empty(); }
 
 template<typename... Args>
 void MysqlResults<Args...>::Clear() {
