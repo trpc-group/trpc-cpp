@@ -84,7 +84,7 @@ class MysqlServiceProxyTest : public ::testing::Test {
     option_->conn_type = "long";
     option_->network = "tcp";
     option_->timeout = 1000;
-    option_->target = "127.0.0.1:3306";
+    option_->target = "localhost:3306";
     option_->selector_name = "direct";
     option_->mysql_conf.dbname = "test";
     option_->mysql_conf.password = "abc123";
@@ -266,5 +266,36 @@ TEST_F(MysqlServiceProxyTest, AsyncException) {
   std::cout << "async call\n";
   ::trpc::future::BlockingGet(std::move(res));
 
+}
+
+
+
+
+TEST_F(MysqlServiceProxyTest, AsyncQueryRepeat) {
+  std::vector<trpc::Future<>> futures;
+  for(int i = 0; i < 8; i++) {
+    auto client_context = GetClientContext();
+    auto f = mock_mysql_service_proxy_->AsyncQuery<mysql::IterMode>(client_context, "select * from users where id > ? or username = ?", i, "alice")
+            .Then([i](trpc::Future<mysql::MysqlResults<mysql::IterMode>>&& f){
+              EXPECT_EQ(true, f.IsReady());
+              EXPECT_EQ(true, f.GetValue0().IsSuccess());
+              return trpc::MakeReadyFuture<>();
+            });
+    futures.push_back(std::move(f));
+  }
+
+  for(auto & future : futures) {
+    ::trpc::future::BlockingGet(std::move(future));
+  }
+}
+
+
+TEST_F(MysqlServiceProxyTest, QueryRepeat) {
+  auto client_context = GetClientContext();
+  mysql::MysqlResults<mysql::IterMode> res;
+  for(int i = 0; i < 8; i++) {
+    mock_mysql_service_proxy_->Query(client_context, res, "select * from users where id > ? or username = ?", i, "alice");
+    EXPECT_EQ(true, res.IsSuccess());
+  }
 }
 }  // namespace trpc::testing

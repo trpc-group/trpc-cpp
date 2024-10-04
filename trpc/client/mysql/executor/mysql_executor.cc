@@ -5,15 +5,15 @@ namespace trpc::mysql {
 
 std::mutex MysqlExecutor::mysql_mutex;
 
-MysqlExecutor::MysqlExecutor(const char* const hostname, const char* const username, const char* const password,
-                             const char* const database, const uint16_t port)
+MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& username, const std::string& password,
+                             const std::string& database, const uint16_t port)
     : hostname_(hostname), username_(username), password_(password), database_(database), port_(port) {
   {
     std::lock_guard<std::mutex> lock(mysql_mutex);
     mysql_ = mysql_init(NULL);
   }
   mysql_set_character_set(mysql_, "utf8");
-  MYSQL* ret = mysql_real_connect(mysql_, hostname, username, password, database, port, nullptr, 0);
+  MYSQL* ret = mysql_real_connect(mysql_, hostname.c_str(), username.c_str(), password.c_str(), database.c_str(), port, nullptr, 0);
 
   if (nullptr == ret) {
     std::runtime_error conn_error("Connection failed: " + std::string(mysql_error(mysql_)));
@@ -80,13 +80,6 @@ uint64_t MysqlExecutor::GetAliveTime() {
 
 void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMicroSeconds(); }
 
-void MysqlExecutor::FreeResult() {
-  if (res_) {
-    mysql_free_result(res_);
-    res_ = nullptr;
-  }
-}
-
 std::string MysqlExecutor::ConvertPlaceholders(const std::string& sql) {
   std::string result;
   size_t len = sql.length();
@@ -131,12 +124,20 @@ bool MysqlExecutor::Reconnect() {
 }
 
 bool MysqlExecutor::IsConnectionValid() {
-  std::lock_guard<std::mutex> lock(mysql_mutex);
   if (mysql_ != nullptr && mysql_ping(mysql_) == 0) {
     return true;
   } else {
     return false;
   }
+}
+
+size_t MysqlExecutor::ExecuteInternal(const std::string &query, MysqlResults<OnlyExec> &mysql_results) {
+  if(mysql_real_query(mysql_, query.c_str(), query.length()) != 0) {
+    mysql_results.SetErrorMessage(mysql_error(mysql_));
+    return 0;
+  }
+
+  return mysql_affected_rows(mysql_);
 }
 
 }  // namespace trpc::mysql

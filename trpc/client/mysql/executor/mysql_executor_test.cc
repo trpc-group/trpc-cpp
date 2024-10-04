@@ -83,10 +83,10 @@ mysql> select * from users;
 +----+----------+-------------------+---------------------+
 */
 
-
+std::string db_ip = "127.0.0.1";
 
 TEST(Executor, QueryNoArgs) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<int, std::string, trpc::mysql::MysqlTime> res;
   conn.QueryAll(res, "select id, username, created_at from users");
 
@@ -99,7 +99,7 @@ TEST(Executor, QueryNoArgs) {
 }
 
 TEST(Executor, QueryString) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::NativeString> res;
   conn.QueryAll(res, "select * from users where id > ? or username = ?", 1, "alice");
 
@@ -108,7 +108,7 @@ TEST(Executor, QueryString) {
 }
 //
 TEST(Executor, QueryNull) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<std::string, std::string> res;
   conn.QueryAll(res, "select username, email from users");
   EXPECT_TRUE(res.GetNullFlag()[0][0] == 0);
@@ -118,7 +118,7 @@ TEST(Executor, QueryNull) {
 }
 //
 TEST(Executor, QueryArgs) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<int, std::string, trpc::mysql::MysqlTime> res;
   conn.QueryAll(res, "select id, email, created_at from users where id = ? or username = ?", 1, "carol");
 
@@ -129,7 +129,7 @@ TEST(Executor, QueryArgs) {
 }
 
 TEST(Executor, Update) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
   conn.Execute(res,
                "update users set username = \
@@ -145,7 +145,7 @@ TEST(Executor, Update) {
 }
 
 TEST(Executor, Insert) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
   mysql::MysqlTime mtime;
   mtime.mt.year = 2024;
@@ -159,7 +159,7 @@ TEST(Executor, Insert) {
 }
 
 TEST(Executor, Delete) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
   conn.Execute(res, "delete from users where username = \"jack\"");
   EXPECT_EQ(1, res.GetAffectedRows());
@@ -168,7 +168,7 @@ TEST(Executor, Delete) {
 
 
 TEST(Executor, SynaxError) {
-  trpc::mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
   conn.Execute(res, "delete users where username = \"jack\"");
   EXPECT_EQ(false, res.IsSuccess());
@@ -176,33 +176,17 @@ TEST(Executor, SynaxError) {
 }
 
 TEST(Executor, OutputArgsError) {
-  mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   mysql::MysqlResults<int, std::string> res;
   conn.QueryAll(res, "select * from users");
   EXPECT_EQ(false, res.IsSuccess());
   std::cout << res.error_message << "\n";
 }
 
-TEST(Executor, BLOB) {
-  mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  mysql::MysqlResults<mysql::OnlyExec> res;
-  mysql::MysqlResults<mysql::MysqlBlob> res2;
-  mysql::MysqlBlob blob(GenRandomBlob(1024));
-  conn.Execute(res,
-               "insert into users (username, email, meta) \
-                                   values (\"jack\", \"jack@abc.com\", ?)", blob);
-  EXPECT_EQ(1, res.GetAffectedRows());
 
-  conn.QueryAll(res2, "select meta from users where username = ?", "jack");
-  auto& meta_res = res2.GetResultSet();
-  EXPECT_EQ(std::get<0>(meta_res[0]), blob);
-
-  conn.Execute(res, "delete from users where username = ?", "jack");
-  EXPECT_GE(1, res.GetAffectedRows());
-}
 
 TEST(Executor, IterMode) {
-  mysql::MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
+  mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   mysql::MysqlResults<mysql::IterMode> res;
   conn.QueryAll(res, "select * from users where id > ? or username = ?", 1, "alice");
 
@@ -225,8 +209,66 @@ TEST(Executor, IterMode) {
   }
 
   std::cout << std::endl;
+}
 
 
+TEST(Executor, BLOB) {
+  mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
+  mysql::MysqlResults<mysql::OnlyExec> exec_res;
+  mysql::MysqlResults<mysql::MysqlBlob> special_res;
+  mysql::MysqlResults<mysql::NativeString> str_res;
+  mysql::MysqlResults<mysql::IterMode> itr_res;
+  mysql::MysqlBlob blob(GenRandomBlob(1024));
+
+
+  // mysql::MysqlBlob
+  conn.Execute(exec_res,
+               "insert into users (username, email, meta)"
+               "values (\"jack\", \"jack@abc.com\", ?)", blob);
+  EXPECT_EQ(1, exec_res.GetAffectedRows());
+
+  conn.QueryAll(special_res, "select meta from users where username = ?", "jack");
+  auto& meta_res = special_res.GetResultSet();
+  EXPECT_EQ(std::get<0>(meta_res[0]), blob);
+
+
+  conn.QueryAll(str_res, "select meta from users where username = ?", "jack");
+  auto& meta_res2 = special_res.GetResultSet();
+  EXPECT_EQ(std::get<0>(meta_res2[0]), blob);
+
+  conn.QueryAll(itr_res, "select meta from users where username = ?", "jack");
+  for(auto row : itr_res) {
+    mysql::MysqlBlob data(row.GetFieldData(0));
+    EXPECT_EQ(data, blob);
+  }
+
+
+  conn.Execute(exec_res, "delete from users where username = ?", "jack");
+  EXPECT_GE(1, exec_res.GetAffectedRows());
+
+
+}
+
+
+TEST(Executor, Transaction) {
+  mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
+  mysql::MysqlResults<mysql::OnlyExec> exec_res;
+  mysql::MysqlResults<mysql::IterMode> itr_res;
+  conn.Execute(exec_res, "begin");
+  EXPECT_EQ(true, exec_res.IsSuccess());
+  conn.Execute(exec_res, "update users set email = ? where username = ?", "rose@abc.com", "rose");
+  EXPECT_EQ(1, exec_res.GetAffectedRows());
+  conn.Execute(exec_res, "rollback");
+  EXPECT_EQ(true, exec_res.IsSuccess());
+
+  conn.QueryAll(itr_res, "select * from users where username = ?", "rose");
+  for(auto row : itr_res) {
+//    for(auto citr = row.begin(); citr != row.end(); ++citr)
+//      if(citr.GetFieldName() == "email")
+//        EXPECT_EQ(true, citr.IsNull());
+    EXPECT_EQ("rose", row.GetFieldData(1));
+    EXPECT_EQ(true, row.IsFieldNull(2));
+  }
 }
 
 

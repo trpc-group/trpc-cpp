@@ -16,6 +16,8 @@
 
 namespace trpc::mysql {
 
+
+
 class Formatter {
  public:
   template <typename T>
@@ -41,6 +43,7 @@ class Formatter {
 /// @brief A MySQL connection class that wraps the MySQL C API.
 /// @note This class is not thread-safe.
 class MysqlExecutor {
+
   template <typename... OutputArgs>
   class QueryHandle {
    public:
@@ -57,7 +60,7 @@ class MysqlExecutor {
     std::unique_ptr<std::vector<unsigned long>> output_length;
     std::unique_ptr<FlagBufferT> null_flag_buffer;
 
-    // Indicate which column variable-length data. It will be used in MysqlExecutro::FetchTruncatedResults.
+    // Indicate which column are variable-length data. It will be used in MysqlExecutro::FetchTruncatedResults.
     // Only variable-length data column may be truncated.
     std::vector<size_t> dynamic_buffer_index;
 
@@ -77,8 +80,8 @@ class MysqlExecutor {
   ///@param password
   ///@param database
   ///@param port Could be ignored
-  MysqlExecutor(const char* const hostname, const char* const username, const char* const password,
-                const char* const database, const uint16_t port = 0);
+  MysqlExecutor(const std::string& hostname, const std::string& username, const std::string& password,
+                const std::string& database, const uint16_t port = 0);
 
   ~MysqlExecutor();
 
@@ -107,6 +110,7 @@ class MysqlExecutor {
   template <typename... InputArgs>
   bool Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args);
 
+
   bool Commit();
 
   bool Transaction();
@@ -131,12 +135,14 @@ class MysqlExecutor {
   template <typename... InputArgs>
   bool QueryAllInternal(MysqlResults<IterMode>& mysql_results, const std::string& query, const InputArgs&... args);
 
-  ///@brief Executes an SQL
+  ///@brief Executes an SQL with prepareed statement.
   ///@param query The SQL query to be executed as a string which uses "?" as placeholders.
   ///@param args The input arguments to be bound to the query placeholders.
   ///@return Affected rows.
   template <typename... InputArgs>
   size_t ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results, const InputArgs&... args);
+
+  size_t ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results);
 
   template <typename... InputArgs>
   void BindInputArgs(std::vector<MYSQL_BIND>& params, const InputArgs&... args);
@@ -156,12 +162,12 @@ class MysqlExecutor {
 
   std::string ConvertPlaceholders(const std::string& sql);
 
-  void FreeResult();
-
  private:
+
+  // Just protects the `mysql_init`
   static std::mutex mysql_mutex;
+
   MYSQL* mysql_;
-  MYSQL_RES* res_;
   uint64_t m_alivetime;  // 初始化活跃时间
 
   std::string hostname_;
@@ -202,8 +208,10 @@ void MysqlExecutor::QueryHandle<OutputArgs...>::ResizeOutputBuffer() {
 template <typename... InputArgs, typename... OutputArgs>
 bool MysqlExecutor::QueryAll(MysqlResults<OutputArgs...>& mysql_results, const std::string& query,
                              const InputArgs&... args) {
-  // FreeResult();
-  static_assert(!MysqlResults<OutputArgs...>::is_only_exec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
+//  static_assert(!MysqlResults<OutputArgs...>::is_only_exec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
+
+  static_assert(MysqlResults<OutputArgs...>::mode != MysqlResultsMode::OnlyExec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
+
 
   if (!QueryAllInternal(mysql_results, query, args...)) return false;
 
@@ -241,6 +249,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
     stmt.CloseStatement();
     return false;
   }
+
 
   if (stmt.GetParamsCount() != sizeof...(InputArgs)) {
     mysql_results.error_message = util::FormatString("The query params count is {}, but you give {} InputputArgs.",
@@ -290,19 +299,29 @@ template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const std::string& query,
                                      const InputArgs&... args) {
   std::string query_str = Formatter::FormatQuery(ConvertPlaceholders(query), args...);
+  auto& results = mysql_result.GetResultSet();
+
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
     mysql_result.SetErrorMessage(mysql_error(mysql_));
     return false;
   }
 
-  res_ = mysql_store_result(mysql_);
-  if (res_ == nullptr) {
+  MYSQL_RES * res_ptr = mysql_store_result(mysql_);
+  if (res_ptr == nullptr) {
     mysql_result.SetErrorMessage(mysql_error(mysql_));
     return false;
   }
 
-  mysql_result.SetRawMysqlRes(res_);
+  mysql_result.SetRawMysqlRes(res_ptr);
+  MYSQL_ROW row;
+  while ((row = mysql_fetch_row(res_ptr)) != nullptr) {
+    unsigned long* lengths;
+    lengths = mysql_fetch_lengths(res_ptr);
+
+    results.emplace_back(mysql_fetch_fields(res_ptr), row, lengths, mysql_num_fields(res_ptr));
+  }
+
 
   return true;
 }
@@ -319,19 +338,19 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
     return false;
   }
 
-  res_ = mysql_store_result(mysql_);
-  if (res_ == nullptr) {
+  MYSQL_RES* res_ptr = mysql_store_result(mysql_);
+  if (res_ptr == nullptr) {
     mysql_result.SetErrorMessage(mysql_error(mysql_));
     return false;
   }
 
-  unsigned long num_fields = mysql_num_fields(res_);
+  unsigned long num_fields = mysql_num_fields(res_ptr);
 
-  while ((row = mysql_fetch_row(res_)) != nullptr) {
+  while ((row = mysql_fetch_row(res_ptr)) != nullptr) {
     unsigned long* lengths;
     results.emplace_back();
     mysql_result.GetNullFlag().emplace_back(num_fields, false);
-    lengths = mysql_fetch_lengths(res_);
+    lengths = mysql_fetch_lengths(res_ptr);
 
     for (unsigned long i = 0; i < num_fields; i++) {
       if (row[i])
@@ -343,7 +362,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
     }
   }
 
-  FreeResult();
+  mysql_free_result(res_ptr);
 
   return true;
 }
@@ -360,7 +379,6 @@ bool MysqlExecutor::FetchResults(MysqlExecutor::QueryHandle<OutputArgs...>& hand
     if (status == 1 || status == MYSQL_NO_DATA) break;
 
     if (status == MYSQL_DATA_TRUNCATED) {
-      // To Do
       // https://dev.mysql.com/doc/c-api/8.0/en/mysql-stmt-fetch.html
       FetchTruncatedResults(handle);
     }
@@ -404,20 +422,20 @@ size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<Onl
   if (!stmt.Init(query)) {
     mysql_results.SetErrorMessage(stmt.GetErrorMessage());
     stmt.CloseStatement();
-    return false;
+    return 0;
   }
   BindInputArgs(input_binds, args...);
 
   if (!stmt.BindParam(input_binds)) {
     mysql_results.SetErrorMessage(stmt.GetErrorMessage());
     stmt.CloseStatement();
-    return false;
+    return 0;
   }
 
   if (!ExecuteStatement(stmt)) {
     mysql_results.SetErrorMessage(stmt.GetErrorMessage());
     stmt.CloseStatement();
-    return false;
+    return 0;
   }
 
   size_t affected_row = mysql_affected_rows(mysql_);

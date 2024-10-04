@@ -33,6 +33,7 @@ MysqlExecutorPool* MysqlExecutorPoolManager::Get(const NodeAddr& node_addr) {
 MysqlExecutorPool* MysqlExecutorPoolManager::CreateExecutorPool(const NodeAddr& node_addr) {
   MysqlExecutorPool* new_pool = new MysqlExecutorPool(option_, node_addr);
   return new_pool;
+//  return nullptr;
 }
 
 }  // namespace mysql

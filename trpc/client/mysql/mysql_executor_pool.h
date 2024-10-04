@@ -37,10 +37,10 @@ class MysqlExecutorPool {
 
  private:
   std::string m_ip_;
+  uint16_t m_port_;
   std::string m_user_;
   std::string m_passwd_;
   std::string m_db_name_;
-  unsigned short m_port_;
 
   uint32_t m_min_size_;
   uint32_t m_max_size_;
@@ -54,6 +54,8 @@ class MysqlExecutorPool {
   std::mutex m_mutexQ_;
   std::condition_variable m_cond_produce_;
   std::condition_variable m_cond_consume_;
+
+  std::atomic<bool> m_stop{false};
 };
 }  // namespace mysql
 }  // namespace trpc

@@ -8,15 +8,15 @@ namespace trpc {
 namespace mysql {
 
 MysqlExecutorPool::MysqlExecutorPool(const MysqlExecutorPoolOption& option, const NodeAddr& node_addr)
-    : m_user_(option.user_name),
+    : m_ip_(node_addr.ip),
+      m_port_(node_addr.port),
+      m_user_(option.user_name),
       m_passwd_(option.password),
       m_db_name_(option.dbname),
       m_min_size_(option.min_size),
       m_max_size_(option.max_size),
       m_timeout_(option.timeout),
-      m_max_idle_time_(option.max_idle_time),
-      m_ip_(node_addr.ip),
-      m_port_(node_addr.port) {
+      m_max_idle_time_(option.max_idle_time) {
   for (uint32_t i = 0; i < m_min_size_; i++) {
     AddExecutor();
   }
@@ -27,26 +27,32 @@ MysqlExecutorPool::MysqlExecutorPool(const MysqlExecutorPoolOption& option, cons
 }
 
 MysqlExecutorPool::~MysqlExecutorPool() {
+  m_stop.store(true);
+
   while (!m_connectQ_.empty()) {
     MysqlExecutor* conn = m_connectQ_.front();
     m_connectQ_.pop();
     delete conn;
   }
+
+  m_cond_produce_.notify_all();
+  m_cond_consume_.notify_all();
 }
 
 void MysqlExecutorPool::ProduceExcutor() {
-  while (true) {
+  while (!m_stop) {
     std::unique_lock<std::mutex> locker(m_mutexQ_);
     while (m_connectQ_.size() >= static_cast<size_t>(m_max_size_)) {
       m_cond_produce_.wait(locker);
+      if(m_stop.load())
+        return;
     }
-    GetExecutor();
     m_cond_consume_.notify_all();
   }
 }
 
 void MysqlExecutorPool::RecycleExcutor() {
-  while (true) {
+  while (!m_stop) {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::lock_guard<std::mutex> locker(m_mutexQ_);
     while (m_connectQ_.size() > static_cast<size_t>(m_min_size_)) {

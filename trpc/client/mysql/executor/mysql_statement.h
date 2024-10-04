@@ -26,6 +26,8 @@ public:
 
   unsigned long GetParamsCount() { return params_count_; }
 
+  MYSQL_RES* GetresultsMeta() {return mysql_stmt_result_metadata(mysql_stmt_); }
+
   MYSQL_STMT* STMTPointer() { return mysql_stmt_; }
 
   bool IsValid() { return mysql_stmt_ == nullptr; }

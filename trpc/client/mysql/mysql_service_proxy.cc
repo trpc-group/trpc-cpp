@@ -7,7 +7,7 @@ namespace trpc::mysql {
 MysqlServiceProxy::MysqlServiceProxy() {
   // need to get option from client config
   ::trpc::ThreadPoolOption thread_pool_option;
-  thread_pool_option.thread_num = 2;
+  thread_pool_option.thread_num = 8;
   thread_pool_option.bind_core = true;
   thread_pool_ = std::make_unique<::trpc::ThreadPool>(std::move(thread_pool_option));
   thread_pool_->Start();
@@ -43,7 +43,7 @@ bool MysqlServiceProxy::InitManager() {
   MysqlExecutorPoolOption pool_option;
   pool_option.user_name = option->mysql_conf.user_name;
   pool_option.password = option->mysql_conf.password;
-  pool_option.db_name = option->mysql_conf.dbname;
+  pool_option.dbname = option->mysql_conf.dbname;
   pool_option.timeout = option->timeout;
   pool_option.min_size = option->mysql_conf.min_size;
   pool_option.max_size = option->mysql_conf.max_size;

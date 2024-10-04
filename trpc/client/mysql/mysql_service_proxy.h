@@ -40,14 +40,9 @@ class MysqlServiceProxy : public ServiceProxy {
 
   void Destroy() override;
 
-//  void ServiceOptionToMysqlConfig();
-//
-//  bool SplitAddressPort(const std::string& address, std::string& ip, uint32_t& port);
-
-
 
  private:
-  ///@brief pool_manager_ only can be init after the service option has been set.
+  ///@brief pool_manager_ only can be inited after the service option has been set.
   bool InitManager();
 
   template <typename... OutputArgs, typename... InputArgs>
@@ -69,7 +64,6 @@ class MysqlServiceProxy : public ServiceProxy {
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
   std::unique_ptr<MysqlExecutorPoolManager> pool_manager_;
-//  std::atomic<bool> pool_manager_inited_{false};
 };
 
 template <typename... OutputArgs, typename... InputArgs>
@@ -77,13 +71,10 @@ Status MysqlServiceProxy::Query(const ClientContextPtr& context, MysqlResults<Ou
                                 const std::string& sql_str, const InputArgs&... args) {
 
   auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  if (filter_status == FilterStatus::REJECT) {
+  if (filter_status == FilterStatus::REJECT)
     TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
-    const Status& result = context->GetStatus();
-    res.SetErrorMessage(result.ErrorMessage());
-  }
-
-  UnaryInvoke(context, res, sql_str, args...);
+  else
+    UnaryInvoke(context, res, sql_str, args...);
 
   RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
   return context->GetStatus();
@@ -115,14 +106,10 @@ Status MysqlServiceProxy::Execute(const ClientContextPtr& context, MysqlResults<
                const InputArgs&... args) {
 
   auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  if (filter_status == FilterStatus::REJECT) {
+  if (filter_status == FilterStatus::REJECT)
     TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
-    const Status& result = context->GetStatus();
-    res.SetErrorMessage(result.ErrorMessage());
-  }
-
-
-  UnaryInvoke(context, res, sql_str, args...);
+  else
+    UnaryInvoke(context, res, sql_str, args...);
 
   RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
   return context->GetStatus();
@@ -164,12 +151,15 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr &context,
     NodeAddr node_addr;
     node_addr.ip = context->GetIp();
     node_addr.port = context->GetPort();
-    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
+//    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
+    auto conn = std::make_unique<MysqlExecutor>("127.0.0.1", "root", "abc123", "test", 3306);
 
-    if constexpr (res.is_only_exec)
+    if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
       conn->Execute(res, sql_str, args...);
     else
       conn->QueryAll(res, sql_str, args...);
+
+//    sleep(1);
 
     e.Set();
   });
@@ -197,13 +187,16 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncUnaryInvoke(const Cl
     NodeAddr node_addr;
     node_addr.ip = context->GetIp();
     node_addr.port = context->GetPort();
-    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
+//    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
+    auto conn = std::make_unique<MysqlExecutor>("127.0.0.1", "root", "abc123", "test", 3306);
 
-
-    if constexpr (res.is_only_exec)
+    if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
       conn->Execute(res, sql_str, args...);
     else
       conn->QueryAll(res, sql_str, args...);
+
+//    sleep(1);
+
 
     RunFilters(FilterPoint::CLIENT_POST_RECV_MSG, context);
 
