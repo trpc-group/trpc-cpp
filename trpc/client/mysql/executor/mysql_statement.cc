@@ -10,7 +10,7 @@ MysqlStatement::MysqlStatement(MYSQL* conn)
 
 bool MysqlStatement::CloseStatement() {
   if(mysql_stmt_ != nullptr) {
-    if(!mysql_stmt_free_result(mysql_stmt_))
+    if(mysql_stmt_free_result(mysql_stmt_) != 0)
       return false;
     mysql_stmt_close(mysql_stmt_);
     mysql_stmt_ = nullptr;
@@ -41,6 +41,10 @@ std::string MysqlStatement::GetErrorMessage() {
 bool MysqlStatement::BindParam(std::vector<MYSQL_BIND> &bind_list) {
 
   return mysql_stmt_bind_param(mysql_stmt_, bind_list.data()) == 0? true : false;
+}
+
+MYSQL_RES* MysqlStatement::GetResultsMeta() {
+  return mysql_stmt_result_metadata(mysql_stmt_);
 }
 
 

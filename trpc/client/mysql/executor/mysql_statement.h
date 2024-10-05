@@ -4,13 +4,14 @@
 //#include "include/mysql.h"
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace trpc::mysql {
 
 class MysqlStatement {
 public:
   MysqlStatement(MYSQL* conn);
-  ~MysqlStatement() = default;
+  ~MysqlStatement() { assert(mysql_stmt_ == nullptr); }
   MysqlStatement(MysqlStatement&& rhs) = default;
   MysqlStatement(MysqlStatement& rhs) = delete;
 
@@ -26,7 +27,7 @@ public:
 
   unsigned long GetParamsCount() { return params_count_; }
 
-  MYSQL_RES* GetresultsMeta() {return mysql_stmt_result_metadata(mysql_stmt_); }
+  MYSQL_RES* GetResultsMeta();
 
   MYSQL_STMT* STMTPointer() { return mysql_stmt_; }
 

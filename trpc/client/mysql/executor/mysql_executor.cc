@@ -6,21 +6,36 @@ namespace trpc::mysql {
 std::mutex MysqlExecutor::mysql_mutex;
 
 MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& username, const std::string& password,
-                             const std::string& database, const uint16_t port)
-    : hostname_(hostname), username_(username), password_(password), database_(database), port_(port) {
+                             const std::string& database, uint16_t port, const std::string& char_set)
+    : is_connected(false), hostname_(hostname), username_(username), password_(password), database_(database), port_(port) {
   {
     std::lock_guard<std::mutex> lock(mysql_mutex);
-    mysql_ = mysql_init(NULL);
+    mysql_ = mysql_init(nullptr);
   }
-  mysql_set_character_set(mysql_, "utf8");
+  mysql_set_character_set(mysql_, char_set.c_str());
   MYSQL* ret = mysql_real_connect(mysql_, hostname.c_str(), username.c_str(), password.c_str(), database.c_str(), port, nullptr, 0);
 
   if (nullptr == ret) {
-    std::runtime_error conn_error("Connection failed: " + std::string(mysql_error(mysql_)));
     mysql_close(mysql_);
-    throw conn_error;
-  }
+  } else
+    is_connected = true;
 }
+
+
+
+bool MysqlExecutor::Connect() {
+  MYSQL* ret = mysql_real_connect(mysql_, hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_, nullptr, 0);
+
+  if (nullptr == ret) {
+    mysql_close(mysql_);
+    is_connected = false;
+    return false;
+  }
+
+  is_connected = true;
+  return true;
+}
+
 
 MysqlExecutor::~MysqlExecutor() {
   Close();
@@ -80,21 +95,6 @@ uint64_t MysqlExecutor::GetAliveTime() {
 
 void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMicroSeconds(); }
 
-std::string MysqlExecutor::ConvertPlaceholders(const std::string& sql) {
-  std::string result;
-  size_t len = sql.length();
-
-  for (size_t i = 0; i < len; ++i) {
-    if (sql[i] == '?' && (i == 0 || sql[i - 1] != '\\')) {
-      result += "{}";
-    } else {
-      result += sql[i];
-    }
-  }
-
-  return result;
-}
-
 void MysqlExecutor::StartReconnectAsync() {
   std::thread([this]() {
     int retry_interval = 100;
@@ -111,16 +111,7 @@ void MysqlExecutor::StartReconnectAsync() {
 }
 
 bool MysqlExecutor::Reconnect() {
-  Close();
-  mysql_ = mysql_init(nullptr);
-  if (!mysql_) return false;
-
-  if (!mysql_real_connect(mysql_, hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_,
-                          nullptr, 0)) {
-    return false;
-  }
-
-  return true;
+  return Connect();
 }
 
 bool MysqlExecutor::IsConnectionValid() {

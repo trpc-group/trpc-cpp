@@ -30,13 +30,28 @@ class Formatter {
     return QuotesIfNeeded(static_cast<const char*>(arg));
   }
 
+  static std::string ConvertPlaceHolder(const std::string& sql) {
+    std::string result;
+    size_t len = sql.length();
+
+    for (size_t i = 0; i < len; ++i) {
+      if (sql[i] == '?' && (i == 0 || sql[i - 1] != '\\')) {
+        result += "{}";
+      } else {
+        result += sql[i];
+      }
+    }
+
+    return result;
+  }
+
   static std::string QuotesIfNeeded(const std::string& arg) { return "'" + arg + "'"; }
 
   static std::string QuotesIfNeeded(const char* const& arg) { return arg ? "'" + std::string(arg) + "'" : "NULL"; }
 
   template <typename... Args>
   static std::string FormatQuery(const std::string& query, const Args&... args) {
-    return util::FormatString(query, QuotesIfNeeded(args)...);
+    return util::FormatString(ConvertPlaceHolder(query), QuotesIfNeeded(args)...);
   }
 };
 
@@ -79,9 +94,9 @@ class MysqlExecutor {
   ///@param username
   ///@param password
   ///@param database
-  ///@param port Could be ignored
+  ///@param port
   MysqlExecutor(const std::string& hostname, const std::string& username, const std::string& password,
-                const std::string& database, const uint16_t port = 0);
+                const std::string& database, uint16_t port = 0, const std::string& char_set = "utf8mb4");
 
   ~MysqlExecutor();
 
@@ -89,6 +104,9 @@ class MysqlExecutor {
   MysqlExecutor(MysqlExecutor&& rhs) = delete;
   MysqlExecutor& operator=(const MysqlExecutor& rhs) = delete;
   MysqlExecutor& operator=(MysqlExecutor&& rhs) = delete;
+
+
+  bool Connect();
 
   ///@brief Close the mysql conection and free the MYSQL*.
   void Close();
@@ -160,12 +178,14 @@ class MysqlExecutor {
   template <typename... OutputArgs>
   bool FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
 
-  std::string ConvertPlaceholders(const std::string& sql);
+//  std::string ConvertPlaceholders(const std::string& sql);
 
  private:
 
   // Just protects the `mysql_init`
   static std::mutex mysql_mutex;
+
+  bool is_connected;
 
   MYSQL* mysql_;
   uint64_t m_alivetime;  // 初始化活跃时间
@@ -292,15 +312,16 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
     return false;
   }
 
+  mysql_results.SetFieldsName(stmt.GetResultsMeta());
+  stmt.CloseStatement();
   return true;
 }
 
 template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const std::string& query,
                                      const InputArgs&... args) {
-  std::string query_str = Formatter::FormatQuery(ConvertPlaceholders(query), args...);
+  std::string query_str = Formatter::FormatQuery(query, args...);
   auto& results = mysql_result.GetResultSet();
-
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
     mysql_result.SetErrorMessage(mysql_error(mysql_));
@@ -322,14 +343,14 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const
     results.emplace_back(mysql_fetch_fields(res_ptr), row, lengths, mysql_num_fields(res_ptr));
   }
 
-
+  mysql_result.SetFieldsName(res_ptr);
   return true;
 }
 
 template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, const std::string& query,
                                      const InputArgs&... args) {
-  std::string query_str = Formatter::FormatQuery(ConvertPlaceholders(query), args...);
+  std::string query_str = Formatter::FormatQuery(query, args...);
   MYSQL_ROW row;
   auto& results = mysql_result.GetResultSet();
 
@@ -362,7 +383,9 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
     }
   }
 
-  mysql_free_result(res_ptr);
+//  mysql_free_result(res_ptr);
+  mysql_result.SetRawMysqlRes(res_ptr);
+  mysql_result.SetFieldsName(res_ptr);
 
   return true;
 }
@@ -440,6 +463,7 @@ size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<Onl
 
   size_t affected_row = mysql_affected_rows(mysql_);
 
+  stmt.CloseStatement();
   return affected_row;
 }
 

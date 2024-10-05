@@ -69,7 +69,7 @@ class MysqlRow {
     return {this, num_fields_};
   }
 
-  std::string GetFieldData(unsigned int column_index) {
+  std::string_view GetFieldData(unsigned int column_index) {
     return {row_[column_index], lengths_[column_index]};
   }
 
@@ -135,7 +135,9 @@ struct ResultSetMapper<MysqlResultsMode::OnlyExec, Args...> {
 
 template<typename... Args>
 struct ResultSetMapper<MysqlResultsMode::NativeString, Args...> {
-  using type = std::vector<std::vector<std::string>>;
+//  using type = std::vector<std::vector<std::string>>;
+  using type = std::vector<std::vector<std::string_view>>;
+
 };
 
 template<typename... Args>
@@ -152,8 +154,6 @@ struct ResultSetMapper<MysqlResultsMode::BindType, Args...> {
 
 class MysqlResultsOption {
  public:
-  bool use_string_view = false;
-
   size_t dynamic_buffer_init_size = 64;
 };
 
@@ -249,6 +249,8 @@ class MysqlResults {
 
   std::vector<std::vector<uint8_t>> &GetNullFlag();
 
+  const std::vector<std::string>& GetFieldsName();
+
   const MysqlResultsOption &GetOption();
 
   size_t GetAffectedRows() const;
@@ -258,6 +260,8 @@ class MysqlResults {
   void Clear();
 
   const std::string &GetErrorMessage();
+
+
 
   class MysqlRowIterator {
    public:
@@ -312,6 +316,8 @@ class MysqlResults {
  private:
   void SetRawMysqlRes(MYSQL_RES* res);
 
+  void SetFieldsName(MYSQL_RES* res);
+
   size_t SetAffectedRows(size_t n_rows);
 
   std::string &SetErrorMessage(const std::string &message);
@@ -338,15 +344,31 @@ class MysqlResults {
 
   bool has_value_;
 
+  std::vector<std::string> fields_name_;
+
+
+  /// @brief For IterMode and NativeString, it will represent real data.
   MYSQL_RES* mysql_res_;
 
-  // Todo: Field Type
-  std::vector<std::string> fields_name_;
 };
 
+template<typename... Args>
+const std::vector<std::string>& MysqlResults<Args...>::GetFieldsName() {
+  return fields_name_;
+}
 
 
+template<typename... Args>
+void MysqlResults<Args...>::SetFieldsName(MYSQL_RES *res) {
+  if(!res)
+    return;
 
+  MYSQL_FIELD* fields_meta = mysql_fetch_fields(res);
+  unsigned long fields_num = mysql_num_fields(res);
+
+  for(unsigned long i = 0; i < fields_num; ++i)
+    fields_name_.emplace_back(fields_meta[i].name);
+}
 
 
 template<typename... Args>
@@ -514,6 +536,11 @@ void MysqlResults<Args...>::Clear() {
   error_message.clear();
   has_value_ = false;
   GetResultSet().clear();
+
+  if(mysql_res_) {
+    mysql_free_result(mysql_res_);
+    mysql_res_ = nullptr;
+  }
 }
 
 }
