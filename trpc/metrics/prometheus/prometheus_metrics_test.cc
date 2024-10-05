@@ -36,6 +36,10 @@ TEST_F(PrometheusMetricsTest, Init) {
 
   TrpcConfig::GetInstance()->Init("./trpc/metrics/prometheus/testing/prometheus_metrics.yaml");
   ASSERT_EQ(0, prometheus_metrics_->Init());
+  ASSERT_TRUE(prometheus_metrics_->GetConfig().push_mode.enabled);
+ 
+   ASSERT_EQ("http://localhost:9091", prometheus_metrics_->GetConfig().push_mode.gateway_url);
+
 }
 
 trpc::ModuleMetricsInfo GetTestModuleInfo(int call) {
@@ -162,6 +166,20 @@ TEST_F(PrometheusMetricsTest, MultiAttrReport) {
   auto max_info = GetTestMultiInfo(trpc::MAX, "multi_max_value");
   ASSERT_NE(0, prometheus_metrics_->MultiAttrReport(max_info));
   ASSERT_NE(0, prometheus_metrics_->MultiAttrReport(std::move(max_info)));
+}
+
+TEST_F(PrometheusMetricsTest, PushMetricsBasic) {
+  // 确保 push mode 已启用
+  ASSERT_TRUE(prometheus_metrics_->GetConfig().push_mode.enabled);
+  
+  // 报告一些指标
+  const std::map<std::string, std::string> labels = {{"label", "test_counter"}};
+  // 增加计数器值
+    ASSERT_EQ(0, prometheus_metrics_->SumDataReport(labels, 5));
+    ASSERT_EQ(0, prometheus_metrics_->SumDataReport(labels, 3));
+  
+  // 尝试手动推送
+  ASSERT_TRUE(prometheus_metrics_->PushMetrics());
 }
 
 }  // namespace trpc::testing
