@@ -2,7 +2,7 @@
 #include <vector>
 
 #include <mysql/mysql.h>
-//#include "include/mysql.h"
+// #include "include/mysql.h"
 #include "include/gtest/gtest.h"
 
 #define private public
@@ -24,15 +24,14 @@ mysql::MysqlBlob GenRandomBlob(std::size_t length) {
   return mysql::MysqlBlob(std::move(random_data));
 }
 
-
 void PrintResultTable(mysql::MysqlResults<mysql::IterMode>& res) {
   // Step 1: 确定每一列的宽度
   std::vector<std::string> fields_name;
   bool flag = false;
   std::vector<size_t> column_widths;
 
-  for(auto row : res) {
-    if(!flag) {
+  for (auto row : res) {
+    if (!flag) {
       fields_name = row.GetFieldsName();
       column_widths.resize(fields_name.size(), 0);
       for (size_t i = 0; i < fields_name.size(); ++i)
@@ -41,12 +40,11 @@ void PrintResultTable(mysql::MysqlResults<mysql::IterMode>& res) {
     }
 
     size_t i = 0;
-    for(auto field : row) {
+    for (auto field : row) {
       column_widths[i] = std::max(column_widths[i], field.length());
       ++i;
     }
   }
-
 
   for (size_t i = 0; i < fields_name.size(); ++i) {
     std::cout << std::left << std::setw(column_widths[i] + 2) << fields_name[i];
@@ -57,14 +55,12 @@ void PrintResultTable(mysql::MysqlResults<mysql::IterMode>& res) {
     std::cout << std::setw(column_widths[i] + 2) << std::setfill('-') << "";
   }
   std::cout << std::endl;
-  std::cout << std::setfill(' '); // 重置填充字符
+  std::cout << std::setfill(' ');  // 重置填充字符
 
   for (auto row : res) {
     int i = 0;
-    for(auto field_itr = row.begin(); field_itr != row.end(); ++field_itr) {
-      std::cout << std::left
-                << std::setw(column_widths[i] + 2)
-                << (field_itr.IsNull() ? "null" : *field_itr);
+    for (auto field_itr = row.begin(); field_itr != row.end(); ++field_itr) {
+      std::cout << std::left << std::setw(column_widths[i] + 2) << (field_itr.IsNull() ? "null" : *field_itr);
       ++i;
     }
     std::cout << std::endl;
@@ -128,7 +124,6 @@ TEST(Executor, QueryArgs) {
   EXPECT_EQ("carol@example.com", std::get<1>(res_data[1]));
 }
 
-
 TEST(Executor, Update) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
@@ -155,7 +150,8 @@ TEST(Executor, Insert) {
 
   conn.Execute(res,
                "insert into users (username, email, created_at) \
-                                   values (\"jack\", \"jack@abc.com\", ?)", mtime);
+                                   values (\"jack\", \"jack@abc.com\", ?)",
+               mtime);
   EXPECT_EQ(1, res.GetAffectedRows());
 }
 
@@ -165,8 +161,6 @@ TEST(Executor, Delete) {
   conn.Execute(res, "delete from users where username = \"jack\"");
   EXPECT_EQ(1, res.GetAffectedRows());
 }
-
-
 
 TEST(Executor, SynaxError) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
@@ -184,8 +178,6 @@ TEST(Executor, OutputArgsError) {
   std::cout << res.error_message << "\n";
 }
 
-
-
 TEST(Executor, IterMode) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   mysql::MysqlResults<mysql::IterMode> res;
@@ -202,23 +194,20 @@ TEST(Executor, IterMode) {
 
   std::cout << "\n--------------------------------------------------------------\n" << std::endl;
 
-  for(auto row : res) {
-    for(unsigned int i = 0; i < row.NumFields(); i++)
-      std::cout << row.GetFieldData(i) << ", ";
+  for (auto row : res) {
+    for (unsigned int i = 0; i < row.NumFields(); i++) std::cout << row.GetFieldData(i) << ", ";
     std::cout << std::endl;
   }
 
   std::cout << "\n---------------------------------------------------------------\n" << std::endl;
 
-  for(auto row : res) {
-    for(auto field : row)
-      std::cout << field << ", ";
+  for (auto row : res) {
+    for (auto field : row) std::cout << field << ", ";
     std::cout << std::endl;
   }
 
   std::cout << std::endl;
 }
-
 
 TEST(Executor, BLOB) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
@@ -228,44 +217,43 @@ TEST(Executor, BLOB) {
   mysql::MysqlResults<mysql::IterMode> itr_res;
   mysql::MysqlBlob blob(GenRandomBlob(1024));
 
-
   // mysql::MysqlBlob
   conn.Execute(exec_res,
                "insert into users (username, email, meta)"
-               "values (\"jack\", \"jack@abc.com\", ?)", blob);
+               "values (\"jack\", \"jack@abc.com\", ?)",
+               blob);
   EXPECT_EQ(1, exec_res.GetAffectedRows());
 
   conn.QueryAll(special_res, "select meta from users where username = ?", "jack");
   auto& meta_res = special_res.GetResultSet();
   EXPECT_EQ(std::get<0>(meta_res[0]), blob);
 
-
   conn.QueryAll(str_res, "select meta from users where username = ?", "jack");
   auto& meta_res2 = special_res.GetResultSet();
   EXPECT_EQ(std::get<0>(meta_res2[0]), blob);
 
   conn.QueryAll(itr_res, "select meta from users where username = ?", "jack");
-  for(auto row : itr_res) {
+  for (auto row : itr_res) {
     mysql::MysqlBlob data(std::string(row.GetFieldData(0)));
     EXPECT_EQ(data, blob);
   }
 
-
   conn.Execute(exec_res, "delete from users where username = ?", "jack");
   EXPECT_GE(1, exec_res.GetAffectedRows());
-
 }
 
 TEST(Executor, TimeType) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
-  mysql::MysqlResults<int, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime> res;
+  mysql::MysqlResults<int, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime, mysql::MysqlTime,
+                      mysql::MysqlTime>
+      res;
   mysql::MysqlResults<mysql::NativeString> res2;
   mysql::MysqlResults<mysql::IterMode> res3;
 
   conn.QueryAll(res, "select * from time_example");
   conn.QueryAll(res2, "select * from time_example");
   conn.QueryAll(res3, "select * from time_example");
-//  PrintResultTable(res3);
+  //  PrintResultTable(res3);
 }
 
 TEST(Executor, StringType) {
@@ -275,17 +263,13 @@ TEST(Executor, StringType) {
   mysql::MysqlResults<mysql::IterMode> res3;
   mysql::MysqlResults<mysql::OnlyExec> res4;
 
-
-
   conn.QueryAll(res, "select * from string_example");
   conn.QueryAll(res2, "select * from string_example");
-  conn.Execute(res4, "insert into string_example (description, json_data) values (?, ?)",
-               res2.GetResultSet()[0][2], res2.GetResultSet()[0][4]);
+  conn.Execute(res4, "insert into string_example (description, json_data) values (?, ?)", res2.GetResultSet()[0][2],
+               res2.GetResultSet()[0][4]);
   conn.QueryAll(res3, "select * from string_example");
-//  PrintResultTable(res3);
-
+  //  PrintResultTable(res3);
 }
-
 
 TEST(Executor, Transaction) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
@@ -299,14 +283,13 @@ TEST(Executor, Transaction) {
   EXPECT_EQ(true, exec_res.IsSuccess());
 
   conn.QueryAll(itr_res, "select * from users where username = ?", "rose");
-  for(auto row : itr_res) {
-//    for(auto citr = row.begin(); citr != row.end(); ++citr)
-//      if(citr.GetFieldName() == "email")
-//        EXPECT_EQ(true, citr.IsNull());
+  for (auto row : itr_res) {
+    //    for(auto citr = row.begin(); citr != row.end(); ++citr)
+    //      if(citr.GetFieldName() == "email")
+    //        EXPECT_EQ(true, citr.IsNull());
     EXPECT_EQ("rose", row.GetFieldData(1));
     EXPECT_EQ(true, row.IsFieldNull(2));
   }
 }
-
 
 }  // namespace trpc::testing

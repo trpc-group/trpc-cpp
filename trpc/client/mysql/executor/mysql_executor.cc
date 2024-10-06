@@ -7,13 +7,19 @@ std::mutex MysqlExecutor::mysql_mutex;
 
 MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& username, const std::string& password,
                              const std::string& database, uint16_t port, const std::string& char_set)
-    : is_connected(false), hostname_(hostname), username_(username), password_(password), database_(database), port_(port) {
+    : is_connected(false),
+      hostname_(hostname),
+      username_(username),
+      password_(password),
+      database_(database),
+      port_(port) {
   {
     std::lock_guard<std::mutex> lock(mysql_mutex);
     mysql_ = mysql_init(nullptr);
   }
   mysql_set_character_set(mysql_, char_set.c_str());
-  MYSQL* ret = mysql_real_connect(mysql_, hostname.c_str(), username.c_str(), password.c_str(), database.c_str(), port, nullptr, 0);
+  MYSQL* ret = mysql_real_connect(mysql_, hostname.c_str(), username.c_str(), password.c_str(), database.c_str(), port,
+                                  nullptr, 0);
 
   if (nullptr == ret) {
     mysql_close(mysql_);
@@ -21,10 +27,9 @@ MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& use
     is_connected = true;
 }
 
-
-
 bool MysqlExecutor::Connect() {
-  MYSQL* ret = mysql_real_connect(mysql_, hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_, nullptr, 0);
+  MYSQL* ret = mysql_real_connect(mysql_, hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(),
+                                  port_, nullptr, 0);
 
   if (nullptr == ret) {
     mysql_close(mysql_);
@@ -35,7 +40,6 @@ bool MysqlExecutor::Connect() {
   is_connected = true;
   return true;
 }
-
 
 MysqlExecutor::~MysqlExecutor() {
   Close();
@@ -51,9 +55,10 @@ void MysqlExecutor::Close() {
 
 bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
   if (!IsConnectionValid()) {
-    std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
-        hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
-
+    // std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
+    //     hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
+    RefPtr<MysqlExecutor> temp_conn = MakeRefCounted<MysqlExecutor>(hostname_.c_str(), username_.c_str(),
+                                                                    password_.c_str(), database_.c_str(), port_);
     if (!temp_conn->IsConnectionValid()) {
       StartReconnectAsync();
       return false;
@@ -72,8 +77,11 @@ bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, Mysq
 
 bool MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
   if (!IsConnectionValid()) {
-    std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
-        hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
+    // std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
+    //     hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
+
+    RefPtr<MysqlExecutor> temp_conn = MakeRefCounted<MysqlExecutor>(hostname_.c_str(), username_.c_str(),
+                                                                    password_.c_str(), database_.c_str(), port_);
 
     if (!temp_conn->IsConnectionValid()) {
       StartReconnectAsync();
@@ -110,9 +118,7 @@ void MysqlExecutor::StartReconnectAsync() {
   }).detach();
 }
 
-bool MysqlExecutor::Reconnect() {
-  return Connect();
-}
+bool MysqlExecutor::Reconnect() { return Connect(); }
 
 bool MysqlExecutor::IsConnectionValid() {
   if (mysql_ != nullptr && mysql_ping(mysql_) == 0) {
@@ -122,8 +128,8 @@ bool MysqlExecutor::IsConnectionValid() {
   }
 }
 
-size_t MysqlExecutor::ExecuteInternal(const std::string &query, MysqlResults<OnlyExec> &mysql_results) {
-  if(mysql_real_query(mysql_, query.c_str(), query.length()) != 0) {
+size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results) {
+  if (mysql_real_query(mysql_, query.c_str(), query.length()) != 0) {
     mysql_results.SetErrorMessage(mysql_error(mysql_));
     return 0;
   }

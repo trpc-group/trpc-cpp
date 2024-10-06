@@ -13,23 +13,9 @@
 namespace trpc {
 namespace mysql {
 
-// class MysqlExecutorPoolManager {
-//  public:
-//   static MysqlExecutorPool* getPool(const MysqlClientConf* conf);
-//
-//   static void stopAndDestroyPools();
-//
-//  private:
-//   static std::string generatePoolKey(const MysqlClientConf* conf);
-//
-//   static std::unordered_map<std::string, std::unique_ptr<MysqlExecutorPool>> pools_;
-//
-//   static std::mutex mutex_;
-// };
-
 using MysqlExecutorPtr = std::shared_ptr<MysqlExecutor>;
 
-class MysqlExecutorPoolManager {
+class MysqlExecutorPoolManager : public RefCounted<MysqlExecutorPoolManager> {
  public:
   explicit MysqlExecutorPoolManager(MysqlExecutorPoolOption&& option);
 

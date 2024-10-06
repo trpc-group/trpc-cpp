@@ -27,6 +27,7 @@ cc_library(
         ":mysql_results",
         "@mysql_c_api_archive//:mysql_c_api",
         "@trpc_cpp//trpc/util:time",
+        "@trpc_cpp//trpc/util:ref_ptr",
         "//trpc/util:string_util"
     ],
     visibility = ["//visibility:public"],

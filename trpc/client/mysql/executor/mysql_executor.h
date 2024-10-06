@@ -11,12 +11,11 @@
 #include "trpc/client/mysql/executor/mysql_binder.h"
 #include "trpc/client/mysql/executor/mysql_results.h"
 #include "trpc/client/mysql/executor/mysql_statement.h"
+#include "trpc/util/ref_ptr.h"
 #include "trpc/util/string_util.h"
 #include "trpc/util/time.h"
 
 namespace trpc::mysql {
-
-
 
 class Formatter {
  public:
@@ -57,8 +56,7 @@ class Formatter {
 
 /// @brief A MySQL connection class that wraps the MySQL C API.
 /// @note This class is not thread-safe.
-class MysqlExecutor {
-
+class MysqlExecutor : public RefCounted<MysqlExecutor> {
   template <typename... OutputArgs>
   class QueryHandle {
    public:
@@ -105,7 +103,6 @@ class MysqlExecutor {
   MysqlExecutor& operator=(const MysqlExecutor& rhs) = delete;
   MysqlExecutor& operator=(MysqlExecutor&& rhs) = delete;
 
-
   bool Connect();
 
   ///@brief Close the mysql conection and free the MYSQL*.
@@ -127,7 +124,6 @@ class MysqlExecutor {
 
   template <typename... InputArgs>
   bool Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args);
-
 
   bool Commit();
 
@@ -178,10 +174,9 @@ class MysqlExecutor {
   template <typename... OutputArgs>
   bool FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
 
-//  std::string ConvertPlaceholders(const std::string& sql);
+  //  std::string ConvertPlaceholders(const std::string& sql);
 
  private:
-
   // Just protects the `mysql_init`
   static std::mutex mysql_mutex;
 
@@ -207,6 +202,10 @@ MysqlExecutor::QueryHandle<OutputArgs...>::QueryHandle(MysqlResults<OutputArgs..
   output_buffer = std::make_unique<DataBufferT>(field_count);
   null_flag_buffer = std::make_unique<FlagBufferT>(field_count);
   output_length = std::make_unique<std::vector<unsigned long>>(field_count);
+  // output_binds = trpc::MakeRefCounted<std::vector<MYSQL_BIND>>(field_count);
+  // output_buffer = trpc::MakeRefCounted<DataBufferT>(field_count);
+  // null_flag_buffer = trpc::MakeRefCounted<FlagBufferT>(field_count);
+  // output_length = trpc::MakeRefCounted<std::vector<unsigned long>>(field_count);
 
   ResizeOutputBuffer();
 }
@@ -228,10 +227,10 @@ void MysqlExecutor::QueryHandle<OutputArgs...>::ResizeOutputBuffer() {
 template <typename... InputArgs, typename... OutputArgs>
 bool MysqlExecutor::QueryAll(MysqlResults<OutputArgs...>& mysql_results, const std::string& query,
                              const InputArgs&... args) {
-//  static_assert(!MysqlResults<OutputArgs...>::is_only_exec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
+  //  static_assert(!MysqlResults<OutputArgs...>::is_only_exec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
 
-  static_assert(MysqlResults<OutputArgs...>::mode != MysqlResultsMode::OnlyExec, "MysqlResults<OnlyExec> cannot be used with QueryAll.");
-
+  static_assert(MysqlResults<OutputArgs...>::mode != MysqlResultsMode::OnlyExec,
+                "MysqlResults<OnlyExec> cannot be used with QueryAll.");
 
   if (!QueryAllInternal(mysql_results, query, args...)) return false;
 
@@ -269,7 +268,6 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
     stmt.CloseStatement();
     return false;
   }
-
 
   if (stmt.GetParamsCount() != sizeof...(InputArgs)) {
     mysql_results.error_message = util::FormatString("The query params count is {}, but you give {} InputputArgs.",
@@ -328,7 +326,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const
     return false;
   }
 
-  MYSQL_RES * res_ptr = mysql_store_result(mysql_);
+  MYSQL_RES* res_ptr = mysql_store_result(mysql_);
   if (res_ptr == nullptr) {
     mysql_result.SetErrorMessage(mysql_error(mysql_));
     return false;
@@ -383,7 +381,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
     }
   }
 
-//  mysql_free_result(res_ptr);
+  //  mysql_free_result(res_ptr);
   mysql_result.SetRawMysqlRes(res_ptr);
   mysql_result.SetFieldsName(res_ptr);
 

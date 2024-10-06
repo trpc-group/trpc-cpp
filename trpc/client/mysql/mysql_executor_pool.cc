@@ -44,8 +44,7 @@ void MysqlExecutorPool::ProduceExcutor() {
     std::unique_lock<std::mutex> locker(m_mutexQ_);
     while (m_connectQ_.size() >= static_cast<size_t>(m_max_size_)) {
       m_cond_produce_.wait(locker);
-      if(m_stop.load())
-        return;
+      if (m_stop.load()) return;
     }
     m_cond_consume_.notify_all();
   }
