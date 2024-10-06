@@ -136,6 +136,31 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, MysqlResu
     node_addr.port = context->GetPort();
     auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
     // auto conn = std::make_unique<MysqlExecutor>("127.0.0.1", "root", "abc123", "test", 3306);
+    if (!conn) {
+      std::string error("");
+      error += "Failed to get connection from pool: timeout while trying to acquire a connection: ";
+      error += node_addr.ip + ":" + std::to_string(node_addr.port);
+      TRPC_LOG_ERROR(error);
+      const ServiceProxyOption* option = GetServiceProxyOption();
+      conn = std::make_unique<MysqlExecutor>(node_addr.ip.c_str(), option->mysql_conf.user_name.c_str(),
+                                             option->mysql_conf.password.c_str(), option->mysql_conf.dbname.c_str(),
+                                             node_addr.port);
+
+      if (!conn) {
+        std::string error("");
+        error += "Failed to create a temporary connection for node: ";
+        error += node_addr.ip + ":" + std::to_string(node_addr.port);
+        TRPC_LOG_ERROR(error);
+
+        Status status;
+        status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+        status.SetErrorMessage(error);
+
+        context->SetStatus(status);
+        e.Set();
+        return;
+      }
+    }
 
     if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
       conn->Execute(res, sql_str, args...);
@@ -169,7 +194,33 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncUnaryInvoke(const Cl
     node_addr.ip = context->GetIp();
     node_addr.port = context->GetPort();
     auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
-    // auto conn = std::make_unique<MysqlExecutor>("127.0.0.1", "root", "abc123", "test", 3306);
+    if (!conn) {
+      std::string error("");
+      error += "Failed to get connection from pool: timeout while trying to acquire a connection.";
+      error += node_addr.ip + ":" + std::to_string(node_addr.port);
+      TRPC_LOG_ERROR(error);
+
+      // Create a temporary connection.
+      const ServiceProxyOption* option = GetServiceProxyOption();
+      conn = std::make_unique<MysqlExecutor>(node_addr.ip.c_str(), option->mysql_conf.user_name.c_str(),
+                                             option->mysql_conf.password.c_str(), option->mysql_conf.dbname.c_str(),
+                                             node_addr.port);
+
+      if (!conn) {
+        std::string error("");
+        error += "Failed to create a temporary connection for node: ";
+        error += node_addr.ip + ":" + std::to_string(node_addr.port);
+        TRPC_LOG_ERROR(error);
+
+        Status status;
+        status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+        status.SetErrorMessage(error);
+
+        context->SetStatus(status);
+        p.SetException(CommonException(status.ErrorMessage().c_str()));
+        return;
+      }
+    }
 
     if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
       conn->Execute(res, sql_str, args...);

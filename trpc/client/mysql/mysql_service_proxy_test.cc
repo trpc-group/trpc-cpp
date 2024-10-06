@@ -289,4 +289,71 @@ TEST_F(MysqlServiceProxyTest, QueryRepeat) {
     EXPECT_EQ(true, res.IsSuccess());
   }
 }
+
+TEST_F(MysqlServiceProxyTest, ConcurrentQuery) {
+  const int kThreadCount = 10;
+  std::vector<std::thread> threads;
+  std::mutex result_mutex;
+  bool all_success = true;
+
+  for (int i = 0; i < kThreadCount; ++i) {
+    threads.emplace_back([this, &result_mutex, &all_success, i]() {
+      auto client_context = GetClientContext();
+      trpc::mysql::MysqlResults<int, std::string> res;
+      mock_mysql_service_proxy_->Query(client_context, res, "select id, username from users where id = ?", i + 1);
+
+      std::lock_guard<std::mutex> lock(result_mutex);
+      if (!res.IsSuccess()) {
+        all_success = false;
+      } else {
+        auto& res_vec = res.GetResultSet();
+        if (!res_vec.empty()) {
+          std::cout << "Thread " << i << " retrieved username: " << std::get<1>(res_vec[0]) << std::endl;
+        }
+      }
+    });
+  }
+
+  for (auto& thread : threads) {
+    if (thread.joinable()) {
+      thread.join();
+    }
+  }
+
+  EXPECT_EQ(true, all_success);
+}
+
+TEST_F(MysqlServiceProxyTest, ConcurrentAsyncQueryWithFutures) {
+  const int kThreadCount = 10;
+  std::vector<trpc::Future<>> futures;
+  std::mutex result_mutex;
+  bool all_success = true;
+
+  for (int i = 0; i < kThreadCount; ++i) {
+    auto client_context = GetClientContext();
+    auto future = mock_mysql_service_proxy_
+                      ->AsyncQuery<mysql::IterMode>(client_context, "select * from users where id >= ?", i + 1)
+                      .Then([&result_mutex, &all_success, i](trpc::Future<mysql::MysqlResults<mysql::IterMode>>&& f) {
+                        if (f.IsReady()) {
+                          auto& result = f.GetConstValue();
+                          std::lock_guard<std::mutex> lock(result_mutex);
+                          if (!result.IsSuccess()) {
+                            all_success = false;
+                          } else {
+                            std::cout << "Thread " << i << " completed async query successfully" << std::endl;
+                          }
+                        }
+                        return trpc::MakeReadyFuture<>();
+                      });
+
+    futures.push_back(std::move(future));
+  }
+
+  for (auto& future : futures) {
+    ::trpc::future::BlockingGet(std::move(future));
+  }
+
+  EXPECT_EQ(true, all_success);
+}
+
 }  // namespace trpc::testing

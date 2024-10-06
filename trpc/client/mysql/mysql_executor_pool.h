@@ -25,12 +25,9 @@ class MysqlExecutorPool {
 
   void Destory();
 
-  void ReconnectWithBackoff(MysqlExecutor* executor);
-
  private:
   MysqlExecutorPool() = default;
 
-  // 连接池操作
   void ProduceExcutor();
   void RecycleExcutor();
   void AddExecutor();

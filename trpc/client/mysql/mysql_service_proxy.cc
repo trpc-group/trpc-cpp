@@ -30,24 +30,6 @@ bool MysqlServiceProxy::InitManager() {
   return true;
 }
 
-// bool MysqlServiceProxy::SplitAddressPort(const std::string& address, std::string& ip, uint32_t& port) {
-//   size_t pos = address.find(':');
-//   if (pos == std::string::npos) {
-//     std::cerr << "Invalid address format: " << address << std::endl;
-//     return false;
-//   }
-//
-//   ip = address.substr(0, pos);
-//   try {
-//     port = std::stoi(address.substr(pos + 1));
-//   } catch (const std::exception& e) {
-//     std::cerr << "Failed to parse port number from address: " << address << std::endl;
-//     return false;
-//   }
-//
-//   return true;
-// }
-
 void MysqlServiceProxy::Destroy() {
   ServiceProxy::Destroy();
   thread_pool_->Join();

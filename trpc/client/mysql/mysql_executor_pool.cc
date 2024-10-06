@@ -82,7 +82,9 @@ std::shared_ptr<MysqlExecutor> MysqlExecutorPool::GetExecutor() {
   std::unique_lock<std::mutex> locker(m_mutexQ_);
   while (m_connectQ_.empty()) {
     if (m_cond_consume_.wait_for(locker, std::chrono::milliseconds(m_timeout_)) == std::cv_status::timeout) {
-      if (m_connectQ_.empty()) continue;
+      if (m_connectQ_.empty()) {
+        return nullptr;
+      };
     }
   }
   std::shared_ptr<MysqlExecutor> connptr(m_connectQ_.front(), [this](MysqlExecutor* conn) {
@@ -93,25 +95,6 @@ std::shared_ptr<MysqlExecutor> MysqlExecutorPool::GetExecutor() {
   m_connectQ_.pop();
   m_cond_produce_.notify_all();
   return connptr;
-}
-
-void MysqlExecutorPool::ReconnectWithBackoff(MysqlExecutor* executor) {
-  int attempt = 0;
-  int max_attempts = 5;
-  int delay = 100;
-
-  while (attempt < max_attempts) {
-    if (executor->Reconnect()) {
-      return;
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    delay = std::min(delay * 2, 30000);
-    attempt++;
-  }
-
-  //
-  // HandleClusterUnavailable();
 }
 
 }  // namespace mysql

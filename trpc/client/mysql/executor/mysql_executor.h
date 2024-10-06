@@ -54,6 +54,14 @@ class Formatter {
   }
 };
 
+class ExecuteStatus {
+ public:
+  bool success;
+  std::string error_message;
+
+  ExecuteStatus(bool s, const std::string& msg = "") : success(s), error_message(msg) {}
+};
+
 /// @brief A MySQL connection class that wraps the MySQL C API.
 /// @note This class is not thread-safe.
 class MysqlExecutor : public RefCounted<MysqlExecutor> {
@@ -137,7 +145,7 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
 
   bool Reconnect();
 
-  void StartReconnectAsync();
+  bool StartReconnect();
 
  private:
   template <typename... InputArgs, typename... OutputArgs>
@@ -164,9 +172,9 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   template <typename... OutputArgs>
   void BindOutputs(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
 
-  bool ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement);
+  ExecuteStatus ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement);
 
-  bool ExecuteStatement(MysqlStatement& statement);
+  ExecuteStatus ExecuteStatement(MysqlStatement& statement);
 
   template <typename... OutputArgs>
   bool FetchResults(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
@@ -183,7 +191,7 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   bool is_connected;
 
   MYSQL* mysql_;
-  uint64_t m_alivetime;  // 初始化活跃时间
+  uint64_t m_alivetime;
 
   std::string hostname_;
   std::string username_;
@@ -202,10 +210,6 @@ MysqlExecutor::QueryHandle<OutputArgs...>::QueryHandle(MysqlResults<OutputArgs..
   output_buffer = std::make_unique<DataBufferT>(field_count);
   null_flag_buffer = std::make_unique<FlagBufferT>(field_count);
   output_length = std::make_unique<std::vector<unsigned long>>(field_count);
-  // output_binds = trpc::MakeRefCounted<std::vector<MYSQL_BIND>>(field_count);
-  // output_buffer = trpc::MakeRefCounted<DataBufferT>(field_count);
-  // null_flag_buffer = trpc::MakeRefCounted<FlagBufferT>(field_count);
-  // output_length = trpc::MakeRefCounted<std::vector<unsigned long>>(field_count);
 
   ResizeOutputBuffer();
 }
@@ -298,11 +302,17 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
     handle.output_binds->at(i).length = &handle.output_length->at(i);
   }
 
-  if (!ExecuteStatement(*handle.output_binds, stmt)) {
-    mysql_results.error_message = stmt.GetErrorMessage();
+  auto status = ExecuteStatement(*handle.output_binds, stmt);
+  if (!status.success) {
+    mysql_results.error_message = status.error_message;
     stmt.CloseStatement();
     return false;
   }
+  // if (!ExecuteStatement(*handle.output_binds, stmt)) {
+  //   mysql_results.error_message = stmt.GetErrorMessage();
+  //   stmt.CloseStatement();
+  //   return false;
+  // }
 
   if (!FetchResults(handle)) {
     mysql_results.error_message = stmt.GetErrorMessage();
@@ -381,7 +391,6 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
     }
   }
 
-  //  mysql_free_result(res_ptr);
   mysql_result.SetRawMysqlRes(res_ptr);
   mysql_result.SetFieldsName(res_ptr);
 
@@ -453,8 +462,15 @@ size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<Onl
     return 0;
   }
 
-  if (!ExecuteStatement(stmt)) {
-    mysql_results.SetErrorMessage(stmt.GetErrorMessage());
+  // if (!ExecuteStatement(stmt)) {
+  //   mysql_results.SetErrorMessage(stmt.GetErrorMessage());
+  //   stmt.CloseStatement();
+  //   return 0;
+  // }
+
+  auto status = ExecuteStatement(stmt);
+  if (!status.success) {
+    mysql_results.SetErrorMessage(status.error_message);
     stmt.CloseStatement();
     return 0;
   }

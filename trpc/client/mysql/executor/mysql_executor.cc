@@ -53,46 +53,31 @@ void MysqlExecutor::Close() {
   }
 }
 
-bool MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
+ExecuteStatus MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
   if (!IsConnectionValid()) {
-    // std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
-    //     hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
-    RefPtr<MysqlExecutor> temp_conn = MakeRefCounted<MysqlExecutor>(hostname_.c_str(), username_.c_str(),
-                                                                    password_.c_str(), database_.c_str(), port_);
-    if (!temp_conn->IsConnectionValid()) {
-      StartReconnectAsync();
-      return false;
+    if (!StartReconnect()) {
+      return ExecuteStatus(false, "MySQL cluster is unavailable.");
     }
-
-    return temp_conn->ExecuteStatement(output_binds, statement);
   }
   if (mysql_stmt_bind_result(statement.STMTPointer(), output_binds.data()) != 0) return false;
-
   if (mysql_stmt_execute(statement.STMTPointer()) != 0) {
-    return false;
+    return ExecuteStatus(false, statement.GetErrorMessage());
   }
 
-  return true;
+  return ExecuteStatus(true);
 }
 
-bool MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
+ExecuteStatus MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
   if (!IsConnectionValid()) {
-    // std::unique_ptr<MysqlExecutor> temp_conn = std::make_unique<MysqlExecutor>(
-    //     hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(), port_);
-
-    RefPtr<MysqlExecutor> temp_conn = MakeRefCounted<MysqlExecutor>(hostname_.c_str(), username_.c_str(),
-                                                                    password_.c_str(), database_.c_str(), port_);
-
-    if (!temp_conn->IsConnectionValid()) {
-      StartReconnectAsync();
-      return false;
+    if (!StartReconnect()) {
+      return ExecuteStatus(false, "MySQL cluster is unavailable.");
     }
-
-    return temp_conn->ExecuteStatement(statement);
   }
-  if (mysql_stmt_execute(statement.STMTPointer()) != 0) return false;
+  if (mysql_stmt_execute(statement.STMTPointer()) != 0) {
+    return ExecuteStatus(false, statement.GetErrorMessage());
+  }
 
-  return true;
+  return ExecuteStatus(true);
 }
 
 uint64_t MysqlExecutor::GetAliveTime() {
@@ -103,19 +88,19 @@ uint64_t MysqlExecutor::GetAliveTime() {
 
 void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMicroSeconds(); }
 
-void MysqlExecutor::StartReconnectAsync() {
-  std::thread([this]() {
-    int retry_interval = 100;
-    int max_retries = 5;
-    for (int i = 0; i < max_retries; ++i) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(retry_interval));
-
-      if (Reconnect()) {
-        return;
-      }
-      retry_interval *= 2;
+bool MysqlExecutor::StartReconnect() {
+  int retry_interval = 100;
+  int max_retries = 5;
+  bool reconnected = false;
+  for (int i = 0; i < max_retries; ++i) {
+    if (Reconnect()) {
+      reconnected = true;
+      break;
     }
-  }).detach();
+    std::this_thread::sleep_for(std::chrono::milliseconds(retry_interval));
+    retry_interval = std::min(retry_interval * 2, 3000);
+  }
+  return reconnected;
 }
 
 bool MysqlExecutor::Reconnect() { return Connect(); }
