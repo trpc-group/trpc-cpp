@@ -24,8 +24,8 @@ bool MysqlServiceProxy::InitManager() {
   pool_option.max_size = option->mysql_conf.max_size;
   pool_option.max_idle_time = option->mysql_conf.max_idle_time;
 
-  // pool_manager_ = std::make_unique<MysqlExecutorPoolManager>(std::move(pool_option));
-  pool_manager_ = trpc::MakeRefCounted<MysqlExecutorPoolManager>(std::move(pool_option));
+  pool_manager_ = std::make_unique<MysqlExecutorPoolManager>(std::move(pool_option));
+  // pool_manager_ = trpc::MakeRefCounted<MysqlExecutorPoolManager>(std::move(pool_option));
   //  pool_manager_inited_.store(true);
   return true;
 }

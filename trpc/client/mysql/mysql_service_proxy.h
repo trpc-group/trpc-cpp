@@ -56,7 +56,7 @@ class MysqlServiceProxy : public ServiceProxy {
 
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
-  trpc::RefPtr<MysqlExecutorPoolManager> pool_manager_;
+  std::unique_ptr<MysqlExecutorPoolManager> pool_manager_;
 };
 
 template <typename... OutputArgs, typename... InputArgs>
