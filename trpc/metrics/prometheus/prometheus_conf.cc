@@ -30,6 +30,11 @@ void PrometheusConfig::Display() const {
     TRPC_LOG_DEBUG(label.first << ":" << label.second);
   }
 
+  TRPC_LOG_DEBUG("auth_cfg:");
+  for (auto label : auth_cfg) {
+    TRPC_LOG_DEBUG(label.first << ":" << label.second);
+  }
+
   TRPC_LOG_DEBUG("--------------------------------");
 }
 
