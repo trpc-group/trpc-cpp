@@ -56,6 +56,15 @@ void MysqlServiceProxy::InitOtherMembers() {
 }
 
 Status MysqlServiceProxy::Begin(const ClientContextPtr& context, TransactionHandle &handle) {
+
+  if(handle.GetState() != TransactionHandle::TxState::kNotInited) {
+    Status status = kUnknownErrorStatus;
+    status.SetErrorMessage("The transaction handle is invalid or has been used.");
+    context->SetStatus(status);
+    return context->GetStatus();
+  }
+
+
   auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
   if (filter_status == FilterStatus::REJECT)
     TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());

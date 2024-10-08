@@ -133,19 +133,22 @@ TEST_F(MysqlServiceProxyTest, Transaction) {
   auto client_context = GetClientContext();
   mysql::TransactionHandle handle;
   mysql::MysqlResults<mysql::OnlyExec> exec_res;
+  mysql::MysqlResults<mysql::NativeString> query_res;
   mysql::MysqlTime mtime;
   mtime.mt.year = 2024;
   mtime.mt.month = 9;
   mtime.mt.day = 10;
   Status s = mock_mysql_service_proxy_->Begin(client_context, handle);
-  s = mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
+  EXPECT_EQ(s.OK(), true);
+  mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
                                          "insert into users (username, email, created_at)"
                                          "values (\"jack\", \"jack@abc.com\", ?)", mtime);
   EXPECT_EQ(1, exec_res.GetAffectedRows());
-  mock_mysql_service_proxy_->Rollback(client_context, handle);
-  EXPECT_EQ(s.OK(), true);
 
-  mysql::MysqlResults<mysql::NativeString> query_res;
+  mock_mysql_service_proxy_->Query(client_context, handle, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(1, query_res.GetResultSet().size());
+  mock_mysql_service_proxy_->Rollback(client_context, handle);
+
   mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
   EXPECT_EQ(0, query_res.GetResultSet().size());
 }

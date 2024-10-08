@@ -335,6 +335,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
 template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const std::string& query,
                                      const InputArgs&... args) {
+  mysql_result.Clear();
   std::string query_str = Formatter::FormatQuery(query, args...);
   auto& results = mysql_result.GetResultSet();
 
@@ -365,6 +366,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const
 template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, const std::string& query,
                                      const InputArgs&... args) {
+  mysql_result.Clear();
   std::string query_str = Formatter::FormatQuery(query, args...);
   MYSQL_ROW row;
   auto& results = mysql_result.GetResultSet();
@@ -453,6 +455,7 @@ bool MysqlExecutor::FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs.
 template <typename... InputArgs>
 size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results,
                                       const InputArgs&... args) {
+  mysql_results.Clear();
   MysqlStatement stmt(mysql_);
   std::vector<MYSQL_BIND> input_binds;
 

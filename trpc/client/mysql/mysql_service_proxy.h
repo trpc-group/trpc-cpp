@@ -20,36 +20,63 @@ class MysqlServiceProxy : public ServiceProxy {
 
   ~MysqlServiceProxy() override = default;
 
-
+  /// @brief Executes a SQL query and retrieves all resulting rows.
+  ///
+  ///  This function executes the provided SQL query with the specified input arguments.
+  ///
+  /// @param context
+  /// @param res Which return the query results. Details in "class MysqlResults"
+  /// @param sql_str The SQL query to be executed as a string which uses "?" as
+  ///  placeholders (see [MySQL C API Documentation](https://dev.mysql.com/doc/c-api/8.0/en/mysql-stmt-prepare.html)).
+  /// @param args The input arguments to be bound to the query placeholders. Could be empty if no placeholders in sql_str.
+  /// @return trpc Status.
   template <typename... OutputArgs, typename... InputArgs>
   Status Query(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                const InputArgs&... args);
 
+
+  /// @brief Async method for executing a SQL query and retrieves all resulting rows.
+  ///
+  ///  This function executes the provided SQL query with the specified input arguments.
+  ///
+  /// @param context
+  /// @param res Which return the query results. Details in "class MysqlResults"
+  /// @param sql_str The SQL query to be executed as a string which uses "?" as
+  ///  placeholders (see [MySQL C API Documentation](https://dev.mysql.com/doc/c-api/8.0/en/mysql-stmt-prepare.html)).
+  /// @param args The input arguments to be bound to the query placeholders. Could be empty if no placeholders in sql_str.
+  /// @return a Future which contains the MysqlResults.
   template <typename... OutputArgs, typename... InputArgs>
   Future<MysqlResults<OutputArgs...>> AsyncQuery(const ClientContextPtr& context, const std::string& sql_str,
                                                  const InputArgs&... args);
 
-  /// @brief Notice that "Execute" methods are completely the same with "Query" now.
+  /// @brief "Execute" methods are completely the same with "Query" now.
   template <typename... OutputArgs, typename... InputArgs>
   Status Execute(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                  const InputArgs&... args);
 
+  /// @brief "Execute" methods are completely the same with "Query" now.
   template <typename... OutputArgs, typename... InputArgs>
   Future<MysqlResults<OutputArgs...>> AsyncExecute(const ClientContextPtr& context, const std::string& sql_str,
                                                    const InputArgs&... args);
 
 
-
+  /// @brief Transaction support for query. A TransactionHandle which has been called "Begin" is needed.
   template <typename... OutputArgs, typename... InputArgs>
   Status Query(const ClientContextPtr& context, TransactionHandle& handle, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                const InputArgs&... args);
 
+  /// @brief Transaction support for query. A TransactionHandle which has been called "Begin" is needed.
   template <typename... OutputArgs, typename... InputArgs>
   Status Execute(const ClientContextPtr& context, TransactionHandle& handle, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                  const InputArgs&... args);
 
+  /// @brief Begin a transaction. A empty handle is needed.
   Status Begin(const ClientContextPtr& context, TransactionHandle& handle);
+
+  /// @brief Commit a transaction.
   Status Commit(const ClientContextPtr& context, TransactionHandle& handle);
+
+  /// @brief Rollback a transaction.
   Status Rollback(const ClientContextPtr& context, TransactionHandle& handle);
 
   void Stop() override;
@@ -120,38 +147,20 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncQuery(const ClientCo
 template <typename... OutputArgs, typename... InputArgs>
 Status MysqlServiceProxy::Execute(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res,
                                   const std::string& sql_str, const InputArgs&... args) {
-  auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  if (filter_status == FilterStatus::REJECT)
-    TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
-  else
-    UnaryInvoke(context, res, sql_str, args...);
 
-  RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
-  return context->GetStatus();
+    return Query(context, res, sql_str, args...);
 }
 
 template <typename... OutputArgs, typename... InputArgs>
 Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncExecute(const ClientContextPtr& context,
                                                                     const std::string& sql_str,
                                                                     const InputArgs&... args) {
-  auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  if (filter_status == FilterStatus::REJECT) {
-    TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
-    context->SetRequestData(nullptr);
-    const Status& result = context->GetStatus();
-    auto exception_fut =
-        MakeExceptionFuture<MysqlResults<OutputArgs...>>(CommonException(result.ErrorMessage().c_str()));
-    filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
-    return exception_fut;
-  }
-
-  return AsyncUnaryInvoke<OutputArgs...>(context, sql_str, args...);
+    return AsyncQuery<OutputArgs...>(context, sql_str, args...);
 }
 
 
 template<typename... OutputArgs, typename... InputArgs>
-Status
-MysqlServiceProxy::Query(const ClientContextPtr &context,
+Status MysqlServiceProxy::Query(const ClientContextPtr &context,
                          TransactionHandle &handle,
                          MysqlResults<OutputArgs...> &res,
                          const std::string &sql_str,
@@ -180,20 +189,7 @@ Status MysqlServiceProxy::Execute(const ClientContextPtr& context,
                                   const std::string& sql_str,
                                   const InputArgs&... args) {
 
-  auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  if (filter_status == FilterStatus::REJECT)
-    TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
-  else if (handle.GetState() != TransactionHandle::TxState::kStart) {
-    Status status;
-    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
-    status.SetErrorMessage("Invalid TransactionHandle state.");
-    context->SetStatus(status);
-  } else {
-    UnaryInvoke(context, handle.GetExecutor(), res, sql_str, args...);
-  }
-
-  RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
-  return context->GetStatus();
+    return Query(context, handle, res, sql_str, args...);
 }
 
 template <typename... OutputArgs, typename... InputArgs>
