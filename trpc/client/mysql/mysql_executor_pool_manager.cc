@@ -31,8 +31,30 @@ MysqlExecutorPool* MysqlExecutorPoolManager::Get(const NodeAddr& node_addr) {
 }
 
 MysqlExecutorPool* MysqlExecutorPoolManager::CreateExecutorPool(const NodeAddr& node_addr) {
-  MysqlExecutorPool* new_pool = new MysqlExecutorPool(option_, node_addr);
+  MysqlExecutorPool* new_pool{nullptr};
+  if(option_.use_back_thread_pool)
+    new_pool = new BackThreadExecutorPool(option_, node_addr);
+  else
+    new_pool = new MysqlExecutorPoolImpl(option_, node_addr);
   return new_pool;
+}
+
+void MysqlExecutorPoolManager::Stop() {
+  execuctor_pools_.GetAllItems(pools_to_destroy_);
+
+  for(auto& [key, pool] : pools_to_destroy_)
+    pool->Stop();
+}
+
+void MysqlExecutorPoolManager::Destroy() {
+  for (auto& [key, pool] : pools_to_destroy_) {
+    pool->Destroy();
+    delete pool;
+    pool = nullptr;
+  }
+
+  execuctor_pools_.Reclaim();
+  pools_to_destroy_.clear();
 }
 
 }  // namespace mysql

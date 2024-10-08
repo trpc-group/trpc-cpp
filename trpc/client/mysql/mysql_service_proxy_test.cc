@@ -84,7 +84,9 @@ class MysqlServiceProxyTest : public ::testing::Test {
     option_->mysql_conf.password = "abc123";
     option_->mysql_conf.user_name = "root";
     option_->mysql_conf.enable = true;
-    option_->mysql_conf.min_size = 6;
+    option_->mysql_conf.min_size = 2;
+    option_->mysql_conf.max_size = 12;
+    option_->mysql_conf.use_back_thread_pool = false;
   }
 
   static void TearDownTestCase() { TrpcPlugin::GetInstance()->UnregisterPlugins(); }
@@ -126,6 +128,27 @@ mysql> select * from users;
 |  4 | rose     | NULL              | 2024-09-08 13:16:53 | NULL       |
 +----+----------+-------------------+---------------------+------------+
 */
+
+TEST_F(MysqlServiceProxyTest, Transaction) {
+  auto client_context = GetClientContext();
+  mysql::TransactionHandle handle;
+  mysql::MysqlResults<mysql::OnlyExec> exec_res;
+  mysql::MysqlTime mtime;
+  mtime.mt.year = 2024;
+  mtime.mt.month = 9;
+  mtime.mt.day = 10;
+  Status s = mock_mysql_service_proxy_->Begin(client_context, handle);
+  s = mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
+                                         "insert into users (username, email, created_at)"
+                                         "values (\"jack\", \"jack@abc.com\", ?)", mtime);
+  EXPECT_EQ(1, exec_res.GetAffectedRows());
+  mock_mysql_service_proxy_->Rollback(client_context, handle);
+  EXPECT_EQ(s.OK(), true);
+
+  mysql::MysqlResults<mysql::NativeString> query_res;
+  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(0, query_res.GetResultSet().size());
+}
 
 TEST_F(MysqlServiceProxyTest, Query) {
   auto client_context = GetClientContext();
@@ -279,6 +302,7 @@ TEST_F(MysqlServiceProxyTest, AsyncQueryRepeat) {
     ::trpc::future::BlockingGet(std::move(future));
   }
 }
+
 
 TEST_F(MysqlServiceProxyTest, QueryRepeat) {
   auto client_context = GetClientContext();

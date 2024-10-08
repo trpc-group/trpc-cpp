@@ -1,5 +1,6 @@
 #include "trpc/client/mysql/executor/mysql_executor.h"
 #include <mysql/mysql.h>
+#include "trpc/util/log/logging.h"
 
 namespace trpc::mysql {
 
@@ -28,6 +29,10 @@ MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& use
 }
 
 bool MysqlExecutor::Connect() {
+
+  if(is_connected)
+      return true;
+
   MYSQL* ret = mysql_real_connect(mysql_, hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(),
                                   port_, nullptr, 0);
 
@@ -42,6 +47,8 @@ bool MysqlExecutor::Connect() {
 }
 
 MysqlExecutor::~MysqlExecutor() {
+  // Usually it will call Close() before destructor
+  TRPC_ASSERT(is_connected == false);
   Close();
   // FreeResult();
 }
@@ -51,6 +58,7 @@ void MysqlExecutor::Close() {
     mysql_close(mysql_);
     mysql_ = nullptr;
   }
+  is_connected = false;
 }
 
 ExecuteStatus MysqlExecutor::ExecuteStatement(std::vector<MYSQL_BIND>& output_binds, MysqlStatement& statement) {
@@ -120,6 +128,22 @@ size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<Onl
   }
 
   return mysql_affected_rows(mysql_);
+}
+
+void MysqlExecutor::SetExecutorId(uint64_t eid) {
+  executor_id_ = eid;
+}
+
+uint64_t MysqlExecutor::GetExecutorId() const {
+  return executor_id_;
+}
+
+std::string MysqlExecutor::GetIp() const {
+  return hostname_;
+}
+
+uint16_t MysqlExecutor::GetPort() const {
+  return port_;
 }
 
 }  // namespace trpc::mysql

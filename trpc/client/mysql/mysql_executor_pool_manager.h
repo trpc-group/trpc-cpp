@@ -13,9 +13,7 @@
 namespace trpc {
 namespace mysql {
 
-using MysqlExecutorPtr = std::shared_ptr<MysqlExecutor>;
-
-class MysqlExecutorPoolManager : public RefCounted<MysqlExecutorPoolManager> {
+class MysqlExecutorPoolManager {
  public:
   explicit MysqlExecutorPoolManager(MysqlExecutorPoolOption&& option);
 
@@ -32,6 +30,7 @@ class MysqlExecutorPoolManager : public RefCounted<MysqlExecutorPoolManager> {
 
  private:
   concurrency::LightlyConcurrentHashMap<std::string, MysqlExecutorPool*> execuctor_pools_;
+  std::unordered_map<std::string, MysqlExecutorPool*> pools_to_destroy_;
   MysqlExecutorPoolOption option_;
 };
 

@@ -92,6 +92,8 @@ TEST(Executor, QueryNoArgs) {
   EXPECT_EQ(2, std::get<0>(res_data[1]));
   EXPECT_EQ("alice", std::get<1>(res_data[0]));
   EXPECT_EQ(2024, std::get<2>(res_data[2]).mt.year);
+
+  conn.Close();
 }
 
 TEST(Executor, QueryString) {
@@ -101,6 +103,7 @@ TEST(Executor, QueryString) {
 
   auto& res_data = res.GetResultSet();
   EXPECT_EQ("alice", res_data[0][1]);
+  conn.Close();
 }
 //
 TEST(Executor, QueryNull) {
@@ -111,6 +114,7 @@ TEST(Executor, QueryNull) {
   EXPECT_TRUE(res.GetNullFlag()[0][1] == 0);
   EXPECT_TRUE(res.GetNullFlag()[3][0] == 0);
   EXPECT_TRUE(res.GetNullFlag()[3][1] != 0);
+  conn.Close();
 }
 
 TEST(Executor, QueryArgs) {
@@ -122,6 +126,7 @@ TEST(Executor, QueryArgs) {
   EXPECT_EQ(2, res_data.size());
   EXPECT_EQ("alice@example.com", std::get<1>(res_data[0]));
   EXPECT_EQ("carol@example.com", std::get<1>(res_data[1]));
+  conn.Close();
 }
 
 TEST(Executor, Update) {
@@ -138,6 +143,7 @@ TEST(Executor, Update) {
                       \"bob\", email = \"bob@abc.com\" where username = ?",
                "tom");
   EXPECT_EQ(1, res.GetAffectedRows());
+  conn.Close();
 }
 
 TEST(Executor, Insert) {
@@ -153,6 +159,7 @@ TEST(Executor, Insert) {
                                    values (\"jack\", \"jack@abc.com\", ?)",
                mtime);
   EXPECT_EQ(1, res.GetAffectedRows());
+  conn.Close();
 }
 
 TEST(Executor, Delete) {
@@ -160,6 +167,7 @@ TEST(Executor, Delete) {
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
   conn.Execute(res, "delete from users where username = \"jack\"");
   EXPECT_EQ(1, res.GetAffectedRows());
+  conn.Close();
 }
 
 TEST(Executor, SynaxError) {
@@ -168,6 +176,7 @@ TEST(Executor, SynaxError) {
   conn.Execute(res, "delete users where username = \"jack\"");
   EXPECT_EQ(false, res.IsSuccess());
   std::cout << res.error_message << "\n";
+  conn.Close();
 }
 
 TEST(Executor, OutputArgsError) {
@@ -176,6 +185,7 @@ TEST(Executor, OutputArgsError) {
   conn.QueryAll(res, "select * from users");
   EXPECT_EQ(false, res.IsSuccess());
   std::cout << res.error_message << "\n";
+  conn.Close();
 }
 
 TEST(Executor, IterMode) {
@@ -207,6 +217,7 @@ TEST(Executor, IterMode) {
   }
 
   std::cout << std::endl;
+  conn.Close();
 }
 
 TEST(Executor, BLOB) {
@@ -240,6 +251,8 @@ TEST(Executor, BLOB) {
 
   conn.Execute(exec_res, "delete from users where username = ?", "jack");
   EXPECT_GE(1, exec_res.GetAffectedRows());
+
+  conn.Close();
 }
 
 TEST(Executor, TimeType) {
@@ -254,6 +267,8 @@ TEST(Executor, TimeType) {
   conn.QueryAll(res2, "select * from time_example");
   conn.QueryAll(res3, "select * from time_example");
   //  PrintResultTable(res3);
+
+  conn.Close();
 }
 
 TEST(Executor, StringType) {
@@ -269,6 +284,8 @@ TEST(Executor, StringType) {
                res2.GetResultSet()[0][4]);
   conn.QueryAll(res3, "select * from string_example");
   //  PrintResultTable(res3);
+
+  conn.Close();
 }
 
 TEST(Executor, Transaction) {
@@ -290,6 +307,8 @@ TEST(Executor, Transaction) {
     EXPECT_EQ("rose", row.GetFieldData(1));
     EXPECT_EQ(true, row.IsFieldNull(2));
   }
+
+  conn.Close();
 }
 
 }  // namespace trpc::testing

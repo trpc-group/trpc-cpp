@@ -3,6 +3,15 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 
+cc_library(
+    name = "transaction",
+    hdrs = ["transaction.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//trpc/client/mysql/executor:mysql_executor"
+    ]
+)
+
 
 cc_library(
     name = "mysql_executor_pool",
@@ -11,6 +20,7 @@ cc_library(
     deps = [
         "//trpc/transport/common:transport_message_common",
         "//trpc/client/mysql/executor:mysql_executor",
+        "//trpc/util/log:logging",
         ":mysql_service_config",
     ],
     visibility = ["//visibility:public"],
@@ -25,13 +35,14 @@ cc_library(
         ":mysql_executor_pool",
         ":mysql_executor_pool_manager",
         ":mysql_service_config",
+        ":transaction",
         "//trpc/client:service_proxy_option",
         "//trpc/util/string:string_util",
         "//trpc/util/thread:thread_pool",
         "//trpc/util/thread:latch",
         "//trpc/coroutine:fiber",
         "//trpc/client:service_proxy",
-        "//trpc/common/logging:trpc_logging"
+        "//trpc/common/logging:trpc_logging",
     ],
     visibility = ["//visibility:public"]
 )

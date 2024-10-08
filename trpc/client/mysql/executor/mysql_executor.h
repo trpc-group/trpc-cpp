@@ -133,9 +133,6 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   template <typename... InputArgs>
   bool Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args);
 
-  bool Commit();
-
-  bool Transaction();
 
   void RefreshAliveTime();
 
@@ -146,6 +143,15 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   bool Reconnect();
 
   bool StartReconnect();
+
+  void SetExecutorId(uint64_t eid);
+
+  uint64_t GetExecutorId() const;
+
+  std::string GetIp() const;
+
+  uint16_t  GetPort() const;
+
 
  private:
   template <typename... InputArgs, typename... OutputArgs>
@@ -192,6 +198,7 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
 
   MYSQL* mysql_;
   uint64_t m_alivetime;
+  uint64_t executor_id_{0};
 
   std::string hostname_;
   std::string username_;

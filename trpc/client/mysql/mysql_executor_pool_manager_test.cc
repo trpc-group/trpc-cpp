@@ -70,12 +70,13 @@ void op1(int begin, int end) {
     sprintf(sql, "insert into person values(%d, 18, 'man', 'starry')", i);
     MysqlResults<trpc::mysql::OnlyExec> res;
     conn.Execute(res, sql);
+    conn.Close();
   }
 }
 
 void op2(MysqlExecutorPool* pool, int begin, int end) {
   for (int i = begin; i < end; i++) {
-    shared_ptr<MysqlExecutor> conn = pool->GetExecutor();
+    auto conn = pool->GetExecutor();
     char sql[1024] = {0};
     sprintf(sql, "insert into person values(%d, 18, 'man', 'starry')", i);
     MysqlResults<trpc::mysql::OnlyExec> res;

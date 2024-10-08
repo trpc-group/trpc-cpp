@@ -8,14 +8,18 @@
 #include "trpc/util/ref_ptr.h"
 #include "trpc/util/thread/latch.h"
 #include "trpc/util/thread/thread_pool.h"
+#include "trpc/client/mysql/transaction.h"
 
 namespace trpc::mysql {
 
 class MysqlServiceProxy : public ServiceProxy {
+
+  using ExecutorPtr = RefPtr<MysqlExecutor>;
  public:
   MysqlServiceProxy();
 
   ~MysqlServiceProxy() override = default;
+
 
   template <typename... OutputArgs, typename... InputArgs>
   Status Query(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
@@ -25,7 +29,7 @@ class MysqlServiceProxy : public ServiceProxy {
   Future<MysqlResults<OutputArgs...>> AsyncQuery(const ClientContextPtr& context, const std::string& sql_str,
                                                  const InputArgs&... args);
 
-  /// @brief Notice that this method can also be used for query data.
+  /// @brief Notice that "Execute" methods are completely the same with "Query" now.
   template <typename... OutputArgs, typename... InputArgs>
   Status Execute(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                  const InputArgs&... args);
@@ -33,6 +37,20 @@ class MysqlServiceProxy : public ServiceProxy {
   template <typename... OutputArgs, typename... InputArgs>
   Future<MysqlResults<OutputArgs...>> AsyncExecute(const ClientContextPtr& context, const std::string& sql_str,
                                                    const InputArgs&... args);
+
+
+
+  template <typename... OutputArgs, typename... InputArgs>
+  Status Query(const ClientContextPtr& context, TransactionHandle& handle, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
+               const InputArgs&... args);
+
+  template <typename... OutputArgs, typename... InputArgs>
+  Status Execute(const ClientContextPtr& context, TransactionHandle& handle, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
+                 const InputArgs&... args);
+
+  Status Begin(const ClientContextPtr& context, TransactionHandle& handle);
+  Status Commit(const ClientContextPtr& context, TransactionHandle& handle);
+  Status Rollback(const ClientContextPtr& context, TransactionHandle& handle);
 
   void Stop() override;
 
@@ -42,13 +60,22 @@ class MysqlServiceProxy : public ServiceProxy {
   ///@brief pool_manager_ only can be inited after the service option has been set.
   bool InitManager();
 
+
+  bool InitThreadPool();
+
   template <typename... OutputArgs, typename... InputArgs>
   Status UnaryInvoke(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                      const InputArgs&... args);
 
   template <typename... OutputArgs, typename... InputArgs>
+  Status UnaryInvoke(const ClientContextPtr& context, const ExecutorPtr& executor, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
+                     const InputArgs&... args);
+
+  template <typename... OutputArgs, typename... InputArgs>
   Future<MysqlResults<OutputArgs...>> AsyncUnaryInvoke(const ClientContextPtr& context, const std::string& sql_str,
                                                        const InputArgs&... args);
+
+  bool EndTransaction(TransactionHandle& handle);
 
  protected:
   /// @brief Init pool_manager_.
@@ -121,6 +148,54 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncExecute(const Client
   return AsyncUnaryInvoke<OutputArgs...>(context, sql_str, args...);
 }
 
+
+template<typename... OutputArgs, typename... InputArgs>
+Status
+MysqlServiceProxy::Query(const ClientContextPtr &context,
+                         TransactionHandle &handle,
+                         MysqlResults<OutputArgs...> &res,
+                         const std::string &sql_str,
+                         const InputArgs &... args) {
+
+  auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
+  if (filter_status == FilterStatus::REJECT)
+    TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
+  else if (handle.GetState() != TransactionHandle::TxState::kStart) {
+    Status status;
+    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+    status.SetErrorMessage("Invalid TransactionHandle state.");
+    context->SetStatus(status);
+  } else {
+    UnaryInvoke(context, handle.GetExecutor(), res, sql_str, args...);
+  }
+
+  RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
+  return context->GetStatus();
+}
+
+template <typename... OutputArgs, typename... InputArgs>
+Status MysqlServiceProxy::Execute(const ClientContextPtr& context,
+                                  TransactionHandle& handle,
+                                  MysqlResults<OutputArgs...>& res,
+                                  const std::string& sql_str,
+                                  const InputArgs&... args) {
+
+  auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
+  if (filter_status == FilterStatus::REJECT)
+    TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
+  else if (handle.GetState() != TransactionHandle::TxState::kStart) {
+    Status status;
+    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+    status.SetErrorMessage("Invalid TransactionHandle state.");
+    context->SetStatus(status);
+  } else {
+    UnaryInvoke(context, handle.GetExecutor(), res, sql_str, args...);
+  }
+
+  RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
+  return context->GetStatus();
+}
+
 template <typename... OutputArgs, typename... InputArgs>
 Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, MysqlResults<OutputArgs...>& res,
                                       const std::string& sql_str, const InputArgs&... args) {
@@ -134,32 +209,22 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, MysqlResu
     NodeAddr node_addr;
     node_addr.ip = context->GetIp();
     node_addr.port = context->GetPort();
-    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
-    // auto conn = std::make_unique<MysqlExecutor>("127.0.0.1", "root", "abc123", "test", 3306);
-    if (!conn) {
+    MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
+    auto conn = pool->GetExecutor();
+
+    if (TRPC_UNLIKELY(!conn)) {
       std::string error("");
-      error += "Failed to get connection from pool: timeout while trying to acquire a connection: ";
+      error += "Failed to get connection from pool: timeout while trying to acquire a connection.";
       error += node_addr.ip + ":" + std::to_string(node_addr.port);
       TRPC_LOG_ERROR(error);
-      const ServiceProxyOption* option = GetServiceProxyOption();
-      conn = std::make_unique<MysqlExecutor>(node_addr.ip.c_str(), option->mysql_conf.user_name.c_str(),
-                                             option->mysql_conf.password.c_str(), option->mysql_conf.dbname.c_str(),
-                                             node_addr.port);
 
-      if (!conn) {
-        std::string error("");
-        error += "Failed to create a temporary connection for node: ";
-        error += node_addr.ip + ":" + std::to_string(node_addr.port);
-        TRPC_LOG_ERROR(error);
+      Status status;
+      status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+      status.SetErrorMessage(error);
 
-        Status status;
-        status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
-        status.SetErrorMessage(error);
-
-        context->SetStatus(status);
-        e.Set();
-        return;
-      }
+      context->SetStatus(status);
+      e.Set();
+      return;
     }
 
     if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
@@ -167,7 +232,36 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, MysqlResu
     else
       conn->QueryAll(res, sql_str, args...);
 
-    //    sleep(1);
+    pool->Reclaim(0, std::move(conn));
+
+    e.Set();
+  });
+
+  e.Wait();
+  RunFilters(FilterPoint::CLIENT_POST_RECV_MSG, context);
+
+  return context->GetStatus();
+}
+
+
+template <typename... OutputArgs, typename... InputArgs>
+Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, const ExecutorPtr& executor, MysqlResults<OutputArgs...>& res,
+                                      const std::string& sql_str, const InputArgs&... args) {
+
+  TRPC_ASSERT(executor != nullptr);
+  FillClientContext(context);
+
+  if (CheckTimeout(context)) return context->GetStatus();
+
+  RunFilters(FilterPoint::CLIENT_PRE_SEND_MSG, context);
+  FiberEvent e;
+  thread_pool_->AddTask([&context, &executor, &e, &res, &sql_str, &args...]() {
+
+
+    if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
+      executor->Execute(res, sql_str, args...);
+    else
+      executor->QueryAll(res, sql_str, args...);
 
     e.Set();
   });
@@ -193,33 +287,23 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncUnaryInvoke(const Cl
     NodeAddr node_addr;
     node_addr.ip = context->GetIp();
     node_addr.port = context->GetPort();
-    auto conn = this->pool_manager_->Get(node_addr)->GetExecutor();
-    if (!conn) {
+
+    MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
+    auto conn = pool->GetExecutor();
+
+    if (TRPC_UNLIKELY(!conn)) {
       std::string error("");
       error += "Failed to get connection from pool: timeout while trying to acquire a connection.";
       error += node_addr.ip + ":" + std::to_string(node_addr.port);
       TRPC_LOG_ERROR(error);
 
-      // Create a temporary connection.
-      const ServiceProxyOption* option = GetServiceProxyOption();
-      conn = std::make_unique<MysqlExecutor>(node_addr.ip.c_str(), option->mysql_conf.user_name.c_str(),
-                                             option->mysql_conf.password.c_str(), option->mysql_conf.dbname.c_str(),
-                                             node_addr.port);
+      Status status;
+      status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+      status.SetErrorMessage(error);
 
-      if (!conn) {
-        std::string error("");
-        error += "Failed to create a temporary connection for node: ";
-        error += node_addr.ip + ":" + std::to_string(node_addr.port);
-        TRPC_LOG_ERROR(error);
-
-        Status status;
-        status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
-        status.SetErrorMessage(error);
-
-        context->SetStatus(status);
-        p.SetException(CommonException(status.ErrorMessage().c_str()));
-        return;
-      }
+      context->SetStatus(status);
+      p.SetException(CommonException(status.ErrorMessage().c_str()));
+      return;
     }
 
     if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
@@ -227,7 +311,7 @@ Future<MysqlResults<OutputArgs...>> MysqlServiceProxy::AsyncUnaryInvoke(const Cl
     else
       conn->QueryAll(res, sql_str, args...);
 
-    //    sleep(1);
+    pool->Reclaim(0, std::move(conn));
 
     RunFilters(FilterPoint::CLIENT_POST_RECV_MSG, context);
 

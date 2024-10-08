@@ -23,6 +23,7 @@ namespace trpc {
 /// @brief Client config for accessing mysql
 /// Mainly contains authentication information
 struct MysqlClientConf {
+
   /// @brief User nmae
   std::string user_name;
 
@@ -32,15 +33,28 @@ struct MysqlClientConf {
   /// @brief db name
   std::string dbname;
 
-  // Minimum number of connections in the pool
-  uint32_t min_size{0};
-
   // Maximum number of connections in the pool
   uint32_t max_size{0};
 
+
+  // Thread num for thread pool
+  size_t thread_num{4};
+
+  // thread_bind_core for thread pool
+  bool thread_bind_core{true};
+
+  uint64_t use_back_thread_pool{false};
+
+  /// Only For MysqlExecutorPoolImpl
+  uint32_t num_shard_group{4};
+
+
+  /// Only For BackThreadExecutorPool
+  // Minimum number of connections in the pool
+  uint32_t min_size{0};
+
   // Maximum idle time for connections
   uint64_t max_idle_time{0};
-
 
   /// @brief Whether enable auth
   bool enable{true};
