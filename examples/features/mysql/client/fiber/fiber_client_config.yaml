@@ -21,11 +21,7 @@ client:
         ip: "localhost"
         port: 3306
         enable: true
-        connectpool:
-          min_size: 100
-          max_size: 200
-          max_idle_time: 500
-          timeout: 200
+        min_size: 6
 
         
     

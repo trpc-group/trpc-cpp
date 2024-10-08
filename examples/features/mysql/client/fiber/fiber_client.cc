@@ -18,9 +18,11 @@
 #include <string>
 #include <thread>
 
+#include <iostream>
 #include "trpc/client/client_context.h"
 #include "trpc/client/make_client_context.h"
 #include "trpc/client/mysql/mysql_service_proxy.h"
+#include "trpc/client/service_proxy.h"
 #include "trpc/client/trpc_client.h"
 #include "trpc/common/runtime_manager.h"
 #include "trpc/common/trpc_plugin.h"
@@ -31,15 +33,43 @@
 
 DEFINE_string(client_config, "fiber_client_client_config.yaml", "trpc cpp framework client_config file");
 
+void printResult(const std::vector<std::tuple<int, std::string>>& res_data) {
+  for (const auto& tuple : res_data) {
+    int id = std::get<0>(tuple);
+    std::string username = std::get<1>(tuple);
+    std::cout << "ID: " << id << ", Username: " << username << std::endl;
+  }
+}
+
 void TestQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+  ctx->SetAddr("127.0.0.1", 3306);
+  ctx->SetTimeout(1000);
   trpc::mysql::MysqlResults<int, std::string> res;
-  proxy->Query(ctx, res, "select id, username from users where id = ?", 1);
+  proxy->Query(ctx, res, "select id, username from users where id = ?", 3);
   auto& res_data = res.GetResultSet();
+  printResult(res_data);
 }
 
 int Run() {
-  auto proxy = trpc::GetTrpcClient()->GetProxy<trpc::mysql::MysqlServiceProxy>("mysql_server");
+  ::trpc::ServiceProxyOption option_;
+  option_.name = "default_mysql_service";
+  option_.caller_name = "";
+  option_.codec_name = "mysql";
+  option_.conn_type = "long";
+  option_.network = "tcp";
+  option_.timeout = 1000;
+  option_.max_conn_num = 100;
+  option_.idle_time = 2000;
+  option_.target = "localhost:3306";
+  option_.selector_name = "direct";
+  option_.mysql_conf.dbname = "test";
+  option_.mysql_conf.password = "abc123";
+  option_.mysql_conf.user_name = "root";
+  option_.mysql_conf.enable = true;
+  option_.mysql_conf.min_size = 6;
+
+  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::mysql::MysqlServiceProxy>("mysql_server", option_);
   TestQuery(proxy);
 }
 
