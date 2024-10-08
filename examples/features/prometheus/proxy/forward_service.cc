@@ -78,11 +78,11 @@ ForwardServiceImpl::ForwardServiceImpl() {
   ::prometheus::Counter& counter = counter_family->Add({{"counter_key", "counter_value"}});
   counter.Increment(random_num);
   
-  // if (::trpc::prometheus::PushMetricsInfo()) {
-  //       TRPC_FMT_INFO("Successfully pushed metrics to Pushgateway");
-  //   } else {
-  //       TRPC_FMT_ERROR("Failed to push metrics to Pushgateway");
-  //   }
+  if (::trpc::prometheus::PushMetricsInfo()) {
+        TRPC_FMT_INFO("Successfully pushed metrics to Pushgateway");
+    } else {
+        TRPC_FMT_ERROR("Failed to push metrics to Pushgateway");
+    }
 #endif
 
   auto client_context = ::trpc::MakeClientContext(context, greeter_proxy_);

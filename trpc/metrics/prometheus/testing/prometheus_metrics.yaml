@@ -11,5 +11,5 @@ plugins:
       push_mode:
         enabled: true
         gateway_url: "http://localhost:9091"
-        job_name: "test_job"
+        job_name: "test_job1"
         push_interval_seconds: 2
