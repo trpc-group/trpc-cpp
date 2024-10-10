@@ -1,7 +1,10 @@
 global:
   threadmodel:
-    fiber:
-      - instance_name: fiber_instance
+    default:
+      - instance_name: default_instance
+        io_handle_type: separate
+        io_thread_num: 2
+        handle_thread_num: 2
 
 client:
   service:

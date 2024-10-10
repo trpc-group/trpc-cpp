@@ -8,7 +8,8 @@ cc_library(
     hdrs = ["transaction.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//trpc/client/mysql/executor:mysql_executor"
+        "//trpc/client/mysql/executor:mysql_executor",
+        "@trpc_cpp//trpc/util:ref_ptr",
     ]
 )
 

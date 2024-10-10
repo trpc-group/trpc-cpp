@@ -18,13 +18,6 @@ MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& use
     mysql_ = mysql_init(nullptr);
   }
   mysql_set_character_set(mysql_, char_set.c_str());
-  MYSQL* ret = mysql_real_connect(mysql_, hostname.c_str(), username.c_str(), password.c_str(), database.c_str(), port,
-                                  nullptr, 0);
-
-  if (nullptr == ret) {
-    mysql_close(mysql_);
-  } else
-    is_connected = true;
 }
 
 bool MysqlExecutor::Connect() {
@@ -113,6 +106,9 @@ bool MysqlExecutor::StartReconnect() {
 bool MysqlExecutor::Reconnect() { return Connect(); }
 
 bool MysqlExecutor::IsConnectionValid() {
+  if(!is_connected)
+      return false;
+
   if (mysql_ != nullptr && mysql_ping(mysql_) == 0) {
     return true;
   } else {
@@ -143,6 +139,10 @@ std::string MysqlExecutor::GetIp() const {
 
 uint16_t MysqlExecutor::GetPort() const {
   return port_;
+}
+
+std::string MysqlExecutor::GetErrorMessage() {
+  return mysql_error(mysql_);
 }
 
 }  // namespace trpc::mysql

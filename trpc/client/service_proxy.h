@@ -127,6 +127,9 @@ class ServiceProxy {
   /// @brief Use the proxy option parameters to set the context.
   void FillClientContext(const ClientContextPtr& context);
 
+  // Routing selection interface, retrieve IP and port based on service name and store in ctx.
+  bool SelectTarget(const ClientContextPtr& context);
+
   /// @brief Run filters by filter point.
   int RunFilters(const FilterPoint& point, const ClientContextPtr& context);
 
@@ -161,9 +164,6 @@ class ServiceProxy {
 
   // Execute IO tracking for rpcz.
   FilterStatus RunIoFilters(const FilterPoint& point, const std::any& msg) noexcept;
-
-  // Routing selection interface, retrieve IP and port based on service name and store in ctx.
-  bool SelectTarget(const ClientContextPtr& context);
 
   // Get connection type by config
   ConnectionType GetClientConnectType();

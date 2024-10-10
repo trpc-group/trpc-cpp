@@ -82,6 +82,7 @@ std::string db_ip = "127.0.0.1";
 TEST(Executor, QueryNoArgs) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<int, std::string, trpc::mysql::MysqlTime> res;
+  conn.Connect();
   conn.QueryAll(res, "select id, username, created_at from users");
 
   auto& res_data = res.GetResultSet();
@@ -97,6 +98,7 @@ TEST(Executor, QueryNoArgs) {
 TEST(Executor, QueryString) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::NativeString> res;
+  conn.Connect();
   conn.QueryAll(res, "select * from users where id > ? or username = ?", 1, "alice");
 
   auto& res_data = res.GetResultSet();
@@ -107,6 +109,7 @@ TEST(Executor, QueryString) {
 TEST(Executor, QueryNull) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<std::string, std::string> res;
+  conn.Connect();
   conn.QueryAll(res, "select username, email from users");
   EXPECT_TRUE(res.GetNullFlag()[0][0] == 0);
   EXPECT_TRUE(res.GetNullFlag()[0][1] == 0);
@@ -118,6 +121,7 @@ TEST(Executor, QueryNull) {
 TEST(Executor, QueryArgs) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<int, std::string, trpc::mysql::MysqlTime> res;
+  conn.Connect();
   conn.QueryAll(res, "select id, email, created_at from users where id = ? or username = ?", 1, "carol");
 
   auto& res_data = res.GetResultSet();
@@ -130,6 +134,7 @@ TEST(Executor, QueryArgs) {
 TEST(Executor, Update) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
+  conn.Connect();
   conn.Execute(res,
                "update users set username = \
                       \"tom\", email = \"tom@abc.com\" where username = ?",
@@ -152,6 +157,7 @@ TEST(Executor, Insert) {
   mtime.mt.month = 10;
   mtime.mt.day = 10;
 
+  conn.Connect();
   conn.Execute(res,
                "insert into users (username, email, created_at) \
                                    values (\"jack\", \"jack@abc.com\", ?)",
@@ -163,6 +169,7 @@ TEST(Executor, Insert) {
 TEST(Executor, Delete) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
+  conn.Connect();
   conn.Execute(res, "delete from users where username = \"jack\"");
   EXPECT_EQ(1, res.GetAffectedRows());
   conn.Close();
@@ -171,6 +178,7 @@ TEST(Executor, Delete) {
 TEST(Executor, SynaxError) {
   trpc::mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   trpc::mysql::MysqlResults<trpc::mysql::OnlyExec> res;
+  conn.Connect();
   conn.Execute(res, "delete users where username = \"jack\"");
   EXPECT_EQ(false, res.IsSuccess());
   std::cout << res.error_message << "\n";
@@ -180,6 +188,7 @@ TEST(Executor, SynaxError) {
 TEST(Executor, OutputArgsError) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   mysql::MysqlResults<int, std::string> res;
+  conn.Connect();
   conn.QueryAll(res, "select * from users");
   EXPECT_EQ(false, res.IsSuccess());
   std::cout << res.error_message << "\n";
@@ -189,6 +198,8 @@ TEST(Executor, OutputArgsError) {
 TEST(Executor, IterMode) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   mysql::MysqlResults<mysql::IterMode> res;
+
+  conn.Connect();
   conn.QueryAll(res, "select * from users where id > ? or username = ?", 1, "alice");
   std::vector<std::string> fields_name = res.GetFieldsName();
 
@@ -225,6 +236,7 @@ TEST(Executor, BLOB) {
   mysql::MysqlResults<mysql::NativeString> str_res;
   mysql::MysqlResults<mysql::IterMode> itr_res;
   mysql::MysqlBlob blob(GenRandomBlob(1024));
+  conn.Connect();
 
   // mysql::MysqlBlob
   conn.Execute(exec_res,
@@ -261,6 +273,7 @@ TEST(Executor, TimeType) {
   mysql::MysqlResults<mysql::NativeString> res2;
   mysql::MysqlResults<mysql::IterMode> res3;
 
+  conn.Connect();
   conn.QueryAll(res, "select * from time_example");
   conn.QueryAll(res2, "select * from time_example");
   conn.QueryAll(res3, "select * from time_example");
@@ -276,6 +289,7 @@ TEST(Executor, StringType) {
   mysql::MysqlResults<mysql::IterMode> res3;
   mysql::MysqlResults<mysql::OnlyExec> res4;
 
+  conn.Connect();
   conn.QueryAll(res, "select * from string_example");
   conn.QueryAll(res2, "select * from string_example");
   conn.Execute(res4, "insert into string_example (description, json_data) values (?, ?)", res2.GetResultSet()[0][2],
@@ -290,6 +304,8 @@ TEST(Executor, Transaction) {
   mysql::MysqlExecutor conn(db_ip, "root", "abc123", "test", 3306);
   mysql::MysqlResults<mysql::OnlyExec> exec_res;
   mysql::MysqlResults<mysql::IterMode> itr_res;
+
+  conn.Connect();
   conn.Execute(exec_res, "begin");
   EXPECT_EQ(true, exec_res.IsSuccess());
   conn.Execute(exec_res, "update users set email = ? where username = ?", "rose@abc.com", "rose");

@@ -63,55 +63,109 @@ void MysqlServiceProxy::InitOtherMembers() {
   InitThreadPool();
 }
 
+
 Status MysqlServiceProxy::Begin(const ClientContextPtr& context, TransactionHandle &handle) {
 
-  if(handle.GetState() != TransactionHandle::TxState::kNotInited) {
-    Status status = kUnknownErrorStatus;
-    status.SetErrorMessage("The transaction handle is invalid or has been used.");
-    context->SetStatus(status);
+  FillClientContext(context);
+  auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
+  if (filter_status == FilterStatus::REJECT) {
+    TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
+    RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
     return context->GetStatus();
   }
 
+  MysqlResults<OnlyExec> res;
+  NodeAddr node_addr;
+
+  // Bypass the selector to use or test the service_proxy independently
+  // (since the selector might not be registered)
+  if(context->GetIp().empty()) {
+    ClientContextPtr temp_ctx = MakeRefCounted<ClientContext>(this->GetClientCodec());
+    FillClientContext(temp_ctx);
+
+    if (!SelectTarget(temp_ctx)) {
+      TRPC_LOG_ERROR("select target failed: " << temp_ctx->GetStatus().ToString());
+      context->SetStatus(temp_ctx->GetStatus());
+      return context->GetStatus();
+    }
+
+    node_addr = temp_ctx->GetNodeAddr();
+
+  } else {
+    node_addr = context->GetNodeAddr();
+  }
+
+  MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
+  auto executor = pool->GetExecutor();
+
+
+  Status s = UnaryInvoke(context, executor, res, "begin");
+
+  if(!s.OK()) {
+    context->SetStatus(s);
+  } else if(!res.IsSuccess()) {
+    s = kUnknownErrorStatus;
+    s.SetErrorMessage(res.GetErrorMessage());
+    context->SetStatus(s);
+  } else {
+    handle.SetExecutor(std::move(executor));
+    handle.SetState(TransactionHandle::TxState::kStart);
+  }
+
+  RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
+  return context->GetStatus();
+}
+
+
+Future<TransactionHandle> MysqlServiceProxy::AsyncBegin(const ClientContextPtr &context) {
+  FillClientContext(context);
 
   auto filter_status = filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_PRE_RPC_INVOKE, context);
-  if (filter_status == FilterStatus::REJECT)
+  if (filter_status == FilterStatus::REJECT) {
     TRPC_FMT_ERROR("service name:{}, filter execute failed.", GetServiceName());
-  else {
-    NodeAddr node_addr;
-    node_addr.ip = context->GetIp();
-    node_addr.port = context->GetPort();
-    MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
-    auto executor = pool->GetExecutor();
-    if(executor == nullptr) {
-      std::string error("");
-      error += "Failed to get connection from pool: timeout while trying to acquire a connection.";
-      error += node_addr.ip + ":" + std::to_string(node_addr.port);
-      TRPC_LOG_ERROR(error);
-
-      Status status;
-      status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
-      status.SetErrorMessage(error);
-      context->SetStatus(status);
-
-      return context->GetStatus();
-    }
-
-    handle = TransactionHandle{std::move(executor)};
-    handle.SetState(TransactionHandle::TxState::kStart);
-
-    MysqlResults<OnlyExec> res;
-    Execute(context, handle, res, "begin");
-
-    if(!res.IsSuccess()) {
-      Status status = kUnknownErrorStatus;
-      status.SetErrorMessage(res.GetErrorMessage());
-      context->SetStatus(status);
-      handle.SetState(TransactionHandle::TxState::kNotInited);
-      return context->GetStatus();
-    }
-
+    context->SetRequestData(nullptr);
+    const Status& result = context->GetStatus();
+    auto exception_fut =
+            MakeExceptionFuture<TransactionHandle>(CommonException(result.ErrorMessage().c_str()));
+    filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
+    return exception_fut;
   }
-  return context->GetStatus();
+
+  MysqlResults<OnlyExec> res;
+  NodeAddr node_addr;
+
+
+  // Bypass the selector to use or test the service_proxy independently
+  // (since the selector might not be registered)
+  if(context->GetIp().empty()) {
+    ClientContextPtr temp_ctx = MakeRefCounted<ClientContext>(this->GetClientCodec());
+    FillClientContext(temp_ctx);
+
+    if (!SelectTarget(temp_ctx)) {
+      TRPC_LOG_ERROR("select target failed: " << temp_ctx->GetStatus().ToString());
+      context->SetStatus(temp_ctx->GetStatus());
+      return MakeExceptionFuture<TransactionHandle>(trpc::CommonException(temp_ctx->GetStatus().ToString().c_str()));
+    }
+    node_addr = temp_ctx->GetNodeAddr();
+
+  } else {
+    node_addr = context->GetNodeAddr();
+  }
+
+  MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
+  auto executor = pool->GetExecutor();
+
+
+  return AsyncUnaryInvoke<OnlyExec>(context, executor, "begin")
+          .Then([executor](Future<MysqlResults<OnlyExec>>&& f) mutable {
+            TransactionHandle handle;
+            if(f.IsFailed()) {
+              return MakeExceptionFuture<TransactionHandle>(f.GetException());
+            }
+            handle.SetState(TransactionHandle::TxState::kStart);
+            handle.SetExecutor(std::move(executor));
+            return MakeReadyFuture(std::move(handle));
+          });
 }
 
 Status MysqlServiceProxy::Commit(const ClientContextPtr &context, TransactionHandle &handle) {
@@ -144,15 +198,49 @@ Status MysqlServiceProxy::Rollback(const ClientContextPtr &context, TransactionH
   return context->GetStatus();
 }
 
-bool MysqlServiceProxy::EndTransaction(TransactionHandle &handle) {
-  handle.SetState(TransactionHandle::TxState::kEnd);
-  NodeAddr node_addr;
-  node_addr.ip = handle.GetExecutor()->GetIp();
-  node_addr.port = handle.GetExecutor()->GetPort();
-  MysqlExecutorPool* pool = pool_manager_->Get(node_addr);
-  pool->Reclaim(0, handle.TransferExecutor());
-  return true;
+
+Future<TransactionHandle> MysqlServiceProxy::AsyncCommit(const ClientContextPtr &context, TransactionHandle&& handle) {
+  MysqlResults<OnlyExec> res;
+  return AsyncQuery<OnlyExec>(context, std::move(handle), "commit")
+          .Then([this, context](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f){
+            if(f.IsFailed()) {
+              auto t = f.GetValue();
+              EndTransaction(std::get<0>(t));
+              return MakeExceptionFuture<TransactionHandle>(f.GetException());
+            }
+            auto t = f.GetValue();
+            EndTransaction(std::get<0>(t));
+            return MakeReadyFuture<TransactionHandle>(std::move(std::get<0>(t)));
+          });
 }
 
+Future<TransactionHandle> MysqlServiceProxy::AsyncRollback(const ClientContextPtr &context, TransactionHandle&& handle) {
+  MysqlResults<OnlyExec> res;
+  return AsyncQuery<OnlyExec>(context, std::move(handle), "rollback")
+          .Then([this, context](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f){
+            if(f.IsFailed()) {
+              auto t = f.GetValue();
+              EndTransaction(std::get<0>(t));
+              return MakeExceptionFuture<TransactionHandle>(f.GetException());
+            }
+            auto t = f.GetValue();
+            EndTransaction(std::get<0>(t));
+            return MakeReadyFuture<TransactionHandle>(std::move(std::get<0>(t)));
+          });
+}
+
+
+bool MysqlServiceProxy::EndTransaction(TransactionHandle &handle) {
+  handle.SetState(TransactionHandle::TxState::kEnd);
+  auto executor = handle.GetExecutor();
+  if(executor) {
+    NodeAddr node_addr;
+    node_addr.ip = executor->GetIp();
+    node_addr.port = executor->GetPort();
+    MysqlExecutorPool *pool = pool_manager_->Get(node_addr);
+    pool->Reclaim(0, handle.TransferExecutor());
+  }
+  return true;
+}
 
 }  // namespace trpc::mysql

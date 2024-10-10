@@ -134,6 +134,9 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   bool Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args);
 
 
+
+  std::string GetErrorMessage();
+
   void RefreshAliveTime();
 
   uint64_t GetAliveTime();
@@ -340,13 +343,13 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const
   auto& results = mysql_result.GetResultSet();
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
-    mysql_result.SetErrorMessage(mysql_error(mysql_));
+    mysql_result.SetErrorMessage(GetErrorMessage());
     return false;
   }
 
   MYSQL_RES* res_ptr = mysql_store_result(mysql_);
   if (res_ptr == nullptr) {
-    mysql_result.SetErrorMessage(mysql_error(mysql_));
+    mysql_result.SetErrorMessage(GetErrorMessage());
     return false;
   }
 
@@ -372,13 +375,13 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
   auto& results = mysql_result.GetResultSet();
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
-    mysql_result.SetErrorMessage(mysql_error(mysql_));
+    mysql_result.SetErrorMessage(GetErrorMessage());
     return false;
   }
 
   MYSQL_RES* res_ptr = mysql_store_result(mysql_);
   if (res_ptr == nullptr) {
-    mysql_result.SetErrorMessage(mysql_error(mysql_));
+    mysql_result.SetErrorMessage(GetErrorMessage());
     return false;
   }
 

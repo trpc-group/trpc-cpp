@@ -16,20 +16,24 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <thread>
 
 #include <iostream>
-#include "trpc/client/client_context.h"
 #include "trpc/client/make_client_context.h"
 #include "trpc/client/mysql/mysql_service_proxy.h"
 #include "trpc/client/service_proxy.h"
 #include "trpc/client/trpc_client.h"
 #include "trpc/common/runtime_manager.h"
-#include "trpc/common/trpc_plugin.h"
-#include "trpc/coroutine/fiber.h"
-#include "trpc/coroutine/fiber_latch.h"
+
 #include "trpc/log/trpc_log.h"
-#include "trpc/util/latch.h"
+
+using trpc::mysql::OnlyExec;
+using trpc::mysql::IterMode;
+using trpc::mysql::NativeString;
+using trpc::mysql::MysqlResults;
+using trpc::mysql::MysqlTime;
+using trpc::mysql::TransactionHandle;
+
+
 
 DEFINE_string(client_config, "fiber_client_client_config.yaml", "trpc cpp framework client_config file");
 
@@ -41,36 +45,171 @@ void printResult(const std::vector<std::tuple<int, std::string>>& res_data) {
   }
 }
 
-void TestQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
-  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
-  ctx->SetAddr("127.0.0.1", 3306);
-  ctx->SetTimeout(1000);
-  trpc::mysql::MysqlResults<int, std::string> res;
-  proxy->Query(ctx, res, "select id, username from users where id = ?", 3);
-  auto& res_data = res.GetResultSet();
-  printResult(res_data);
+void PrintResultTable(const MysqlResults<IterMode>& res) {
+  std::vector<std::string> fields_name;
+  bool flag = false;
+  std::vector<size_t> column_widths;
+  for (auto row: res) {
+    if (!flag) {
+      fields_name = row.GetFieldsName();
+      column_widths.resize(fields_name.size(), 0);
+      for (size_t i = 0; i < fields_name.size(); ++i)
+        column_widths[i] = std::max(column_widths[i], fields_name[i].length());
+      flag = true;
+    }
+
+    size_t i = 0;
+    for (auto field: row) {
+      column_widths[i] = std::max(column_widths[i], field.length());
+      ++i;
+    }
+  }
+
+  for (size_t i = 0; i < fields_name.size(); ++i) {
+    std::cout << std::left << std::setw(column_widths[i] + 2) << fields_name[i];
+  }
+  std::cout << std::endl;
+
+  for (size_t i = 0; i < fields_name.size(); ++i) {
+    std::cout << std::setw(column_widths[i] + 2) << std::setfill('-') << "";
+  }
+  std::cout << std::endl;
+  std::cout << std::setfill(' ');
+
+  for (auto row: res) {
+    int i = 0;
+    for (auto field_itr = row.begin(); field_itr != row.end(); ++field_itr) {
+      std::cout << std::left << std::setw(column_widths[i] + 2) << (field_itr.IsNull() ? "null" : *field_itr);
+      ++i;
+    }
+    std::cout << std::endl;
+  }
 }
 
-int Run() {
-  ::trpc::ServiceProxyOption option_;
-  option_.name = "default_mysql_service";
-  option_.caller_name = "";
-  option_.codec_name = "mysql";
-  option_.conn_type = "long";
-  option_.network = "tcp";
-  option_.timeout = 1000;
-  option_.max_conn_num = 100;
-  option_.idle_time = 2000;
-  option_.target = "localhost:3306";
-  option_.selector_name = "direct";
-  option_.mysql_conf.dbname = "test";
-  option_.mysql_conf.password = "abc123";
-  option_.mysql_conf.user_name = "root";
-  option_.mysql_conf.enable = true;
-  option_.mysql_conf.min_size = 6;
+void TestQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+  MysqlResults<int, std::string> res;
+  proxy->Query(ctx, res, "select id, username from users where id = ? and username = ?", 3, "carol");
+  auto& res_data = res.GetResultSet();
+  printResult(res_data);
 
-  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::mysql::MysqlServiceProxy>("mysql_server", option_);
+  MysqlResults<IterMode> res2;
+  auto s = proxy->Query(ctx, res2, "select * from users");
+  for(auto row : res2) {
+    int i = 0;
+    for(auto field : row) {
+      std::cout << (row.IsFieldNull(i++) ? "null" : field) << "    ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "\n\n\n";
+  PrintResultTable(res2);
+}
+
+void TestUpdate(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  std::cout << "\n\n\n";
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<std::string, MysqlTime> query_res;
+  MysqlTime mtime;
+  mtime.mt.year = 2024;
+  mtime.mt.month = 9;
+  mtime.mt.day = 10;
+
+  proxy->Execute(ctx, exec_res,
+                             "insert into users (username, email, created_at)"
+                             "values (\"jack\", \"jack@abc.com\", ?)",
+                             mtime);
+  if(1 == exec_res.GetAffectedRows())
+    std::cout << "Insert one\n";
+
+  ctx = trpc::MakeClientContext(proxy);
+  proxy->Execute(ctx, query_res, "select email, created_at from users where username = ?",
+                                     "jack");
+  auto& res_vec = query_res.GetResultSet();
+  std::cout << std::get<0>(res_vec[0]) << std::endl;
+
+  ctx = trpc::MakeClientContext(proxy);
+  proxy->Execute(ctx, exec_res, "delete from users where username = \"jack\"");
+  if(1 == exec_res.GetAffectedRows())
+    std::cout << "Delete one\n";
+
+  ctx = trpc::MakeClientContext(proxy);
+  proxy->Execute(ctx, query_res, "select email, created_at from users where username = ?",
+                                     "jack");
+  if(query_res.GetResultSet().empty())
+    std::cout << R"(No user "jack" in users)" << std::endl;
+}
+
+void TestTransaction(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+  MysqlResults<trpc::mysql::OnlyExec> res;
+  TransactionHandle handle;
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<NativeString> query_res;
+  MysqlTime mtime;
+  mtime.mt.year = 2024;
+  mtime.mt.month = 9;
+  mtime.mt.day = 10;
+
+  // Begin
+  trpc::Status s = proxy->Begin(ctx, handle);
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+
+  // Insert a row
+  s = proxy->Execute(ctx, handle, exec_res,
+                                     "insert into users (username, email, created_at)"
+                                     "values (\"jack\", \"jack@abc.com\", ?)", mtime);
+  if(!s.OK() || (exec_res.GetAffectedRows() != 1) || !exec_res.IsSuccess()) {
+    TRPC_FMT_ERROR("status: {}, res error: {}", s.ToString(), exec_res.GetErrorMessage());
+    return;
+  }
+
+
+  // Query the new row
+  s = proxy->Query(ctx, handle, query_res, "select * from users where username = ?", "jack");
+  if(!s.OK() || (exec_res.GetAffectedRows() != 1) || !exec_res.IsSuccess()) {
+    TRPC_FMT_ERROR("status: {}, res error: {}", s.ToString(), exec_res.GetErrorMessage());
+    return;
+  } else if(query_res.GetResultSet().size() != 1) {
+    TRPC_FMT_ERROR("Unexpected.");
+    return;
+  }
+
+
+  // Rollback
+  s = proxy->Rollback(ctx, handle);
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+
+
+  // Check Rollback
+  s = proxy->Query(ctx, query_res, "select * from users where username = ?", "jack");
+  if(!s.OK() || (exec_res.GetAffectedRows() != 1) || !exec_res.IsSuccess()) {
+    TRPC_FMT_ERROR("status: {}, res error: {}", s.ToString(), exec_res.GetErrorMessage());
+    return;
+  } else if(!query_res.GetResultSet().empty()) {
+    TRPC_FMT_ERROR("Unexpected.");
+    return;
+  }
+
+  std::cout << "Rollback transaction end." << std::endl;
+}
+
+
+
+int Run() {
+  auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::mysql::MysqlServiceProxy>("mysql_server");
   TestQuery(proxy);
+  TestUpdate(proxy);
+  TestTransaction(proxy);
+  return 0;
 }
 
 void ParseClientConfig(int argc, char* argv[]) {

@@ -13,7 +13,14 @@
 
 namespace trpc::testing {
 
-class MockMysqlServiceProxy : public mysql::MysqlServiceProxy {
+using trpc::mysql::OnlyExec;
+using trpc::mysql::IterMode;
+using trpc::mysql::NativeString;
+using trpc::mysql::MysqlResults;
+using trpc::mysql::MysqlTime;
+using trpc::mysql::TransactionHandle;
+
+ class MockMysqlServiceProxy : public mysql::MysqlServiceProxy {
  public:
   void SetMockServiceProxyOption(const std::shared_ptr<ServiceProxyOption>& option) {
     SetServiceProxyOptionInner(option);
@@ -21,7 +28,7 @@ class MockMysqlServiceProxy : public mysql::MysqlServiceProxy {
 
   void SetMockCodec(ClientCodecPtr&& codec) { codec_ = codec; }
 
-  void PrintResultTable(const mysql::MysqlResults<mysql::IterMode>& res) {
+  void PrintResultTable(const MysqlResults<IterMode>& res) {
     std::vector<std::string> fields_name;
     bool flag = false;
     std::vector<size_t> column_widths;
@@ -126,33 +133,10 @@ mysql> select * from users;
 +----+----------+-------------------+---------------------+------------+
 */
 
-TEST_F(MysqlServiceProxyTest, Transaction) {
-  auto client_context = GetClientContext();
-  mysql::TransactionHandle handle;
-  mysql::MysqlResults<mysql::OnlyExec> exec_res;
-  mysql::MysqlResults<mysql::NativeString> query_res;
-  mysql::MysqlTime mtime;
-  mtime.mt.year = 2024;
-  mtime.mt.month = 9;
-  mtime.mt.day = 10;
-  Status s = mock_mysql_service_proxy_->Begin(client_context, handle);
-  EXPECT_EQ(s.OK(), true);
-  mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
-                                         "insert into users (username, email, created_at)"
-                                         "values (\"jack\", \"jack@abc.com\", ?)", mtime);
-  EXPECT_EQ(1, exec_res.GetAffectedRows());
-
-  mock_mysql_service_proxy_->Query(client_context, handle, query_res, "select * from users where username = ?", "jack");
-  EXPECT_EQ(1, query_res.GetResultSet().size());
-  mock_mysql_service_proxy_->Rollback(client_context, handle);
-
-  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
-  EXPECT_EQ(0, query_res.GetResultSet().size());
-}
 
 TEST_F(MysqlServiceProxyTest, Query) {
   auto client_context = GetClientContext();
-  trpc::mysql::MysqlResults<int, std::string> res;
+  MysqlResults<int, std::string> res;
   mock_mysql_service_proxy_->Query(client_context, res, "select id, username from users where id = ?", 1);
   auto& res_vec = res.GetResultSet();
   EXPECT_EQ(true, res.IsSuccess());
@@ -160,11 +144,11 @@ TEST_F(MysqlServiceProxyTest, Query) {
 }
 
 TEST_F(MysqlServiceProxyTest, AsyncQuery) {
-  // trpc::mysql::MysqlServiceProxy proxy;
+  // trpc::MysqlServiceProxy proxy;
   auto client_context = GetClientContext();
   auto res =
-      mock_mysql_service_proxy_->AsyncQuery<mysql::IterMode>(client_context, "select * from users where id >= ?", 1)
-          .Then([this](trpc::Future<mysql::MysqlResults<mysql::IterMode>>&& f) {
+      mock_mysql_service_proxy_->AsyncQuery<IterMode>(client_context, "select * from users where id >= ?", 1)
+          .Then([this](trpc::Future<MysqlResults<IterMode>>&& f) {
             if (f.IsReady()) {
               auto row_iter = f.GetConstValue().begin();
               EXPECT_EQ(5, (*row_iter).NumFields());
@@ -180,8 +164,8 @@ TEST_F(MysqlServiceProxyTest, AsyncQuery) {
 
 TEST_F(MysqlServiceProxyTest, Execute) {
   auto client_context = GetClientContext();
-  mysql::MysqlResults<mysql::OnlyExec> exec_res;
-  mysql::MysqlTime mtime;
+  MysqlResults<OnlyExec> exec_res;
+  MysqlTime mtime;
   mtime.mt.year = 2024;
   mtime.mt.month = 9;
   mtime.mt.day = 10;
@@ -193,7 +177,7 @@ TEST_F(MysqlServiceProxyTest, Execute) {
   EXPECT_EQ(1, exec_res.GetAffectedRows());
 
   client_context = GetClientContext();
-  trpc::mysql::MysqlResults<std::string, mysql::MysqlTime> res;
+  MysqlResults<std::string, MysqlTime> res;
   mock_mysql_service_proxy_->Execute(client_context, res, "select email, created_at from users where username = ?",
                                      "jack");
   auto& res_vec = res.GetResultSet();
@@ -213,17 +197,17 @@ TEST_F(MysqlServiceProxyTest, Execute) {
 
 TEST_F(MysqlServiceProxyTest, AsyncExecute) {
   auto client_context = GetClientContext();
-  mysql::MysqlTime mtime;
+  MysqlTime mtime;
   mtime.mt.year = 2024;
   mtime.mt.month = 9;
   mtime.mt.day = 10;
 
   auto res = mock_mysql_service_proxy_
-                 ->AsyncExecute<mysql::OnlyExec>(client_context,
+                 ->AsyncExecute<OnlyExec>(client_context,
                                                  "insert into users (username, email, created_at) \
                                    values (\"jack\", \"jack@abc.com\", ?)",
                                                  mtime)
-                 .Then([](trpc::Future<mysql::MysqlResults<mysql::OnlyExec>>&& f) {
+                 .Then([](trpc::Future<MysqlResults<OnlyExec>>&& f) {
                    if (f.IsReady()) {
                      EXPECT_EQ(1, f.GetConstValue().GetAffectedRows());
                    }
@@ -232,9 +216,9 @@ TEST_F(MysqlServiceProxyTest, AsyncExecute) {
   ::trpc::future::BlockingGet(std::move(res));
 
   auto res2 = mock_mysql_service_proxy_
-                  ->AsyncExecute<std::string, mysql::MysqlTime>(
+                  ->AsyncExecute<std::string, MysqlTime>(
                       client_context, "select email, created_at from users where username = ?", "jack")
-                  .Then([](trpc::Future<mysql::MysqlResults<std::string, mysql::MysqlTime>>&& f) {
+                  .Then([](trpc::Future<MysqlResults<std::string, MysqlTime>>&& f) {
                     if (f.IsReady()) {
                       auto& res_vec = f.GetValue0().GetResultSet();
                       EXPECT_EQ("jack@abc.com", std::get<0>(res_vec[0]));
@@ -244,8 +228,8 @@ TEST_F(MysqlServiceProxyTest, AsyncExecute) {
   ::trpc::future::BlockingGet(std::move(res2));
 
   auto res3 = mock_mysql_service_proxy_
-                  ->AsyncExecute<mysql::OnlyExec>(client_context, "delete from users where username = \"jack\"")
-                  .Then([](trpc::Future<mysql::MysqlResults<mysql::OnlyExec>>&& f) {
+                  ->AsyncExecute<OnlyExec>(client_context, "delete from users where username = \"jack\"")
+                  .Then([](trpc::Future<MysqlResults<OnlyExec>>&& f) {
                     if (f.IsReady()) {
                       EXPECT_EQ(1, f.GetConstValue().GetAffectedRows());
                     }
@@ -254,9 +238,9 @@ TEST_F(MysqlServiceProxyTest, AsyncExecute) {
   ::trpc::future::BlockingGet(std::move(res3));
 
   auto res4 = mock_mysql_service_proxy_
-                  ->AsyncExecute<std::string, mysql::MysqlTime>(
+                  ->AsyncExecute<std::string, MysqlTime>(
                       client_context, "select email, created_at from users where username = ?", "jack")
-                  .Then([](trpc::Future<mysql::MysqlResults<std::string, mysql::MysqlTime>>&& f) {
+                  .Then([](trpc::Future<MysqlResults<std::string, MysqlTime>>&& f) {
                     if (f.IsReady()) {
                       EXPECT_EQ(0, f.GetValue0().GetResultSet().size());
                     }
@@ -271,8 +255,8 @@ TEST_F(MysqlServiceProxyTest, AsyncException) {
       "check the manual that corresponds to your MySQL server version "
       "for the right syntax to use near '' at line 1";
   auto client_context = GetClientContext();
-  auto res = mock_mysql_service_proxy_->AsyncQuery<mysql::IterMode>(client_context, "select * from users where")
-                 .Then([&error_msg](trpc::Future<mysql::MysqlResults<mysql::IterMode>>&& f) {
+  auto res = mock_mysql_service_proxy_->AsyncQuery<IterMode>(client_context, "select * from users where")
+                 .Then([&error_msg](trpc::Future<MysqlResults<IterMode>>&& f) {
                    EXPECT_EQ(true, f.IsFailed());
                    auto e = f.GetException();
                    EXPECT_EQ(error_msg, e.what());
@@ -288,9 +272,9 @@ TEST_F(MysqlServiceProxyTest, AsyncQueryRepeat) {
   for (int i = 0; i < 8; i++) {
     auto client_context = GetClientContext();
     auto f = mock_mysql_service_proxy_
-                 ->AsyncQuery<mysql::IterMode>(client_context, "select * from users where id > ? or username = ?", i,
+                 ->AsyncQuery<IterMode>(client_context, "select * from users where id > ? or username = ?", i,
                                                "alice")
-                 .Then([i](trpc::Future<mysql::MysqlResults<mysql::IterMode>>&& f) {
+                 .Then([i](trpc::Future<MysqlResults<IterMode>>&& f) {
                    EXPECT_EQ(true, f.IsReady());
                    EXPECT_EQ(true, f.GetValue0().IsSuccess());
                    return trpc::MakeReadyFuture<>();
@@ -306,7 +290,7 @@ TEST_F(MysqlServiceProxyTest, AsyncQueryRepeat) {
 
 TEST_F(MysqlServiceProxyTest, QueryRepeat) {
   auto client_context = GetClientContext();
-  mysql::MysqlResults<mysql::IterMode> res;
+  MysqlResults<IterMode> res;
   for (int i = 0; i < 8; i++) {
     mock_mysql_service_proxy_->Query(client_context, res, "select * from users where id > ? or username = ?", i,
                                      "alice");
@@ -323,7 +307,7 @@ TEST_F(MysqlServiceProxyTest, ConcurrentQuery) {
   for (int i = 0; i < kThreadCount; ++i) {
     threads.emplace_back([this, &result_mutex, &all_success, i]() {
       auto client_context = GetClientContext();
-      trpc::mysql::MysqlResults<int, std::string> res;
+      MysqlResults<int, std::string> res;
       mock_mysql_service_proxy_->Query(client_context, res, "select id, username from users where id = ?", i + 1);
 
       std::lock_guard<std::mutex> lock(result_mutex);
@@ -356,8 +340,8 @@ TEST_F(MysqlServiceProxyTest, ConcurrentAsyncQueryWithFutures) {
   for (int i = 0; i < kThreadCount; ++i) {
     auto client_context = GetClientContext();
     auto future = mock_mysql_service_proxy_
-                      ->AsyncQuery<mysql::IterMode>(client_context, "select * from users where id >= ?", i + 1)
-                      .Then([&result_mutex, &all_success, i](trpc::Future<mysql::MysqlResults<mysql::IterMode>>&& f) {
+                      ->AsyncQuery<IterMode>(client_context, "select * from users where id >= ?", i + 1)
+                      .Then([&result_mutex, &all_success, i](trpc::Future<MysqlResults<IterMode>>&& f) {
                         if (f.IsReady()) {
                           auto& result = f.GetConstValue();
                           std::lock_guard<std::mutex> lock(result_mutex);
@@ -378,6 +362,124 @@ TEST_F(MysqlServiceProxyTest, ConcurrentAsyncQueryWithFutures) {
   }
 
   EXPECT_EQ(true, all_success);
+}
+
+
+TEST_F(MysqlServiceProxyTest, Transaction) {
+  auto client_context = GetClientContext();
+  TransactionHandle handle;
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<NativeString> query_res;
+  MysqlTime mtime;
+  mtime.mt.year = 2024;
+  mtime.mt.month = 9;
+  mtime.mt.day = 10;
+  Status s = mock_mysql_service_proxy_->Begin(client_context, handle);
+  EXPECT_EQ(s.OK(), true);
+  mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
+                                     "insert into users (username, email, created_at)"
+                                     "values (\"jack\", \"jack@abc.com\", ?)", mtime);
+  EXPECT_EQ(1, exec_res.GetAffectedRows());
+
+  mock_mysql_service_proxy_->Query(client_context, handle, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(1, query_res.GetResultSet().size());
+  mock_mysql_service_proxy_->Rollback(client_context, handle);
+
+  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(0, query_res.GetResultSet().size());
+}
+
+
+TEST_F(MysqlServiceProxyTest, AsyncTransaction) {
+  auto client_context = GetClientContext();
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<IterMode> query_res;
+  TransactionHandle handle;
+  int table_rows = 0;
+
+  //
+  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users");
+  table_rows = query_res.GetResultSet().size();
+
+  // Do two query separately in the same one transaction and the handle will be moved to handle2
+  auto fu = mock_mysql_service_proxy_->AsyncBegin(client_context)
+          .Then([&handle](Future<TransactionHandle>&& f) mutable {
+            if(f.IsFailed())
+              return MakeExceptionFuture<>(f.GetException());
+            handle = f.GetValue0();
+            return MakeReadyFuture<>();
+          });
+
+  future::BlockingGet(std::move(fu));
+
+  auto fu2 = mock_mysql_service_proxy_
+          ->AsyncQuery<NativeString>(client_context, std::move(handle), "select username from users where username = ?", "alice")
+          .Then([](Future<TransactionHandle, MysqlResults<NativeString>>&& f) mutable {
+            if(f.IsFailed())
+              return MakeExceptionFuture<TransactionHandle>(f.GetException());
+            auto t = f.GetValue();
+            auto res = std::move(std::get<1>(t));
+            EXPECT_EQ("alice", res.GetResultSet()[0][0]);
+            return MakeReadyFuture<TransactionHandle>(std::move(std::get<0>(t)));
+          });
+
+  auto fu3 = future::BlockingGet(std::move(fu2));
+  TransactionHandle handle2(fu3.GetValue0());
+  EXPECT_EQ(TransactionHandle::TxState::kStart, handle2.GetState());
+
+  // Do query in "Then Chain" and rollback
+  MysqlTime mtime;
+  mtime.mt.year = 2024;
+  mtime.mt.month = 9;
+  mtime.mt.day = 10;
+  auto fu4 = mock_mysql_service_proxy_
+          ->AsyncExecute<OnlyExec>(client_context, std::move(handle2),
+                                   "insert into users (username, email, created_at)"
+                                   "values (\"jack\", \"jack@abc.com\", ?)", mtime)
+          .Then([this, client_context](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f) {
+            if(f.IsFailed())
+              return MakeExceptionFuture<TransactionHandle, MysqlResults<NativeString>>(f.GetException());
+            auto t = f.GetValue();
+            auto res = std::move(std::get<1>(t));
+            EXPECT_EQ(1, res.GetAffectedRows());
+            return mock_mysql_service_proxy_->AsyncQuery<NativeString>(client_context, std::move(std::get<0>(t)),
+                                                                       "select username from users where username = ?", "jack");
+          })
+          .Then([this, client_context](Future<TransactionHandle, MysqlResults<NativeString>>&& f){
+            if(f.IsFailed())
+              return MakeExceptionFuture<TransactionHandle, MysqlResults<OnlyExec>>(f.GetException());
+            auto t = f.GetValue();
+            auto res = std::move(std::get<1>(t));
+            EXPECT_EQ("jack", res.GetResultSet()[0][0]);
+            return mock_mysql_service_proxy_
+                    ->AsyncQuery<OnlyExec>(client_context, std::move(std::get<0>(t)),
+                                           "update users set email = ? where username = ? ", "jack@gmail.com", "jack");
+          })
+          .Then([this, client_context](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f) {
+            if(f.IsFailed())
+              return MakeExceptionFuture<TransactionHandle>(f.GetException());
+            auto t = f.GetValue();
+            auto res = std::move(std::get<1>(t));
+            EXPECT_EQ(1, res.GetAffectedRows());
+            return mock_mysql_service_proxy_
+                    ->AsyncRollback(client_context, std::move(std::get<0>(t)));
+          })
+          .Then([](Future<TransactionHandle>&& f){
+            if(f.IsFailed())
+              return MakeExceptionFuture<>(f.GetException());
+            auto handle =f.GetValue0();
+            EXPECT_EQ(TransactionHandle::TxState::kEnd, handle.GetState());
+            return MakeReadyFuture<>();
+          });
+
+  trpc::future::BlockingGet(std::move(fu4));
+
+  // Check rollback
+  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users");
+  EXPECT_EQ(table_rows, query_res.GetResultSet().size());
+  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(true, query_res.GetResultSet().empty());
+
 }
 
 }  // namespace trpc::testing
