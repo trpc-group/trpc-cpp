@@ -1,7 +1,6 @@
 cc_binary(
     name = "fiber_client",
     srcs = ["fiber_client.cc"],
-    linkopts = ["-ldl"],
     deps = [
         "@com_github_gflags_gflags//:gflags",
         "@trpc_cpp//trpc/client:client_context",

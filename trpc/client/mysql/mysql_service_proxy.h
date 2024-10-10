@@ -83,6 +83,10 @@ class MysqlServiceProxy : public ServiceProxy {
 
   void Destroy() override;
 
+ protected:
+  /// @brief Init pool_manager_.
+  void InitOtherMembers() override;
+
  private:
   ///@brief pool_manager_ only can be inited after the service option has been set.
   bool InitManager();
@@ -103,10 +107,6 @@ class MysqlServiceProxy : public ServiceProxy {
                                                        const InputArgs&... args);
 
   bool EndTransaction(TransactionHandle& handle);
-
- protected:
-  /// @brief Init pool_manager_.
-  void InitOtherMembers() override;
 
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};

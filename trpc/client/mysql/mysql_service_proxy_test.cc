@@ -19,8 +19,6 @@ class MockMysqlServiceProxy : public mysql::MysqlServiceProxy {
     SetServiceProxyOptionInner(option);
   }
 
-  void InitMockOtherMembers() { InitOtherMembers(); }
-
   void SetMockCodec(ClientCodecPtr&& codec) { codec_ = codec; }
 
   void PrintResultTable(const mysql::MysqlResults<mysql::IterMode>& res) {
@@ -95,7 +93,6 @@ class MysqlServiceProxyTest : public ::testing::Test {
   void SetUp() override {
     mock_mysql_service_proxy_ = std::make_shared<MockMysqlServiceProxy>();
     mock_mysql_service_proxy_->SetMockServiceProxyOption(option_);
-    mock_mysql_service_proxy_->InitMockOtherMembers();
   }
 
   void TearDown() {

@@ -135,7 +135,6 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name) {
 
   new_proxy->SetServiceProxyOptionInner(option);
 
-  new_proxy->InitOtherMembers();
 
   // Depend on new_proxy->SetServiceProxyOptionInner to be executed first, which may update selector_name.
   if (option->selector_name.compare("direct") == 0 || option->selector_name.compare("domain") == 0) {
@@ -173,7 +172,6 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const 
 
   new_proxy->SetServiceProxyOptionInner(option_ptr);
 
-  new_proxy->InitOtherMembers();
 
   // Depend on new_proxy->SetServiceProxyOptionInner to be executed first, which may update selector_name.
   if (option_ptr->selector_name.compare("direct") == 0 || option_ptr->selector_name.compare("domain") == 0) {
@@ -225,7 +223,6 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name,
 
   new_proxy->SetServiceProxyOptionInner(option);
 
-  new_proxy->InitOtherMembers();
 
   // Depend on new_proxy->SetServiceProxyOptionInner to be executed first, which may update selector_name.
   if (option->selector_name.compare("direct") == 0 || option->selector_name.compare("domain") == 0) {
@@ -288,8 +285,6 @@ std::shared_ptr<T> ServiceProxyManager::GetProxy(const std::string& name, const 
   SetOptionDefaultValue(name, option);
 
   new_proxy->SetServiceProxyOptionInner(option);
-
-  new_proxy->InitOtherMembers();
 
   // Depend on new_proxy->SetServiceProxyOptionInner to be executed first, which may update selector_name.
   if (option->selector_name.compare("direct") == 0 || option->selector_name.compare("domain") == 0) {

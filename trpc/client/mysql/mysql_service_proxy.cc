@@ -9,6 +9,10 @@ MysqlServiceProxy::MysqlServiceProxy() {
 }
 
 bool MysqlServiceProxy::InitManager() {
+
+  if(pool_manager_ != nullptr)
+    return true;
+
   const ServiceProxyOption* option = GetServiceProxyOption();
   MysqlExecutorPoolOption pool_option;
   pool_option.user_name = option->mysql_conf.user_name;
@@ -28,6 +32,10 @@ bool MysqlServiceProxy::InitManager() {
 }
 
 bool MysqlServiceProxy::InitThreadPool() {
+
+  if(thread_pool_ != nullptr)
+      return true;
+
   const ServiceProxyOption* option = GetServiceProxyOption();
   ::trpc::ThreadPoolOption thread_pool_option;
   thread_pool_option.thread_num = option->mysql_conf.thread_num;

@@ -359,6 +359,8 @@ void ServiceProxy::SetServiceProxyOptionInner(const std::shared_ptr<ServiceProxy
   // Init the service routing name.
   // It should be executed after 'InitSelectorFilter'.
   InitServiceNameInfo();
+
+  InitOtherMembers();
 }
 
 void ServiceProxy::PrepareStatistics(const std::string& service_name) {
