@@ -1,5 +1,4 @@
 #include "trpc/client/mysql/executor/mysql_executor.h"
-#include <mysql/mysql.h>
 #include "trpc/util/log/logging.h"
 
 namespace trpc::mysql {

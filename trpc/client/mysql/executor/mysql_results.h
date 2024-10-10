@@ -5,7 +5,7 @@
 #ifndef TRPC_CPP_MYSQL_RESULTS_H
 #define TRPC_CPP_MYSQL_RESULTS_H
 
-#include <mysql/mysql.h>
+#include "mysqlclient/mysql.h"
 #include <string>
 #include <tuple>
 #include <variant>

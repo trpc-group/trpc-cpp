@@ -1,7 +1,6 @@
 #pragma once
 
-#include <mysql/mysql.h>
-//#include "include/mysql.h"
+#include "mysqlclient/mysql.h"
 #include <string>
 #include <vector>
 #include <cassert>

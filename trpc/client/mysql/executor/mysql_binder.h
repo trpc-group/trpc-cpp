@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mysql/mysql.h>
+#include "mysqlclient/mysql.h"
 #include <cstring>
 #include <string>
 #include <type_traits>

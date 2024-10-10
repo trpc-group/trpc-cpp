@@ -8,7 +8,6 @@
 #include "trpc/client/mysql/mysql_service_config.h"
 #include "trpc/transport/common/transport_message_common.h"
 #include "trpc/util/concurrency/lightly_concurrent_hashmap.h"
-// #include "trpc/transport/client/trans_info.h"
 
 namespace trpc {
 namespace mysql {

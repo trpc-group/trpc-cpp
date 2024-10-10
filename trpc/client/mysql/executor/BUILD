@@ -7,32 +7,42 @@ cc_library(
     srcs = ["mysql_statement.cc"],
     hdrs = ["mysql_statement.h"],
     visibility = ["//visibility:public"],
-#    deps = ["@mysql_c_api_archive//:mysql_c_api"]
+    deps = [
+        "@mysqlclient//:mysqlclient"
+    ]
 )
 
+cc_library(
+    name = "mysql_binder",
+    hdrs = [ "mysql_binder.h"],
+    deps = [
+        "@mysqlclient//:mysqlclient",
+    ],
+)
 
 cc_library(
     name = "mysql_results",
     srcs = ["mysql_results.cc"],
     hdrs = ["mysql_results.h"],
+    deps = ["@mysqlclient//:mysqlclient"],
     visibility = ["//visibility:public"]
 )
 
 cc_library(
     name = "mysql_executor",
     srcs = ["mysql_executor.cc"],
-    hdrs = ["mysql_executor.h", "mysql_binder.h"],
+    hdrs = ["mysql_executor.h",],
     deps = [
+        "@mysqlclient//:mysqlclient",
         ":mysql_statement",
         ":mysql_results",
-        "@mysql_c_api_archive//:mysql_c_api",
+        ":mysql_binder",
         "@trpc_cpp//trpc/util:time",
         "@trpc_cpp//trpc/util:ref_ptr",
         "//trpc/util/log:logging",
         "//trpc/util:string_util"
     ],
     visibility = ["//visibility:public"],
-    linkopts = ["-lmysqlclient"]
 )
 
 cc_test(

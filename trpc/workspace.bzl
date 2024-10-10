@@ -351,18 +351,28 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
         tag = "v{ver}".format(ver = kwargs.get("com_github_trpc_protocol_ver", "1.0.0")),
     )
 
-    # MySQL C API version and summary
-    mysql_c_api_ver = kwargs.get("mysql_c_api_ver", "8.0.18")
-    mysql_c_api_sha256 = kwargs.get("mysql_c_api_sha256", "c91970c20e9d868aa7bc90c4692b9bf1fd6ef12f604c3392b871ad4dfc04fb84")
-    mysql_c_api_urls = [
-        "https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-8.0.18-linux-glibc2.12-x86-64bit.tar.gz",
+
+
+    mysqlclient_ver = kwargs.get("mysqlclient_ver", "8.0.39")
+    mysqlclient_sha256 = kwargs.get("mysqlclient_sha256", "ed3722dcd91607e118ed6cf51246f7d0882d982b33dab2935a2ec6c6e1271f2e")
+    mysqlclient_urls = [
+        "https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-8.0.39-linux-glibc2.17-x86_64-minimal.tar.xz"
     ]
 
-
+    mysqlclient_ver = kwargs.get("mysqlclient_ver", "8.0.39")
+    mysqlclient_major_ver = mysqlclient_ver.split(".")[0] + "." + mysqlclient_ver.split(".")[1]
+    mysqlclient_sha256 = kwargs.get("mysqlclient_sha256", "ed3722dcd91607e118ed6cf51246f7d0882d982b33dab2935a2ec6c6e1271f2e")
+    mysqlclient_urls = [
+        "https://dev.mysql.com/get/Downloads/MySQL-{major}/mysql-{full_ver}-linux-glibc2.17-x86_64-minimal.tar.xz".format(
+            major = mysqlclient_major_ver,
+            full_ver = mysqlclient_ver
+        )
+    ]
     http_archive(
-        name = "mysql_c_api_archive",
-        sha256 = mysql_c_api_sha256,
-        strip_prefix = "mysql-connector-c++-8.0.18-linux-glibc2.12-x86-64bit",
-        urls = mysql_c_api_urls,
-        build_file = clean_dep("//third_party/mysql:mysql.BUILD"),
+        name = "mysqlclient",
+        urls = mysqlclient_urls,
+        strip_prefix = "mysql-{full_ver}-linux-glibc2.17-x86_64-minimal".format(full_ver = mysqlclient_ver),
+        sha256 = mysqlclient_sha256,
+        build_file = clean_dep("//third_party/mysqlclient:mysqlclient.BUILD"),
     )
+
