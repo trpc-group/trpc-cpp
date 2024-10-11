@@ -32,10 +32,7 @@ MysqlExecutorPool* MysqlExecutorPoolManager::Get(const NodeAddr& node_addr) {
 
 MysqlExecutorPool* MysqlExecutorPoolManager::CreateExecutorPool(const NodeAddr& node_addr) {
   MysqlExecutorPool* new_pool{nullptr};
-  if(option_.use_back_thread_pool)
-    new_pool = new BackThreadExecutorPool(option_, node_addr);
-  else
-    new_pool = new MysqlExecutorPoolImpl(option_, node_addr);
+  new_pool = new MysqlExecutorPoolImpl(option_, node_addr);
   return new_pool;
 }
 

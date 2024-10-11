@@ -81,12 +81,12 @@ ExecuteStatus MysqlExecutor::ExecuteStatement(MysqlStatement& statement) {
 }
 
 uint64_t MysqlExecutor::GetAliveTime() {
-  uint64_t now = trpc::GetSteadyMicroSeconds();
+  uint64_t now = trpc::GetSteadyMilliSeconds();
   uint64_t alive_time = now - m_alivetime;
   return alive_time;
 }
 
-void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMicroSeconds(); }
+void MysqlExecutor::RefreshAliveTime() { m_alivetime = trpc::GetSteadyMilliSeconds(); }
 
 bool MysqlExecutor::StartReconnect() {
   int retry_interval = 100;

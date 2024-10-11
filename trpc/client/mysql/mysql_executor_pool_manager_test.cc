@@ -19,11 +19,11 @@ namespace trpc {
 namespace testing {
 
 void clearPersonTable() {
-  MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-  char sql[1024] = {0};
-  sprintf(sql, "DELETE FROM person");
+  MysqlExecutor conn("127.0.0.1", "root", "abc123", "test", 3306);
+  conn.Connect();
   MysqlResults<trpc::mysql::OnlyExec> res;
-  conn.Execute(res, sql);
+  conn.Execute(res, "delete from person");
+  conn.Close();
 }
 
 trpc::mysql::MysqlExecutorPoolOption* readMysqlClientConf() {
@@ -34,15 +34,8 @@ trpc::mysql::MysqlExecutorPoolOption* readMysqlClientConf() {
   conf->user_name = client.service_proxy_config[0].mysql_conf.user_name;
   conf->password = client.service_proxy_config[0].mysql_conf.password;
   conf->dbname = client.service_proxy_config[0].mysql_conf.dbname;
-  conf->min_size = client.service_proxy_config[0].mysql_conf.min_size;
   conf->max_size = client.service_proxy_config[0].max_conn_num;
   conf->max_idle_time = client.service_proxy_config[0].idle_time;
-  conf->timeout = client.service_proxy_config[0].timeout;
-  std::string target = client.service_proxy_config[0].target;
-  std::size_t pos = target.find(':');
-  std::string ip = target.substr(0, pos);
-  std::string port_str = target.substr(pos + 1);
-  uint32_t port = static_cast<uint32_t>(std::stoul(port_str));
   return conf;
 }
 
@@ -65,11 +58,10 @@ trpc::mysql::MysqlExecutorPool* initManager() {
 
 void op1(int begin, int end) {
   for (int i = begin; i < end; i++) {
-    MysqlExecutor conn("localhost", "root", "abc123", "test", 3306);
-    char sql[1024] = {0};
-    sprintf(sql, "insert into person values(%d, 18, 'man', 'starry')", i);
+    MysqlExecutor conn("127.0.0.1", "root", "abc123", "test", 3306);
+    conn.Connect();
     MysqlResults<trpc::mysql::OnlyExec> res;
-    conn.Execute(res, sql);
+    conn.Execute(res, "insert into person values(?, 18, 'man', 'starry')", i);
     conn.Close();
   }
 }
@@ -77,35 +69,35 @@ void op1(int begin, int end) {
 void op2(MysqlExecutorPool* pool, int begin, int end) {
   for (int i = begin; i < end; i++) {
     auto conn = pool->GetExecutor();
-    char sql[1024] = {0};
-    sprintf(sql, "insert into person values(%d, 18, 'man', 'starry')", i);
     MysqlResults<trpc::mysql::OnlyExec> res;
-    conn->Execute(res, sql);
+    conn->Execute(res, "insert into person values(?, 18, 'man', 'starry')", i);
+    pool->Reclaim(0, std::move(conn));
   }
 }
 
-// 性能测试
+
+// Performance Tests
 TEST(PerformanceTest, SingleThreadedWithoutPool) {
-  clearPersonTable();  // 清空 person 表数据
+  clearPersonTable();  // Clear the person table data
   steady_clock::time_point begin = steady_clock::now();
   op1(0, 500);
   steady_clock::time_point end = steady_clock::now();
   auto length = end - begin;
-  cout << "非连接池，单线程，用时：" << length.count() << "纳秒，" << length.count() / 1000000 << "毫秒" << endl;
+  cout << "Without connection pool, single-threaded, time used: " << length.count() << " nanoseconds, " << length.count() / 1000000 << " milliseconds" << endl;
 }
 
 TEST(PerformanceTest, SingleThreadedWithPool) {
-  clearPersonTable();  // 清空 person 表数据
+  clearPersonTable();  // Clear the person table data
   MysqlExecutorPool* pool = initManager();
   steady_clock::time_point begin = steady_clock::now();
   op2(pool, 0, 500);
   steady_clock::time_point end = steady_clock::now();
   auto length = end - begin;
-  cout << "连接池，单线程，用时：" << length.count() << "纳秒，" << length.count() / 1000000 << "毫秒" << endl;
+  cout << "With connection pool, single-threaded, time used: " << length.count() << " nanoseconds, " << length.count() / 1000000 << " milliseconds" << endl;
 }
 
 TEST(PerformanceTest, MultiThreadedWithoutPool) {
-  clearPersonTable();  // 清空 person 表数据
+  clearPersonTable();  // Clear the person table data
   steady_clock::time_point begin = steady_clock::now();
   thread t1(op1, 0, 100);
   thread t2(op1, 100, 200);
@@ -119,11 +111,11 @@ TEST(PerformanceTest, MultiThreadedWithoutPool) {
   t5.join();
   steady_clock::time_point end = steady_clock::now();
   auto length = end - begin;
-  cout << "非连接池，多线程，用时：" << length.count() << "纳秒，" << length.count() / 1000000 << "毫秒" << endl;
+  cout << "Without connection pool, multi-threaded, time used: " << length.count() << " nanoseconds, " << length.count() / 1000000 << " milliseconds" << endl;
 }
 
 TEST(PerformanceTest, MultiThreadedWithPool) {
-  clearPersonTable();  // 清空 person 表数据
+  clearPersonTable();  // Clear the person table data
   MysqlExecutorPool* pool = initManager();
   steady_clock::time_point begin = steady_clock::now();
   thread t1(op2, pool, 0, 100);
@@ -138,8 +130,9 @@ TEST(PerformanceTest, MultiThreadedWithPool) {
   t5.join();
   steady_clock::time_point end = steady_clock::now();
   auto length = end - begin;
-  cout << "连接池，多线程，用时：" << length.count() << "纳秒，" << length.count() / 1000000 << "毫秒" << endl;
+  cout << "With connection pool, multi-threaded, time used: " << length.count() << " nanoseconds, " << length.count() / 1000000 << " milliseconds" << endl;
 }
+
 
 }  // namespace testing
 }  // namespace trpc

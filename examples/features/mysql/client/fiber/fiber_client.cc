@@ -142,7 +142,73 @@ void TestUpdate(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
     std::cout << R"(No user "jack" in users)" << std::endl;
 }
 
-void TestTransaction(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+void TestCommit(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+
+  std::cout << "\nTestCommit\n";
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+  MysqlResults<trpc::mysql::OnlyExec> res;
+  TransactionHandle handle;
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<IterMode> query_res;
+  MysqlTime mtime;
+  mtime.mt.year = 2024;
+  mtime.mt.month = 9;
+  mtime.mt.day = 10;
+
+  trpc::Status s = proxy->Query(ctx, query_res, "select * from users");
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+
+  std::cout << "Before transaction\n\n";
+  PrintResultTable(query_res);
+
+  // Begin
+  s = proxy->Begin(ctx, handle);
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+
+  // Insert a row
+  s = proxy->Execute(ctx, handle, exec_res,
+                     "insert into users (username, email, created_at)"
+                     "values (\"jack\", \"jack@abc.com\", ?)", mtime);
+  if(!s.OK() || (exec_res.GetAffectedRows() != 1) || !exec_res.IsSuccess()) {
+    TRPC_FMT_ERROR("status: {}, res error: {}", s.ToString(), exec_res.GetErrorMessage());
+    return;
+  }
+
+  // Commit
+  s = proxy->Commit(ctx, handle);
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+
+  // Print table after commit
+  s = proxy->Query(ctx, query_res, "select * from users");
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+
+  std::cout << "\n\nAfter commit\n\n";
+  PrintResultTable(query_res);
+
+
+  // Clean new data
+  s = proxy->Execute(ctx, exec_res, "delete from users where username = ?", "jack");
+  if(!s.OK()) {
+    TRPC_FMT_ERROR("status: {}", s.ToString());
+    return;
+  }
+}
+
+void TestRollback(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  std::cout << "\n\nTestRollback\n";
+
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
   MysqlResults<trpc::mysql::OnlyExec> res;
   TransactionHandle handle;
@@ -208,7 +274,8 @@ int Run() {
   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::mysql::MysqlServiceProxy>("mysql_server");
   TestQuery(proxy);
   TestUpdate(proxy);
-  TestTransaction(proxy);
+  TestCommit(proxy);
+  TestRollback(proxy);
   return 0;
 }
 

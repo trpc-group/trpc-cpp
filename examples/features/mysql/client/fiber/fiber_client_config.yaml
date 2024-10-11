@@ -13,13 +13,17 @@ client:
       is_conn_complex: true
       target: 127.0.0.1:3306
       selector_name: direct
+      max_conn_num: 16
+      idle_time: 40000
 
       mysql:
         user_name: "root"
         password: "abc123"
         dbname: "test"
+        num_shard_group: 2
+        thread_num: 6
+        thread_bind_core: true
         enable: true
-        max_size: 8
 
 
 plugins:

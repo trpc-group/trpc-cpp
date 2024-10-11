@@ -66,12 +66,16 @@ class MysqlRow {
   unsigned int NumFields() { return num_fields_; }
 
   MysqlRow(MYSQL_FIELD* fields, MYSQL_ROW row, unsigned long* length, unsigned int num_field)
-      : fields_(fields), row_(row), lengths_(length), num_fields_(num_field) {}
+      : fields_(fields), row_(row), num_fields_(num_field) {
+    for(unsigned int i = 0; i < num_field; i++)
+      lengths_.push_back(length[i]);
+  }
 
  private:
   MYSQL_FIELD* fields_;
   MYSQL_ROW row_;
-  unsigned long* lengths_;
+//  unsigned long* lengths_;
+  std::vector<unsigned long> lengths_{};
   unsigned int num_fields_;
 };
 

@@ -16,14 +16,10 @@ struct MysqlExecutorPoolOption {
   /// @brief db name
   std::string dbname;
 
-  uint32_t min_size{0};       // Minimum number of connections in the pool
   uint32_t max_size{0};       // Maximum number of connections in the pool
   uint64_t max_idle_time{0};  // Maximum idle time for connections
-  uint32_t timeout{0};        // Timeout for acquiring a connection from the pool
-
   uint32_t num_shard_group{4};
 
-  bool use_back_thread_pool{false};
 };
 
 }  // namespace trpc::mysql

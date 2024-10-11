@@ -89,9 +89,7 @@ class MysqlServiceProxyTest : public ::testing::Test {
     option_->mysql_conf.password = "abc123";
     option_->mysql_conf.user_name = "root";
     option_->mysql_conf.enable = true;
-    option_->mysql_conf.min_size = 2;
-    option_->mysql_conf.max_size = 12;
-    option_->mysql_conf.use_back_thread_pool = false;
+    option_->max_conn_num = 12;
   }
 
   static void TearDownTestCase() { TrpcPlugin::GetInstance()->UnregisterPlugins(); }

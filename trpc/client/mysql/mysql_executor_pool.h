@@ -47,6 +47,8 @@ class MysqlExecutorPoolImpl : public MysqlExecutorPool {
 
   RefPtr<MysqlExecutor> GetOrCreate();
 
+  bool IsIdleTimeout(RefPtr<MysqlExecutor> executor);
+
  private:
   std::string m_ip_;
   uint16_t m_port_;
@@ -62,6 +64,8 @@ class MysqlExecutorPoolImpl : public MysqlExecutorPool {
 
   uint32_t max_conn_{0};
 
+  uint64_t max_idle_time_{0};
+
 
   struct alignas(hardware_destructive_interference_size) Shard {
     std::mutex lock;
@@ -76,55 +80,6 @@ class MysqlExecutorPoolImpl : public MysqlExecutorPool {
   std::atomic<uint32_t> executor_id_gen_{0};
 
 
-};
-
-class BackThreadExecutorPool : public  MysqlExecutorPool {
- public:
-  // static MysqlExecutorPool* getConnectPool(const MysqlClientConf& conf);
-
-  BackThreadExecutorPool(const MysqlExecutorPool& obj) = delete;
-  BackThreadExecutorPool& operator=(const MysqlExecutorPool& obj) = delete;
-
-  BackThreadExecutorPool(const MysqlExecutorPoolOption& option, const NodeAddr& node_addr);
-
-  RefPtr<MysqlExecutor> GetExecutor() override;
-
-  void Reclaim(int ret, RefPtr<MysqlExecutor>&&) override;
-
-  ~BackThreadExecutorPool() override;
-
-
- private:
-  BackThreadExecutorPool() = default;
-
-  void ProduceExecutor();
-  void RecycleExecutor();
-  void AddExecutor();
-
- private:
-  std::string m_ip_;
-  uint16_t m_port_;
-  std::string m_user_;
-  std::string m_passwd_;
-  std::string m_db_name_;
-
-  uint32_t m_min_size_;
-  uint32_t m_max_size_;
-
-  uint32_t m_timeout_;
-  uint64_t m_max_idle_time_;
-
-  uint64_t m_recycle_interval_;
-
-  std::queue<RefPtr<MysqlExecutor>> m_connectQ_;
-  std::mutex m_mutexQ_;
-  std::condition_variable m_cond_produce_;
-  std::condition_variable m_cond_consume_;
-
-  std::thread m_producer;
-  std::thread m_recycler;
-
-  std::atomic<bool> m_stop{false};
 };
 
 

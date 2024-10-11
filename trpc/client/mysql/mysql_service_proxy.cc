@@ -18,16 +18,11 @@ bool MysqlServiceProxy::InitManager() {
   pool_option.user_name = option->mysql_conf.user_name;
   pool_option.password = option->mysql_conf.password;
   pool_option.dbname = option->mysql_conf.dbname;
-  pool_option.timeout = option->timeout;
-  pool_option.min_size = option->mysql_conf.min_size;
-  pool_option.max_size = option->mysql_conf.max_size;
-  pool_option.max_idle_time = option->mysql_conf.max_idle_time;
+  pool_option.max_size = option->max_conn_num;
+  pool_option.max_idle_time = option->idle_time;
   pool_option.num_shard_group = option->mysql_conf.num_shard_group;
-  pool_option.use_back_thread_pool = option->mysql_conf.use_back_thread_pool;
 
   pool_manager_ = std::make_unique<MysqlExecutorPoolManager>(std::move(pool_option));
-  // pool_manager_ = trpc::MakeRefCounted<MysqlExecutorPoolManager>(std::move(pool_option));
-  //  pool_manager_inited_.store(true);
   return true;
 }
 

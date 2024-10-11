@@ -209,6 +209,13 @@ TEST(Executor, IterMode) {
   EXPECT_EQ("created_at", fields_name[3]);
   EXPECT_EQ("meta", fields_name[4]);
 
+  auto& rows = res.GetResultSet();
+  for(auto& row : rows) {
+    for (auto field : row)
+      std::cout << field << ", ";
+    std::cout << std::endl;
+  }
+
   PrintResultTable(res);
 
   std::cout << "\n--------------------------------------------------------------\n" << std::endl;
@@ -226,6 +233,9 @@ TEST(Executor, IterMode) {
   }
 
   std::cout << std::endl;
+
+  std::cout << "\n---------------------------------------------------------------\n" << std::endl;
+
   conn.Close();
 }
 

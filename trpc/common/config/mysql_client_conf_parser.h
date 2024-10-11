@@ -15,10 +15,10 @@ struct convert<trpc::MysqlClientConf> {
     node["user_name"] = mysql_conf.user_name;
     node["password"] = mysql_conf.password;
     node["dbname"] = mysql_conf.dbname;
+    node["thread_num"] = mysql_conf.thread_num;
+    node["thread_bind_core"] = mysql_conf.thread_bind_core;
+    node["num_shard_group"] = mysql_conf.num_shard_group;
     node["enable"] = mysql_conf.enable;
-
-    // 编码 connectpool 部分
-    node["min_size"] = mysql_conf.min_size;
 
     return node;
   }
@@ -34,12 +34,17 @@ struct convert<trpc::MysqlClientConf> {
     if (node["dbname"]) {
       mysql_conf.dbname = node["dbname"].as<std::string>();
     }
+    if (node["thread_num"]) {
+      mysql_conf.thread_num = node["thread_num"].as<size_t>();
+    }
+    if (node["thread_bind_core"]) {
+      mysql_conf.thread_bind_core = node["thread_bind_core"].as<bool>();
+    }
+    if (node["num_shard_group"]) {
+      mysql_conf.num_shard_group = node["num_shard_group"].as<uint32_t>();
+    }
     if (node["enable"]) {
       mysql_conf.enable = node["enable"].as<bool>();
-    }
-
-    if (node["min_size"]) {
-      mysql_conf.min_size = node["min_size"].as<uint32_t>();
     }
 
     return true;
