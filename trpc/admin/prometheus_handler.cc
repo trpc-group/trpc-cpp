@@ -27,22 +27,24 @@ PrometheusHandler::PrometheusHandler() {
         "Failed to obtain Prometheus plugin configuration from the framework configuration file. Default configuration "
         "will be used.");
   }
+  Init();
+}
+
+void PrometheusHandler::Init() {
   auto& cfg = prometheus_conf_.auth_cfg;
   if (cfg.count("username") && cfg.count("password")) {
-    username_ = cfg["username"];
-    password_ = cfg["password"];
-    has_cfg = true;
+    auth_conf_.username = cfg["username"];
+    auth_conf_.password = cfg["password"];
   } else {
     TRPC_LOG_INFO("can not found prometheus auth config");
-    has_cfg = false;
   }
 }
 
 void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value& result,
                                       rapidjson::Document::AllocatorType& alloc) {
   static std::unique_ptr<::prometheus::Serializer> serializer = std::make_unique<::prometheus::TextSerializer>();
-  
-  if (has_cfg) {
+
+  if (auth_conf_.username.size() && auth_conf_.password.size()) {
     std::string token = req->GetHeader("Authorization");
     auto splited = Split(token, ' ');
     if (splited.size() != 2) {
@@ -65,19 +67,18 @@ void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value
     }
     
     auto username = sp[0];
-    if (username != username_) {
+    if (username != auth_conf_.username) {
       result.AddMember("message", "wrong request without right username", alloc);
-      TRPC_LOG_INFO("error username: " << username << ",right username: " << username_);
+      TRPC_LOG_INFO("error username: " << username << ",right username: " << auth_conf_.username);
       return;
     }
     auto pwd = sp[1];
-    if (pwd != password_) {
+    if (pwd != auth_conf_.password) {
       result.AddMember("message", "wrong request without right password", alloc);
-      TRPC_LOG_INFO("error password: " << pwd << ",right password: " << password_);
+      TRPC_LOG_INFO("error password: " << pwd << ",right password: " << auth_conf_.password);
       return;
     }
   }
-
 
   std::string prometheus_str = serializer->Serialize(trpc::prometheus::Collect());
   result.AddMember(rapidjson::StringRef("trpc-html"), rapidjson::Value(prometheus_str, alloc).Move(), alloc);

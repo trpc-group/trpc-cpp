@@ -46,6 +46,7 @@ YAML::Node convert<trpc::PrometheusConfig>::encode(const trpc::PrometheusConfig&
   YAML::Node node;
   node["histogram_module_cfg"] = config.histogram_module_cfg;
   node["const_labels"] = config.const_labels;
+  node["auth_cfg"] = config.auth_cfg;
   node["push_mode"]["enabled"] = config.push_mode.enabled;
   if (config.push_mode.enabled) {
     node["push_mode"]["gateway_url"] = config.push_mode.gateway_url;
@@ -61,6 +62,9 @@ bool convert<trpc::PrometheusConfig>::decode(const YAML::Node& node, trpc::Prome
   }
   if (node["const_labels"]) {
     config.const_labels = node["const_labels"].as<std::map<std::string, std::string>>();
+  }
+  if (node["auth_cfg"]) {
+    config.auth_cfg = node["auth_cfg"].as<std::map<std::string, std::string>>();
   }
   if (node["push_mode"]) {
     const auto& push_mode = node["push_mode"];
