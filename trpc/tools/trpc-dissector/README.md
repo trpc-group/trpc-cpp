@@ -22,8 +22,8 @@ tRPC-Dissector是tRPC协议的Wireshark解析器，提供了一对一应答的�
 
 Request包解析效果
 
-![](C:\Users\chenzhuozhuo\AppData\Roaming\marktext\images\2024-10-12-12-20-56-image.png)
+![trpc_wireshark_dissector_request.png](../../../docs/images/trpc_wireshark_dissector_request.png)
 
 Response包解析效果
 
-![](C:\Users\chenzhuozhuo\AppData\Roaming\marktext\images\2024-10-12-12-21-19-image.png)
+![trpc_wireshark_dissector_response.png](../../../docs/images/trpc_wireshark_dissector_response.png)
