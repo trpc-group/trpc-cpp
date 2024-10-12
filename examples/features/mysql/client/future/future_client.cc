@@ -116,7 +116,6 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
   proxy->Query(ctx, query_res, "select * from users");
-  table_rows = query_res.GetResultSet().size();
 
   // Do two query separately in the same one transaction and the handle will be moved to handle2
   auto fu = proxy->AsyncBegin(ctx)
@@ -241,6 +240,9 @@ void ParseClientConfig(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
   ParseClientConfig(argc, argv);
 
+  std::cout << "*************************************\n"
+            << "************future_client************\n"
+            << "*************************************\n\n";
   // If the business code is running in trpc pure client mode,
   // the business code needs to be running in the `RunInTrpcRuntime` function
   return ::trpc::RunInTrpcRuntime([]() { return Run(); });

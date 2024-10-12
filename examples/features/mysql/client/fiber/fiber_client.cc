@@ -23,7 +23,7 @@
 #include "trpc/client/service_proxy.h"
 #include "trpc/client/trpc_client.h"
 #include "trpc/common/runtime_manager.h"
-
+#include "trpc/util/random.h"
 #include "trpc/log/trpc_log.h"
 
 using trpc::mysql::OnlyExec;
@@ -32,7 +32,7 @@ using trpc::mysql::NativeString;
 using trpc::mysql::MysqlResults;
 using trpc::mysql::MysqlTime;
 using trpc::mysql::TransactionHandle;
-
+using trpc::mysql::MysqlBlob;
 
 
 DEFINE_string(client_config, "fiber_client_client_config.yaml", "trpc cpp framework client_config file");
@@ -43,6 +43,18 @@ void printResult(const std::vector<std::tuple<int, std::string>>& res_data) {
     std::string username = std::get<1>(tuple);
     std::cout << "ID: " << id << ", Username: " << username << std::endl;
   }
+}
+
+MysqlBlob GenRandomBlob(std::size_t length) {
+  std::string random_data;
+  random_data.reserve(length);
+
+  for (std::size_t i = 0; i < length; ++i) {
+    char random_byte = static_cast<char>(trpc::Random<uint8_t>(0, 255));
+    random_data.push_back(random_byte);
+  }
+
+  return MysqlBlob(std::move(random_data));
 }
 
 void PrintResultTable(const MysqlResults<IterMode>& res) {
@@ -87,6 +99,7 @@ void PrintResultTable(const MysqlResults<IterMode>& res) {
 }
 
 void TestQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  std::cout << "TestQuery\n";
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
   MysqlResults<int, std::string> res;
   proxy->Query(ctx, res, "select id, username from users where id = ? and username = ?", 3, "carol");
@@ -108,7 +121,7 @@ void TestQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 }
 
 void TestUpdate(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
-  std::cout << "\n\n\n";
+  std::cout << "\n\nTestUpdate\n";
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
   MysqlResults<OnlyExec> exec_res;
   MysqlResults<std::string, MysqlTime> query_res;
@@ -269,6 +282,63 @@ void TestRollback(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 }
 
 
+void TestError(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  std::cout << "\nTestError\n";
+  MysqlResults<int> res;
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+
+  // Make context timeout
+  ctx->SetTimeout(0);
+  trpc::Status s = proxy->Query(ctx, res, "select id from users where username = ?", "alice");
+  if(!s.OK())
+    std::cout << s.ToString() << std::endl;
+
+  ctx = trpc::MakeClientContext(proxy);
+  s = proxy->Query(ctx, res, "select id from users where usernames = ?", "alice");
+  if(!s.OK())
+    return;
+  if(!res.IsSuccess())
+    std::cout << res.GetErrorMessage() << std::endl;
+
+}
+
+void TestBlob(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  std::cout << "\nTestBlob\n";
+
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<MysqlBlob> special_res;
+  MysqlResults<NativeString> str_res;
+  MysqlResults<IterMode> itr_res;
+  MysqlBlob blob(GenRandomBlob(1024));
+
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+  // MysqlBlob
+  trpc::Status s = proxy->Execute(ctx, exec_res,
+                         "insert into users (username, email, meta)"
+                         "values (\"jack\", \"jack@abc.com\", ?)",
+                         blob);
+  if(s.OK() && exec_res.IsSuccess())
+    std::cout << "blob inserted.\n";
+  else
+    return;
+
+  proxy->Query(ctx, special_res, "select meta from users where username = ?", "jack");
+  if(std::get<0>(special_res.GetResultSet()[0]) == blob)
+    std::cout << "same blob\n";
+
+  proxy->Query(ctx, str_res, "select meta from users where username = ?", "jack");
+  auto str_view = str_res.GetResultSet()[0][0];
+  if(MysqlBlob(std::string(str_view)) == blob)
+    std::cout << "same blob\n";
+
+  proxy->Query(ctx, itr_res, "select meta from users where username = ?", "jack");
+  for (auto row : itr_res) {
+    MysqlBlob data(std::string(row.GetFieldData(0)));
+    if(data == blob)
+      std::cout << "same blob\n";
+  }
+
+}
 
 int Run() {
   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::mysql::MysqlServiceProxy>("mysql_server");
@@ -276,6 +346,8 @@ int Run() {
   TestUpdate(proxy);
   TestCommit(proxy);
   TestRollback(proxy);
+  TestError(proxy);
+  TestBlob(proxy);
   return 0;
 }
 
@@ -298,7 +370,9 @@ void ParseClientConfig(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   ParseClientConfig(argc, argv);
-
+  std::cout << "************************************\n"
+            << "************fiber_client************\n"
+            << "************************************\n\n";
   // If the business code is running in trpc pure client mode,
   // the business code needs to be running in the `RunInTrpcRuntime` function
   return ::trpc::RunInTrpcRuntime([]() { return Run(); });
