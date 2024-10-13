@@ -13,10 +13,20 @@ cc_library(
 )
 
 cc_library(
+    name = "mysql_type",
+    srcs = ["mysql_type.cc"],
+    hdrs = ["mysql_type.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@mysqlclient//:mysqlclient",
+    ],
+)
+
+cc_library(
     name = "mysql_binder",
     hdrs = [ "mysql_binder.h"],
     deps = [
-        "@mysqlclient//:mysqlclient",
+        ":mysql_type",
     ],
 )
 
@@ -33,7 +43,6 @@ cc_library(
     srcs = ["mysql_executor.cc"],
     hdrs = ["mysql_executor.h",],
     deps = [
-        "@mysqlclient//:mysqlclient",
         ":mysql_statement",
         ":mysql_results",
         ":mysql_binder",

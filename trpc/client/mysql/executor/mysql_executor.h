@@ -17,6 +17,8 @@
 
 namespace trpc::mysql {
 
+/// @brief Converts placeholders when the executor is not using the prepared statement API.
+/// There may be potential bugs, and currently, it does not support types from mysql_type.h.
 class Formatter {
  public:
   template <typename T>
@@ -54,17 +56,10 @@ class Formatter {
   }
 };
 
-class ExecuteStatus {
- public:
-  bool success;
-  std::string error_message;
-
-  ExecuteStatus(bool s, const std::string& msg = "") : success(s), error_message(msg) {}
-};
-
 /// @brief A MySQL connection class that wraps the MySQL C API.
-/// @note This class is not thread-safe.
+/// @note This class is not thread-safe. Ensure exclusive ownership during queries.
 class MysqlExecutor : public RefCounted<MysqlExecutor> {
+
   template <typename... OutputArgs>
   class QueryHandle {
    public:
@@ -86,21 +81,18 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
     std::vector<size_t> dynamic_buffer_index;
 
    private:
-    size_t dynamic_buffer_size_;
 
     template <std::size_t... Indices>
     void ResizeBuffers(std::index_sequence<Indices...>);
 
     void ResizeOutputBuffer();
+
+   private:
+    size_t dynamic_buffer_size_;    // the initial buffer size of variant size type (string, blob)
   };
 
  public:
-  ///@brief Init and connect to the mysql server.
-  ///@param hostname
-  ///@param username
-  ///@param password
-  ///@param database
-  ///@param port
+
   MysqlExecutor(const std::string& hostname, const std::string& username, const std::string& password,
                 const std::string& database, uint16_t port = 0, const std::string& char_set = "utf8mb4");
 
@@ -111,9 +103,10 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   MysqlExecutor& operator=(const MysqlExecutor& rhs) = delete;
   MysqlExecutor& operator=(MysqlExecutor&& rhs) = delete;
 
+  ///@brief Connect to mysql server.
   bool Connect();
 
-  ///@brief Close the mysql conection and free the MYSQL*.
+  ///@brief Close the mysql connection and free the MYSQL*.
   void Close();
 
   ///@brief Executes an SQL query and retrieves all resulting rows, storing each row as a tuple.
@@ -130,12 +123,9 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   template <typename... InputArgs, typename... OutputArgs>
   bool QueryAll(MysqlResults<OutputArgs...>& mysql_results, const std::string& query, const InputArgs&... args);
 
+  ///@brief Same as QueryAll, but does not fetch result set, only returns affected rows
   template <typename... InputArgs>
   bool Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args);
-
-
-
-  std::string GetErrorMessage();
 
   void RefreshAliveTime();
 
@@ -157,6 +147,8 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
 
 
  private:
+
+  ///@note: Only this overload will use mysql prepared statement api.
   template <typename... InputArgs, typename... OutputArgs>
   bool QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results, const std::string& query, const InputArgs&... args);
 
@@ -169,10 +161,12 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   ///@brief Executes an SQL with prepareed statement.
   ///@param query The SQL query to be executed as a string which uses "?" as placeholders.
   ///@param args The input arguments to be bound to the query placeholders.
+  ///@details Use prepared statements of mysql api.
   ///@return Affected rows.
   template <typename... InputArgs>
   size_t ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results, const InputArgs&... args);
 
+  ///@brief This overload exists because some SQLs are not supported in mysql prepared statement api.
   size_t ExecuteInternal(const std::string& query, MysqlResults<OnlyExec>& mysql_results);
 
   template <typename... InputArgs>
@@ -191,10 +185,11 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   template <typename... OutputArgs>
   bool FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
 
-  //  std::string ConvertPlaceholders(const std::string& sql);
+  std::string GetErrorMessage();
+
 
  private:
-  // Just protects the `mysql_init`
+  /// Just protects the `mysql_init` api
   static std::mutex mysql_mutex;
 
   bool is_connected;
@@ -318,11 +313,6 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
     stmt.CloseStatement();
     return false;
   }
-  // if (!ExecuteStatement(*handle.output_binds, stmt)) {
-  //   mysql_results.error_message = stmt.GetErrorMessage();
-  //   stmt.CloseStatement();
-  //   return false;
-  // }
 
   if (!FetchResults(handle)) {
     mysql_results.error_message = stmt.GetErrorMessage();
@@ -474,12 +464,6 @@ size_t MysqlExecutor::ExecuteInternal(const std::string& query, MysqlResults<Onl
     stmt.CloseStatement();
     return 0;
   }
-
-  // if (!ExecuteStatement(stmt)) {
-  //   mysql_results.SetErrorMessage(stmt.GetErrorMessage());
-  //   stmt.CloseStatement();
-  //   return 0;
-  // }
 
   auto status = ExecuteStatement(stmt);
   if (!status.success) {

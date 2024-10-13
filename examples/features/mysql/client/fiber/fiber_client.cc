@@ -270,7 +270,7 @@ void TestRollback(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 
   // Check Rollback
   s = proxy->Query(ctx, query_res, "select * from users where username = ?", "jack");
-  if(!s.OK() || (exec_res.GetAffectedRows() != 1) || !exec_res.IsSuccess()) {
+  if(!s.OK() || !exec_res.IsSuccess()) {
     TRPC_FMT_ERROR("status: {}, res error: {}", s.ToString(), exec_res.GetErrorMessage());
     return;
   } else if(!query_res.GetResultSet().empty()) {
@@ -306,9 +306,6 @@ void TestBlob(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
   std::cout << "\nTestBlob\n";
 
   MysqlResults<OnlyExec> exec_res;
-  MysqlResults<MysqlBlob> special_res;
-  MysqlResults<NativeString> str_res;
-  MysqlResults<IterMode> itr_res;
   MysqlBlob blob(GenRandomBlob(1024));
 
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
@@ -321,6 +318,11 @@ void TestBlob(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
     std::cout << "blob inserted.\n";
   else
     return;
+
+  // three mode for Blob
+  MysqlResults<MysqlBlob> special_res;
+  MysqlResults<NativeString> str_res;
+  MysqlResults<IterMode> itr_res;
 
   proxy->Query(ctx, special_res, "select meta from users where username = ?", "jack");
   if(std::get<0>(special_res.GetResultSet()[0]) == blob)

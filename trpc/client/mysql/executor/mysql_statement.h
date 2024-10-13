@@ -38,4 +38,14 @@ private:
   unsigned int field_count_;
   unsigned long params_count_;
 };
+
+
+class ExecuteStatus {
+ public:
+  bool success;
+  std::string error_message;
+
+  ExecuteStatus(bool s, const std::string& msg = "") : success(s), error_message(msg) {}
+};
+
 }  // namespace trpc::mysql

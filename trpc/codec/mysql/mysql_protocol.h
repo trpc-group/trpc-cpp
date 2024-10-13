@@ -9,6 +9,7 @@
 namespace trpc {
 
 /// @brief MySQL request protocol message is mainly used to package MySQL request to make the code consistent
+/// @details This is a dummy protocol as we directly utilizes the MySQL API, bypassing the transport layer.
 /// @private For internal use purpose only.
 class MySQLRequestProtocol : public trpc::Protocol {
  public:

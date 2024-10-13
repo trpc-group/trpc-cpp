@@ -24,8 +24,9 @@
 
 namespace trpc {
 
-/// @brief MySQL codec (client side) to encode request message and decode response message.
-/// @private For internal use purpose only.
+/// @brief MySQL client-side codec for encoding request messages and decoding response messages.
+/// @details This is a dummy codec as we directly utilizes the MySQL API, bypassing the transport layer.
+/// @note For internal use only; not intended for public interfaces.
 class MySQLClientCodec : public ClientCodec {
  public:
   /// @private For internal use purpose only.

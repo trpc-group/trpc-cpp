@@ -2,8 +2,7 @@
 // Created by kosmos on 9/23/24.
 //
 
-#ifndef TRPC_CPP_MYSQL_RESULTS_H
-#define TRPC_CPP_MYSQL_RESULTS_H
+#pragma once
 
 #include "mysqlclient/mysql.h"
 #include <string>
@@ -14,70 +13,57 @@
 namespace trpc::mysql {
 
 /// @brief This is an abstract representation of a row pointer and does not contain any actual data.
-/// Therefore, MysqlResult<IterMode> will not create or store MysqlRow instances.
-/// The operator* of MysqlRowIterator does not return a reference to MysqlRow.
 class MysqlRow {
  public:
   class MysqlFieldIterator {
    public:
-    MysqlFieldIterator(MysqlRow* mrow, unsigned int index) : mrow_(mrow), index_(index) {}
+    MysqlFieldIterator(MysqlRow* mrow, unsigned int index);
 
-    MysqlFieldIterator& operator++() {
-      if (index_ < mrow_->num_fields_) ++index_;
-      return *this;
-    }
+    MysqlFieldIterator& operator++();
 
-    bool operator!=(const MysqlFieldIterator& other) const { return index_ != other.index_ || mrow_ != other.mrow_; }
+    bool operator!=(const MysqlFieldIterator& other) const;
 
-    bool operator==(const MysqlFieldIterator& other) const { return index_ == other.index_ && mrow_ == other.mrow_; }
+    bool operator==(const MysqlFieldIterator& other) const;
 
-    std::string operator*() const {
-      if (!mrow_ || index_ >= mrow_->num_fields_) {
-        return "";
-      }
-      return mrow_->row_[index_] ? std::string(mrow_->row_[index_], mrow_->lengths_[index_]) : "";
-    }
+    std::string operator*() const;
 
-    bool IsNull() { return mrow_->row_[index_] == nullptr; }
+    bool IsNull();
 
-    std::string GetFieldName() const { return mrow_->fields_[index_].name; }
+    std::string GetFieldName() const;
 
    private:
     MysqlRow* mrow_;
     unsigned int index_;
   };
 
-  MysqlFieldIterator begin() { return {this, 0}; }
+  MysqlFieldIterator begin();
 
-  MysqlFieldIterator end() { return {this, num_fields_}; }
+  MysqlFieldIterator end();
 
-  std::string_view GetFieldData(unsigned int column_index) { return {row_[column_index], lengths_[column_index]}; }
+  std::string_view GetFieldData(unsigned int column_index);
 
-  bool IsFieldNull(unsigned int column_index) { return row_[column_index] == nullptr; }
+  bool IsFieldNull(unsigned int column_index);
 
-  std::vector<std::string> GetFieldsName() {
-    std::vector<std::string> fields_name;
+  std::vector<std::string> GetFieldsName();
 
-    for (unsigned int i = 0; i < num_fields_; i++) fields_name.emplace_back(fields_[i].name);
+  unsigned int NumFields();
 
-    return fields_name;
-  }
-
-  unsigned int NumFields() { return num_fields_; }
-
-  MysqlRow(MYSQL_FIELD* fields, MYSQL_ROW row, unsigned long* length, unsigned int num_field)
-      : fields_(fields), row_(row), num_fields_(num_field) {
-    for(unsigned int i = 0; i < num_field; i++)
-      lengths_.push_back(length[i]);
-  }
+  MysqlRow(MYSQL_FIELD* fields, MYSQL_ROW row, unsigned long* length, unsigned int num_field);
 
  private:
   MYSQL_FIELD* fields_;
   MYSQL_ROW row_;
-//  unsigned long* lengths_;
-  std::vector<unsigned long> lengths_{};
+  std::vector<unsigned long> lengths_;
   unsigned int num_fields_;
 };
+
+
+
+class MysqlResultsOption {
+ public:
+  size_t dynamic_buffer_init_size = 64;
+};
+
 
 ///@brief Just specialize class MysqlResults
 class OnlyExec {};
@@ -90,38 +76,38 @@ class IterMode {};
 enum class MysqlResultsMode {
   BindType,      // Bind query result data to tuples.
   OnlyExec,      // For SQL which will not return a result set data.
-  NativeString,  // Return result data as vector of string.
+  NativeString,  // Return result data as vector of string_view.
   IterMode       // User Iterator to traverse raw data.
 };
 
-template <MysqlResultsMode M, typename... Args>
-struct ResultSetMapper;
 
 template <typename... Args>
-struct ResultSetMapper<MysqlResultsMode::OnlyExec, Args...> {
+struct ResultSetMapper {
   using type = std::vector<std::tuple<Args...>>;
+  static constexpr MysqlResultsMode mode = MysqlResultsMode::BindType;
 };
 
-template <typename... Args>
-struct ResultSetMapper<MysqlResultsMode::NativeString, Args...> {
-  //  using type = std::vector<std::vector<std::string>>;
+
+template <>
+struct ResultSetMapper<NativeString> {
   using type = std::vector<std::vector<std::string_view>>;
+  static constexpr MysqlResultsMode mode = MysqlResultsMode::NativeString;
 };
 
-template <typename... Args>
-struct ResultSetMapper<MysqlResultsMode::IterMode, Args...> {
+template <>
+struct ResultSetMapper<IterMode> {
   using type = std::vector<MysqlRow>;
+  static constexpr MysqlResultsMode mode = MysqlResultsMode::IterMode;
 };
 
-template <typename... Args>
-struct ResultSetMapper<MysqlResultsMode::BindType, Args...> {
-  using type = std::vector<std::tuple<Args...>>;
+template <>
+struct ResultSetMapper<OnlyExec> {
+  using type = std::vector<std::tuple<OnlyExec>>;
+  static constexpr MysqlResultsMode mode = MysqlResultsMode::OnlyExec;
+
 };
 
-class MysqlResultsOption {
- public:
-  size_t dynamic_buffer_init_size = 64;
-};
+
 
 ///
 ///@brief A class used to store the results of a MySQL query executed by the MysqlConnection class.
@@ -144,25 +130,10 @@ class MysqlResults {
   friend class MysqlExecutor;
 
  public:
-  //  static constexpr bool is_only_exec = std::is_same_v<std::tuple<Args...>, std::tuple<OnlyExec>>;
-  //
-  //  static constexpr bool is_native_string = std::is_same_v<std::tuple<Args...>, std::tuple<NativeString>>;
-  //
-  //  static constexpr bool is_iter_mode = std::is_same_v<std::tuple<Args...>, std::tuple<IterMode>>;
 
-  static constexpr MysqlResultsMode mode = []() {
-    if constexpr (std::is_same_v<std::tuple<Args...>, std::tuple<OnlyExec>>) {
-      return MysqlResultsMode::OnlyExec;
-    } else if constexpr (std::is_same_v<std::tuple<Args...>, std::tuple<NativeString>>) {
-      return MysqlResultsMode::NativeString;
-    } else if constexpr (std::is_same_v<std::tuple<Args...>, std::tuple<IterMode>>) {
-      return MysqlResultsMode::IterMode;
-    } else {
-      return MysqlResultsMode::BindType;
-    }
-  }();
+  static constexpr MysqlResultsMode mode = ResultSetMapper<Args...>::mode;
 
-  using ResultSetType = typename ResultSetMapper<mode, Args...>::type;
+  using ResultSetType = typename ResultSetMapper<Args...>::type;
 
  public:
   MysqlResults();
@@ -179,20 +150,7 @@ class MysqlResults {
 
   ~MysqlResults();
 
-  //  template <typename T = void, typename = std::enable_if_t<!is_only_exec, T>>
-  //  auto &GetResultSet();
-  //
-  //  template <typename T = void, typename = std::enable_if_t<!is_only_exec, T>>
-  //  int GetResultSet(std::vector<std::vector<std::string>> &res);
-  //
-  //  template <typename T = void, typename = std::enable_if_t<!is_only_exec, T>>
-  //  int GetResultSet(std::vector<std::tuple<Args...>> &res);
-
   auto& GetResultSet();
-
-  //  int GetResultSet(std::vector<std::vector<std::string>> &res);
-  //
-  //  int GetResultSet(std::vector<std::tuple<Args...>> &res);
 
   template <typename T>
   bool GetResultSet(T& res);
@@ -265,11 +223,6 @@ class MysqlResults {
 
  private:
   MysqlResultsOption option_;
-
-  //  std::variant< std::vector<std::tuple<Args...>>,          // for bind to types
-  //                std::vector<std::vector<std::string>>,     // for NativeString
-  //                std::vector<MysqlRow>                      // for IterMode
-  //                > result_set;
 
   ResultSetType result_set;
 
@@ -360,16 +313,6 @@ const std::string& MysqlResults<Args...>::GetErrorMessage() {
   return error_message;
 }
 
-// template<typename... Args>
-// MysqlResults<Args...>::MysqlResults() : affected_rows(0), has_value_(false), mysql_res_(nullptr) {
-//   if constexpr (is_native_string)
-//     result_set = std::vector<std::vector<std::string>>();
-//   else if constexpr (is_iter_mode)
-//     result_set = std::vector<MysqlRow>();
-//   else
-//     result_set = std::vector<std::tuple<Args...>>();
-// }
-
 template <typename... Args>
 MysqlResults<Args...>::MysqlResults() : affected_rows(0), has_value_(false), mysql_res_(nullptr) {
   // dummy
@@ -380,53 +323,10 @@ MysqlResults<Args...>::MysqlResults(const MysqlResultsOption& option) : MysqlRes
   option_ = option;
 }
 
-// template<typename... Args>
-// template <typename T, typename >
-// auto &MysqlResults<Args...>::GetResultSet() {
-//   if constexpr (is_native_string)
-//     return std::get<std::vector<std::vector<std::string>>>(result_set);
-//   else
-//     return std::get<std::vector<std::tuple<Args...>>>(result_set);
-// }
-//
-// template<typename... Args>
-// template <typename T, typename >
-// int MysqlResults<Args...>::GetResultSet(std::vector<std::vector<std::string>> &res) {
-//   if (!is_native_string || !has_value_) return -1;
-//   res = std::move(std::get<std::vector<std::vector<std::string>>>(result_set));
-//   has_value_ = false;
-//   return 0;
-// }
-//
-// template<typename... Args>
-// template <typename T, typename >
-// int MysqlResults<Args...>::GetResultSet(std::vector<std::tuple<Args...>> &res) {
-//   if (is_native_string || is_only_exec || !has_value_) return -1;
-//   res = std::move(std::get<std::vector<std::tuple<Args...>>>(result_set));
-//   has_value_ = false;
-//   return 0;
-// }
-
 template <typename... Args>
 auto& MysqlResults<Args...>::GetResultSet() {
   return result_set;
 }
-
-// template<typename... Args>
-// int MysqlResults<Args...>::GetResultSet(std::vector<std::vector<std::string>> &res) {
-//   if (!is_native_string || !has_value_) return -1;
-//   res = std::move(std::get<std::vector<std::vector<std::string>>>(result_set));
-//   has_value_ = false;
-//   return 0;
-// }
-//
-// template<typename... Args>
-// int MysqlResults<Args...>::GetResultSet(std::vector<std::tuple<Args...>> &res) {
-//   if (is_native_string || is_only_exec || !has_value_) return -1;
-//   res = std::move(std::get<std::vector<std::tuple<Args...>>>(result_set));
-//   has_value_ = false;
-//   return 0;
-// }
 
 template <typename... Args>
 template <typename T>
@@ -477,5 +377,3 @@ void MysqlResults<Args...>::Clear() {
 }
 
 }  // namespace trpc::mysql
-
-#endif  // TRPC_CPP_MYSQL_RESULTS_H

@@ -118,9 +118,7 @@ class MysqlServiceProxy : public ServiceProxy {
   ///@brief pool_manager_ only can be inited after the service option has been set.
   bool InitManager();
 
-
   bool InitThreadPool();
-
 
   template <typename... OutputArgs, typename... InputArgs>
   Status UnaryInvoke(const ClientContextPtr& context, const ExecutorPtr& executor, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
@@ -322,8 +320,6 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, const Exe
 
   return context->GetStatus();
 }
-
-
 
 template <typename... OutputArgs, typename... InputArgs>
 Future<MysqlResults<OutputArgs...>>
