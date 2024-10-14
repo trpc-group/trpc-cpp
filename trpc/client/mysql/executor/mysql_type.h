@@ -59,6 +59,8 @@ class MysqlBlob {
 
   size_t size() const;
 
+  std::string_view AsStringView();
+
  private:
   std::string data_;
 };

@@ -23,11 +23,12 @@ bool MysqlRow::MysqlFieldIterator::operator==(const MysqlFieldIterator& other) c
   return index_ == other.index_ && mrow_ == other.mrow_;
 }
 
-std::string MysqlRow::MysqlFieldIterator::operator*() const {
+std::string_view MysqlRow::MysqlFieldIterator::operator*() const {
   if (!mrow_ || index_ >= mrow_->num_fields_) {
     return "";
   }
-  return mrow_->row_[index_] ? std::string(mrow_->row_[index_], mrow_->lengths_[index_]) : "";
+  return mrow_->row_[index_] ?
+          std::string_view(mrow_->row_[index_], mrow_->lengths_[index_]) : std::string_view();
 }
 
 bool MysqlRow::MysqlFieldIterator::IsNull() { return mrow_->row_[index_] == nullptr; }

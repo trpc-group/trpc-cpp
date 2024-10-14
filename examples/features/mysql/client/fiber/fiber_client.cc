@@ -320,12 +320,19 @@ void TestBlob(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
     return;
 
   // three mode for Blob
-  MysqlResults<MysqlBlob> special_res;
+  MysqlResults<MysqlBlob> bind_blob_res;
+  MysqlResults<std::string> bind_str_res;
+
   MysqlResults<NativeString> str_res;
   MysqlResults<IterMode> itr_res;
 
-  proxy->Query(ctx, special_res, "select meta from users where username = ?", "jack");
-  if(std::get<0>(special_res.GetResultSet()[0]) == blob)
+  proxy->Query(ctx, bind_blob_res, "select meta from users where username = ?", "jack");
+  if(std::get<0>(bind_blob_res.GetResultSet()[0]) == blob)
+    std::cout << "same blob\n";
+
+
+  proxy->Query(ctx, bind_str_res, "select meta from users where username = ?", "jack");
+  if(std::get<0>(bind_str_res.GetResultSet()[0]) == blob.AsStringView())
     std::cout << "same blob\n";
 
   proxy->Query(ctx, str_res, "select meta from users where username = ?", "jack");

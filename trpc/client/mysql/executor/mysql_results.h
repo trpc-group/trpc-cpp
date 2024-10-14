@@ -25,7 +25,7 @@ class MysqlRow {
 
     bool operator==(const MysqlFieldIterator& other) const;
 
-    std::string operator*() const;
+    std::string_view operator*() const;
 
     bool IsNull();
 

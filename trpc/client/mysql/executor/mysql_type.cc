@@ -45,4 +45,7 @@ size_t MysqlBlob::size() const {
   return data_.size();
 }
 
+std::string_view MysqlBlob::AsStringView() {
+  return data_;
+}
 }
