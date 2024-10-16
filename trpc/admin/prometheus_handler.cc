@@ -61,7 +61,7 @@ bool PrometheusHandler::CheckAuth(std::string token) {
     TRPC_FMT_ERROR("error username or password: username: {}, password: {}", username, pwd);
     return false;
   }
-  return true;  
+  return true;
 }
 
 void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value& result,
