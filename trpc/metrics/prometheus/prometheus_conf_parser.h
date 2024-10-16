@@ -25,6 +25,7 @@ struct convert<trpc::PrometheusConfig> {
     YAML::Node node;
     node["histogram_module_cfg"] = conf.histogram_module_cfg;
     node["const_labels"] = conf.const_labels;
+    node["auth_cfg"] = conf.auth_cfg;
 
     return node;
   }
@@ -36,6 +37,10 @@ struct convert<trpc::PrometheusConfig> {
 
     if (node["const_labels"]) {
       conf.const_labels = node["const_labels"].as<std::map<std::string, std::string>>();
+    }
+
+    if (node["auth_cfg"]) {
+      conf.auth_cfg = node["auth_cfg"].as<std::map<std::string, std::string>>();
     }
     return true;
   }

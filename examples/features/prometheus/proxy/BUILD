@@ -44,3 +44,13 @@ cc_library(
         "@trpc_cpp//trpc/metrics/prometheus:prometheus_metrics_api",
     ],
 )
+
+cc_binary(
+    name = "push",
+    srcs = ["push.cc"],
+    deps = [
+        "@trpc_cpp//trpc/metrics/prometheus:prometheus_metrics_api",
+        "@trpc_cpp//trpc/log:trpc_log",
+
+    ],
+)

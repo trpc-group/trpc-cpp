@@ -6,7 +6,7 @@ echo "begin"
 sleep 1
 ./bazel-bin/examples/features/prometheus/proxy/forward_server --config=examples/features/prometheus/proxy/trpc_cpp_fiber.yaml &
 sleep 1
-./bazel-bin/examples/features/prometheus/client/client_config --config=examples/features/prometheus/client/trpc_cpp_fiber.yaml
+./bazel-bin/examples/features/prometheus/client/client --client_config=examples/features/prometheus/client/trpc_cpp_fiber.yaml
 
 killall helloworld_svr
 if [ $? -ne 0 ]; then

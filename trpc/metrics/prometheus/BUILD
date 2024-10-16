@@ -10,6 +10,16 @@ filegroup(
 )
 
 cc_library(
+    name = "prometheus_pusher",
+    srcs = ["prometheus_pusher.cc"],
+    hdrs = ["prometheus_pusher.h"],
+    deps = [
+        "//trpc/util/log:logging",
+        "@com_github_jupp0r_prometheus_cpp//push",
+    ],
+)
+
+cc_library(
     name = "prometheus_conf",
     srcs = ["prometheus_conf.cc"],
     hdrs = ["prometheus_conf.h"],
@@ -73,15 +83,20 @@ cc_library(
         ":prometheus_conf",
         ":prometheus_conf_parser",
         "//trpc/util:prometheus",
+        "@com_github_jupp0r_prometheus_cpp//core",
+
         "//trpc/common/config:trpc_config",
+        ":prometheus_pusher",
         "//trpc/metrics",
     ] + select({
         "//conditions:default": [],
         "//trpc:trpc_include_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
+            "@com_github_jupp0r_prometheus_cpp//push",
         ],
         "//trpc:include_metrics_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
+            "@com_github_jupp0r_prometheus_cpp//push",
         ],
     }),
 )

@@ -15,9 +15,16 @@
 #include "trpc/metrics/prometheus/prometheus_metrics.h"
 
 #include "trpc/common/config/trpc_config.h"
-#include "trpc/metrics/prometheus/prometheus_conf_parser.h"
+// #include "trpc/metrics/prometheus/prometheus_conf_parser.h"
 
 namespace trpc {
+
+// PrometheusMetrics::~PrometheusMetrics() {
+//     should_stop_ = true;
+//     if (push_thread_.joinable()) {
+//         push_thread_.join();
+//     }
+// }
 
 int PrometheusMetrics::Init() noexcept {
   bool ret = TrpcConfig::GetInstance()->GetPluginConfig<PrometheusConfig>(
@@ -28,6 +35,15 @@ int PrometheusMetrics::Init() noexcept {
         "will be used.");
   }
   prometheus_conf_.Display();
+
+  registry_=trpc::prometheus::GetRegistry();
+  if (prometheus_conf_.push_mode.enabled) {
+        pusher_ = std::make_unique<PrometheusPusher>(
+            prometheus_conf_.push_mode.gateway_url,
+            prometheus_conf_.push_mode.job_name);
+        // push_thread_ = std::thread(&PrometheusMetrics::PushLoop, this);
+        pusher_->registerCollectable(registry_);
+    }
 
   // initialize prometheus metrics family
   rpc_client_counter_family_ =
@@ -46,6 +62,31 @@ int PrometheusMetrics::Init() noexcept {
       trpc::prometheus::GetHistogramFamily(kPrometheusHistogramName, kPrometheusHistogramDesc);
 
   return 0;
+}
+
+// void PrometheusMetrics::PushLoop() {
+//     while (!should_stop_) {
+//         std::this_thread::sleep_for(std::chrono::seconds(prometheus_conf_.push_mode.push_interval_seconds));
+        
+//         if (should_stop_) break;
+
+//         std::vector<::prometheus::MetricFamily> metrics = registry_->Collect();
+//         if (pusher_->Push(metrics)) {
+//             TRPC_LOG_INFO("Successfully pushed metrics to Pushgateway");
+//         } else {
+//             TRPC_LOG_ERROR("Failed to push metrics to Pushgateway");
+//         }
+//     }
+// }
+
+bool PrometheusMetrics::PushMetrics() {
+    if (!prometheus_conf_.push_mode.enabled || !pusher_) {
+        TRPC_LOG_WARN("Prometheus push mode is not enabled or pusher is not initialized");
+        return false;
+    }
+
+    std::vector<::prometheus::MetricFamily> metrics = registry_->Collect();
+    return pusher_->Push(metrics);
 }
 
 int PrometheusMetrics::ModuleReport(const ModuleMetricsInfo& info) {

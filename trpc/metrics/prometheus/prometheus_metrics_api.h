@@ -22,6 +22,9 @@
 /// @brief Prometheus metrics interfaces for user programing
 namespace trpc::prometheus {
 
+bool PushMetricsInfo();
+
+
 /// @brief Reports metrics data with SUM type
 /// @param labels prometheus metrics labels
 /// @param value the value to increment

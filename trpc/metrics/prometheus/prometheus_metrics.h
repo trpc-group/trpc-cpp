@@ -24,11 +24,13 @@
 #include "prometheus/histogram.h"
 #include "prometheus/summary.h"
 
+
 #include "trpc/metrics/metrics.h"
 #include "trpc/metrics/prometheus/prometheus_common.h"
 #include "trpc/metrics/prometheus/prometheus_conf.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/prometheus.h"
+#include "trpc/metrics/prometheus/prometheus_pusher.h"
 
 namespace trpc {
 
@@ -37,6 +39,10 @@ class PrometheusMetrics : public Metrics {
   std::string Name() const override { return trpc::prometheus::kPrometheusMetricsName; }
 
   int Init() noexcept override;
+
+  // ~PrometheusMetrics() override;
+  bool PushMetrics();
+  const PrometheusConfig& GetConfig() const { return prometheus_conf_; }
 
   int ModuleReport(const ModuleMetricsInfo& info) override;
 
@@ -118,6 +124,13 @@ class PrometheusMetrics : public Metrics {
 
  private:
   PrometheusConfig prometheus_conf_;
+
+  std::unique_ptr<PrometheusPusher> pusher_;
+  std::thread push_thread_;
+  std::atomic<bool> should_stop_{false};
+  std::shared_ptr<::prometheus::Registry> registry_;
+
+  // void PushLoop();
 
   // metrics family for number of client-side RPC calls
   ::prometheus::Family<::prometheus::Counter>* rpc_client_counter_family_;

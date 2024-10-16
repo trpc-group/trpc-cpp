@@ -46,6 +46,15 @@ int ReportHistogramTemplate(const std::map<std::string, std::string>& labels, T&
 
 }  // namespace
 
+bool PushMetricsInfo() {
+    trpc::PrometheusMetricsPtr metrics = GetPlugin();
+    if (!metrics) {
+        return -1;
+      }
+
+    return metrics->PushMetrics();
+}
+
 int ReportSumMetricsInfo(const std::map<std::string, std::string>& labels, double value) {
   trpc::PrometheusMetricsPtr metrics = GetPlugin();
   if (!metrics) {
