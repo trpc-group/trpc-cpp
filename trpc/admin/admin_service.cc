@@ -117,7 +117,9 @@ AdminService::AdminService() {
 
 #ifdef TRPC_BUILD_INCLUDE_PROMETHEUS
   // Prometheus metrics.
-  RegisterCmd(http::OperationType::GET, "/metrics", std::make_shared<admin::PrometheusHandler>());
+  auto prometheus_handle_ptr = std::make_shared<admin::PrometheusHandler>();
+  prometheus_handle_ptr->Init();
+  RegisterCmd(http::OperationType::GET, "/metrics", prometheus_handle_ptr);
 #endif
 
   RegisterCmd(http::OperationType::POST, "/client_detach", std::make_shared<admin::ClientDetachHandler>());

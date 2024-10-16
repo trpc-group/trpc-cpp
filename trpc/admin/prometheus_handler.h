@@ -15,13 +15,13 @@
 #pragma once
 
 #include "trpc/admin/admin_handler.h"
-#include "trpc/util/prometheus.h"
-#include "trpc/util/http/base64.h"
-#include "trpc/util/string/string_helper.h"
-#include "trpc/util/time.h"
+#include "trpc/common/config/trpc_config.h"
 #include "trpc/log/trpc_log.h"
 #include "trpc/metrics/prometheus/prometheus_metrics.h"
-#include "trpc/common/config/trpc_config.h"
+#include "trpc/util/http/base64.h"
+#include "trpc/util/prometheus.h"
+#include "trpc/util/string/string_helper.h"
+#include "trpc/util/time.h"
 
 namespace trpc::admin {
 
@@ -30,16 +30,17 @@ class PrometheusHandler : public AdminHandlerBase {
  public:
   PrometheusHandler();
 
-  void CommandHandle(http::HttpRequestPtr req, rapidjson::Value& result,
-                     rapidjson::Document::AllocatorType& alloc) override;
- private:
   void Init();
 
-  PrometheusConfig prometheus_conf_;   
+  void CommandHandle(http::HttpRequestPtr req, rapidjson::Value& result,
+                     rapidjson::Document::AllocatorType& alloc) override;
+
+ private:
+  bool CheckAuth(std::string token);
 
   struct AuthConf {
     std::string username;
-    std::string password;    
+    std::string password;
   } auth_conf_;
 };
 
