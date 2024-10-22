@@ -104,6 +104,12 @@ void TestAsyncQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
                         });
   std::cout << "do something\n";
   trpc::future::BlockingGet(std::move(future));
+
+  if(future.IsFailed()) {
+    TRPC_FMT_ERROR(future.GetException().what());
+    std::cerr << future.GetException().what() << std::endl;
+    return;
+  }
 }
 
 
@@ -140,6 +146,12 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
           });
 
   auto fu3 = trpc::future::BlockingGet(std::move(fu2));
+
+  if(fu3.IsFailed()) {
+    TRPC_FMT_ERROR(fu3.GetException().what());
+    std::cerr << fu3.GetException().what() << std::endl;
+    return;
+  }
   TransactionHandle handle2(fu3.GetValue0());
 
   // Do query in "Then Chain" and rollback

@@ -164,9 +164,7 @@ TEST_F(MysqlServiceProxyTest, Execute) {
   auto client_context = GetClientContext();
   MysqlResults<OnlyExec> exec_res;
   MysqlTime mtime;
-  mtime.mt.year = 2024;
-  mtime.mt.month = 9;
-  mtime.mt.day = 10;
+  mtime.SetYear(2024).SetMonth(9).SetDay(10);
 
   mock_mysql_service_proxy_->Execute(client_context, exec_res,
                                      "insert into users (username, email, created_at) \
@@ -196,9 +194,8 @@ TEST_F(MysqlServiceProxyTest, Execute) {
 TEST_F(MysqlServiceProxyTest, AsyncExecute) {
   auto client_context = GetClientContext();
   MysqlTime mtime;
-  mtime.mt.year = 2024;
-  mtime.mt.month = 9;
-  mtime.mt.day = 10;
+  mtime.SetYear(2024).SetMonth(9).SetDay(10);
+
 
   auto res = mock_mysql_service_proxy_
                  ->AsyncExecute<OnlyExec>(client_context,
@@ -369,9 +366,8 @@ TEST_F(MysqlServiceProxyTest, Transaction) {
   MysqlResults<OnlyExec> exec_res;
   MysqlResults<NativeString> query_res;
   MysqlTime mtime;
-  mtime.mt.year = 2024;
-  mtime.mt.month = 9;
-  mtime.mt.day = 10;
+  mtime.SetYear(2024).SetMonth(9).SetDay(10);
+
   Status s = mock_mysql_service_proxy_->Begin(client_context, handle);
   EXPECT_EQ(s.OK(), true);
   mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
@@ -387,6 +383,30 @@ TEST_F(MysqlServiceProxyTest, Transaction) {
   EXPECT_EQ(0, query_res.ResultSet().size());
 }
 
+TEST_F(MysqlServiceProxyTest, TransactionNoCommit) {
+  auto client_context = GetClientContext();
+  TransactionHandle handle;
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<NativeString> query_res;
+  MysqlTime mtime;
+  mtime.SetYear(2024).SetMonth(9).SetDay(10);
+
+  Status s = mock_mysql_service_proxy_->Begin(client_context, handle);
+  EXPECT_EQ(s.OK(), true);
+  mock_mysql_service_proxy_->Execute(client_context, handle, exec_res,
+                                     "insert into users (username, email, created_at)"
+                                     "values (\"jack\", \"jack@abc.com\", ?)", mtime);
+  EXPECT_EQ(1, exec_res.GetAffectedRowNum());
+
+  mock_mysql_service_proxy_->Query(client_context, handle, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(1, query_res.ResultSet().size());
+
+
+  handle.GetExecutor()->Close();
+
+  mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
+  EXPECT_EQ(0, query_res.ResultSet().size());
+}
 
 TEST_F(MysqlServiceProxyTest, AsyncTransaction) {
   auto client_context = GetClientContext();
@@ -427,9 +447,8 @@ TEST_F(MysqlServiceProxyTest, AsyncTransaction) {
 
   // Do query in "Then Chain" and rollback
   MysqlTime mtime;
-  mtime.mt.year = 2024;
-  mtime.mt.month = 9;
-  mtime.mt.day = 10;
+  mtime.SetYear(2024).SetMonth(9).SetDay(10);
+
   auto fu4 = mock_mysql_service_proxy_
           ->AsyncExecute<OnlyExec>(client_context, std::move(handle2),
                                    "insert into users (username, email, created_at)"

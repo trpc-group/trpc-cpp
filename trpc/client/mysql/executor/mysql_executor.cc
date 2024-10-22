@@ -42,11 +42,10 @@ MysqlExecutor::~MysqlExecutor() {
   // Usually it will call Close() before destructor
   TRPC_ASSERT(is_connected == false);
   Close();
-  // FreeResult();
 }
 
 void MysqlExecutor::Close() {
-  if (mysql_ != nullptr) {
+  if (mysql_ != nullptr && is_connected) {
     mysql_close(mysql_);
     mysql_ = nullptr;
   }
@@ -143,6 +142,15 @@ uint16_t MysqlExecutor::GetPort() const {
 
 std::string MysqlExecutor::GetErrorMessage() {
   return mysql_error(mysql_);
+}
+
+bool MysqlExecutor::Autocommit(bool mode) {
+  unsigned mode_n = mode ? 1 : 0;
+  if(mysql_autocommit(mysql_, mode_n) != 0)
+    return false;
+
+  auto_commit_ = mode;
+  return true;
 }
 
 }  // namespace trpc::mysql

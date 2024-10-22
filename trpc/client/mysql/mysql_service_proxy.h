@@ -299,14 +299,21 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, const Exe
       } else
         conn = executor;
 
-      if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
-        conn->Execute(res, sql_str, args...);
-      else
-        conn->QueryAll(res, sql_str, args...);
+      if(conn == nullptr) {
+        Status status;
+        status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+        status.SetErrorMessage("connection failed");
+        TRPC_FMT_ERROR("service name:{}, connection failed", GetServiceName());
+        context->SetStatus(std::move(status));
+      } else {
+        if constexpr (MysqlResults<OutputArgs...>::mode == MysqlResultsMode::OnlyExec)
+          conn->Execute(res, sql_str, args...);
+        else
+          conn->QueryAll(res, sql_str, args...);
 
-
-      if(pool != nullptr)
-        pool->Reclaim(0, std::move(conn));
+        if(pool != nullptr)
+          pool->Reclaim(0, std::move(conn));
+      }
 
       e.Set();
     });
@@ -358,14 +365,11 @@ MysqlServiceProxy::AsyncUnaryInvoke(const ClientContextPtr& context, const Execu
       conn = executor;
 
     if (TRPC_UNLIKELY(!conn)) {
-      std::string error;
-      error += "Failed to get connection from pool: timeout while trying to acquire a connection.";
-      error += node_addr.ip + ":" + std::to_string(node_addr.port);
-      TRPC_LOG_ERROR(error);
+      TRPC_FMT_ERROR("service name:{}, connection failed", GetServiceName());
 
       Status status;
       status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
-      status.SetErrorMessage(error);
+      status.SetErrorMessage("connection failed");
 
       context->SetStatus(status);
       p.SetException(CommonException(status.ErrorMessage().c_str()));

@@ -111,6 +111,11 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   ///@brief Close the mysql connection and free the MYSQL*.
   void Close();
 
+  ///@brief set auto commit for current session
+  ///@param mode true if enable auto commit else false
+  ///@return true if no error
+  bool Autocommit(bool mode);
+
   ///@brief Executes an SQL query and retrieves all resulting rows, storing each row as a tuple.
   ///
   /// This function executes the provided SQL query with the specified input arguments.
@@ -128,6 +133,8 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   ///@brief Same as QueryAll, but does not fetch result set, only returns affected rows
   template <typename... InputArgs>
   bool Execute(MysqlResults<OnlyExec>& mysql_results, const std::string& query, const InputArgs&... args);
+
+  std::string GetErrorMessage();
 
   void RefreshAliveTime();
 
@@ -184,8 +191,6 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
   template <typename... OutputArgs>
   bool FetchTruncatedResults(MysqlExecutor::QueryHandle<OutputArgs...>& handle);
 
-  std::string GetErrorMessage();
-
 
  private:
   /// Just protects the `mysql_init` api
@@ -193,14 +198,22 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
 
   bool is_connected;
 
+  bool auto_commit_{true};
+
   MYSQL* mysql_;
+
   uint64_t m_alivetime;
+
   uint64_t executor_id_{0};
 
   std::string hostname_;
+
   std::string username_;
+
   std::string password_;
+
   std::string database_;
+
   uint16_t port_;
 };
 

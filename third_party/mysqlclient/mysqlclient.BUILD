@@ -6,15 +6,16 @@ package(
 
 cc_library(
     name = "mysqlclient_deps",
-    # Exclude libprotobuf to avoid conflicts with the existing protobuf in the project.
-    srcs = glob(["lib/private/*"],
-            exclude = ["lib/private/libproto*"]),
+    srcs = [
+            "lib/private/libcrypto.so.3",
+            "lib/private/libssl.so.3"
+    ],
     visibility = ["//visibility:private"],
 )
 
 cc_library(
     name = "mysqlclient",
-    srcs = glob(["lib/libmysqlclient.*"]),
+    srcs = glob(["lib/libmysqlclient.a"]),
     hdrs = glob([
         "include/**/*.h",
     ]),

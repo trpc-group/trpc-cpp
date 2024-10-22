@@ -62,6 +62,7 @@ RefPtr<MysqlExecutor> MysqlExecutorPoolImpl::GetOrCreate() {
   }
 
   executor = CreateExecutor(shard_id);
+
   if(executor->Connect()) {
     executor_num_.fetch_add(1, std::memory_order_relaxed);
     return executor;

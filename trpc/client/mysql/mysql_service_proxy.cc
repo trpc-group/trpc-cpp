@@ -93,15 +93,23 @@ Status MysqlServiceProxy::Begin(const ClientContextPtr& context, TransactionHand
   MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
   auto executor = pool->GetExecutor();
 
+  Status status;
+  if(executor == nullptr) {
+    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+    status.SetErrorMessage("connection failed");
+    TRPC_FMT_ERROR("service name:{}, connection failed", GetServiceName());
+    context->SetStatus(std::move(status));
+  } else {
+    status = UnaryInvoke(context, executor, res, "begin");
+  }
 
-  Status s = UnaryInvoke(context, executor, res, "begin");
 
-  if(!s.OK()) {
-    context->SetStatus(s);
+  if(!status.OK()) {
+    context->SetStatus(status);
   } else if(!res.OK()) {
-    s = kUnknownErrorStatus;
-    s.SetErrorMessage(res.GetErrorMessage());
-    context->SetStatus(s);
+    status = kUnknownErrorStatus;
+    status.SetErrorMessage(res.GetErrorMessage());
+    context->SetStatus(status);
   } else {
     handle.SetExecutor(std::move(executor));
     handle.SetState(TransactionHandle::TxState::kStart);
@@ -149,7 +157,14 @@ Future<TransactionHandle> MysqlServiceProxy::AsyncBegin(const ClientContextPtr &
 
   MysqlExecutorPool* pool = this->pool_manager_->Get(node_addr);
   auto executor = pool->GetExecutor();
-
+  if(executor == nullptr) {
+    TRPC_FMT_ERROR("service name:{}, connection failed", GetServiceName());
+    Status status;
+    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+    status.SetErrorMessage("connection failed");
+    context->SetStatus(status);
+    return MakeExceptionFuture<TransactionHandle>(CommonException("connection failed"));
+  }
 
   return AsyncUnaryInvoke<OnlyExec>(context, executor, "begin")
           .Then([executor](Future<MysqlResults<OnlyExec>>&& f) mutable {
