@@ -13,6 +13,7 @@ MysqlExecutorPoolImpl::MysqlExecutorPoolImpl(const MysqlExecutorPoolOption& opti
       m_user_(option.user_name),
       m_passwd_(option.password),
       m_db_name_(option.dbname),
+      m_char_set_(option.char_set),
       num_shard_group_(option.num_shard_group),
       max_conn_(option.max_size),
       max_idle_time_(option.max_idle_time){
@@ -73,7 +74,7 @@ RefPtr<MysqlExecutor> MysqlExecutorPoolImpl::CreateExecutor(uint32_t shard_id) {
   uint64_t executor_id = static_cast<uint64_t>(shard_id) << 32;
   executor_id |= executor_id_gen_.fetch_add(1, std::memory_order_relaxed);
 
-  auto executor = MakeRefCounted<MysqlExecutor>(m_ip_, m_user_, m_passwd_, m_db_name_, m_port_);
+  auto executor = MakeRefCounted<MysqlExecutor>(m_ip_, m_user_, m_passwd_, m_db_name_, m_port_, m_char_set_);
   executor->SetExecutorId(executor_id);
   return executor;
 }

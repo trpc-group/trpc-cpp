@@ -10,27 +10,61 @@
 namespace trpc::mysql {
 
 /// @brief A common type for MySQL time.
-/// @note Ensure that sizeof(MYSQL_TIME) == sizeof(MysqlTime).
-///       The generic templates StepInputBind and StepOutputBind rely on this.
-///       If MysqlTime changes and this condition is not met,
-///       additional overloads for data binding functions for MysqlTime will be required.
-class MysqlTime
-{
+class MysqlTime {
  public:
-  //Todo: Friendly constructor and member functions
-  MysqlTime() {
-    mt.year = 2024;
-    mt.month = 1;
-    mt.day = 1;
-    mt.hour = 0;
-    mt.minute = 0;
-    mt.second = 0;
-    mt.second_part = 0;
-    mt.time_type = MYSQL_TIMESTAMP_DATETIME;
-    mt.neg = 0;
-  }
+  MysqlTime();
 
-  MYSQL_TIME mt;
+  explicit MysqlTime(MYSQL_TIME my_time);
+
+  MysqlTime& SetYear(unsigned int year);
+
+  MysqlTime& SetMonth(unsigned int month);
+
+  MysqlTime& SetDay(unsigned int day);
+
+  MysqlTime& SetHour(unsigned int hour);
+
+  MysqlTime& SetMinute(unsigned int minute);
+
+  MysqlTime& SetSecond(unsigned int second);
+
+  MysqlTime& SetSecondPart(unsigned long second_part);
+
+  MysqlTime& SetTimeType(enum_mysql_timestamp_type time_type);
+
+  unsigned int GetYear() const;
+
+  unsigned int GetMonth() const;
+
+  unsigned int GetDay() const;
+
+  unsigned int GetHour() const;
+
+  unsigned int GetMinute() const;
+
+  unsigned int GetSecond() const;
+
+  unsigned long SetSecondPart() const;
+
+  enum_mysql_timestamp_type GetTimeType() const;
+
+
+  /// @brief Converts the MYSQL_TIME object to a string representation.
+  /// The format of the string is "YYYY-MM-DD HH:MM:SS".
+  std::string ToString() const;
+
+
+  /// @brief Parses a string in the format "YYYY-MM-DD HH:MM:SS"
+  /// and updates the MYSQL_TIME object accordingly.
+  /// The input string must match the expected format.
+  void FromString(const std::string& timeStr);
+
+
+  /// @brief For mysql_binder.h
+  const char* DataConstPtr() const;
+
+ private:
+  MYSQL_TIME mt{};
 };
 
 

@@ -9,20 +9,21 @@ global:
 client:
   service:
     - name: mysql_server
-      protocol: trpc
-      timeout: 3000
-      network: tcp
-      conn_type: long
-      is_conn_complex: true
+      protocol: mysql
+      timeout: 4000
       target: 127.0.0.1:3306
       selector_name: direct
+      max_conn_num: 16
+      idle_time: 40000
 
       mysql:
         user_name: "root"
         password: "abc123"
         dbname: "test"
-        enable: true
-        max_size: 8
+        char_set: "utf8mb4"
+        num_shard_group: 4
+        thread_num: 4
+        thread_bind_core: false
 
 
 plugins:
@@ -31,4 +32,4 @@ plugins:
       - name: default
         sinks:
           local_file:
-            filename: trpc_fiber_client.log
+            filename: trpc_future_client.log

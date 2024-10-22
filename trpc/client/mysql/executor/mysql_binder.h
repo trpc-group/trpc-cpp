@@ -63,6 +63,14 @@ inline void StepInputBind(MYSQL_BIND& bind, const MysqlBlob& value) {
   bind.is_unsigned = false;
 }
 
+
+inline void StepInputBind(MYSQL_BIND& bind, const MysqlTime& value) {
+  std::memset(&bind, 0, sizeof(bind));
+  bind.buffer_type = MYSQL_TYPE_DATETIME;
+  bind.buffer = BIND_POINTER_CAST(value.DataConstPtr());
+  bind.is_unsigned = true;
+}
+
 ///@brief use string_view to handle "string", "char *, char[N]"
 inline void StepInputBind(MYSQL_BIND& bind, std::string_view value) {
   std::memset(&bind, 0, sizeof(bind));
@@ -133,6 +141,10 @@ inline void BindOutputImpl(std::vector<MYSQL_BIND>& output_binds,
 template <typename T>
 inline void StepTupleSet(T& value, const MYSQL_BIND& bind) {
   value = *static_cast<const decltype(&value)>(bind.buffer);
+}
+
+inline void StepTupleSet(MysqlTime& value, const MYSQL_BIND& bind) {
+  value = {*static_cast<MysqlTime*>(bind.buffer)};
 }
 
 inline void StepTupleSet(std::string& value, const MYSQL_BIND& bind) {

@@ -30,7 +30,6 @@
 #include "trpc/future/future_utility.h"
 
 using trpc::mysql::OnlyExec;
-using trpc::mysql::IterMode;
 using trpc::mysql::NativeString;
 using trpc::mysql::MysqlResults;
 using trpc::mysql::MysqlTime;
@@ -47,13 +46,14 @@ void printResult(const std::vector<std::tuple<int, std::string>>& res_data) {
   }
 }
 
-void PrintResultTable(const MysqlResults<IterMode>& res) {
-  std::vector<std::string> fields_name;
+void PrintResultTable(const MysqlResults<NativeString>& res) {
+  std::vector<std::string> fields_name = res.GetFieldsName();
   bool flag = false;
   std::vector<size_t> column_widths;
-  for (auto row: res) {
+  auto& res_set = res.ResultSet();
+
+  for (auto& row : res_set) {
     if (!flag) {
-      fields_name = row.GetFieldsName();
       column_widths.resize(fields_name.size(), 0);
       for (size_t i = 0; i < fields_name.size(); ++i)
         column_widths[i] = std::max(column_widths[i], fields_name[i].length());
@@ -61,7 +61,7 @@ void PrintResultTable(const MysqlResults<IterMode>& res) {
     }
 
     size_t i = 0;
-    for (auto field: row) {
+    for (auto field : row) {
       column_widths[i] = std::max(column_widths[i], field.length());
       ++i;
     }
@@ -78,15 +78,14 @@ void PrintResultTable(const MysqlResults<IterMode>& res) {
   std::cout << std::endl;
   std::cout << std::setfill(' ');
 
-  for (auto row: res) {
-    int i = 0;
-    for (auto field_itr = row.begin(); field_itr != row.end(); ++field_itr) {
-      std::cout << std::left << std::setw(column_widths[i] + 2) << (field_itr.IsNull() ? "null" : *field_itr);
-      ++i;
+  for(int i = 0; i < res_set.size(); i++) {
+    for(int j = 0; j < res_set[i].size(); j++) {
+      std::cout << std::left << std::setw(column_widths[j] + 2) << (res.IsValueNull(i, j) ? "null" : res_set[i][j]);
     }
     std::cout << std::endl;
   }
 }
+
 
 
 void TestAsyncQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
@@ -98,7 +97,7 @@ void TestAsyncQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
                         .Then([](trpc::Future<ResultType>&& f){
                           if(f.IsReady()) {
                             auto res = f.GetValue0();
-                            printResult(res.GetResultSet());
+                            printResult(res.ResultSet());
                             return trpc::MakeReadyFuture();
                           }
                           return trpc::MakeExceptionFuture<>(f.GetException());
@@ -110,9 +109,8 @@ void TestAsyncQuery(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 
 void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
   MysqlResults<OnlyExec> exec_res;
-  MysqlResults<IterMode> query_res;
+  MysqlResults<NativeString> query_res;
   TransactionHandle handle;
-  int table_rows = 0;
 
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
   proxy->Query(ctx, query_res, "select * from users");
@@ -129,8 +127,8 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
   trpc::future::BlockingGet(std::move(fu));
 
   auto fu2 = proxy
-          ->AsyncQuery<IterMode>(ctx, std::move(handle), "select username from users where username = ?", "alice")
-          .Then([](Future<TransactionHandle, MysqlResults<IterMode>>&& f) mutable {
+          ->AsyncQuery<NativeString>(ctx, std::move(handle), "select username from users where username = ?", "alice")
+          .Then([](Future<TransactionHandle, MysqlResults<NativeString>>&& f) mutable {
             if(f.IsFailed())
               return trpc::MakeExceptionFuture<TransactionHandle>(f.GetException());
             auto t = f.GetValue();
@@ -146,9 +144,7 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 
   // Do query in "Then Chain" and rollback
   MysqlTime mtime;
-  mtime.mt.year = 2024;
-  mtime.mt.month = 9;
-  mtime.mt.day = 10;
+  mtime.SetYear(2024).SetMonth(9).SetDay(10);
   auto fu4 = proxy
           ->AsyncExecute<OnlyExec>(ctx, std::move(handle2),
                                    "insert into users (username, email, created_at)"
@@ -162,7 +158,7 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
                       << "insert into users (username, email, created_at)\n"
                       << "values (\"jack\", \"jack@abc.com\", \"2024-9-10\")\n\n"
                       << "affected rows: "
-                      << res.GetAffectedRows()
+                      << res.GetAffectedRowNum()
                       << "\n";
 
             return proxy
@@ -171,18 +167,18 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
           })
           .Then([proxy, ctx](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f) {
             if(f.IsFailed())
-              return trpc::MakeExceptionFuture<TransactionHandle, MysqlResults<IterMode>>(f.GetException());
+              return trpc::MakeExceptionFuture<TransactionHandle, MysqlResults<NativeString>>(f.GetException());
             auto t = f.GetValue();
             auto res = std::move(std::get<1>(t));
             std::cout << "\n>>> "
                       << "update users set email = \"jack@gmail.com\" where username = \"jack\"\n\n"
                       << "affected rows: "
-                      << res.GetAffectedRows()
+                      << res.GetAffectedRowNum()
                       << "\n";
 
-            return proxy->AsyncQuery<IterMode>(ctx, std::move(std::get<0>(t)), "select * from users");
+            return proxy->AsyncQuery<NativeString>(ctx, std::move(std::get<0>(t)), "select * from users");
           })
-          .Then([proxy, ctx](Future<TransactionHandle, MysqlResults<IterMode>>&& f){
+          .Then([proxy, ctx](Future<TransactionHandle, MysqlResults<NativeString>>&& f){
             if(f.IsFailed())
               return trpc::MakeExceptionFuture<TransactionHandle>(f.GetException());
             auto t = f.GetValue();
@@ -202,7 +198,7 @@ void TestAsyncTx(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
             std::cout << "\n>>> rollback\n"
                       << "transaction end\n"
                       << "\n>>> select * from users\n";
-            MysqlResults<IterMode> query_res;
+            MysqlResults<NativeString> query_res;
             proxy->Query(ctx, query_res, "select * from users");
             PrintResultTable(query_res);
 

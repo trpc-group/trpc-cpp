@@ -22,13 +22,13 @@ namespace trpc::mysql {
 class Formatter {
  public:
   template <typename T>
-  static T QuotesIfNeeded(const T& arg) {
+  static T SpecialConvert(const T& arg) {
     return arg;
   }
 
   template <size_t N>
-  static std::string QuotesIfNeeded(const char (&arg)[N]) {
-    return QuotesIfNeeded(static_cast<const char*>(arg));
+  static std::string SpecialConvert(const char (&arg)[N]) {
+    return SpecialConvert(static_cast<const char*>(arg));
   }
 
   static std::string ConvertPlaceHolder(const std::string& sql) {
@@ -46,13 +46,15 @@ class Formatter {
     return result;
   }
 
-  static std::string QuotesIfNeeded(const std::string& arg) { return "'" + arg + "'"; }
+  static std::string SpecialConvert(const std::string& arg) { return "'" + arg + "'"; }
 
-  static std::string QuotesIfNeeded(const char* const& arg) { return arg ? "'" + std::string(arg) + "'" : "NULL"; }
+  static std::string SpecialConvert(const char* const& arg) { return arg ? "'" + std::string(arg) + "'" : "NULL"; }
+
+  static std::string SpecialConvert(const MysqlTime& arg) { return "'" + arg.ToString() + "'"; }
 
   template <typename... Args>
   static std::string FormatQuery(const std::string& query, const Args&... args) {
-    return util::FormatString(ConvertPlaceHolder(query), QuotesIfNeeded(args)...);
+    return util::FormatString(ConvertPlaceHolder(query), SpecialConvert(args)...);
   }
 };
 
@@ -154,9 +156,6 @@ class MysqlExecutor : public RefCounted<MysqlExecutor> {
 
   template <typename... InputArgs>
   bool QueryAllInternal(MysqlResults<NativeString>& mysql_results, const std::string& query, const InputArgs&... args);
-
-  template <typename... InputArgs>
-  bool QueryAllInternal(MysqlResults<IterMode>& mysql_results, const std::string& query, const InputArgs&... args);
 
   ///@brief Executes an SQL with prepareed statement.
   ///@param query The SQL query to be executed as a string which uses "?" as placeholders.
@@ -326,43 +325,12 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
 }
 
 template <typename... InputArgs>
-bool MysqlExecutor::QueryAllInternal(MysqlResults<IterMode>& mysql_result, const std::string& query,
-                                     const InputArgs&... args) {
-  mysql_result.Clear();
-  std::string query_str = Formatter::FormatQuery(query, args...);
-  auto& results = mysql_result.GetResultSet();
-
-  if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
-    mysql_result.SetErrorMessage(GetErrorMessage());
-    return false;
-  }
-
-  MYSQL_RES* res_ptr = mysql_store_result(mysql_);
-  if (res_ptr == nullptr) {
-    mysql_result.SetErrorMessage(GetErrorMessage());
-    return false;
-  }
-
-  mysql_result.SetRawMysqlRes(res_ptr);
-  MYSQL_ROW row;
-  while ((row = mysql_fetch_row(res_ptr)) != nullptr) {
-    unsigned long* lengths;
-    lengths = mysql_fetch_lengths(res_ptr);
-
-    results.emplace_back(mysql_fetch_fields(res_ptr), row, lengths, mysql_num_fields(res_ptr));
-  }
-
-  mysql_result.SetFieldsName(res_ptr);
-  return true;
-}
-
-template <typename... InputArgs>
 bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, const std::string& query,
                                      const InputArgs&... args) {
   mysql_result.Clear();
   std::string query_str = Formatter::FormatQuery(query, args...);
   MYSQL_ROW row;
-  auto& results = mysql_result.GetResultSet();
+  auto& results = mysql_result.MutableResultSet();
 
   if (mysql_real_query(mysql_, query_str.c_str(), query_str.length())) {
     mysql_result.SetErrorMessage(GetErrorMessage());
@@ -380,14 +348,14 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
   while ((row = mysql_fetch_row(res_ptr)) != nullptr) {
     unsigned long* lengths;
     results.emplace_back();
-    mysql_result.GetNullFlag().emplace_back(num_fields, false);
+    mysql_result.null_flags.emplace_back(num_fields, false);
     lengths = mysql_fetch_lengths(res_ptr);
 
     for (unsigned long i = 0; i < num_fields; i++) {
       if (row[i])
         results.back().emplace_back(row[i], lengths[i]);
       else {
-        mysql_result.GetNullFlag().back()[i] = true;
+        mysql_result.null_flags.back()[i] = true;
         results.back().emplace_back("");
       }
     }
@@ -404,8 +372,8 @@ bool MysqlExecutor::FetchResults(MysqlExecutor::QueryHandle<OutputArgs...>& hand
   if (mysql_stmt_store_result(handle.statement->STMTPointer()) != 0) return false;
 
   int status = 0;
-  auto& results = handle.mysql_results->GetResultSet();
-  auto& null_flags = handle.mysql_results->GetNullFlag();
+  auto& results = handle.mysql_results->MutableResultSet();
+  auto& res_null_flags = handle.mysql_results->null_flags;
   while (true) {
     status = mysql_stmt_fetch(handle.statement->STMTPointer());
     if (status == 1 || status == MYSQL_NO_DATA) break;
@@ -418,7 +386,7 @@ bool MysqlExecutor::FetchResults(MysqlExecutor::QueryHandle<OutputArgs...>& hand
     std::tuple<OutputArgs...> row_res;
     SetResultTuple(row_res, *handle.output_binds);
     results.push_back(std::move(row_res));
-    null_flags.emplace_back(*handle.null_flag_buffer);
+    res_null_flags.emplace_back(*handle.null_flag_buffer);
   }
 
   if (status == 1) return false;

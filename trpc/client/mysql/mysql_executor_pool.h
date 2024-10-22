@@ -55,6 +55,7 @@ class MysqlExecutorPoolImpl : public MysqlExecutorPool {
   std::string m_user_;
   std::string m_passwd_;
   std::string m_db_name_;
+  std::string m_char_set_;
 
   uint32_t num_shard_group_{4};
   std::atomic<uint32_t> executor_num_{0};

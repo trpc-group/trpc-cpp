@@ -21,7 +21,7 @@ bool MysqlServiceProxy::InitManager() {
   pool_option.max_size = option->max_conn_num;
   pool_option.max_idle_time = option->idle_time;
   pool_option.num_shard_group = option->mysql_conf.num_shard_group;
-
+  pool_option.char_set = option->mysql_conf.char_set;
   pool_manager_ = std::make_unique<MysqlExecutorPoolManager>(std::move(pool_option));
   return true;
 }
@@ -98,7 +98,7 @@ Status MysqlServiceProxy::Begin(const ClientContextPtr& context, TransactionHand
 
   if(!s.OK()) {
     context->SetStatus(s);
-  } else if(!res.IsSuccess()) {
+  } else if(!res.OK()) {
     s = kUnknownErrorStatus;
     s.SetErrorMessage(res.GetErrorMessage());
     context->SetStatus(s);
@@ -167,7 +167,7 @@ Status MysqlServiceProxy::Commit(const ClientContextPtr &context, TransactionHan
   MysqlResults<OnlyExec> res;
   Status s = Execute(context, handle, res, "commit");
 
-  if(!res.IsSuccess()) {
+  if(!res.OK()) {
     Status status = kUnknownErrorStatus;
     status.SetErrorMessage(res.GetErrorMessage());
     context->SetStatus(status);
@@ -182,7 +182,7 @@ Status MysqlServiceProxy::Rollback(const ClientContextPtr &context, TransactionH
   MysqlResults<OnlyExec> res;
   Status s = Execute(context, handle, res, "rollback");
 
-  if(!res.IsSuccess()) {
+  if(!res.OK()) {
     Status status = kUnknownErrorStatus;
     status.SetErrorMessage(res.GetErrorMessage());
     context->SetStatus(status);

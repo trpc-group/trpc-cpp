@@ -6,11 +6,8 @@ global:
 client:
   service:
     - name: mysql_server
-      protocol: trpc
-      timeout: 3000
-      network: tcp
-      conn_type: long
-      is_conn_complex: true
+      protocol: mysql
+      timeout: 4000
       target: 127.0.0.1:3306
       selector_name: direct
       max_conn_num: 16
@@ -20,10 +17,10 @@ client:
         user_name: "root"
         password: "abc123"
         dbname: "test"
-        num_shard_group: 2
-        thread_num: 6
-        thread_bind_core: true
-        enable: true
+        char_set: "utf8mb4"
+        num_shard_group: 4
+        thread_num: 4
+        thread_bind_core: false
 
 
 plugins:

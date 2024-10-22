@@ -382,7 +382,7 @@ MysqlServiceProxy::AsyncUnaryInvoke(const ClientContextPtr& context, const Execu
 
     ProxyStatistics(context);
 
-    if (res.IsSuccess())
+    if (res.OK())
       p.SetValue(std::move(res));
     else
       p.SetException(CommonException(res.GetErrorMessage().c_str()));

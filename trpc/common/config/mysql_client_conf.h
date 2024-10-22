@@ -33,18 +33,19 @@ struct MysqlClientConf {
   /// @brief db name
   std::string dbname;
 
+  std::string char_set{"utf8mb4"};
+
   // Thread num for thread pool
   size_t thread_num{4};
 
   // thread_bind_core for thread pool
-  bool thread_bind_core{true};
+  bool thread_bind_core{false};
 
   /// Only For MysqlExecutorPoolImpl
   uint32_t num_shard_group{4};
 
   /// @brief Whether enable auth
-  bool enable{true};
-
+  bool enable{false};
 
   void Display() const;
 };

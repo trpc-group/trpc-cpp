@@ -16,6 +16,8 @@ struct MysqlExecutorPoolOption {
   /// @brief db name
   std::string dbname;
 
+  std::string char_set;
+
   uint32_t max_size{0};       // Maximum number of connections in the pool
   uint64_t max_idle_time{0};  // Maximum idle time for connections
   uint32_t num_shard_group{4};

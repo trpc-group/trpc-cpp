@@ -12,53 +12,6 @@
 
 namespace trpc::mysql {
 
-/// @brief This is an abstract representation of a row pointer and does not contain any actual data.
-class MysqlRow {
- public:
-  class MysqlFieldIterator {
-   public:
-    MysqlFieldIterator(MysqlRow* mrow, unsigned int index);
-
-    MysqlFieldIterator& operator++();
-
-    bool operator!=(const MysqlFieldIterator& other) const;
-
-    bool operator==(const MysqlFieldIterator& other) const;
-
-    std::string_view operator*() const;
-
-    bool IsNull();
-
-    std::string GetFieldName() const;
-
-   private:
-    MysqlRow* mrow_;
-    unsigned int index_;
-  };
-
-  MysqlFieldIterator begin();
-
-  MysqlFieldIterator end();
-
-  std::string_view GetFieldData(unsigned int column_index);
-
-  bool IsFieldNull(unsigned int column_index);
-
-  std::vector<std::string> GetFieldsName();
-
-  unsigned int NumFields();
-
-  MysqlRow(MYSQL_FIELD* fields, MYSQL_ROW row, unsigned long* length, unsigned int num_field);
-
- private:
-  MYSQL_FIELD* fields_;
-  MYSQL_ROW row_;
-  std::vector<unsigned long> lengths_;
-  unsigned int num_fields_;
-};
-
-
-
 class MysqlResultsOption {
  public:
   size_t dynamic_buffer_init_size = 64;
@@ -70,14 +23,11 @@ class OnlyExec {};
 
 class NativeString {};
 
-class IterMode {};
-
 /// @brief Mode for `MysqlResults`
 enum class MysqlResultsMode {
   BindType,      // Bind query result data to tuples.
   OnlyExec,      // For SQL which will not return a result set data.
   NativeString,  // Return result data as vector of string_view.
-  IterMode       // User Iterator to traverse raw data.
 };
 
 
@@ -95,18 +45,11 @@ struct ResultSetMapper<NativeString> {
 };
 
 template <>
-struct ResultSetMapper<IterMode> {
-  using type = std::vector<MysqlRow>;
-  static constexpr MysqlResultsMode mode = MysqlResultsMode::IterMode;
-};
-
-template <>
 struct ResultSetMapper<OnlyExec> {
   using type = std::vector<std::tuple<OnlyExec>>;
   static constexpr MysqlResultsMode mode = MysqlResultsMode::OnlyExec;
 
 };
-
 
 
 ///
@@ -150,65 +93,28 @@ class MysqlResults {
 
   ~MysqlResults();
 
-  auto& GetResultSet();
+  auto& MutableResultSet();
+
+  const auto& ResultSet() const;
 
   template <typename T>
   bool GetResultSet(T& res);
 
-  std::vector<std::vector<uint8_t>>& GetNullFlag();
+  const std::vector<std::vector<uint8_t>>& GetNullFlag();
 
-  const std::vector<std::string>& GetFieldsName();
+  const std::vector<std::string>& GetFieldsName() const;
 
   const MysqlResultsOption& GetOption();
 
-  size_t GetAffectedRows() const;
+  size_t GetAffectedRowNum() const;
 
-  bool IsSuccess() const;
+  bool IsValueNull(size_t row_index, size_t col_index) const;
+
+  bool OK() const;
 
   void Clear();
 
   const std::string& GetErrorMessage();
-
-  class MysqlRowIterator {
-   public:
-    MysqlRowIterator(MYSQL_RES* res, MYSQL_ROW row, unsigned long* lengths, size_t row_index)
-        : result_(res), row_(row), lengths_(lengths), current_row_index_(row_index) {}
-
-    MysqlRowIterator& operator++() {
-      row_ = mysql_fetch_row(result_);
-      lengths_ = mysql_fetch_lengths(result_);
-      ++current_row_index_;
-      return *this;
-    }
-
-    MysqlRow operator*() { return {mysql_fetch_fields(result_), row_, lengths_, mysql_num_fields(result_)}; }
-
-    bool operator!=(const MysqlRowIterator& other) const { return row_ != other.row_; }
-
-   private:
-    MYSQL_RES* result_;
-    MYSQL_ROW row_;
-    unsigned long* lengths_;
-    size_t current_row_index_;
-  };
-
-  /// @brief Get the row iterator.
-  /// @tparam T Dummy parameter for disabling this member when `is_iter_mode` is false
-  template <typename T = void, typename = std::enable_if_t<mode == MysqlResultsMode::IterMode, T>>
-  MysqlRowIterator begin() const {
-    if (mysql_res_ == nullptr) return end();
-    mysql_data_seek(mysql_res_, 0);
-    MYSQL_ROW row = mysql_fetch_row(mysql_res_);
-    unsigned long* lengths = mysql_fetch_lengths(mysql_res_);
-    return MysqlRowIterator(mysql_res_, row, lengths, 0);
-  }
-
-  /// @brief Get the row iterator.
-  /// @tparam T Dummy parameter for disabling this member when `is_iter_mode` is false
-  template <typename T = void, typename = std::enable_if_t<mode == MysqlResultsMode::IterMode, T>>
-  MysqlRowIterator end() const {
-    return MysqlRowIterator(mysql_res_, nullptr, nullptr, 0);
-  }
 
  private:
   void SetRawMysqlRes(MYSQL_RES* res);
@@ -226,6 +132,8 @@ class MysqlResults {
 
   ResultSetType result_set;
 
+  std::vector<std::string> fields_name_;
+
   std::vector<std::vector<uint8_t>> null_flags;
 
   std::string error_message;
@@ -234,14 +142,12 @@ class MysqlResults {
 
   bool has_value_;
 
-  std::vector<std::string> fields_name_;
-
-  /// @brief For IterMode and NativeString, it will represent real data.
+  /// @brief For NativeString, it will represent real data.
   MYSQL_RES* mysql_res_;
 };
 
 template <typename... Args>
-const std::vector<std::string>& MysqlResults<Args...>::GetFieldsName() {
+const std::vector<std::string>& MysqlResults<Args...>::GetFieldsName() const {
   return fields_name_;
 }
 
@@ -260,6 +166,7 @@ MysqlResults<Args...>& MysqlResults<Args...>::operator=(MysqlResults&& other) no
   if (this != &other) {
     option_ = std::move(other.option_);
     result_set = std::move(other.result_set);
+    fields_name_ = std::move(other.fields_name_);
     null_flags = std::move(other.null_flags);
     error_message = std::move(other.error_message);
     affected_rows = other.affected_rows;
@@ -275,6 +182,7 @@ template <typename... Args>
 MysqlResults<Args...>::MysqlResults(MysqlResults&& other) noexcept
     : option_(std::move(other.option_)),
       result_set(std::move(other.result_set)),
+      fields_name_(std::move(other.fields_name_)),
       null_flags(std::move(other.null_flags)),
       error_message(std::move(other.error_message)),
       affected_rows(other.affected_rows),
@@ -324,7 +232,12 @@ MysqlResults<Args...>::MysqlResults(const MysqlResultsOption& option) : MysqlRes
 }
 
 template <typename... Args>
-auto& MysqlResults<Args...>::GetResultSet() {
+auto& MysqlResults<Args...>::MutableResultSet() {
+  return result_set;
+}
+
+template <typename... Args>
+const auto& MysqlResults<Args...>::ResultSet() const {
   return result_set;
 }
 
@@ -333,12 +246,23 @@ template <typename T>
 bool MysqlResults<Args...>::GetResultSet(T& res) {
   if (!has_value_) return false;
 
-  res = std::move(result_set);
-  return true;
+
+  if constexpr (mode == MysqlResultsMode::NativeString) {
+    res.clear();
+    for (const auto& row : result_set) {
+      res.emplace_back(row.begin(), row.end());
+    }
+
+    return true;
+  } else {
+    res = std::move(result_set);
+    has_value_ = false;
+    return true;
+  }
 }
 
 template <typename... Args>
-std::vector<std::vector<uint8_t>>& MysqlResults<Args...>::GetNullFlag() {
+const std::vector<std::vector<uint8_t>>& MysqlResults<Args...>::GetNullFlag() {
   return null_flags;
 }
 
@@ -348,7 +272,7 @@ const MysqlResultsOption& MysqlResults<Args...>::GetOption() {
 }
 
 template <typename... Args>
-size_t MysqlResults<Args...>::GetAffectedRows() const {
+size_t MysqlResults<Args...>::GetAffectedRowNum() const {
   return affected_rows;
 }
 
@@ -359,7 +283,13 @@ size_t MysqlResults<Args...>::SetAffectedRows(size_t n_rows) {
 }
 
 template <typename... Args>
-bool MysqlResults<Args...>::IsSuccess() const {
+bool MysqlResults<Args...>::IsValueNull(size_t row_index, size_t col_index) const {
+  return null_flags[row_index][col_index];
+}
+
+
+template <typename... Args>
+bool MysqlResults<Args...>::OK() const {
   return error_message.empty();
 }
 
@@ -367,8 +297,10 @@ template <typename... Args>
 void MysqlResults<Args...>::Clear() {
   null_flags.clear();
   error_message.clear();
+  fields_name_.clear();
   has_value_ = false;
-  GetResultSet().clear();
+  affected_rows = 0;
+  MutableResultSet().clear();
 
   if (mysql_res_) {
     mysql_free_result(mysql_res_);
