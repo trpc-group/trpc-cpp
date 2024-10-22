@@ -12,7 +12,7 @@ do
     local field_reserved   = ProtoField.uint8(protocol_name .. ".reserved",     "Reserved",    base.DEC)
     trpc_proto.fields      = {field_magic, field_type, field_stream, field_total_size, field_header_size, field_unique_id, field_version, field_reserved}
 	
-	local MAGIC_CODE_PRPC = "0930"
+    local MAGIC_CODE_PRPC = "0930"
     local PROTO_HEADER_LENGTH = 16
 
     local server_port      = 12345
@@ -23,7 +23,7 @@ do
     local protobuf_dissector = Dissector.get("protobuf")
 
     function trpc_proto.dissector(buffer, packet, tree) 
-       packet.cols.protocol:set("TRPC")
+        packet.cols.protocol:set("tRPC")
 
         if tcp_src_port()() == server_port then
             packet.private["pb_msg_type"] = "message,trpc.ResponseProtocol"
@@ -73,7 +73,7 @@ do
 	
 	    local magic = tvbuf:range(0, 2):bytes():tohex()
       -- for range dissectors
-        if magic ~= MAGIC_CODE_PRPC  then
+        if magic ~= MAGIC_CODE_TRPC  then
             return false
         end
         trpc_proto.dissector(tvbuf, pktinfo, root)
