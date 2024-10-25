@@ -1,7 +1,3 @@
-//
-// Created by kosmos on 10/7/24.
-//
-
 #pragma once
 
 #include "trpc/client/mysql/executor/mysql_executor.h"
@@ -11,7 +7,7 @@ namespace trpc::mysql {
 class TransactionHandle : public RefCounted<TransactionHandle>{
 
  public:
-  enum class TxState {kNotInited, kStart, kEnd, kInValid};
+  enum class TxState {kNotInited, kStart, kRollBacked, kCommitted, kInValid};
 
   explicit TransactionHandle(RefPtr<MysqlExecutor> &&executor) : executor_(std::move(executor)) {}
 

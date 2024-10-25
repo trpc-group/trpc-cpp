@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "mysqlclient/mysql.h"
 #include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
+#include "mysqlclient/mysql.h"
+#include "mysql_binder.h"
+#include "mysql_binder.h"
+
 
 namespace trpc::mysql {
 
@@ -121,6 +124,8 @@ class MysqlResults {
 
   void SetFieldsName(MYSQL_RES* res);
 
+  bool CheckFieldsType(MYSQL_RES* res);
+
   size_t SetAffectedRows(size_t n_rows);
 
   std::string& SetErrorMessage(const std::string& message);
@@ -158,7 +163,28 @@ void MysqlResults<Args...>::SetFieldsName(MYSQL_RES* res) {
   MYSQL_FIELD* fields_meta = mysql_fetch_fields(res);
   unsigned long fields_num = mysql_num_fields(res);
 
-  for (unsigned long i = 0; i < fields_num; ++i) fields_name_.emplace_back(fields_meta[i].name);
+  for (unsigned long i = 0; i < fields_num; ++i)
+    fields_name_.emplace_back(fields_meta[i].name);
+}
+
+template <typename... Args>
+bool MysqlResults<Args...>::CheckFieldsType(MYSQL_RES* res) {
+  MYSQL_FIELD* fields_meta = mysql_fetch_fields(res);
+
+  unsigned long i = 0;
+  std::vector<unsigned long> failed_index;
+  ((OutputTypeValid<Args>(fields_meta[i].type) ? (void)i++ : failed_index.push_back(i++)), ...);
+
+  if(!failed_index.empty()) {
+    std::string error = "Bind output type warning for fields: (";
+    error += std::string(fields_meta[failed_index[0]].name);
+    for(i = 1; i < failed_index.size(); i++)
+      error.append(", ").append(fields_meta[failed_index[i]].name);
+    error.append(").");
+    error_message.append(error);
+    return false;
+  }
+  return true;
 }
 
 template <typename... Args>

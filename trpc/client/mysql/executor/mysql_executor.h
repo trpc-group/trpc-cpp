@@ -333,6 +333,7 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<OutputArgs...>& mysql_results,
   }
 
   mysql_results.SetFieldsName(stmt.GetResultsMeta());
+  mysql_results.CheckFieldsType(stmt.GetResultsMeta());
   stmt.CloseStatement();
   return true;
 }
@@ -376,7 +377,6 @@ bool MysqlExecutor::QueryAllInternal(MysqlResults<NativeString>& mysql_result, c
 
   mysql_result.SetRawMysqlRes(res_ptr);
   mysql_result.SetFieldsName(res_ptr);
-
   return true;
 }
 

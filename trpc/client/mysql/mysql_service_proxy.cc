@@ -181,7 +181,7 @@ Status MysqlServiceProxy::Commit(const ClientContextPtr &context, TransactionHan
     status.SetErrorMessage(res.GetErrorMessage());
     context->SetStatus(status);
   } else {
-    EndTransaction(handle);
+    EndTransaction(handle, false);
   }
 
   return context->GetStatus();
@@ -196,7 +196,7 @@ Status MysqlServiceProxy::Rollback(const ClientContextPtr &context, TransactionH
     status.SetErrorMessage(res.GetErrorMessage());
     context->SetStatus(status);
   } else {
-    EndTransaction(handle);
+    EndTransaction(handle, true);
   }
 
   return context->GetStatus();
@@ -209,11 +209,10 @@ Future<TransactionHandle> MysqlServiceProxy::AsyncCommit(const ClientContextPtr 
           .Then([this, context](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f){
             if(f.IsFailed()) {
               auto t = f.GetValue();
-              EndTransaction(std::get<0>(t));
               return MakeExceptionFuture<TransactionHandle>(f.GetException());
             }
             auto t = f.GetValue();
-            EndTransaction(std::get<0>(t));
+            EndTransaction(std::get<0>(t), false);
             return MakeReadyFuture<TransactionHandle>(std::move(std::get<0>(t)));
           });
 }
@@ -224,18 +223,18 @@ Future<TransactionHandle> MysqlServiceProxy::AsyncRollback(const ClientContextPt
           .Then([this, context](Future<TransactionHandle, MysqlResults<OnlyExec>>&& f){
             if(f.IsFailed()) {
               auto t = f.GetValue();
-              EndTransaction(std::get<0>(t));
               return MakeExceptionFuture<TransactionHandle>(f.GetException());
             }
             auto t = f.GetValue();
-            EndTransaction(std::get<0>(t));
+            EndTransaction(std::get<0>(t), true);
             return MakeReadyFuture<TransactionHandle>(std::move(std::get<0>(t)));
           });
 }
 
 
-bool MysqlServiceProxy::EndTransaction(TransactionHandle &handle) {
-  handle.SetState(TransactionHandle::TxState::kEnd);
+bool MysqlServiceProxy::EndTransaction(TransactionHandle &handle, bool rollback) {
+
+  handle.SetState(rollback? TransactionHandle::TxState::kRollBacked : TransactionHandle::TxState::kCommitted);
   auto executor = handle.GetExecutor();
   if(executor) {
     NodeAddr node_addr;

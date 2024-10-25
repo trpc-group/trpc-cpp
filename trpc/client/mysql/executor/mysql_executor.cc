@@ -31,6 +31,11 @@ bool MysqlExecutor::Connect() {
   if(is_connected)
       return true;
 
+  if(mysql_ == nullptr) {
+    std::lock_guard<std::mutex> lock(mysql_mutex);
+    mysql_ = mysql_init(nullptr);
+  }
+
   MYSQL* ret = mysql_real_connect(mysql_, hostname_.c_str(), username_.c_str(), password_.c_str(), database_.c_str(),
                                   port_, nullptr, 0);
 
@@ -117,6 +122,7 @@ bool MysqlExecutor::IsConnectionValid() {
   if (mysql_ != nullptr && mysql_ping(mysql_) == 0) {
     return true;
   } else {
+    is_connected = false;
     return false;
   }
 }

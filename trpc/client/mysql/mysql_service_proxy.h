@@ -137,7 +137,7 @@ class MysqlServiceProxy : public ServiceProxy {
   Future<MysqlResults<OutputArgs...>> AsyncUnaryInvoke(const ClientContextPtr& context, const ExecutorPtr& executor, const std::string& sql_str,
                                                        const InputArgs&... args);
 
-  bool EndTransaction(TransactionHandle& handle);
+  bool EndTransaction(TransactionHandle& handle, bool rollback);
 
  private:
   std::unique_ptr<ThreadPool> thread_pool_{nullptr};
@@ -221,6 +221,12 @@ Status MysqlServiceProxy::Query(const ClientContextPtr &context,
     status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
     status.SetErrorMessage("Invalid TransactionHandle state.");
     context->SetStatus(status);
+  } else if(!handle.GetExecutor()->IsConnectionValid()) {
+    handle.SetState(TransactionHandle::TxState::kRollBacked);
+    Status status;
+    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+    status.SetErrorMessage("Connect error. Rollback.");
+    context->SetStatus(status);
   } else {
     UnaryInvoke(context, handle.GetExecutor(), res, sql_str, args...);
   }
@@ -259,12 +265,23 @@ MysqlServiceProxy::AsyncQuery(const ClientContextPtr &context, TransactionHandle
     return exception_fut;
   }
 
+  if(!handle.GetExecutor()->IsConnectionValid()) {
+    handle.SetState(TransactionHandle::TxState::kRollBacked);
+    Status status;
+    status.SetFrameworkRetCode(TrpcRetCode::TRPC_CLIENT_CONNECT_ERR);
+    status.SetErrorMessage("Connect error. Rollback.");
+    context->SetStatus(status);
+    auto exception_fut =
+            MakeExceptionFuture<TransactionHandle, MysqlResults<OutputArgs...>>(CommonException("Connect error. Rollback."));
+    filter_controller_.RunMessageClientFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
+    return exception_fut;
+  }
+
   auto executor = handle.GetExecutor();
 
   return AsyncUnaryInvoke<OutputArgs...>(context, executor, sql_str, args...)
           .Then([moved_handle = std::move(handle), this, context](Future<MysqlResults<OutputArgs...>>&& f) mutable{
             if(f.IsFailed()) {
-              EndTransaction(moved_handle);
               RunFilters(FilterPoint::CLIENT_POST_RPC_INVOKE, context);
               return MakeExceptionFuture<TransactionHandle, MysqlResults<OutputArgs...>>(f.GetException());
             }

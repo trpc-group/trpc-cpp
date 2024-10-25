@@ -1,7 +1,3 @@
-//
-// Created by kosmos on 10/13/24.
-//
-
 #pragma once
 
 #include "mysqlclient/mysql.h"

@@ -13,6 +13,7 @@ MySQL数据库已经成为构建互联网世界的基石，尤其是其支持事
 - [用户接口](#用户接口)
 - [错误信息](#错误信息)
 - [更多例子](#更多例子)
+   - [日期和Blob](#更多类型)
    - [插入和更新](#插入和更新)
    - [事务](#事务)
    - [异步接口](#异步接口)
@@ -159,15 +160,13 @@ mysql> select * from users;
 #### class MysqlResults\<OnlyExec\>
 
 ```c++
-class MysqlResults<OnlyExec>
-    
 // example
 MysqlResults<OnlyExec> exec_res;
 proxy->Execute(client_context, exec_res,
              "insert into users (username)"
              "values (?)", "Jack");
 if(exe_res.OK())
-	size_t n_rows = exec_res.GetAffectedRowNum()
+    size_t n_rows = exec_res.GetAffectedRowNum()
 else
     std::string error = exec_res.GetErrorMessage()
 ```
@@ -220,11 +219,39 @@ else
     std::string error = exec_res.GetErrorMessage()
 ```
 
-使用类型绑定，如果模板指定为除 `OnlyExec`，`NativeString`之外的其它类型，则结果集的每一行是一个tuple，注意模板参数需要和查询结果匹配：
+使用类型绑定，如果模板指定为除 `OnlyExec`，`NativeString`之外的其它类型，则结果集的每一行是一个tuple。（这里关于 `MysqlTime` 的使用见[日期和Blob](#更多类型)）
+
+注意模板参数需要和查询结果匹配：
 
 - 如果模板参数个数与实际查询结果字段个数不一致（因此不能用于 "select *"），则可以通过 `GetErrorMessage()` 返回错误
-- 如果模板参数的类型和实际字段类型不匹配（例如用int去接受MySQL的字符串），则**目前运行时不会抛出错误(待后续更新)**，用户需要自行保证类型匹配。
+- 如果模板参数的类型和实际字段类型不匹配（例如用int去接受MySQL的字符串），也可以通过 `GetErrorMessage()` 获取错误信息，例如下面的情况：
+  ```c++
+  MysqlResults<int, int, double> res;
+  Status s = proxy->Query(client_context, res,
+                          "select id, email, created_at from users");
+  std::string error_msg = res.GetGetErrorMessage();
+  // error_msg: "Bind output type warning for fields: (email, created_at)."
+  ```
+  具体匹配关系见下表：
 
+| MySQL Type                   | Template Output Type       |
+|------------------------------|----------------------------|
+| TINYINT                      | `int8_t`, `uint8_t`        |
+| SMALLINT                     | `int16_t`, `uint16_t`      |
+| MEDIUMINT, INT               | `int32_t`, `uint32_t`      |
+| BIGINT                       | `int64_t`, `uint64_t`      |
+| FLOAT                        | `float`                    |
+| DOUBLE                       | `double`                   |
+| DECIMAL                      | `std::string`              |
+| YEAR                         | `int16_t`, `uint16_t`      |
+| TIME, DATE, DATETIME, TIMESTAMP | `MysqlTime`, `std::string` |
+| CHAR, BINARY                 | `std::string`              |
+| VARCHAR, VARBINARY           | `std::string`              |
+| TINYBLOB, TINYTEXT          | `std::string`, `MysqlBlob` |
+| BLOB, TEXT                   | `std::string`, `MysqlBlob` |
+| MEDIUMBLOB, MEDIUMTEXT       | `std::string`, `MysqlBlob` |
+| LONGBLOB, LONGTEXT           | `std::string`, `MysqlBlob` |
+| BIT                          | `std::string`, `MysqlBlob` |
 
 
 
@@ -235,36 +262,38 @@ else
 
 用户可以使用 `trpc::mysql::MysqlServiceProxy` 对 MySQL server进行访问，并可以通过框架 yaml 配置文件对访问进行定制。proxy 支持通过 SQL 语句进行数据库的读写和事务，并同时提供同步和异步两种方式。
 
-| 方法名                     | 描述                                | 参数                                                         | 返回类型                                  | 备注                      |
-| -------------------------- | ----------------------------------- | ------------------------------------------------------------ | ----------------------------------------- | ------------------------- |
-| `Query`                    | 执行 SQL 查询并检索所有结果行。     | `context`: 客户端上下文;   `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串  `args`: 输入参数，可以为空 | `Status`                                  |                           |
-| `AsyncQuery`               | 异步执行 SQL 查询并检索所有结果行。 | `context`: 客户端上下文；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Future<MysqlResults>`                    |                           |
-| `Execute`                  | 同步执行 SQL 查询，用于OnlyExec。   | `context`: 客户端上下文；  `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Status`                                  | 可被`Query` 完全替代      |
-| `AsyncExecute`             | 异步执行 SQL 查询，用于OnlyExec。   | `context`: 客户端上下文；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Future<MysqlResults>`                    | 可被`AsyncQuery` 完全替代 |
-| `Query`（事务支持）        | 在事务中执行 SQL 查询。             | `context`: 客户端上下文 ； `handle`: 事务句柄；  `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Status`                                  |                           |
-| `Execute`（事务支持）      | 在事务中执行 SQL 查询。             | `context`: 客户端上下文；  `handle`: 事务句柄；  `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Status`                                  |                           |
-| `AsyncQuery`（事务支持）   | 异步在事务中执行 SQL 查询。         | `context`: 客户端上下文；  `handle`: 事务句柄 ； `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Future<TransactionHandle, MysqlResults>` |                           |
-| `AsyncExecute`（事务支持） | 异步在事务中执行 SQL 查询。         | `context`: 客户端上下文 ； `handle`: 事务句柄；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Future<TransactionHandle, MysqlResults>` |                           |
-| `Begin`                    | 开始一个事务。                      | `context`: 客户端上下文；  `handle`: 空事务句柄              | `Status`                                  |                           |
-| `Commit`                   | 提交一个事务。                      | `context`: 客户端上下文；  `handle`: 事务句柄                | `Status`                                  |                           |
-| `Rollback`                 | 回滚一个事务。                      | `context`: 客户端上下文；  `handle`: 事务句柄                | `Status`                                  |                           |
-| `AsyncBegin`               | 异步开始一个事务。                  | `context`: 客户端上下文                                      | `Future<TransactionHandle>`               |                           |
-| `AsyncCommit`              | 异步提交一个事务。                  | `context`: 客户端上下文；  `handle`: 事务句柄                | `Future<TransactionHandle>`               |                           |
-| `AsyncRollback`            | 异步回滚一个事务。                  | `context`: 客户端上下文；  `handle`: 事务句柄                | `Future<TransactionHandle>`               |                           |
+| 方法名                     | 描述                                | 参数                                                                                                                           | 返回类型                                  | 备注                      |
+| -------------------------- | ----------------------------------- |------------------------------------------------------------------------------------------------------------------------------| ----------------------------------------- | ------------------------- |
+| `Query`                    | 执行 SQL 查询并检索所有结果行。     | `context`: 客户端上下文;   `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串  `args`: 输入参数，可以为空                  | `Status`                                  |                           |
+| `AsyncQuery`               | 异步执行 SQL 查询并检索所有结果行。 | `context`: 客户端上下文；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空                                                     | `Future<MysqlResults>`                    |                           |
+| `Execute`                  | 同步执行 SQL 查询，用于OnlyExec。   | `context`: 客户端上下文；  `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空                  | `Status`                                  | 可被`Query` 完全替代      |
+| `AsyncExecute`             | 异步执行 SQL 查询，用于OnlyExec。   | `context`: 客户端上下文；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空                                                     | `Future<MysqlResults>`                    | 可被`AsyncQuery` 完全替代 |
+| `Query`（事务支持）        | 在事务中执行 SQL 查询。             | `context`: 客户端上下文 ； `handle`: 事务标识；  `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Status`                                  |                           |
+| `Execute`（事务支持）      | 在事务中执行 SQL 查询。             | `context`: 客户端上下文；  `handle`: 事务标识；  `res`: 用于返回查询结果的 MysqlResults 对象；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空 | `Status`                                  |                           |
+| `AsyncQuery`（事务支持）   | 异步在事务中执行 SQL 查询。         | `context`: 客户端上下文；  `handle`: 事务标识 ； `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空                                    | `Future<TransactionHandle, MysqlResults>` |                           |
+| `AsyncExecute`（事务支持） | 异步在事务中执行 SQL 查询。         | `context`: 客户端上下文 ； `handle`: 事务标识；  `sql_str`: 带有占位符 "?" 的 SQL 查询字符串；  `args`: 输入参数，可以为空                                    | `Future<TransactionHandle, MysqlResults>` |                           |
+| `Begin`                    | 开始一个事务。                      | `context`: 客户端上下文；  `handle`: 空事务标识                                                                                          | `Status`                                  |                           |
+| `Commit`                   | 提交一个事务。                      | `context`: 客户端上下文；  `handle`: 事务标识                                                                                           | `Status`                                  |                           |
+| `Rollback`                 | 回滚一个事务。                      | `context`: 客户端上下文；  `handle`: 事务标识                                                                                           | `Status`                                  |                           |
+| `AsyncBegin`               | 异步开始一个事务。                  | `context`: 客户端上下文                                                                                                            | `Future<TransactionHandle>`               |                           |
+| `AsyncCommit`              | 异步提交一个事务。                  | `context`: 客户端上下文；  `handle`: 事务标识                                                                                           | `Future<TransactionHandle>`               |                           |
+| `AsyncRollback`            | 异步回滚一个事务。                  | `context`: 客户端上下文；  `handle`: 事务标识                                                                                           | `Future<TransactionHandle>`               |                           |
 
 - 当`MysqlResults` 使用 `NativeString`  时，仅仅使用字符串格式化来处理占位符，转为一个完整的SQL语句进行查询。除此之外的情况会使用 MySQL prepared statement，可以防止SQL注入，关于重复使用同一个prepared statement接口目前暂时还未提供。
 
 - 由于mysql api 的调用由线程池完成，因此：
 
    - 在同步接口中，如果外部逻辑处于fiber协程下，该协程会等待，但不会阻塞线程。
-   - 在异步接口中，请注意根据环境选择时使用 `::trpc::future` 里的future相关接口还是 `::trpc::fiber` 里的future相关接口。
+   - 在异步接口中，如果是在fiber环境中请使用 `::trpc::fiber` 里的future相关接口。
 
 
 
 ## 错误信息
 
-- 同步接口的 `Status` 返回调用过程的错误信息，同时也可以通过`MysqlResult` 通过 `OK` 和 `GetErrorMessage` 以字符串形式描述MySQL查询错误（因为 MysqlResult 的错误信息一定会被设置到返回的 Status，因此完全可以只检查 Status）。
-- 异步接口如果出错，会返回的 exception future 对象，因为异常future不包含值，因此无法通过 future 里面的 value 即  `MysqlResults` 对象获取MySQL查询错误。因此在异步接口中，不管是框架错误还是MySQL查询错误，均是以异常future的exception返回。
+- 同步接口的 `Status` 返回调用过程的错误信息，同时也可以通过`MysqlResult` 通过 `OK` 和 `GetErrorMessage` 以字符串形式描述MySQL查询错误
+。两者的区别是所有错误都会返回到Status，而MysqlResult中只会保存MySQL查询相关的错误，例如上下文Timeout和被Filter拒绝的情况下，MysqlResult不会有错误。
+（总之 MysqlResult 的错误信息一定会被设置到返回的 Status，因此完全可以只检查 Status）。
+- 异步接口如果出错，会返回的 exception future 对象，因为异常future不包含值，因此无法通过 future 里面的 value 即  `MysqlResults` 对象获取MySQL查询错误。因此在异步接口中，只能从异常future的exception返回。
 
 
 
@@ -435,6 +464,20 @@ proxy->Execute(ctx, exec_res, "delete from users where username = \"jack\"");
    ```
 
    同样的，也可以 `RollBack` 。
+4. **关于事务中的异常**
+   - 事务中的异常检查和非事务接口的异常检查一致，都是通过检查返回的Status或Future的异常信息。
+   - 如果开始了一个事务，但最后没有显式调用Commit或者Rollback，那么TransactionHandle会在析构时断开连接，而连接断开时会**自动回滚**。
+   - 可以通过 handle.GetState() 检查当前状态
+
+| TransactionHandle::TxState | 描述                                   |
+|----------------------------|--------------------------------------|
+| `kNotInited`                 | 未初始化(空事务)                            |
+| `kStart`                     | 事务已开始                                |
+| `kRollBacked`                | 事务已回滚                                |
+| `kCommitted`                 | 事务已提交                                |
+| `kInValid`                   | 事务无效（对象被move时的状态，并非指rollback或commit） |
+
+
 
 ### 异步接口
 

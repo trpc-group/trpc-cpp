@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include "trpc/client/mysql/executor/mysql_type.h"
+#include <unordered_set>
 
 #define BIND_POINTER_CAST(v) (const_cast<void*>(static_cast<const void*>(v)))
 
@@ -14,32 +15,65 @@ namespace trpc::mysql {
 
 ///@brief map type information for mysql api
 template <typename T>
-struct MysqlTypeInfo {
+struct MysqlInputType {
   static constexpr enum_field_types value = MYSQL_TYPE_NULL;
   static constexpr bool is_unsigned = false;
 };
 
 
-#define DEFINE_MYSQL_TYPE_SPECIALIZATION(c_type, mysql_type, is_unsigned_type) \
+#define MYSQL_INPUT_TYPE_SPECIALIZATION(c_type, mysql_type, is_unsigned_type)  \
   template <>                                                                  \
-  struct MysqlTypeInfo<c_type> {                                                   \
+  struct MysqlInputType<c_type> {                                              \
     static constexpr enum_field_types value = mysql_type;                      \
     static constexpr bool is_unsigned = is_unsigned_type;                      \
   };
 
-DEFINE_MYSQL_TYPE_SPECIALIZATION(int8_t, MYSQL_TYPE_TINY, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(uint8_t, MYSQL_TYPE_TINY, true)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(int16_t, MYSQL_TYPE_SHORT, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(uint16_t, MYSQL_TYPE_SHORT, true)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(int32_t, MYSQL_TYPE_LONG, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(uint32_t, MYSQL_TYPE_LONG, true)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(int64_t, MYSQL_TYPE_LONGLONG, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(uint64_t, MYSQL_TYPE_LONGLONG, true)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(float, MYSQL_TYPE_FLOAT, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(double, MYSQL_TYPE_DOUBLE, false)
-DEFINE_MYSQL_TYPE_SPECIALIZATION(MysqlTime, MYSQL_TYPE_DATETIME, true)
+
+MYSQL_INPUT_TYPE_SPECIALIZATION(int8_t, MYSQL_TYPE_TINY, false)
+MYSQL_INPUT_TYPE_SPECIALIZATION(uint8_t, MYSQL_TYPE_TINY, true)
+MYSQL_INPUT_TYPE_SPECIALIZATION(int16_t, MYSQL_TYPE_SHORT, false)
+MYSQL_INPUT_TYPE_SPECIALIZATION(uint16_t, MYSQL_TYPE_SHORT, true)
+MYSQL_INPUT_TYPE_SPECIALIZATION(int32_t, MYSQL_TYPE_LONG, false)
+MYSQL_INPUT_TYPE_SPECIALIZATION(uint32_t, MYSQL_TYPE_LONG, true)
+MYSQL_INPUT_TYPE_SPECIALIZATION(int64_t, MYSQL_TYPE_LONGLONG, false)
+MYSQL_INPUT_TYPE_SPECIALIZATION(uint64_t, MYSQL_TYPE_LONGLONG, true)
+MYSQL_INPUT_TYPE_SPECIALIZATION(float, MYSQL_TYPE_FLOAT, false)
+MYSQL_INPUT_TYPE_SPECIALIZATION(double, MYSQL_TYPE_DOUBLE, false)
+MYSQL_INPUT_TYPE_SPECIALIZATION(MysqlTime, MYSQL_TYPE_DATETIME, true)
 
 
+
+template <typename T>
+struct MysqlOutputType {
+  static const std::unordered_set<enum_field_types> types;
+};
+
+
+#define MYSQL_OUTPUT_TYPE_SPECIALIZATION(c_type) \
+template <> \
+struct MysqlOutputType<c_type> { \
+    static const std::unordered_set<enum_field_types> types; \
+};
+
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(int8_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(uint8_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(int16_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(uint16_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(int32_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(uint32_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(int64_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(uint64_t)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(float)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(double)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(MysqlTime)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(std::string)
+MYSQL_OUTPUT_TYPE_SPECIALIZATION(MysqlBlob)
+
+
+template <typename T>
+inline bool OutputTypeValid(enum_field_types mysql_type) {
+  return MysqlOutputType<T>::types.count(mysql_type) > 0;
+}
 
 // ***********
 // Input Bind
@@ -48,9 +82,9 @@ DEFINE_MYSQL_TYPE_SPECIALIZATION(MysqlTime, MYSQL_TYPE_DATETIME, true)
 template <typename T, typename = std::enable_if_t<!std::is_convertible<T, std::string_view>::value>>
 inline void StepInputBind(MYSQL_BIND& bind, const T& value) {
   std::memset(&bind, 0, sizeof(bind));
-  bind.buffer_type = MysqlTypeInfo<T>::value;
+  bind.buffer_type = MysqlInputType<T>::value;
   bind.buffer = BIND_POINTER_CAST(&value);
-  bind.is_unsigned = MysqlTypeInfo<T>::is_unsigned;
+  bind.is_unsigned = MysqlInputType<T>::is_unsigned;
 }
 
 
@@ -94,8 +128,8 @@ inline void BindInputImpl(std::vector<MYSQL_BIND>& binds, const InputArgs&... ar
 
 template <typename T>
 inline void StepOutputBind(MYSQL_BIND& bind, std::vector<std::byte>& buffer, uint8_t& null_flag) {
-  bind.buffer_type = MysqlTypeInfo<T>::value;
-  bind.is_unsigned = MysqlTypeInfo<T>::is_unsigned;
+  bind.buffer_type = MysqlInputType<T>::value;
+  bind.is_unsigned = MysqlInputType<T>::is_unsigned;
   buffer.resize(sizeof(T));
   bind.buffer = buffer.data();
   bind.is_null = reinterpret_cast<bool*>(&null_flag);

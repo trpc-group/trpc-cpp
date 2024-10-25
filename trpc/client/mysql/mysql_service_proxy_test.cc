@@ -131,6 +131,7 @@ mysql> select * from users;
 */
 
 
+
 TEST_F(MysqlServiceProxyTest, Query) {
   auto client_context = GetClientContext();
   MysqlResults<int, std::string> res;
@@ -400,12 +401,10 @@ TEST_F(MysqlServiceProxyTest, TransactionNoCommit) {
   mock_mysql_service_proxy_->Query(client_context, handle, query_res, "select * from users where username = ?", "jack");
   EXPECT_EQ(1, query_res.ResultSet().size());
 
-
-  handle.GetExecutor()->Close();
-
   mock_mysql_service_proxy_->Query(client_context, query_res, "select * from users where username = ?", "jack");
   EXPECT_EQ(0, query_res.ResultSet().size());
 }
+
 
 TEST_F(MysqlServiceProxyTest, AsyncTransaction) {
   auto client_context = GetClientContext();
@@ -484,7 +483,7 @@ TEST_F(MysqlServiceProxyTest, AsyncTransaction) {
             if(f.IsFailed())
               return MakeExceptionFuture<>(f.GetException());
             auto handle =f.GetValue0();
-            EXPECT_EQ(TransactionHandle::TxState::kEnd, handle.GetState());
+            EXPECT_EQ(TransactionHandle::TxState::kRollBacked, handle.GetState());
             return MakeReadyFuture<>();
           });
 
@@ -622,15 +621,17 @@ TEST_F(MysqlServiceProxyTest, SyntaxError) {
 }
 
 
-//TEST_F(MysqlServiceProxyTest,BindTypeError) {
-//  auto client_context = GetClientContext();
-//  client_context->SetAddr("127.0.0.1", 3306);
-//  MysqlResults<int> res;
-//  Status s = mock_mysql_service_proxy_->Query(client_context, res, "select email from users");
-//  EXPECT_EQ(s.OK(), true);
-//
-//  auto fu = future::BlockingGet(mock_mysql_service_proxy_->AsyncQuery<NativeString>(client_context, "select * from users"));
-//  EXPECT_EQ(fu.IsFailed(), true);
-//}
+TEST_F(MysqlServiceProxyTest,BindTypeError) {
+  auto client_context = GetClientContext();
+  client_context->SetAddr("127.0.0.1", 3306);
+  MysqlResults<int, int, double> res;
+  Status s = mock_mysql_service_proxy_->Query(client_context, res,
+                                              "select id, email, created_at from users");
+  EXPECT_EQ(s.OK(), false);
+
+  auto fu = future::BlockingGet(mock_mysql_service_proxy_->AsyncQuery<int, int, std::string>(client_context,
+                                                                           "select id, email, created_at from users"));
+  EXPECT_EQ(fu.IsFailed(), true);
+}
 
 }  // namespace trpc::testing
