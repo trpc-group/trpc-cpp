@@ -24,6 +24,9 @@
 #include "trpc/common/runtime_manager.h"
 #include "trpc/util/random.h"
 #include "trpc/log/trpc_log.h"
+#include "trpc/coroutine/future.h"
+#include "trpc/coroutine/fiber_latch.h"
+
 
 using trpc::mysql::OnlyExec;
 using trpc::mysql::NativeString;
@@ -173,7 +176,7 @@ void TestUpdate(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 
 
 void TestTime(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
-  std::cout << "\nTestBlob\n";
+  std::cout << "\nTestTime\n";
   trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
 
   // Use string
@@ -369,6 +372,33 @@ void TestError(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 }
 
 
+void TestFiberAsync(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
+  std::cout << "\nTestFiberAsync\n";
+  trpc::ClientContextPtr ctx = trpc::MakeClientContext(proxy);
+
+  trpc::FiberLatch latch(1);
+  auto future = proxy->AsyncQuery<NativeString>(ctx, "select * from users")
+          .Then([&latch](trpc::Future<MysqlResults<NativeString>>&& f){
+            latch.Wait();
+            if(f.IsReady()) {
+              auto res = f.GetValue0();
+              PrintResultTable(res);
+              return trpc::MakeReadyFuture();
+            }
+            return trpc::MakeExceptionFuture<>(f.GetException());
+          });
+  std::cout << "do something\n";
+  latch.CountDown();
+  auto ret_future = trpc::fiber::BlockingGet(std::move(future));
+
+  if(ret_future.IsFailed()) {
+    TRPC_FMT_ERROR(ret_future.GetException().what());
+    std::cerr << ret_future.GetException().what() << std::endl;
+    return;
+  }
+}
+
+
 
 
 void TestBlob(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
@@ -412,6 +442,8 @@ void TestBlob(std::shared_ptr<trpc::mysql::MysqlServiceProxy>& proxy) {
 
 }
 
+
+
 int Run() {
   auto proxy = ::trpc::GetTrpcClient()->GetProxy<::trpc::mysql::MysqlServiceProxy>("mysql_server");
   TestQuery(proxy);
@@ -419,6 +451,7 @@ int Run() {
   TestCommit(proxy);
   TestRollback(proxy);
   TestError(proxy);
+  TestFiberAsync(proxy);
   TestBlob(proxy);
   TestTime(proxy);
   return 0;

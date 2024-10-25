@@ -263,7 +263,7 @@ else
 
 ## 错误信息
 
-- 同步接口的 `Status` 返回框架错误，`MysqlResult` 通过 `OK` 和 `GetErrorMessage` 以字符串形式描述MySQL查询错误。因此 `Status` 正常时并不表示 MySQL 查询无错误（例如Timeout）。
+- 同步接口的 `Status` 返回调用过程的错误信息，同时也可以通过`MysqlResult` 通过 `OK` 和 `GetErrorMessage` 以字符串形式描述MySQL查询错误（因为 MysqlResult 的错误信息一定会被设置到返回的 Status，因此完全可以只检查 Status）。
 - 异步接口如果出错，会返回的 exception future 对象，因为异常future不包含值，因此无法通过 future 里面的 value 即  `MysqlResults` 对象获取MySQL查询错误。因此在异步接口中，不管是框架错误还是MySQL查询错误，均是以异常future的exception返回。
 
 

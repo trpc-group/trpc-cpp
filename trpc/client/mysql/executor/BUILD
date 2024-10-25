@@ -19,6 +19,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@mysqlclient//:mysqlclient",
+        "//trpc/util:time"
     ],
 )
 

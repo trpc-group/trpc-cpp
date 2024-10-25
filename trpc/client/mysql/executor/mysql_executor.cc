@@ -18,6 +18,12 @@ MysqlExecutor::MysqlExecutor(const std::string& hostname, const std::string& use
     mysql_ = mysql_init(nullptr);
   }
   mysql_set_character_set(mysql_, char_set.c_str());
+
+  unsigned int timeout = 5;
+  mysql_options(mysql_, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+  mysql_options(mysql_, MYSQL_OPT_READ_TIMEOUT, &timeout);
+  mysql_options(mysql_, MYSQL_OPT_WRITE_TIMEOUT, &timeout);
+
 }
 
 bool MysqlExecutor::Connect() {

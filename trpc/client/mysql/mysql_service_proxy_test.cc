@@ -78,7 +78,6 @@ class MysqlServiceProxyTest : public ::testing::Test {
     TrpcPlugin::GetInstance()->RegisterPlugins();
     trpc::detail::SetDefaultOption(option_);
     option_->name = "default_mysql_service";
-    option_->caller_name = "";
     option_->codec_name = "mysql";
     option_->conn_type = "long";
     option_->network = "tcp";
@@ -499,5 +498,139 @@ TEST_F(MysqlServiceProxyTest, AsyncTransaction) {
 
 }
 
+
+
+std::mutex mtx;
+std::condition_variable tx_cv;
+bool query_executed = false;
+bool committed = false;
+
+void DoTx(MysqlServiceProxyPtr proxy, TransactionHandle&& handle, const std::string& new_value, bool first) {
+  auto ctx = MakeClientContext(proxy);
+  MysqlResults<OnlyExec> exec_res;
+  ctx->SetTimeout(200);
+  ctx->SetAddr("127.0.0.1", 3306);
+  Status s;
+
+  // Ensure that the first transaction updates before the second transaction
+  if(!first) {
+    std::unique_lock<std::mutex> lock(mtx);
+    tx_cv.wait(lock, [] { return query_executed; });
+  }
+
+  if(!first) {
+    std::cout << trpc::util::FormatString("The second transaction calls the update\n");
+  }
+
+  s = proxy->Query(ctx, handle, exec_res,
+                        "update users set email = ? where username = ?",
+                        new_value, "rose");
+  if(!s.OK())
+    std::cout << s.ErrorMessage() << std::endl;
+  EXPECT_EQ(s.OK(), true);
+  EXPECT_EQ(exec_res.OK(), true);
+
+
+  // The first transaction updates the email before the second transaction.
+  // After the second transaction is awakened, the first transaction sleeps for a few seconds.
+  // The second transaction will attempt to execute the update, but it will be blocked
+  // by the transaction's concurrency control. The first transaction will then wake up
+  // and commit before the second transaction completes the update.
+  if(first) {
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      query_executed = true;
+    }
+    tx_cv.notify_all();
+  }
+
+  std::cout << trpc::util::FormatString("update rose's email to {} executed\n", new_value);
+
+  if(first) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+  s = proxy->Commit(ctx, handle);
+  EXPECT_EQ(s.OK(), true);
+  EXPECT_EQ(exec_res.OK(), true);
+
+  std::cout << trpc::util::FormatString("update rose's email to {} committed\n", new_value);
+}
+
+TEST_F(MysqlServiceProxyTest, TxConcurrency) {
+  auto client_context = GetClientContext();
+  TransactionHandle handle;
+  TransactionHandle handle2;
+  MysqlResults<OnlyExec> exec_res;
+  MysqlResults<OnlyExec> exec_res2;
+
+  Status s1 = mock_mysql_service_proxy_->Begin(client_context, handle);
+  Status s2 = mock_mysql_service_proxy_->Begin(client_context, handle2);
+
+  EXPECT_EQ(s1.OK(), true);
+  EXPECT_EQ(s2.OK(), true);
+
+  std::thread t1(DoTx, mock_mysql_service_proxy_, std::move(handle), "rose@gmail.com", true);
+  std::thread t2(DoTx, mock_mysql_service_proxy_, std::move(handle2), "rose@outlook.com", false);
+
+  t1.join();
+  t2.join();
+
+
+  // Check the result. The email will be updated to "rose@outlook.com"
+  MysqlResults<NativeString> query_res;
+  Status s = mock_mysql_service_proxy_->Query(client_context, query_res, "select email from users where username = ?",
+                                              "rose");
+  EXPECT_EQ(s.OK(), true);
+  EXPECT_EQ(query_res.OK(), true);
+  EXPECT_EQ(query_res.ResultSet().size(), 1);
+  EXPECT_EQ(query_res.ResultSet()[0][0], "rose@outlook.com");
+
+  s = mock_mysql_service_proxy_->Query(client_context, exec_res, "update users set email = NULL where username = ?",
+                                              "rose");
+  EXPECT_EQ(s.OK(), true);
+  EXPECT_EQ(exec_res.OK(), true);
+}
+
+
+TEST_F(MysqlServiceProxyTest, ConnectionError) {
+  auto client_context = GetClientContext();
+  client_context->SetAddr("111.111.111.111", 3306);
+  MysqlResults<NativeString> res;
+  Status s = mock_mysql_service_proxy_->Query(client_context, res, "select * from users");
+  EXPECT_EQ(s.OK(), false);
+
+  auto fu = future::BlockingGet(mock_mysql_service_proxy_->AsyncQuery<NativeString>(client_context, "select * from users"));
+  EXPECT_EQ(fu.IsFailed(), true);
+}
+
+TEST_F(MysqlServiceProxyTest, SyntaxError) {
+  auto client_context = GetClientContext();
+  client_context->SetAddr("127.0.0.1", 3306);
+  MysqlResults<NativeString> res;
+  Status s = mock_mysql_service_proxy_->Query(client_context, res, "select * fromm users");
+  std::string expected_error = "You have an error in your SQL syntax; "
+                               "check the manual that corresponds to your MySQL server version "
+                               "for the right syntax to use near 'fromm users' at line 1";
+  EXPECT_EQ(s.OK(), false);
+  EXPECT_EQ(s.ErrorMessage(), expected_error);
+
+  auto fu = future::BlockingGet(mock_mysql_service_proxy_
+                                ->AsyncQuery<NativeString>(client_context, "select * fromm users"));
+  EXPECT_EQ(fu.IsFailed(), true);
+  EXPECT_EQ(fu.GetException().what(), expected_error);
+
+}
+
+
+//TEST_F(MysqlServiceProxyTest,BindTypeError) {
+//  auto client_context = GetClientContext();
+//  client_context->SetAddr("127.0.0.1", 3306);
+//  MysqlResults<int> res;
+//  Status s = mock_mysql_service_proxy_->Query(client_context, res, "select email from users");
+//  EXPECT_EQ(s.OK(), true);
+//
+//  auto fu = future::BlockingGet(mock_mysql_service_proxy_->AsyncQuery<NativeString>(client_context, "select * from users"));
+//  EXPECT_EQ(fu.IsFailed(), true);
+//}
 
 }  // namespace trpc::testing

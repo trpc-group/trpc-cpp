@@ -2,9 +2,10 @@
 // Created by kosmos on 10/13/24.
 //
 
-#include "trpc/client/mysql/executor/mysql_type.h"
 #include <sstream>
 #include <iomanip>
+#include "trpc/client/mysql/executor/mysql_type.h"
+#include "trpc/util/time.h"
 
 namespace trpc::mysql {
 
@@ -87,15 +88,20 @@ unsigned long MysqlTime::SetSecondPart() const { return mt.second_part; }
 
 enum_mysql_timestamp_type MysqlTime::GetTimeType() const { return mt.time_type; }
 
+//std::string MysqlTime::ToString() const {
+//  std::ostringstream oss;
+//  oss << std::setw(4) << std::setfill('0') << mt.year << '-'
+//      << std::setw(2) << std::setfill('0') << mt.month << '-'
+//      << std::setw(2) << std::setfill('0') << mt.day << ' '
+//      << std::setw(2) << std::setfill('0') << mt.hour << ':'
+//      << std::setw(2) << std::setfill('0') << mt.minute << ':'
+//      << std::setw(2) << std::setfill('0') << mt.second;
+//  return oss.str();
+//}
+
 std::string MysqlTime::ToString() const {
-  std::ostringstream oss;
-  oss << std::setw(4) << std::setfill('0') << mt.year << '-'
-      << std::setw(2) << std::setfill('0') << mt.month << '-'
-      << std::setw(2) << std::setfill('0') << mt.day << ' '
-      << std::setw(2) << std::setfill('0') << mt.hour << ':'
-      << std::setw(2) << std::setfill('0') << mt.minute << ':'
-      << std::setw(2) << std::setfill('0') << mt.second;
-  return oss.str();
+  return time::StringFormat("%04d-%02d-%02d %02d:%02d:%02d", mt.year, mt.month,
+                      mt.day, mt.hour, mt.minute, mt.second);
 }
 
 void MysqlTime::FromString(const std::string &timeStr) {

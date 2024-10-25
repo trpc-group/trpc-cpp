@@ -7,6 +7,7 @@
 #include "trpc/coroutine/fiber_event.h"
 #include "trpc/util/ref_ptr.h"
 #include "trpc/util/thread/latch.h"
+#include "trpc/coroutine//fiber_latch.h"
 #include "trpc/util/thread/thread_pool.h"
 #include "trpc/client/mysql/transaction.h"
 
@@ -120,6 +121,14 @@ class MysqlServiceProxy : public ServiceProxy {
 
   bool InitThreadPool();
 
+
+
+   /// @param context
+   /// @param executor If executor is nullptr, it will get a executor from executor manager.
+   /// @param res
+   /// @param sql_str
+   /// @param args
+   /// @return
   template <typename... OutputArgs, typename... InputArgs>
   Status UnaryInvoke(const ClientContextPtr& context, const ExecutorPtr& executor, MysqlResults<OutputArgs...>& res, const std::string& sql_str,
                      const InputArgs&... args);
@@ -319,6 +328,13 @@ Status MysqlServiceProxy::UnaryInvoke(const ClientContextPtr& context, const Exe
     });
 
     e.Wait();
+  }
+
+  if(!res.OK()) {
+    Status s;
+    s.SetErrorMessage(res.GetErrorMessage());
+    s.SetFuncRetCode(-1);
+    context->SetStatus(std::move(s));
   }
 
   ProxyStatistics(context);

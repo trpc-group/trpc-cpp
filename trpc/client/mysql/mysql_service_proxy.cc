@@ -104,13 +104,7 @@ Status MysqlServiceProxy::Begin(const ClientContextPtr& context, TransactionHand
   }
 
 
-  if(!status.OK()) {
-    context->SetStatus(status);
-  } else if(!res.OK()) {
-    status = kUnknownErrorStatus;
-    status.SetErrorMessage(res.GetErrorMessage());
-    context->SetStatus(status);
-  } else {
+  if(context->GetStatus().OK()) {
     handle.SetExecutor(std::move(executor));
     handle.SetState(TransactionHandle::TxState::kStart);
   }
