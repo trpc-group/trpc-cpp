@@ -158,7 +158,6 @@ include(snappy)
 include(lz4)
 include(toml11)
 include(flatbuffers)
-include(mysqlclient)
 
 #---------------------------------------------------------------------------------------
 # Set complie options and include other libs if options are ON

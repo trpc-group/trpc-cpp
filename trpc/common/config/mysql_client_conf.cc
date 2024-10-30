@@ -1,5 +1,5 @@
-#include "trpc/common/config/mysql_client_conf.h"  // 包含 MysqlClientConf 头文件
-#include "trpc/util/log/logging.h"                 // 包含日志功能
+#include "trpc/common/config/mysql_client_conf.h"
+#include "trpc/util/log/logging.h"
 
 namespace trpc {
 

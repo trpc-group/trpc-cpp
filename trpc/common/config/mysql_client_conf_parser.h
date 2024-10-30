@@ -1,7 +1,6 @@
 #pragma once
 
 #include "trpc/common/config/mysql_client_conf.h"
-// #include "trpc/common/config/mysql_connect_pool_conf_parser.h"
 #include "yaml-cpp/yaml.h"
 
 namespace YAML {

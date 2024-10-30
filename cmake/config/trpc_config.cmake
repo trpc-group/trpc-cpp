@@ -55,8 +55,7 @@ set(INCLUDE_PATHS   ${TRPC_ROOT_PATH}
                     ${TRPC_ROOT_PATH}/cmake_third_party/nghttp2/lib/includes
                     ${TRPC_ROOT_PATH}/cmake_third_party/picohttpparser
                     ${TRPC_ROOT_PATH}/cmake_third_party/snappy
-                    ${TRPC_ROOT_PATH}/cmake_third_party/lz4
-                    ${TRPC_ROOT_PATH}/cmake_third_party/mysqlclient/include)
+                    ${TRPC_ROOT_PATH}/cmake_third_party/lz4)
 
 # When use tRPC as a third-party library, selectively inject the header files at including any-lib.cmake.
 set(TARGET_INCLUDE_PATHS  ${TRPC_ROOT_PATH})
@@ -107,7 +106,6 @@ set(LIBS_BASIC
                     snappy
                     lz4
                     flatbuffers
-                    mysqlclient
                     pthread
                     z
                     dl
