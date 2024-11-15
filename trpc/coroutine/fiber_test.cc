@@ -298,4 +298,73 @@ TEST(Fiber, FiberMutexInMixedContext) {
   });
 }
 
+// Passing `c` as non-const reference to test `std::ref` (see below.).
+void Product(int a, int b, int& c) { c = a * b; }
+
+TEST(Fiber, CallWithArgs) {
+  RunAsFiber([]() {
+    // Test lambda
+    Fiber([](const char* hello) { ASSERT_EQ(hello, "hello"); }, "hello").Join();
+
+    Fiber(
+        [](auto&& First, auto&&... other) {
+          auto ans = (First + ... + other);
+          ASSERT_EQ(ans, 55);
+        },
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        .Join();
+
+    // Test member method
+    struct Add {
+      void operator()(int a, int b, int c) const { ASSERT_EQ(a + b, c); }
+    };
+
+    const Add add;
+    Fiber(std::ref(add), 2, 3, 5).Join();
+    Fiber(&Add::operator(), &add, 1, 2, 3).Join();
+
+    struct Worker {  // Noncopyable
+      std::string s;
+      void work(std::string_view s) { ASSERT_EQ("work...", s); }
+      void operator()(const std::string& str) { s = str; }
+      Worker() = default;
+      Worker(Worker&&) = default;
+      Worker(const Worker&) = delete;
+      Worker& operator=(const Worker&) = delete;
+    };
+
+    Worker w;
+    Fiber(&Worker::work, &w, "work...").Join();
+    Fiber(&Worker::operator(), &w, "Work Test").Join();
+    ASSERT_EQ(w.s, "Work Test");
+    Fiber(std::move(w), "Move Test").Join();
+
+    // Test template function
+    std::vector vec{5, 4, 3, 2, 1};
+    ASSERT_FALSE(std::is_sorted(vec.begin(), vec.end()));
+    Fiber(&std::sort<std::vector<int>::iterator>, vec.begin(), vec.end())
+        .Join();
+    ASSERT_TRUE(std::is_sorted(vec.begin(), vec.end()));
+
+    // Test function name
+    int res = 0;
+    Fiber(Product, 2, 5, std::ref(res)).Join();
+    ASSERT_EQ(res, 10);
+
+    // Test function address
+    Fiber(&Product, 6, 7, std::ref(res)).Join();
+    ASSERT_EQ(res, 42);
+
+    // Test bind
+    auto bind_function =
+        std::bind(Product, 3, std::placeholders::_1, std::placeholders::_2);
+    Fiber(bind_function, 5, std::ref(res)).Join();
+    ASSERT_EQ(res, 15);
+
+    // `std::pair` shouldn't be converted to `std::tuple` implicitly (by CTAD).
+    Fiber([&](auto&& p) { res = p.first; }, std::make_pair(1, 2)).Join();
+    EXPECT_EQ(1, res);
+  });
+}
+
 }  // namespace trpc

@@ -105,8 +105,8 @@ class Fiber {
   Fiber(const Attributes& attr, F&& f, Args&&... args)
       : Fiber(attr, [f = std::forward<F>(f),
                      // P0780R2 is not implemented as of now (GCC 8.2).
-                     t = std::tuple(std::forward<Args>(args)...)] {
-          std::apply(std::forward<F>(f)(std::move(t)));
+                     t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+          std::apply(std::move(f), std::move(t));
         }) {}
 
   /// @brief Special case if no parameter is passed to `F`, in this case we don't need
