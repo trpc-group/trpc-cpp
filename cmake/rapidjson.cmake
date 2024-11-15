@@ -28,6 +28,10 @@ FetchContent_GetProperties(com_github_tencent_rapidjson)
 if(NOT com_github_tencent_rapidjson_POPULATED)
     FetchContent_Populate(com_github_tencent_rapidjson)
 
+    execute_process(COMMAND git apply ${TRPC_ROOT_PATH}/third_party/com_github_tencent_rapidjson/0001-remove-non-compiling-assignment-operator.patch
+                                      --directory cmake_third_party/rapidjson
+                    WORKING_DIRECTORY ${TRPC_ROOT_PATH})
+
     add_definitions(-DRAPIDJSON_HAS_STDSTRING)
     include_directories("${TRPC_ROOT_PATH}/cmake_third_party/rapidjson/include/")
 
