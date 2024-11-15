@@ -11,15 +11,18 @@
 //
 //
 
-#include "trpc/common/config/domain_naming_conf.h"
-#include "trpc/common/config/domain_naming_conf_parser.h"
+#include "trpc/naming/domain/domain_selector_conf.h"
 
 #include "gtest/gtest.h"
-#include "yaml-cpp/yaml.h"
 
-TEST(LoadbalancerConfig, load_test) {
+#include "trpc/naming/domain/domain_selector_conf_parser.h"
+
+TEST(LoadbalancerConfig, EncodeAndDecode) {
   trpc::naming::DomainSelectorConfig domain_selector_config;
   domain_selector_config.exclude_ipv6 = true;
+  domain_selector_config.circuit_break_config.plugin_name = "self";
+  domain_selector_config.circuit_break_config.enable = false;
+  domain_selector_config.circuit_break_config.plugin_config["enable"] = "false";
   domain_selector_config.Display();
 
   YAML::convert<trpc::naming::DomainSelectorConfig> c;
@@ -30,4 +33,6 @@ TEST(LoadbalancerConfig, load_test) {
 
   tmp.Display();
   ASSERT_EQ(domain_selector_config.exclude_ipv6, tmp.exclude_ipv6);
+  ASSERT_TRUE(tmp.circuit_break_config.plugin_name == domain_selector_config.circuit_break_config.plugin_name);
+  ASSERT_TRUE(tmp.circuit_break_config.enable == domain_selector_config.circuit_break_config.enable);
 }

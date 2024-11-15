@@ -7,8 +7,10 @@ package(
 )
 
 exports_files([
-    "test.yaml",
+    "direct_selector_test.yaml",
     "domain_test.yaml",
+    "domain_selector_test.yaml",
+    "test.yaml",
     "test_load.yaml",
     "test_load.toml",
 ])
