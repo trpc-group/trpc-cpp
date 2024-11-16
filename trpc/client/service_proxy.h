@@ -140,9 +140,6 @@ class ServiceProxy {
   /// @note Subclasses can implement transport by overriding this method themselves.
   virtual void InitTransport();
 
-  /// @brief Init the derived class members if need. It will be called after SetServiceProxyOptionInner.
-  virtual void InitOtherMembers();
-
  private:
   // Init the service routing name by config
   void InitServiceNameInfo();
