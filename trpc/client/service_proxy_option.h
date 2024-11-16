@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "trpc/common/config/default_value.h"
+#include "trpc/common/config/mysql_client_conf.h"
 #include "trpc/common/config/redis_client_conf.h"
 #include "trpc/common/config/ssl_conf.h"
 #include "trpc/naming/common/common_inc_deprecated.h"
@@ -193,6 +194,9 @@ struct ServiceProxyOption {
 
   /// The configuration information for Redis authentication.
   RedisClientConf redis_conf;
+
+  /// The configuration information for MySQL authentication.
+  MysqlClientConf mysql_conf;
 
   /// The configuration information for SSL/TLS authentication.
   ClientSslConfig ssl_config;

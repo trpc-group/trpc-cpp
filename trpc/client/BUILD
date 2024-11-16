@@ -28,6 +28,7 @@ cc_library(
     deps = [
         "//trpc/common/config:default_value",
         "//trpc/common/config:redis_client_conf",
+        "//trpc/common/config:mysql_client_conf",
         "//trpc/common/config:ssl_conf",
         "//trpc/naming/common:common_inc_deprecated",
         "//trpc/runtime/iomodel/reactor/common:connection_handler",
@@ -43,6 +44,7 @@ cc_library(
     deps = [
         "//trpc/client:service_proxy_option",
         "//trpc/common/config:redis_client_conf",
+        "//trpc/common/config:mysql_client_conf",
         "//trpc/common/config:ssl_conf",
     ],
 )
