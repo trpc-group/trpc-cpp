@@ -11,6 +11,8 @@
 //
 //
 
+#ifdef TRPC_BUILD_INCLUDE_RPCZ
+
 #include "examples/features/rpcz/proxy/rpcz_proxy.h"
 
 #include "trpc/rpcz/trpc_rpcz.h"
@@ -90,3 +92,11 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+
+#else
+
+int main(int argc, char** argv) {
+  return 0;
+}
+
+#endif // TRPC_BUILD_INCLUDE_RPCZ

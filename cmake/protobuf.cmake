@@ -43,6 +43,6 @@ if(NOT protobuf_POPULATED)
 endif()
 
 # Make sure protoc binary when import protobuf
-if(NOT DEFINED ROTOBUF_PROTOC_EXECUTABLE)
+if(NOT DEFINED PROTOBUF_PROTOC_EXECUTABLE)
     set(PROTOBUF_PROTOC_EXECUTABLE protoc)
 endif()

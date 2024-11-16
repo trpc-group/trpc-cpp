@@ -1,0 +1,25 @@
+From 4bd1e5f857adfc3363126e2001de935183808f1a Mon Sep 17 00:00:00 2001
+From: zhangyi1357 <zhangyi_1357@sjtu.edu.cn>
+Date: Wed, 7 Aug 2024 14:31:29 +0800
+Subject: [PATCH] remove non-compiling assignment operator
+
+---
+ include/rapidjson/document.h | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/include/rapidjson/document.h b/include/rapidjson/document.h
+index e3e20dfb..b0f1f70b 100644
+--- a/include/rapidjson/document.h
++++ b/include/rapidjson/document.h
+@@ -316,8 +316,6 @@ struct GenericStringRef {
+ 
+     GenericStringRef(const GenericStringRef& rhs) : s(rhs.s), length(rhs.length) {}
+ 
+-    GenericStringRef& operator=(const GenericStringRef& rhs) { s = rhs.s; length = rhs.length; }
+-
+     //! implicit conversion to plain CharType pointer
+     operator const Ch *() const { return s; }
+ 
+-- 
+2.46.0
+
