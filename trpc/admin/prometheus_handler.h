@@ -37,7 +37,9 @@ class PrometheusHandler : public AdminHandlerBase {
                      rapidjson::Document::AllocatorType& alloc) override;
 
  private:
-  bool CheckAuth(std::string token);
+  bool CheckTokenAuth(std::string token);
+
+  bool CheckBasicAuth(std::string token);
 
   std::map<std::string, std::string> auth_cfg_;
 };
