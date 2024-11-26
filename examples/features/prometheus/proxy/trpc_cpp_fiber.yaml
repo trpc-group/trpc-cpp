@@ -49,6 +49,11 @@ plugins:
         gateway_url: "http://pushgateway:9091"
         job_name: "test_job"
         push_interval_seconds: 2
+      auth_cfg:
+        iss: admin 
+        sub: prometheus-pull
+        aud: trpc-server
+        secret: test
   log:
     default:
       - name: default

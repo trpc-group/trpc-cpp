@@ -363,3 +363,11 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
         remote = "https://github.com/trpc-group/trpc.git",
         tag = "v{ver}".format(ver = kwargs.get("com_github_trpc_protocol_ver", "1.0.0")),
     )
+    # com_github_thalhammer_jwt_cpp
+    http_archive(
+        name = "com_github_thalhammer_jwt_cpp",
+        strip_prefix = "jwt-cpp-0.7.0",
+        urls = ["https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v0.7.0.tar.gz"],
+        sha256 = "b9eb270e3ba8221e4b2bc38723c9a1cb4fa6c241a42908b9a334daff31137406",
+        build_file = clean_dep("//third_party/com_github_thalhammer_jwt_cpp:jwt_cpp.BUILD"),
+    )

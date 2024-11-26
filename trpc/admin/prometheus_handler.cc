@@ -29,36 +29,23 @@ void PrometheusHandler::Init() {
         "Failed to obtain Prometheus plugin configuration from the framework configuration file. Default configuration "
         "will be used.");
   }
-  auto& cfg = prometheus_conf.auth_cfg;
-  if (cfg.count("username") && cfg.count("password")) {
-    auth_conf_.username = cfg["username"];
-    auth_conf_.password = cfg["password"];
-  } else {
-    TRPC_LOG_WARN("can not found prometheus auth config");
-  }
+  auth_cfg_ = prometheus_conf.auth_cfg;
 }
 
-bool PrometheusHandler::CheckAuth(std::string token) {
-  auto splited = Split(token, ' ');
+bool PrometheusHandler::CheckAuth(std::string bearer_token) {
+  auto splited = Split(bearer_token, ' ');
   if (splited.size() != 2) {
-    TRPC_FMT_ERROR("error token: {}", token);
+    TRPC_FMT_ERROR("error token: {}", bearer_token);
     return false;
   }
-  if (splited[0] != "Basic") {
-    TRPC_FMT_ERROR("error token: {}", token);
+  auto method = splited[0];
+  if (method != "Bearer") {
+    TRPC_FMT_ERROR("error auth method: {}", method);
     return false;
-  }
-
-  std::string username_pwd = http::Base64Decode(std::begin(splited[1]), std::end(splited[1]));
-  auto sp = Split(username_pwd, ':');
-  if (sp.size() != 2) {
+  } 
+  std::string token = std::string(splited[1]);
+  if (!Jwt::isValid(token, auth_cfg_)) {
     TRPC_FMT_ERROR("error token: {}", token);
-    return false;
-  }
-
-  auto username = sp[0], pwd = sp[1];
-  if (username != auth_conf_.username || pwd != auth_conf_.password) {
-    TRPC_FMT_ERROR("error username or password: username: {}, password: {}", username, pwd);
     return false;
   }
   return true;
@@ -68,12 +55,10 @@ void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value
                                       rapidjson::Document::AllocatorType& alloc) {
   static std::unique_ptr<::prometheus::Serializer> serializer = std::make_unique<::prometheus::TextSerializer>();
 
-  if (auth_conf_.username.size() && auth_conf_.password.size()) {
-    std::string token = req->GetHeader("authorization");
-    if (!CheckAuth(token)) {
-      result.AddMember("message", "wrong request without right username or password", alloc);
-      return;
-    }
+  std::string bearer_token = req->GetHeader("authorization");
+  if (!CheckAuth(bearer_token)) {
+    result.AddMember("message", "wrong request without right token", alloc);
+    return;
   }
 
   std::string prometheus_str = serializer->Serialize(trpc::prometheus::Collect());

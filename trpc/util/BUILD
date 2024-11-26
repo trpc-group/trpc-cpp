@@ -153,6 +153,15 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "jwt",
+    srcs = ["jwt.cc"],
+    hdrs = ["jwt.h"],
+    deps = [
+        "@com_github_thalhammer_jwt_cpp//:jwt-cpp",
+    ],
+)
+
 cc_test(
     name = "pb2json_test",
     srcs = ["pb2json_test.cc"],

@@ -17,9 +17,10 @@
 
 namespace trpc {
 
+/// @brief Implementation of Json Web Token.
 class Jwt {
   public:
     static bool isValid(const std::string& token, std::map<std::string, std::string>& auth_cfg);
 };
 
-}
+} // namespace trpc

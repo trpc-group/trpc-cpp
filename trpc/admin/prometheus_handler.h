@@ -22,6 +22,7 @@
 #include "trpc/util/prometheus.h"
 #include "trpc/util/string/string_helper.h"
 #include "trpc/util/time.h"
+#include "trpc/util/jwt.h"
 
 namespace trpc::admin {
 
@@ -38,10 +39,7 @@ class PrometheusHandler : public AdminHandlerBase {
  private:
   bool CheckAuth(std::string token);
 
-  struct AuthConf {
-    std::string username;
-    std::string password;
-  } auth_conf_;
+  std::map<std::string, std::string> auth_cfg_;
 };
 
 }  // namespace trpc::admin

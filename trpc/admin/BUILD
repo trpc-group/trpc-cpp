@@ -358,6 +358,7 @@ cc_library(
         "//trpc/log:trpc_log",
         "//trpc/util/http:base64",
         "//trpc/util/string:string_helper",
+        "//trpc/util:jwt",
     ] + select({
         "//conditions:default": [],
         "//trpc:trpc_include_prometheus": [
