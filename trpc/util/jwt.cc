@@ -39,4 +39,4 @@ bool Jwt::isValid(const std::string& token, std::map<std::string, std::string>& 
   }
 }
 
-} // namespace trpc
+}  // namespace trpc

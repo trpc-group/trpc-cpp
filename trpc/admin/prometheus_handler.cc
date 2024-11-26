@@ -42,7 +42,7 @@ bool PrometheusHandler::CheckTokenAuth(std::string bearer_token) {
   if (method != "Bearer") {
     TRPC_FMT_ERROR("error auth method: {}", method);
     return false;
-  } 
+  }
   std::string token = std::string(splited[1]);
   if (!Jwt::isValid(token, auth_cfg_)) {
     TRPC_FMT_ERROR("error token: {}", token);
@@ -100,7 +100,6 @@ void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value
       return;
     }
   }
-
 
   std::string prometheus_str = serializer->Serialize(trpc::prometheus::Collect());
   result.AddMember(rapidjson::StringRef("trpc-html"), rapidjson::Value(prometheus_str, alloc).Move(), alloc);
