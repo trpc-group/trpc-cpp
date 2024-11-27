@@ -487,6 +487,10 @@ basic_auth_users:
   admin: $2b$12$kXxrZP74Fmjh6Wih0Ignu.uWSiojl5aKj4UnMvHN9s2h/Lc/ui0.S
 ```
 
-
+密码的密文可以通过htpasswd工具生成：
+```shell
+> htpasswd -nbB admin test
+admin:$2y$05$5uq4H5p8JyfQm.e16o3xduW6tkI2bTRpArTK4MF4dEuvncpz/bqy.
+```
 
 
