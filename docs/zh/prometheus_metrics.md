@@ -420,6 +420,8 @@ Prometheus插件鉴权分为两种模式：pull模式 和 push模式，不同模
 
 ```yaml
 plugins:
+  metrics:
+    prometheus:
       auth_cfg:
         iss: admin # issuer 签发人
         sub: prometheus-pull # subject 主题 
@@ -455,6 +457,8 @@ scrape_configs:
 
 ```yaml
 plugins:
+  metrics:
+    prometheus:
       auth_cfg:
         username: admin
         password: test
