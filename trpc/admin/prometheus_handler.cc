@@ -83,21 +83,21 @@ void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value
 
   std::string token = req->GetHeader("authorization");
 
-  if (auth_cfg_.count("username") && auth_cfg_.count("password")) {
-    TRPC_FMT_INFO("push mode");
-    // push mode
-    // use the basic auth if already config the username and password.
-    if (!CheckBasicAuth(token)) {
-      result.AddMember("message", "wrong request without right username or password", alloc);
-      return;
-    }
-  } else {
-    // pull mode
-    // use the json web token auth.
-    TRPC_FMT_INFO("pull mode");
-    if (!CheckTokenAuth(token)) {
-      result.AddMember("message", "wrong request without right token", alloc);
-      return;
+  if (!auth_cfg_.empty()) {
+    if (auth_cfg_.count("username") && auth_cfg_.count("password")) {
+      // push mode
+      // use the basic auth if already config the username and password.
+      if (!CheckBasicAuth(token)) {
+        result.AddMember("message", "wrong request without right username or password", alloc);
+        return;
+      }
+    } else {
+      // pull mode
+      // use the json web token auth.
+      if (!CheckTokenAuth(token)) {
+        result.AddMember("message", "wrong request without right token", alloc);
+        return;
+      }
     }
   }
 
