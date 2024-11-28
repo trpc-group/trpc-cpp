@@ -80,18 +80,16 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
             urls = zlib_urls,
         )
 
-
     http_archive(
-    name = "com_github_curl",
-    build_file = "@com_github_jupp0r_prometheus_cpp//bazel:curl.BUILD",
-    sha256 = "01ae0c123dee45b01bbaef94c0bc00ed2aec89cb2ee0fd598e0d302a6b5e0a98",
-    strip_prefix = "curl-7.69.1",
-    urls = [
-        "https://curl.haxx.se/download/curl-7.69.1.tar.gz",
-        "https://github.com/curl/curl/releases/download/curl-7_69_1/curl-7.69.1.tar.gz",
+        name = "com_github_curl",
+        build_file = "@com_github_jupp0r_prometheus_cpp//bazel:curl.BUILD",
+        sha256 = "01ae0c123dee45b01bbaef94c0bc00ed2aec89cb2ee0fd598e0d302a6b5e0a98",
+        strip_prefix = "curl-7.69.1",
+        urls = [
+            "https://curl.haxx.se/download/curl-7.69.1.tar.gz",
+            "https://github.com/curl/curl/releases/download/curl-7_69_1/curl-7.69.1.tar.gz",
         ],
     )
-
 
     # com_github_google_snappy
     com_github_google_snappy_ver = kwargs.get("com_github_google_snappy_ver", "1.1.8")
@@ -339,11 +337,12 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
         sha256 = "a0b6bec77c0e418eea7d270a4437510884f2fe8f61e7ab121729624f04c4b58e",
         build_file = clean_dep("//third_party/com_github_toruniina_toml11:toml.BUILD"),
     )
+
     # com_github_google_flatbuffers
     fbs_ver = kwargs.get("fbs_ver", "23.5.26")
     fbs_sha256 = kwargs.get("fbs_sha256", "1cce06b17cddd896b6d73cc047e36a254fb8df4d7ea18a46acf16c4c0cd3f3f3")
     fbs_urls = [
-       "https://github.com/google/flatbuffers/archive/v{ver}.tar.gz".format(ver = fbs_ver),
+        "https://github.com/google/flatbuffers/archive/v{ver}.tar.gz".format(ver = fbs_ver),
     ]
     http_archive(
         name = "com_github_google_flatbuffers",
@@ -363,6 +362,7 @@ def trpc_workspace(path_prefix = "", repo_name = "", **kwargs):
         remote = "https://github.com/trpc-group/trpc.git",
         tag = "v{ver}".format(ver = kwargs.get("com_github_trpc_protocol_ver", "1.0.0")),
     )
+
     # com_github_thalhammer_jwt_cpp
     http_archive(
         name = "com_github_thalhammer_jwt_cpp",
