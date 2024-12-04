@@ -57,11 +57,6 @@ plugins:
       const_labels:
         key1: value1
         key2: value2
-      auth_cfg:
-        iss: admin
-        sub: prometheus-pull
-        aud: trpc-server
-        secret: test
 ```
 
 配置项说明：
@@ -70,7 +65,6 @@ plugins:
 | ------ | ------ | ------ | ------ |
 | histogram_module_cfg | 序列（Sequences） | 否，默认为 [1, 10, 100, 1000] | 模调监控耗时分布的统计区间，单位为ms |
 | const_labels | 映射（Mappings） | 否，默认为空 | 每个RPC统计数据默认附带的标签 |
-| auth_cfg | 鉴权（Mappings） | 否，默认为空 | 鉴权相关参数配置 | 
 
 ## 模调监控上报
 
@@ -464,31 +458,13 @@ plugins:
         password: test
 ```
 
-### Prometheus服务器配置
-
-```yaml
-global:
-  scrape_interval:     15s
-  evaluation_interval: 15s
-
-scrape_configs:
-    - job_name: pushgateway
-      static_configs:
-        - targets: ['172.17.0.5:9091'] # pushgateway服务器的地址
-          labels:
-            instance: pushgateway_instance
-      basic_auth:
-        username: admin
-        password: test
-```
-
 ### Pushgateway服务器配置
 
 需要在Pushgateway服务器启动时，通过带有通过**bcrypt**加密的密文的配置文件启动。Pushgateway启动的配置文件如下：
 
 ```yaml
 basic_auth_users:                                                                                                                                          
-  admin: $2b$12$kXxrZP74Fmjh6Wih0Ignu.uWSiojl5aKj4UnMvHN9s2h/Lc/ui0.S
+  admin: $2y$05$5uq4H5p8JyfQm.e16o3xduW6tkI2bTRpArTK4MF4dEuvncpz/bqy.
 ```
 
 密码的密文可以通过htpasswd工具生成：
