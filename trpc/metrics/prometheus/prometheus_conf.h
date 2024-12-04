@@ -29,7 +29,19 @@ struct PrometheusConfig {
   /// The default label attached to each RPC metrics data
   std::map<std::string, std::string> const_labels;
 
+  std::map<std::string, std::string> auth_cfg;
+
   void Display() const;
 };
 
 }  // namespace trpc
+
+namespace YAML {
+
+template <>
+struct convert<trpc::PrometheusConfig> {
+  static YAML::Node encode(const trpc::PrometheusConfig& config);
+  static bool decode(const YAML::Node& node, trpc::PrometheusConfig& config);
+};
+
+}  // namespace YAML

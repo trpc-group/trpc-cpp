@@ -14,8 +14,16 @@
 #ifdef TRPC_BUILD_INCLUDE_PROMETHEUS
 #pragma once
 
+#include <jwt-cpp/jwt.h>
+
 #include "trpc/admin/admin_handler.h"
+#include "trpc/common/config/trpc_config.h"
+#include "trpc/log/trpc_log.h"
+#include "trpc/metrics/prometheus/prometheus_metrics.h"
+#include "trpc/util/http/base64.h"
 #include "trpc/util/prometheus.h"
+#include "trpc/util/string/string_helper.h"
+#include "trpc/util/time.h"
 
 namespace trpc::admin {
 
@@ -24,8 +32,18 @@ class PrometheusHandler : public AdminHandlerBase {
  public:
   PrometheusHandler();
 
+  void Init();
+
   void CommandHandle(http::HttpRequestPtr req, rapidjson::Value& result,
                      rapidjson::Document::AllocatorType& alloc) override;
+
+ private:
+  bool CheckTokenAuth(std::string token);
+
+  bool CheckBasicAuth(std::string token);
+
+  // Yaml-cpp only supports conversion to std::map.
+  std::map<std::string, std::string> auth_cfg_;
 };
 
 }  // namespace trpc::admin

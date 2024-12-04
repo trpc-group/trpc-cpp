@@ -354,13 +354,21 @@ cc_library(
         ":admin_handler",
         ":base_funcs",
         "//trpc/util:prometheus",
+        "//trpc/common/config:trpc_config",
+        "//trpc/log:trpc_log",
+        "//trpc/util/http:base64",
+        "//trpc/util/string:string_helper",
     ] + select({
         "//conditions:default": [],
         "//trpc:trpc_include_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
+            "@com_github_thalhammer_jwt_cpp//:jwt-cpp",
+            "//trpc/metrics/prometheus:prometheus_metrics",
         ],
         "//trpc:include_metrics_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
+            "@com_github_thalhammer_jwt_cpp//:jwt-cpp",
+            "//trpc/metrics/prometheus:prometheus_metrics",
         ],
     }),
 )

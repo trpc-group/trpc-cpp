@@ -12,7 +12,6 @@
 //
 
 #include "trpc/metrics/prometheus/prometheus_conf.h"
-#include "trpc/metrics/prometheus/prometheus_conf_parser.h"
 
 #include "gtest/gtest.h"
 #include "yaml-cpp/yaml.h"

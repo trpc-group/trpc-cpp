@@ -40,7 +40,7 @@
 
 #pragma once
 
-#include <bits/stdint-uintn.h>
+#include <stdint.h>
 
 #ifndef GET_ULONG_LE
 #define GET_ULONG_LE(n, b, i)                                                                                    \

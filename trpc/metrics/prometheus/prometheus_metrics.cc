@@ -15,7 +15,6 @@
 #include "trpc/metrics/prometheus/prometheus_metrics.h"
 
 #include "trpc/common/config/trpc_config.h"
-#include "trpc/metrics/prometheus/prometheus_conf_parser.h"
 
 namespace trpc {
 

@@ -55,7 +55,8 @@ set(INCLUDE_PATHS   ${TRPC_ROOT_PATH}
                     ${TRPC_ROOT_PATH}/cmake_third_party/nghttp2/lib/includes
                     ${TRPC_ROOT_PATH}/cmake_third_party/picohttpparser
                     ${TRPC_ROOT_PATH}/cmake_third_party/snappy
-                    ${TRPC_ROOT_PATH}/cmake_third_party/lz4)
+                    ${TRPC_ROOT_PATH}/cmake_third_party/lz4
+                    ${TRPC_ROOT_PATH}/cmake_third_party/jwt_cpp)
 
 # When use tRPC as a third-party library, selectively inject the header files at including any-lib.cmake.
 set(TARGET_INCLUDE_PATHS  ${TRPC_ROOT_PATH})
@@ -117,4 +118,5 @@ set(LIB_SSL ssl crypto)
 
 set(LIB_METRICS_PROMETHEUS prometheus-cpp-core
                            prometheus-cpp-pull
-                           prometheus-cpp-push)
+                           prometheus-cpp-push
+                           jwt-cpp)

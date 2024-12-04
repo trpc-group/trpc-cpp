@@ -34,3 +34,28 @@ void PrometheusConfig::Display() const {
 }
 
 }  // namespace trpc
+
+namespace YAML {
+
+YAML::Node convert<trpc::PrometheusConfig>::encode(const trpc::PrometheusConfig& config) {
+  YAML::Node node;
+  node["histogram_module_cfg"] = config.histogram_module_cfg;
+  node["const_labels"] = config.const_labels;
+  node["auth_cfg"] = config.auth_cfg;
+  return node;
+}
+
+bool convert<trpc::PrometheusConfig>::decode(const YAML::Node& node, trpc::PrometheusConfig& config) {
+  if (node["histogram_module_cfg"]) {
+    config.histogram_module_cfg = node["histogram_module_cfg"].as<std::vector<double>>();
+  }
+  if (node["const_labels"]) {
+    config.const_labels = node["const_labels"].as<std::map<std::string, std::string>>();
+  }
+  if (node["auth_cfg"]) {
+    config.auth_cfg = node["auth_cfg"].as<std::map<std::string, std::string>>();
+  }
+  return true;
+}
+
+}  // namespace YAML
