@@ -75,13 +75,16 @@ cc_library(
         "//trpc/util:prometheus",
         "//trpc/common/config:trpc_config",
         "//trpc/metrics",
+        "//trpc/runtime/common:periphery_task_scheduler",
     ] + select({
         "//conditions:default": [],
         "//trpc:trpc_include_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
+            "@com_github_jupp0r_prometheus_cpp//push",
         ],
         "//trpc:include_metrics_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
+            "@com_github_jupp0r_prometheus_cpp//push",
         ],
     }),
 )

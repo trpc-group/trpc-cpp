@@ -14,8 +14,6 @@
 #ifdef TRPC_BUILD_INCLUDE_PROMETHEUS
 #pragma once
 
-#include <jwt-cpp/jwt.h>
-
 #include "trpc/admin/admin_handler.h"
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/log/trpc_log.h"

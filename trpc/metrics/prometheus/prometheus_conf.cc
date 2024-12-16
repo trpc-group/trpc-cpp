@@ -30,32 +30,18 @@ void PrometheusConfig::Display() const {
     TRPC_LOG_DEBUG(label.first << ":" << label.second);
   }
 
+  TRPC_LOG_DEBUG("auth_cfg:");
+  for (auto auth : auth_cfg) {
+    TRPC_LOG_DEBUG(auth.first << ":" << auth.second);
+  }
+
+  TRPC_LOG_DEBUG("push_mode enable:" << push_mode.enable);
+  TRPC_LOG_DEBUG("push_mode gateway_host:" << push_mode.gateway_host);
+  TRPC_LOG_DEBUG("push_mode gateway_port:" << push_mode.gateway_port);
+  TRPC_LOG_DEBUG("push_mode job_name:" << push_mode.job_name);
+  TRPC_LOG_DEBUG("push_mode interval_ms:" << push_mode.interval_ms);
+
   TRPC_LOG_DEBUG("--------------------------------");
 }
 
 }  // namespace trpc
-
-namespace YAML {
-
-YAML::Node convert<trpc::PrometheusConfig>::encode(const trpc::PrometheusConfig& config) {
-  YAML::Node node;
-  node["histogram_module_cfg"] = config.histogram_module_cfg;
-  node["const_labels"] = config.const_labels;
-  node["auth_cfg"] = config.auth_cfg;
-  return node;
-}
-
-bool convert<trpc::PrometheusConfig>::decode(const YAML::Node& node, trpc::PrometheusConfig& config) {
-  if (node["histogram_module_cfg"]) {
-    config.histogram_module_cfg = node["histogram_module_cfg"].as<std::vector<double>>();
-  }
-  if (node["const_labels"]) {
-    config.const_labels = node["const_labels"].as<std::map<std::string, std::string>>();
-  }
-  if (node["auth_cfg"]) {
-    config.auth_cfg = node["auth_cfg"].as<std::map<std::string, std::string>>();
-  }
-  return true;
-}
-
-}  // namespace YAML

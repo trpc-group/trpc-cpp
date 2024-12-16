@@ -20,19 +20,19 @@ endif()
 set(JWT_URL https://github.com/Thalhammer/jwt-cpp/archive/refs/tags/v${JWT_VET}.tar.gz)
 
 FetchContent_Declare(
-    jwt-cpp 
+    jwt_cpp
     URL             ${JWT_URL}
     SOURCE_DIR      ${TRPC_ROOT_PATH}/cmake_third_party/jwt_cpp
 )
 
-FetchContent_GetProperties(jwt-cpp)
+FetchContent_GetProperties(jwt_cpp)
 
 if(NOT jwt_cpp_POPULATED)
-    FetchContent_Populate(jwt-cpp)
+    FetchContent_Populate(jwt_cpp)
     add_subdirectory(${TRPC_ROOT_PATH}/cmake_third_party/jwt_cpp)
     add_library(trpc_jwt_cpp ALIAS jwt-cpp)
     set(TARGET_INCLUDE_PATHS    ${TARGET_INCLUDE_PATHS}
                                 ${TRPC_ROOT_PATH}/cmake_third_party/jwt_cpp)
-    set(TARGET_LINK_LIBS ${TARGET_LINK_LIBS} jwt_cpp)
+    set(TARGET_LINK_LIBS ${TARGET_LINK_LIBS} trpc_jwt_cpp)
 endif()
 

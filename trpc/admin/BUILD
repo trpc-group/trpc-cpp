@@ -364,11 +364,13 @@ cc_library(
             "@com_github_jupp0r_prometheus_cpp//pull",
             "@com_github_thalhammer_jwt_cpp//:jwt-cpp",
             "//trpc/metrics/prometheus:prometheus_metrics",
+            "//trpc/metrics/prometheus:prometheus_conf_parser",
         ],
         "//trpc:include_metrics_prometheus": [
             "@com_github_jupp0r_prometheus_cpp//pull",
             "@com_github_thalhammer_jwt_cpp//:jwt-cpp",
             "//trpc/metrics/prometheus:prometheus_metrics",
+            "//trpc/metrics/prometheus:prometheus_conf_parser",
         ],
     }),
 )

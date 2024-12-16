@@ -32,6 +32,14 @@ examples/features/prometheus/
 
 * Compilation
 
+Before compile, please add prometheus deps in your WORKSPACE.
+
+```python
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+
+prometheus_cpp_repositories()
+```
+
 We can run the following command to compile the demo.
 
 ```shell

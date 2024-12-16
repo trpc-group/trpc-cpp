@@ -19,6 +19,14 @@ tRPC-Cpp 框架默认不会编译 Prometheus 相关的代码。若要开启，�
 
 ## Bazel 启用方式
 
+编译前，需要增加prometheus的依赖在WORKSPACE文件里。
+
+```python
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+
+prometheus_cpp_repositories()
+```
+
 bazel 编译时加上`“trpc_include_prometheus”`编译选项。
 
 例如在 `.bazelrc` 中加上：
@@ -57,6 +65,20 @@ plugins:
       const_labels:
         key1: value1
         key2: value2
+```
+
+默认采用pull模式，如果需要启用push模式，则需要增加类似如下的配置：
+
+```yaml
+plugins:
+  metrics:
+    prometheus:
+      push_mode:
+        enable: true
+        gateway_host: 127.0.0.1
+        gateway_port: 9091
+        job_name: trpc_prometheus_push_metrics
+        interval_ms: 10000 # 默认上报间隔是10s
 ```
 
 配置项说明：

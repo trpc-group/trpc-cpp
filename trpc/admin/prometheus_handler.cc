@@ -14,7 +14,10 @@
 #ifdef TRPC_BUILD_INCLUDE_PROMETHEUS
 #include "trpc/admin/prometheus_handler.h"
 
+#include "jwt-cpp/jwt.h"
 #include "prometheus/text_serializer.h"
+
+#include "trpc/metrics/prometheus/prometheus_conf_parser.h"
 
 namespace {
 bool JwtValidate(const std::string& token, std::map<std::string, std::string>& auth_cfg) {
@@ -88,19 +91,6 @@ bool PrometheusHandler::CheckBasicAuth(std::string token) {
     TRPC_FMT_ERROR("error token: {}", token);
     return false;
   }
-
-  std::string username_pwd = http::Base64Decode(std::begin(splited[1]), std::end(splited[1]));
-  auto sp = Split(username_pwd, ':');
-  if (sp.size() != 2) {
-    TRPC_FMT_ERROR("error token: {}", token);
-    return false;
-  }
-
-  auto username = sp[0], pwd = sp[1];
-  if (username != auth_cfg_["username"] || pwd != auth_cfg_["password"]) {
-    TRPC_FMT_ERROR("error username or password: username: {}, password: {}", username, pwd);
-    return false;
-  }
   return true;
 }
 
@@ -113,20 +103,10 @@ void PrometheusHandler::CommandHandle(http::HttpRequestPtr req, rapidjson::Value
   std::string token = req->GetHeader("authorization");
 
   if (!auth_cfg_.empty()) {
-    if (auth_cfg_.count("username") && auth_cfg_.count("password")) {
-      // push mode
-      // use the basic auth if already config the username and password.
-      if (!CheckBasicAuth(token)) {
-        result.AddMember("message", "wrong request without right username or password", alloc);
-        return;
-      }
-    } else {
-      // pull mode
-      // use the json web token auth.
-      if (!CheckTokenAuth(token)) {
-        result.AddMember("message", "wrong request without right token", alloc);
-        return;
-      }
+    // use the json web token auth.
+    if (!CheckTokenAuth(token)) {
+      result.AddMember("message", "wrong request without right token", alloc);
+      return;
     }
   }
 

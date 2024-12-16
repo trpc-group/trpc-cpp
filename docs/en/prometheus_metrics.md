@@ -19,6 +19,14 @@ By default, tRPC-Cpp framework does not compile related code with prometheus. To
 
 ## Bazel
 
+Before compile, please add prometheus deps in your WORKSPACE file.
+
+```python
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+
+prometheus_cpp_repositories()
+```
+
 Add the `"trpc_include_prometheus"` compilation option during Bazel compilation.
 
 For example, add it in `.bazelrc` file.
@@ -65,6 +73,20 @@ The description of the configuration item are as follow.
 | ------ | ------ | ------ | ------ |
 | histogram_module_cfg | Sequences | No, the default value is [1, 10, 100, 1000] | Statistical interval for latency distribution in ModuleReport, measured in milliseconds. |
 | const_labels | Mappings | No, the default value is empty. | Default labels attached to each RPC statistical data. |
+
+By default, we use pull mode to report. If you want to use push mode, please add below configuration to your yaml file.
+
+```yaml
+plugins:
+  metrics:
+    prometheus:
+      push_mode:
+        enable: true
+        gateway_host: 127.0.0.1
+        gateway_port: 9091
+        job_name: trpc_prometheus_push_metrics
+        interval_ms: 10000 # 默认上报间隔是10s
+```
 
 ## ModuleReport
 

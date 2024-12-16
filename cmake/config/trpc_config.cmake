@@ -56,7 +56,7 @@ set(INCLUDE_PATHS   ${TRPC_ROOT_PATH}
                     ${TRPC_ROOT_PATH}/cmake_third_party/picohttpparser
                     ${TRPC_ROOT_PATH}/cmake_third_party/snappy
                     ${TRPC_ROOT_PATH}/cmake_third_party/lz4
-                    ${TRPC_ROOT_PATH}/cmake_third_party/jwt_cpp)
+                    ${TRPC_ROOT_PATH}/cmake_third_party/jwt_cpp/include)
 
 # When use tRPC as a third-party library, selectively inject the header files at including any-lib.cmake.
 set(TARGET_INCLUDE_PATHS  ${TRPC_ROOT_PATH})

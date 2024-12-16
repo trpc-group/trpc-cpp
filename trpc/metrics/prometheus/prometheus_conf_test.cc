@@ -16,6 +16,8 @@
 #include "gtest/gtest.h"
 #include "yaml-cpp/yaml.h"
 
+#include "trpc/metrics/prometheus/prometheus_conf_parser.h"
+
 namespace trpc::testing {
 
 TEST(PrometheusConfig, Load) {

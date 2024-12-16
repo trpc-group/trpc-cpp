@@ -44,6 +44,12 @@ plugins:
       const_labels:
         const_key1: const_value1
         const_key2: const_value2
+      # push_mode:
+      #   enable: true
+      #   gateway_host: 127.0.0.1
+      #   gateway_port: 9091
+      #   job_name: trpc_prometheus_push_metrics
+      #   interval_ms: 1000
   log:
     default:
       - name: default
