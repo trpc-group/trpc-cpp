@@ -36,8 +36,8 @@
 // documentation and/or software.
 #include "trpc/naming/common/util/hash/md5.h"
 
-#include <bits/stdint-uintn.h>
 #include <memory.h>
+#include <stdint.h>
 /*
  * MD5 context setup
  */

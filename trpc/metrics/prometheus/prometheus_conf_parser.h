@@ -25,7 +25,14 @@ struct convert<trpc::PrometheusConfig> {
     YAML::Node node;
     node["histogram_module_cfg"] = conf.histogram_module_cfg;
     node["const_labels"] = conf.const_labels;
-
+    node["auth_cfg"] = conf.auth_cfg;
+    node["push_mode"]["enable"] = conf.push_mode.enable;
+    if (conf.push_mode.enable) {
+      node["push_mode"]["gateway_host"] = conf.push_mode.gateway_host;
+      node["push_mode"]["gateway_port"] = conf.push_mode.gateway_port;
+      node["push_mode"]["job_name"] = conf.push_mode.job_name;
+      node["push_mode"]["interval_ms"] = conf.push_mode.interval_ms;
+    }
     return node;
   }
 
@@ -36,6 +43,20 @@ struct convert<trpc::PrometheusConfig> {
 
     if (node["const_labels"]) {
       conf.const_labels = node["const_labels"].as<std::map<std::string, std::string>>();
+    }
+
+    if (node["auth_cfg"]) {
+      conf.auth_cfg = node["auth_cfg"].as<std::map<std::string, std::string>>();
+    }
+    if (node["push_mode"]) {
+      const auto& push_mode = node["push_mode"];
+      conf.push_mode.enable = push_mode["enable"].as<bool>(false);
+      if (conf.push_mode.enable) {
+        conf.push_mode.gateway_host = push_mode["gateway_host"].as<std::string>();
+        conf.push_mode.gateway_port = push_mode["gateway_port"].as<std::string>();
+        conf.push_mode.job_name = push_mode["job_name"].as<std::string>();
+        conf.push_mode.interval_ms = push_mode["interval_ms"].as<int>(10000);
+      }
     }
     return true;
   }

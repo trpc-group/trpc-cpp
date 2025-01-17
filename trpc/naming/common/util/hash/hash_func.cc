@@ -13,7 +13,7 @@
 
 #include "trpc/naming/common/util/hash/hash_func.h"
 
-#include <bits/stdint-uintn.h>
+#include <stdint.h>
 #include <string>
 
 #include "trpc/naming/common/util/hash/city.h"

@@ -16,8 +16,13 @@
 
 #include "trpc/common/config/trpc_config.h"
 #include "trpc/metrics/prometheus/prometheus_conf_parser.h"
+#include "trpc/runtime/common/periphery_task_scheduler.h"
+
+#include "prometheus/gateway.h"
 
 namespace trpc {
+
+constexpr const int kPushToGatewaySucc = 200;
 
 int PrometheusMetrics::Init() noexcept {
   bool ret = TrpcConfig::GetInstance()->GetPluginConfig<PrometheusConfig>(
@@ -46,6 +51,47 @@ int PrometheusMetrics::Init() noexcept {
       trpc::prometheus::GetHistogramFamily(kPrometheusHistogramName, kPrometheusHistogramDesc);
 
   return 0;
+}
+
+void PrometheusMetrics::Start() noexcept {
+  // initialize prometheus pusher task
+  if (prometheus_conf_.push_mode.enable) {
+    if (push_gateway_task_id_ == 0) {
+      const auto& push_conf = prometheus_conf_.push_mode;
+      const auto& auth_conf = prometheus_conf_.auth_cfg;
+      std::string username, password;
+      if (!auth_conf.empty()) {
+        auto it = auth_conf.find("username");
+        if (it != auth_conf.end()) {
+          username = it->second;
+        }
+        it = auth_conf.find("password");
+        if (it != auth_conf.end()) {
+          password = it->second;
+        }
+      }
+      ::prometheus::Labels labels;
+      std::unique_ptr<::prometheus::Gateway> gateway = std::make_unique<::prometheus::Gateway>(
+          push_conf.gateway_host, push_conf.gateway_port, push_conf.job_name, labels, username, password);
+      gateway->RegisterCollectable(trpc::prometheus::GetRegistry());
+      push_gateway_task_id_ = PeripheryTaskScheduler::GetInstance()->SubmitInnerPeriodicalTask(
+          [gateway = std::move(gateway)]() {
+            int ret = gateway->Push();
+            if (ret != kPushToGatewaySucc) {
+              TRPC_FMT_ERROR("Failed to push metrics to the gateway");
+            }
+          },
+          prometheus_conf_.push_mode.interval_ms, "PrometheusPushGatewayTask");
+    }
+  }
+}
+
+void PrometheusMetrics::Stop() noexcept {
+  if (push_gateway_task_id_ != 0) {
+    PeripheryTaskScheduler::GetInstance()->StopInnerTask(push_gateway_task_id_);
+    PeripheryTaskScheduler::GetInstance()->JoinInnerTask(push_gateway_task_id_);
+    push_gateway_task_id_ = 0;
+  }
 }
 
 int PrometheusMetrics::ModuleReport(const ModuleMetricsInfo& info) {

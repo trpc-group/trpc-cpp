@@ -30,6 +30,17 @@ void PrometheusConfig::Display() const {
     TRPC_LOG_DEBUG(label.first << ":" << label.second);
   }
 
+  TRPC_LOG_DEBUG("auth_cfg:");
+  for (auto auth : auth_cfg) {
+    TRPC_LOG_DEBUG(auth.first << ":" << auth.second);
+  }
+
+  TRPC_LOG_DEBUG("push_mode enable:" << push_mode.enable);
+  TRPC_LOG_DEBUG("push_mode gateway_host:" << push_mode.gateway_host);
+  TRPC_LOG_DEBUG("push_mode gateway_port:" << push_mode.gateway_port);
+  TRPC_LOG_DEBUG("push_mode job_name:" << push_mode.job_name);
+  TRPC_LOG_DEBUG("push_mode interval_ms:" << push_mode.interval_ms);
+
   TRPC_LOG_DEBUG("--------------------------------");
 }
 

@@ -51,6 +51,9 @@ ${TRPC_BUILD_BINARY_PATH}/cmake_third_party/prometheus/core/include>"
                                 ${prometheus_SOURCE_DIR}/pull/include
                                 ${TRPC_BUILD_BINARY_PATH}/cmake_third_party/prometheus/pull/include
                                 ${CMAKE_SOURCE_DIR}/build/_deps/prometheus-build/pull/include
+                                ${prometheus_SOURCE_DIR}/push/include
+                                ${TRPC_BUILD_BINARY_PATH}/cmake_third_party/prometheus/push/include
+                                ${CMAKE_SOURCE_DIR}/build/_deps/prometheus-build/push/include
                                 ${prometheus_SOURCE_DIR}/core/include
                                 ${TRPC_BUILD_BINARY_PATH}/cmake_third_party/prometheus/core/include
                                 ${CMAKE_SOURCE_DIR}/build/_deps/prometheus-build/core/include)

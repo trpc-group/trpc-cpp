@@ -19,6 +19,14 @@ tRPC-Cpp 框架默认不会编译 Prometheus 相关的代码。若要开启，�
 
 ## Bazel 启用方式
 
+编译前，需要增加prometheus的依赖在WORKSPACE文件里。
+
+```python
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+
+prometheus_cpp_repositories()
+```
+
 bazel 编译时加上`“trpc_include_prometheus”`编译选项。
 
 例如在 `.bazelrc` 中加上：
@@ -57,6 +65,20 @@ plugins:
       const_labels:
         key1: value1
         key2: value2
+```
+
+默认采用pull模式，如果需要启用push模式，则需要增加类似如下的配置：
+
+```yaml
+plugins:
+  metrics:
+    prometheus:
+      push_mode:
+        enable: true
+        gateway_host: 127.0.0.1
+        gateway_port: 9091
+        job_name: trpc_prometheus_push_metrics
+        interval_ms: 10000 # 默认上报间隔是10s
 ```
 
 配置项说明：
@@ -398,3 +420,60 @@ std::vector<::prometheus::MetricFamily> Collect();
 ## 通过 admin 获取
 
 如果服务开启了 [admin 功能](./admin_service.md)，则可以通过访问 `http://admin_ip:admin_port/metrics` 获取序列化为字符串后的 Prometheus 数据。
+
+# 鉴权
+
+Prometheus插件鉴权分为两种模式：pull模式 和 push模式，不同模式下的配置方式有所区别。
+
+## pull模式
+
+在pull模式下，使用Json Web Token（JWT）方式来鉴权。需要同时配置**trpc的Prometheus插件**和**Prometheus服务器**。
+
+### 插件配置
+
+插件配置样例如下：
+
+```yaml
+plugins:
+  metrics:
+    prometheus:
+      auth_cfg:
+        iss: admin # issuer 签发人
+        sub: prometheus-pull # subject 主题
+        aud: trpc-server # audience 受众
+        secret: test # 密钥
+```
+
+需要配置**bearer_token**字段，该token可以通过[JWT官方工具](https://jwt.io/)生成。在payload中填写相应的iss，sub和aud字段，verify signature中填写secret字段，加密算法使用默认的 HS256。
+
+## push模式
+
+在push模式下，为了和pushgateway兼容，鉴权使用**username**和**password**的形式。
+
+### 插件配置
+
+插件配置样例如下：
+
+```yaml
+plugins:
+  metrics:
+    prometheus:
+      auth_cfg:
+        username: admin
+        password: test
+```
+
+### Pushgateway服务器配置
+
+需要在Pushgateway服务器启动时，通过带有通过**bcrypt**加密的密文的配置文件启动。Pushgateway启动的配置文件如下：
+
+```yaml
+basic_auth_users:
+  admin: $2y$05$5uq4H5p8JyfQm.e16o3xduW6tkI2bTRpArTK4MF4dEuvncpz/bqy.
+```
+
+密码的密文可以通过htpasswd工具生成：
+```shell
+> htpasswd -nbB admin test
+admin:$2y$05$5uq4H5p8JyfQm.e16o3xduW6tkI2bTRpArTK4MF4dEuvncpz/bqy.
+```

@@ -29,6 +29,16 @@ struct PrometheusConfig {
   /// The default label attached to each RPC metrics data
   std::map<std::string, std::string> const_labels;
 
+  std::map<std::string, std::string> auth_cfg;
+
+  struct PushMode {
+    bool enable = false;
+    std::string gateway_host;
+    std::string gateway_port;
+    std::string job_name;
+    int interval_ms = 10000;
+  } push_mode;
+
   void Display() const;
 };
 

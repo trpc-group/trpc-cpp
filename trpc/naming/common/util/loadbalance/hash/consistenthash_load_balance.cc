@@ -14,8 +14,8 @@
 #include "trpc/naming/common/util/loadbalance/hash/consistenthash_load_balance.h"
 
 #include <arpa/inet.h>
-#include <bits/stdint-uintn.h>
 #include <netdb.h>
+#include <stdint.h>
 #include <sys/socket.h>
 
 #include <algorithm>

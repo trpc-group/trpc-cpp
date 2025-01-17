@@ -38,6 +38,10 @@ class PrometheusMetrics : public Metrics {
 
   int Init() noexcept override;
 
+  void Start() noexcept override;
+
+  void Stop() noexcept override;
+
   int ModuleReport(const ModuleMetricsInfo& info) override;
 
   int SingleAttrReport(const SingleAttrMetricsInfo& info) override;
@@ -118,6 +122,7 @@ class PrometheusMetrics : public Metrics {
 
  private:
   PrometheusConfig prometheus_conf_;
+  uint64_t push_gateway_task_id_ = 0;
 
   // metrics family for number of client-side RPC calls
   ::prometheus::Family<::prometheus::Counter>* rpc_client_counter_family_;
