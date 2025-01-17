@@ -67,7 +67,7 @@ void ServiceProxyManager::SetOptionDefaultValue(const std::string& name, std::sh
   if (option->name_space.empty()) {
     option->name_space = TrpcConfig::GetInstance()->GetGlobalConfig().env_namespace;
   }
-  
+
   // If callee_name is not set, set it to name of proxy.
   if (option->callee_name.empty()) {
     option->callee_name = name;
