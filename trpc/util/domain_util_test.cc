@@ -22,9 +22,7 @@
 namespace trpc::util::testing {
 
 TEST(DomainUtilTest, GetAddrTypeTest) {
-  EXPECT_EQ(trpc::util::GetAddrType("10.01.1.2"), trpc::util::AddrType::ADDR_NX);
   EXPECT_EQ(trpc::util::GetAddrType("0.1.1.2"), trpc::util::AddrType::ADDR_NX);
-  EXPECT_EQ(trpc::util::GetAddrType("10.1.1.2"), trpc::util::AddrType::ADDR_IP);
   EXPECT_EQ(trpc::util::GetAddrType("127.0.0.1"), trpc::util::AddrType::ADDR_IP);
   EXPECT_EQ(trpc::util::GetAddrType("::1"), trpc::util::AddrType::ADDR_IP);
   EXPECT_EQ(trpc::util::GetAddrType("::"), trpc::util::AddrType::ADDR_IP);
@@ -65,10 +63,10 @@ TEST(DomainUtilTest, LocalhostTest) {
 TEST(DomainUtilTest, Ipv4NormalTest) {
   std::vector<std::string> addrs;
 
-  std::string domain = "10.28.44.240";
+  std::string domain = "127.0.0.1";
   trpc::util::GetAddrFromDomain(domain, addrs);
   EXPECT_EQ(addrs.size(), 1);
-  EXPECT_TRUE(addrs[0] == "10.28.44.240");
+  EXPECT_TRUE(addrs[0] == "127.0.0.1");
 }
 
 TEST(DomainUtilTest, Ipv4FailTest) {

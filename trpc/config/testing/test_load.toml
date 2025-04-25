@@ -5,7 +5,7 @@ name = "John Doe"
 dob = "1979-05-27T07:32:00-08:00" # First-class dates
 
 [database]
-server = "192.168.1.1"
+server = "127.0.0.1"
 ports = [ 8001, 8001, 8002 ]
 connection_max = 5000
 enabled = true
@@ -14,9 +14,9 @@ enabled = true
 
 # Indentation (tabs and/or spaces) is allowed but not required
 [servers.alpha]
-ip = "10.0.0.1"
+ip = "127.0.0.1"
 dc = "eqdc10"
 
 [servers.beta]
-ip = "10.0.0.2"
+ip = "127.0.0.2"
 dc = "eqdc10"

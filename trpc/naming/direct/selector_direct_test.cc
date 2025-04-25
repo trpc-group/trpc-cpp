@@ -37,7 +37,7 @@ TEST(SelectorDirect, select_test) {
   TrpcEndpointInfo endpoint1, endpoint2;
   endpoint1.host = "127.0.0.1";
   endpoint1.port = 1001;
-  endpoint2.host = "192.168.0.2";
+  endpoint2.host = "127.0.0.1";
   endpoint2.port = 1002;
   endpoints_info.push_back(endpoint1);
   endpoints_info.push_back(endpoint2);
@@ -55,7 +55,7 @@ TEST(SelectorDirect, select_test) {
   EXPECT_TRUE(endpoint.id != kInvalidEndpointId);
 
   ptr->Select(&select_info, &endpoint);
-  EXPECT_TRUE(endpoint.host == "192.168.0.2");
+  EXPECT_TRUE(endpoint.host == "127.0.0.1");
   EXPECT_TRUE(endpoint.port == 1002);
   EXPECT_TRUE(endpoint.id != kInvalidEndpointId);
 
@@ -66,7 +66,7 @@ TEST(SelectorDirect, select_test) {
   auto trpc_codec = std::make_shared<trpc::TrpcClientCodec>();
   result.context = MakeRefCounted<ClientContext>(trpc_codec);
   result.context->SetCallerName("test_service");
-  result.context->SetAddr("192.168.0.1", 1001);
+  result.context->SetAddr("127.0.0.1", 1001);
   int ret = ptr->ReportInvokeResult(&result);
   EXPECT_EQ(0, ret);
 
@@ -144,7 +144,7 @@ TEST(SelectorDirect, asyncselect_test) {
   TrpcEndpointInfo endpoint1, endpoint2;
   endpoint1.host = "127.0.0.1";
   endpoint1.port = 1001;
-  endpoint2.host = "192.168.0.2";
+  endpoint2.host = "127.0.0.1";
   endpoint2.port = 1002;
   endpoints_info.push_back(endpoint1);
   endpoints_info.push_back(endpoint2);
@@ -167,7 +167,7 @@ TEST(SelectorDirect, asyncselect_test) {
   ptr->AsyncSelect(&select_info).Then([](Future<trpc::TrpcEndpointInfo>&& fut) {
     EXPECT_TRUE(fut.IsReady());
     TrpcEndpointInfo endpoint = fut.GetValue0();
-    EXPECT_TRUE(endpoint.host == "192.168.0.2");
+    EXPECT_TRUE(endpoint.host == "127.0.0.1");
     EXPECT_TRUE(endpoint.port == 1002);
     return trpc::MakeReadyFuture<>();
   });
@@ -216,7 +216,7 @@ TEST(SelectorDirect, endpoint_unique_id_test) {
   TrpcEndpointInfo endpoint1, endpoint2;
   endpoint1.host = "127.0.0.1";
   endpoint1.port = 1001;
-  endpoint2.host = "192.168.0.2";
+  endpoint2.host = "127.0.0.1";
   endpoint2.port = 1002;
   endpoints_info.push_back(endpoint1);
   endpoints_info.push_back(endpoint2);
