@@ -37,7 +37,7 @@ TEST_P(NetUtilTestValid, test) {
 }
 
 INSTANTIATE_TEST_SUITE_P(test, NetUtilTestValid,
-                         ::testing::Values("0.0.0.0", "1.1.1.1", "59.56.54.51", "255.255.255.255"));
+                         ::testing::Values("127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4"));
 
 class NetUtilTestInvalid : public ::testing::TestWithParam<std::string> {};
 

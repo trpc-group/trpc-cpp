@@ -110,12 +110,12 @@ TEST_F(TrpcConfigProviderTest, TestLocalTOML) {
       trpc::config::Load("./test_load.toml", trpc::config::WithCodec("toml"), trpc::config::WithProvider("file3"));
   ASSERT_EQ(config->GetString("title", ""), "TOML TEST");
   ASSERT_EQ(config->GetString("owner.name", ""), "John Doe");
-  ASSERT_EQ(config->GetString("database.server", ""), "192.168.1.1");
+  ASSERT_EQ(config->GetString("database.server", ""), "127.0.0.1");
   ASSERT_EQ(config->GetInt64("database.connection_max", 0), 5000);
   ASSERT_TRUE(config->GetBool("database.enabled", false));
-  ASSERT_EQ(config->GetString("servers.alpha.ip", ""), "10.0.0.1");
+  ASSERT_EQ(config->GetString("servers.alpha.ip", ""), "127.0.0.1");
   ASSERT_EQ(config->GetString("servers.alpha.dc", ""), "eqdc10");
-  ASSERT_EQ(config->GetString("servers.beta.ip", ""), "10.0.0.2");
+  ASSERT_EQ(config->GetString("servers.beta.ip", ""), "127.0.0.2");
   ASSERT_EQ(config->GetString("servers.beta.dc", ""), "eqdc10");
 }
 

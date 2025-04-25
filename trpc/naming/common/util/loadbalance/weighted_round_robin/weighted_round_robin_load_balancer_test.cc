@@ -53,19 +53,19 @@ TEST_F(SWRoundRobinLoadBalanceTest, SelectWithWeights) {
   // Initialize endpoints with different weights
   std::vector<TrpcEndpointInfo> endpoints_info;
   TrpcEndpointInfo endpoint1;
-  endpoint1.host = "192.168.1.1";
+  endpoint1.host = "127.0.0.1";
   endpoint1.port = 10000;
   endpoint1.weight = 10;
   endpoints_info.push_back(endpoint1);
 
   TrpcEndpointInfo endpoint2;
-  endpoint2.host = "192.168.1.2";
+  endpoint2.host = "127.0.0.1";
   endpoint2.port = 20000;
   endpoint2.weight = 20;
   endpoints_info.push_back(endpoint2);
 
   TrpcEndpointInfo endpoint3;
-  endpoint2.host = "192.168.1.3";
+  endpoint2.host = "127.0.0.1";
   endpoint2.port = 30000;
   endpoint2.weight = 30;
   endpoints_info.push_back(endpoint2);
@@ -80,8 +80,7 @@ TEST_F(SWRoundRobinLoadBalanceTest, SelectWithWeights) {
     select_info.name = "test_service";
     TrpcEndpointInfo selected_endpoint;
     test_polling_load_balance_->Select(&select_info, &selected_endpoint);
-    EXPECT_TRUE(selected_endpoint.host == "192.168.1.1" || selected_endpoint.host == "192.168.1.2" ||
-                selected_endpoint.host == "192.168.1.3");
+    EXPECT_TRUE(selected_endpoint.host == "127.0.0.1");
     EXPECT_TRUE(selected_endpoint.port == 10000 || selected_endpoint.port == 20000 || selected_endpoint.port == 30000);
     EXPECT_TRUE(selected_endpoint.id != kInvalidEndpointId);
     count_map[selected_endpoint.port]++;
