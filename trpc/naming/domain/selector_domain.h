@@ -18,10 +18,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "trpc/common/config/domain_naming_conf.h"
-#include "trpc/common/config/domain_naming_conf_parser.h"
 #include "trpc/common/plugin.h"
+#include "trpc/naming/common/util/circuit_break/circuit_break_whitelist.h"
+#include "trpc/naming/common/util/circuit_break/circuit_breaker.h"
 #include "trpc/naming/common/util/utils_help.h"
+#include "trpc/naming/domain/domain_selector_conf.h"
 #include "trpc/naming/load_balance.h"
 #include "trpc/naming/selector.h"
 
@@ -66,6 +67,9 @@ class SelectorDomain : public Selector {
   /// @brief Interface for setting the routing information of the called service
   int SetEndpoints(const RouterInfo* info) override;
 
+  /// @brief Sets the whitelist of framework error codes for circuit breaking reporting
+  bool SetCircuitBreakWhiteList(const std::vector<int>& framework_retcodes) override;
+
  private:
   struct DomainEndpointInfo {
     // Domain name of the called service
@@ -74,15 +78,19 @@ class SelectorDomain : public Selector {
     int port;
     // IP/port information of the called service
     std::vector<TrpcEndpointInfo> endpoints;
+    // available endpoints
+    std::vector<TrpcEndpointInfo> available_endpoints;
     // Node ID generator
     EndpointIdGenerator id_generator;
+    // circuit breaker
+    naming::CircuitBreakerPtr circuit_breaker{nullptr};
   };
 
   // Update the IP information corresponding to the domain name
   int RefreshEndpointInfoByName(std::string dn_name, int dn_port, SelectorDomain::DomainEndpointInfo& endpointInfo);
 
   // Update EndpointInfo to targets_map and load_balance cache
-  int RefreshDomainInfo(const SelectorInfo* info, DomainEndpointInfo& dn_endpointInfo);
+  int RefreshDomainInfo(const std::string& service_name, DomainEndpointInfo& dn_endpointInfo);
 
   // Determine whether to refresh routing information
   bool NeedUpdate();
@@ -92,6 +100,17 @@ class SelectorDomain : public Selector {
 
   // Get the loadbalance plugin by name
   LoadBalance* GetLoadBalance(const std::string& name);
+
+  // Create circuit breaker by service name
+  naming::CircuitBreakerPtr CreateCircuitBreaker(const std::string& service_name);
+
+  // Update endpoints when circuit break state changes
+  bool DoUpdate(const std::string& service_name, const std::string& load_balance_name);
+
+  // Check if there is any change in the circuit breaker status of the node, and if there is, update the list of available nodes
+  bool CheckAndUpdate(const SelectorInfo* info);
+
+  bool IsSuccess(int framework_result);
 
  private:
   // Default load balancer name
@@ -109,10 +128,12 @@ class SelectorDomain : public Selector {
   uint64_t last_update_time_;
 
   // Business configuration items specified in the yaml file
-  naming::DomainSelectorConfig select_config_;
+  naming::DomainSelectorConfig config_;
 
   /// Task id of periodically updating node tasks
   uint64_t task_id_{0};
+
+  naming::CircuitBreakWhiteList circuitbreak_whitelist_;
 };
 
 using SelectorDomainPtr = RefPtr<SelectorDomain>;
