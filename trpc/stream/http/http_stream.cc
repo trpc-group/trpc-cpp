@@ -93,6 +93,9 @@ Status HttpWriteStream::WriteHeader() {
       if (content_length_ == kChunked) {
         response_->SetHeader(http::kHeaderTransferEncoding, http::kTransferEncodingChunked);
       }
+      if (response_->IsHeaderOnly()) {
+        content_length_ = 0;
+      }
       response_->SerializeHeaderToString(builder);
       return ContextStatusToStreamStatus(context_->SendResponse(builder.DestructiveGet()), [&] {
         state_ |= kHeaderWritten;
