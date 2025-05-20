@@ -33,7 +33,11 @@ inline std::optional<T> TryParse(const std::string_view& s, const Args&... args)
 /// @sa: `std::format`
 template <class... Args>
 std::string Format(const std::string_view& fmt, const Args&... args) {
+  #if FMT_VERSION >= 80000
+  return fmt::format(fmt::runtime(fmt), args...);
+  #else
   return fmt::format(fmt, args...);
+  #endif
 }
 
 /// @brief `std::string(_view)::starts_with/ends_with` is not available until C++20, so
