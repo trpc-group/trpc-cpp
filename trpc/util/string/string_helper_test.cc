@@ -271,4 +271,9 @@ TEST(String, ToLower) {
   ASSERT_EQ("abcd", ToLower("aBCd"));
 }
 
+TEST(String, FormatTest) {
+  std::string fmt_str = "this {} a {} project";
+  ASSERT_EQ(Format(fmt_str, "is", "trpc-cpp"), "this is a trpc-cpp project");
+}
+
 }  // namespace trpc::testing
