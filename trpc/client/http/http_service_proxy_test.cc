@@ -3335,6 +3335,7 @@ TEST_F(HttpServiceProxyTest, HttpUnaryInvoke) {
   EXPECT_EQ(reply.GetVersion(), rep.GetVersion());
   EXPECT_EQ(reply.GetStatus(), rep.GetStatus());
   EXPECT_EQ(str, rep.GetContent());
+  EXPECT_EQ(str, FlattenSlow(rep.GetNonContiguousBufferContent()));
 
   HttpRequestProtocol* http_req_protocol = static_cast<HttpRequestProtocol*>(ctx->GetRequest().get());
   EXPECT_EQ(http_req_protocol->request->GetMethodType(), http::OperationType::POST);
@@ -3354,6 +3355,7 @@ TEST_F(HttpServiceProxyTest, HttpUnaryInvoke) {
             EXPECT_EQ(reply.GetVersion(), rep.GetVersion());
             EXPECT_EQ(reply.GetStatus(), rep.GetStatus());
             EXPECT_EQ(str, rep.GetContent());
+            EXPECT_EQ(str, FlattenSlow(rep.GetNonContiguousBufferContent()));
             return MakeReadyFuture<>();
           });
   future::BlockingGet(std::move(async_unary_invoke_fut));
