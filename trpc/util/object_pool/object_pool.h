@@ -75,7 +75,8 @@ inline void Delete(T* ptr) {
 }  // namespace detail
 
 /// @brief Allocate and construct an object (thread-safe).
-/// @example
+/// @code
+/// example
 ///   struct A {
 ///     int a;
 ///   };
@@ -90,6 +91,7 @@ inline void Delete(T* ptr) {
 ///   #endif
 ///   A* a_p = trpc::object_pool::New<A>();
 ///   trpc::object_pool::Delete(a_p);
+/// @endcode
 template <class T, class... Args>
 T* New(Args&&... args) {
   // Remove CV attributes. We do not differentiate between T, const T, volatile T, and const volatile T,
