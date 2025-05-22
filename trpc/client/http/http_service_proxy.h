@@ -394,6 +394,7 @@ Status HttpServiceProxy::HttpUnaryInvoke(const ClientContextPtr& context, const 
 
   if (context->GetStatus().OK()) {
     auto* ret_rsp = static_cast<HttpResponseProtocol*>(rsp_protocol.get());
+    ret_rsp->response.SetNonContiguousBufferContent(ret_rsp->GetNonContiguousProtocolBody());
     *rsp = std::move(ret_rsp->response);
   }
   return context->GetStatus();
@@ -425,6 +426,7 @@ Future<ResponseMessage> HttpServiceProxy::AsyncHttpUnaryInvoke(const ClientConte
 
       ProtocolPtr& rsp_protocol = context->GetResponse();
       auto* rsp = static_cast<HttpResponseProtocol*>(rsp_protocol.get());
+      rsp->response.SetNonContiguousBufferContent(rsp->GetNonContiguousProtocolBody());
       return MakeReadyFuture<ResponseMessage>(std::move(rsp->response));
     }
     return MakeExceptionFuture<ResponseMessage>(rsp_fut.GetException());
