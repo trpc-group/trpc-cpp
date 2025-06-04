@@ -53,7 +53,12 @@ class TestStreamVarMetrics : public trpc::Metrics {
 
   int ModuleReport(const ModuleMetricsInfo& info) override { return 0; }
 
-  int SingleAttrReport(const SingleAttrMetricsInfo& info) override { return 0; }
+  int SingleAttrReport(const SingleAttrMetricsInfo& info) override {
+    if (info.name.empty() || info.dimension.empty()) {
+      return -1;
+    }
+    return 0; 
+  }
 
   int MultiAttrReport(const MultiAttrMetricsInfo& info) override { return 0; }
 
