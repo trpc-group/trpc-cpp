@@ -636,11 +636,19 @@ bool SslContext::SetSslVerifyPeerOptions(const std::string& cert_path, int verif
   } else {
     SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
     SSL_CTX_set_verify_depth(ssl_ctx_, verify_depth);
-    if (!cert_path.empty() && SSL_CTX_load_verify_locations(ssl_ctx_, cert_path.c_str(), nullptr) == 0) {
-      TRPC_LOG_ERROR("SSL_CTX_load_verify_locations() failed, cert path:" << cert_path);
-      return false;
+    if (!cert_path.empty()) {
+      if (SSL_CTX_load_verify_locations(ssl_ctx_, cert_path.c_str(), nullptr) == 0) {
+        TRPC_LOG_ERROR("SSL_CTX_load_verify_locations() failed, cert path:" << cert_path);
+        return false;
+      }
+    } else {  // 用户没有设置CA证书路径时，使用系统默认的证书
+      if (SSL_CTX_set_default_verify_paths(ssl_ctx_) == 0) {
+        TRPC_LOG_ERROR("SSL_CTX_set_default_verify_paths() failed");
+        return false;
+      }
     }
   }
+
   return true;
 }
 
