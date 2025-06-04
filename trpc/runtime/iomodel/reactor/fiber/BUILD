@@ -28,6 +28,7 @@ cc_library(
         "//trpc/coroutine:fiber_timer",
         "//trpc/runtime/iomodel/reactor",
         "//trpc/runtime/iomodel/reactor/common:connection",
+	"//trpc/runtime/iomodel/reactor/fiber:fiber_reactor",
         "//trpc/util:align",
         "//trpc/util:likely",
         "//trpc/util:ref_ptr",

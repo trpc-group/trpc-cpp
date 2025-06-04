@@ -110,6 +110,9 @@ void SetReactorNumPerSchedulingGroup(size_t size);
 /// @brief Set reactor keep running
 void SetReactorKeepRunning();
 
+/// @brief Is reactor keep running
+bool IsReactorKeepRunning();
+
 /// @brief Set fiber reactor task queue size
 void SetReactorTaskQueueSize(uint32_t size);
 

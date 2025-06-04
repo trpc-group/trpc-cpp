@@ -16,6 +16,7 @@
 #include "trpc/coroutine/fiber.h"
 #include "trpc/coroutine/fiber_condition_variable.h"
 #include "trpc/coroutine/fiber_timer.h"
+#include "trpc/runtime/iomodel/reactor/fiber/fiber_reactor.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/likely.h"
 #include "trpc/util/thread/internal/memory_barrier.h"
@@ -359,7 +360,7 @@ void FiberConnection::QueueCleanupCallbackCheck() {
         conn_unavailable_ = true;
       }
       // No need to take a reference to us, `OnCleanup()` has not been called.
-      GetReactor()->SubmitTask([this] {
+      Function<void()> cleanup_task = [this] {
         // The load below acts as a fence (paired with `exchange` above). (But
         // does it make sense?)
         (void)read_mostly_.seldomly_used->cleanup_queued.load(std::memory_order_acquire);
@@ -386,7 +387,15 @@ void FiberConnection::QueueCleanupCallbackCheck() {
         std::scoped_lock _(read_mostly_.seldomly_used->cleanup_lk);
         read_mostly_.seldomly_used->cleanup_completed = true;
         read_mostly_.seldomly_used->cleanup_cv.notify_one();
-      });
+      };
+
+      if (!fiber::IsReactorKeepRunning()) {
+        GetReactor()->SubmitTask(std::move(cleanup_task));
+      } else {
+        // In fiber reactor keep running mode, since `FiberMutex` is used in cleanup_task, it may cause coroutine switching, so it is not put into reactor to run
+        bool res = StartFiberDetached(std::move(cleanup_task));
+        TRPC_ASSERT(res && "StartFiber for cleanup failed");
+      }
     }
   }
 }
