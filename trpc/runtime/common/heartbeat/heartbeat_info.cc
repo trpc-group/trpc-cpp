@@ -16,6 +16,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include <shared_mutex>
 #include <utility>
 
 #include "trpc/runtime/threadmodel/common/worker_thread.h"
@@ -24,13 +25,16 @@
 
 namespace trpc {
 
+std::shared_mutex thread_heartbeat_function_mutex_;
 ThreadHeartBeatFunction thread_heartbeat_function{nullptr};
 
 void RegisterThreadHeartBeatFunction(ThreadHeartBeatFunction&& heartbeat_function) {
+  std::unique_lock<std::shared_mutex> lock(thread_heartbeat_function_mutex_);
   thread_heartbeat_function = std::move(heartbeat_function);
 }
 
 void HeartBeat(uint32_t task_queue_size) {
+  std::shared_lock<std::shared_mutex> lock(thread_heartbeat_function_mutex_);
   if (TRPC_UNLIKELY(!thread_heartbeat_function)) {
     return;
   }
