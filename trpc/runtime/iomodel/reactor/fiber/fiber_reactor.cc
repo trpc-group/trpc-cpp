@@ -155,6 +155,10 @@ void SetReactorKeepRunning() {
   reactor_keep_running = true;
 }
 
+bool IsReactorKeepRunning() {
+  return reactor_keep_running;
+}
+
 void SetReactorTaskQueueSize(uint32_t size) {
   reactor_task_queue_size = size;
 }

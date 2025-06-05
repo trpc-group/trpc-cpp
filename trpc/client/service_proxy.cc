@@ -104,7 +104,7 @@ bool ServiceProxy::CheckTimeout(const ClientContextPtr& context) {
     }
     result.SetErrorMessage(error);
 
-    TRPC_LOG_ERROR(error);
+    TRPC_FMT_ERROR_EVERY_N(1000, "{}", error);
     context->SetStatus(std::move(result));
 
     return true;

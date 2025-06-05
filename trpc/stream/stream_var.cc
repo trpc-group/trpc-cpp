@@ -20,6 +20,12 @@
 
 namespace trpc::stream {
 
+namespace {
+
+constexpr std::string_view kStreamRuntimeInfo = "trpc_stream_runtime_info";
+
+} // namespace
+
 StreamVarPtr CreateStreamVar(const std::string& var_path) { return MakeRefCounted<StreamVar>(var_path); }
 
 StreamVar::StreamVar(const std::string& var_path)
@@ -115,10 +121,15 @@ bool StreamVarHelper::ReportMetrics(const std::string& metrics_name,
 
   for (const auto& [var_path, var_value] : metrics) {
     SingleAttrMetricsInfo single_attr_info;
+    single_attr_info.name = kStreamRuntimeInfo;
     single_attr_info.dimension = var_path;
     single_attr_info.value = static_cast<double>(var_value);
     single_attr_info.policy = MetricsPolicy::SUM;
-    metrics_ptr->SingleAttrReport(std::move(single_attr_info));
+    if (metrics_ptr->SingleAttrReport(single_attr_info) != 0) {
+      TRPC_FMT_TRACE("trpc stream var metrics report failed, dimension:{} value:{}", single_attr_info.dimension,
+                     single_attr_info.value);
+      return false;
+    }
     TRPC_FMT_TRACE("trpc stream var metrics report, dimension:{} value:{}", single_attr_info.dimension,
                    single_attr_info.value);
   }
