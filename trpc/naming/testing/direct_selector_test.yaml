@@ -1,0 +1,14 @@
+plugins:
+  selector:
+    direct:
+      circuitBreaker:
+        default:        
+          enable: true
+          statWindow: 10s
+          bucketsNum: 5
+          sleepWindow: 5s
+          requestVolumeThreshold: 5
+          errorRateThreshold: 0.4
+          continuousErrorThreshold: 5
+          requestCountAfterHalfOpen: 5
+          successCountAfterHalfOpen: 4

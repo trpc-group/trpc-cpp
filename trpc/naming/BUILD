@@ -173,6 +173,8 @@ cc_library(
         ":selector_factory",
         "//trpc/filter:filter_manager",
         "//trpc/naming:load_balance_factory",
+        "//trpc/naming/common/util/circuit_break:circuit_breaker_creator_factory",
+        "//trpc/naming/common/util/circuit_break:default_circuit_breaker",
         "//trpc/naming/direct:direct_selector_filter",
         "//trpc/naming/direct:selector_direct",
         "//trpc/naming/domain:domain_selector_filter",

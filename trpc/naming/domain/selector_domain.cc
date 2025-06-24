@@ -19,7 +19,9 @@
 #include <utility>
 
 #include "trpc/common/config/trpc_config.h"
+#include "trpc/naming/common/util/circuit_break/circuit_breaker_creator_factory.h"
 #include "trpc/naming/common/util/loadbalance/polling/polling_load_balance.h"
+#include "trpc/naming/domain/domain_selector_conf_parser.h"
 #include "trpc/naming/load_balance_factory.h"
 #include "trpc/naming/selector_factory.h"
 #include "trpc/runtime/common/periphery_task_scheduler.h"
@@ -32,13 +34,13 @@ namespace trpc {
 
 SelectorDomain::SelectorDomain(const LoadBalancePtr& load_balance) : default_load_balance_(load_balance) {
   TRPC_ASSERT(default_load_balance_);
-  dn_update_interval_ = 3600;
 }
 
 int SelectorDomain::Init() noexcept {
-  if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("selector", "domain", select_config_)) {
+  if (!trpc::TrpcConfig::GetInstance()->GetPluginConfig("selector", "domain", config_)) {
     TRPC_FMT_DEBUG("get selector domain config failed, use default value");
   }
+  config_.Display();
 
   // domain update duration is 30s
   dn_update_interval_ = 30 * 1000;
@@ -77,7 +79,7 @@ int SelectorDomain::RefreshEndpointInfoByName(std::string dn_name, int dn_port,
   }
 
   // exclude or not ipv6
-  if (select_config_.exclude_ipv6 && endpoints_exclude_ipv6.size() != 0) {
+  if (config_.exclude_ipv6 && endpoints_exclude_ipv6.size() != 0) {
     endpointInfo.endpoints.swap(endpoints_exclude_ipv6);
   }
 
@@ -85,34 +87,39 @@ int SelectorDomain::RefreshEndpointInfoByName(std::string dn_name, int dn_port,
 }
 
 // Used to update EndpointInof to targets_map and load_balance caches
-int SelectorDomain::RefreshDomainInfo(const SelectorInfo* info, SelectorDomain::DomainEndpointInfo& dn_endpointInfo) {
-  if (nullptr == info) {
-    TRPC_LOG_ERROR("Invalid parameter");
-    return -1;
+int SelectorDomain::RefreshDomainInfo(const std::string& service_name,
+                                      SelectorDomain::DomainEndpointInfo& dn_endpointInfo) {
+  std::unordered_set<naming::CircuitBreakRecordKey, naming::CircuitBreakRecordKeyHash> keys;
+  for (auto& endpoint : dn_endpointInfo.endpoints) {
+    keys.emplace(naming::CircuitBreakRecordKey(endpoint.host, endpoint.port));
   }
 
   std::unique_lock<std::shared_mutex> uniq_lock(mutex_);
   // Generate a unique id for the node
-  auto iter = targets_map_.find(info->name);
+  auto iter = targets_map_.find(service_name);
   if (iter != targets_map_.end()) {
     // If the service name is in the cache, use the original id generator
     dn_endpointInfo.id_generator = std::move(iter->second.id_generator);
+    dn_endpointInfo.circuit_breaker = std::move(iter->second.circuit_breaker);
+  } else {
+    dn_endpointInfo.circuit_breaker = CreateCircuitBreaker(service_name);
   }
 
+  // add or remove the status statistics in the circuit breaker based on the node set information
+  if (dn_endpointInfo.circuit_breaker != nullptr) {
+    dn_endpointInfo.circuit_breaker->Reserve(keys);
+  }
   for (auto& item : dn_endpointInfo.endpoints) {
     std::string endpoint = item.host + ":" + std::to_string(item.port);
     item.id = dn_endpointInfo.id_generator.GetEndpointId(endpoint);
   }
 
-  targets_map_[info->name] = dn_endpointInfo;
+  targets_map_[service_name] = dn_endpointInfo;
 
   uniq_lock.unlock();
 
   // update loadbalance cache
-  LoadBalanceInfo lb_info;
-  lb_info.info = info;
-  lb_info.endpoints = &dn_endpointInfo.endpoints;
-  default_load_balance_->Update(&lb_info);
+  DoUpdate(service_name, "");
   return 0;
 }
 
@@ -127,12 +134,84 @@ LoadBalance* SelectorDomain::GetLoadBalance(const std::string& name) {
   return default_load_balance_.get();
 }
 
+naming::CircuitBreakerPtr SelectorDomain::CreateCircuitBreaker(const std::string& service_name) {
+  if (config_.circuit_break_config.enable) {
+    auto& plugin_name = config_.circuit_break_config.plugin_name;
+    auto& plugin_config = config_.circuit_break_config.plugin_config;
+    return naming::CircuitBreakerCreatorFactory::GetInstance()->Create(plugin_name, &plugin_config, service_name);
+  }
+
+  return nullptr;
+}
+
+bool SelectorDomain::DoUpdate(const std::string& service_name, const std::string& load_balance_name) {
+  std::unique_lock<std::shared_mutex> wlock(mutex_);
+  auto it = targets_map_.find(service_name);
+  if (it == targets_map_.end()) {
+    return false;
+  }
+  auto& real_endpoints = it->second.endpoints;
+  auto& available_endpoints = it->second.available_endpoints;
+
+  auto& circuit_breaker = it->second.circuit_breaker;
+  if (circuit_breaker != nullptr) {
+    available_endpoints.clear();
+    available_endpoints.reserve(real_endpoints.size());
+    auto endpoints_status = circuit_breaker->GetAllStatus();
+    for (auto& endpoint : real_endpoints) {
+      naming::CircuitBreakRecordKey key(endpoint.host, endpoint.port);
+      auto iter = endpoints_status.find(key);
+      if (iter != endpoints_status.end()) {
+        if (iter->second != naming::CircuitBreakStatus::kOpen) {
+          available_endpoints.push_back(endpoint);
+        }
+      }
+    }
+  }
+
+  // update route info
+  SelectorInfo select_info;
+  select_info.name = service_name;
+  LoadBalanceInfo load_balance_info;
+  load_balance_info.info = &select_info;
+  // no available nodes, then select from all nodes
+  if (!available_endpoints.empty()) {
+    load_balance_info.endpoints = &available_endpoints;
+  } else {
+    load_balance_info.endpoints = &real_endpoints;
+  }
+  GetLoadBalance(load_balance_name)->Update(&load_balance_info);
+  return true;
+}
+
+bool SelectorDomain::CheckAndUpdate(const SelectorInfo* info) {
+  if (!config_.circuit_break_config.enable) {
+    return false;
+  }
+
+  std::shared_lock<std::shared_mutex> rlock(mutex_);
+  auto it = targets_map_.find(info->name);
+  if (it == targets_map_.end()) {
+    return false;
+  }
+  auto& circuit_breaker = it->second.circuit_breaker;
+  if (circuit_breaker && circuit_breaker->StatusChanged(GetMilliSeconds())) {
+    // If the node status changes, update the nodes set in the load balancer
+    rlock.unlock();
+    return DoUpdate(info->name, info->load_balance_name);
+  }
+
+  return false;
+}
+
 // Get the routing interface of the node being called
 int SelectorDomain::Select(const SelectorInfo* info, TrpcEndpointInfo* endpoint) {
   if (nullptr == info || nullptr == endpoint) {
     TRPC_LOG_ERROR("Invalid parameter");
     return -1;
   }
+
+  CheckAndUpdate(info);
 
   LoadBalanceResult load_balance_result;
   load_balance_result.info = info;
@@ -148,22 +227,12 @@ int SelectorDomain::Select(const SelectorInfo* info, TrpcEndpointInfo* endpoint)
 
 // Get a throttling interface asynchronously
 Future<TrpcEndpointInfo> SelectorDomain::AsyncSelect(const SelectorInfo* info) {
-  if (nullptr == info) {
-    TRPC_LOG_ERROR("Selector info is null");
-    return MakeExceptionFuture<TrpcEndpointInfo>(CommonException("Selector info is null"));
+  TrpcEndpointInfo endpoint;
+  if (Select(info, &endpoint) == 0) {
+    return MakeReadyFuture<TrpcEndpointInfo>(std::move(endpoint));
   }
 
-  LoadBalanceResult load_balance_result;
-  load_balance_result.info = info;
-  auto lb = GetLoadBalance(info->load_balance_name);
-  if (lb->Next(load_balance_result)) {
-    std::string error_str = "Do load balance of " + info->name + " failed";
-    TRPC_LOG_ERROR(error_str);
-    return MakeExceptionFuture<TrpcEndpointInfo>(CommonException(error_str.c_str()));
-  }
-
-  TrpcEndpointInfo endpoint = std::any_cast<TrpcEndpointInfo>(load_balance_result.result);
-  return MakeReadyFuture<TrpcEndpointInfo>(std::move(endpoint));
+  return MakeExceptionFuture<TrpcEndpointInfo>(CommonException("AsyncSelect failed"));
 }
 
 // An interface for fetching node routing information in bulk by policy
@@ -172,6 +241,8 @@ int SelectorDomain::SelectBatch(const SelectorInfo* info, std::vector<TrpcEndpoi
     TRPC_LOG_ERROR("Invalid parameter");
     return -1;
   }
+
+  CheckAndUpdate(info);
 
   std::string callee = info->name;
   std::shared_lock<std::shared_mutex> lock(mutex_);
@@ -182,7 +253,11 @@ int SelectorDomain::SelectBatch(const SelectorInfo* info, std::vector<TrpcEndpoi
   }
 
   if (info->policy == SelectorPolicy::MULTIPLE) {
-    SelectMultiple(iter->second.endpoints, endpoints, info->select_num);
+    if (!iter->second.available_endpoints.empty()) {
+      SelectMultiple(iter->second.available_endpoints, endpoints, info->select_num);
+    } else {
+      SelectMultiple(iter->second.endpoints, endpoints, info->select_num);
+    }
   } else {
     *endpoints = iter->second.endpoints;
   }
@@ -192,35 +267,37 @@ int SelectorDomain::SelectBatch(const SelectorInfo* info, std::vector<TrpcEndpoi
 
 // Asynchronous interface to fetch nodes' routing information in bulk by policy
 Future<std::vector<TrpcEndpointInfo>> SelectorDomain::AsyncSelectBatch(const SelectorInfo* info) {
-  if (nullptr == info) {
-    TRPC_LOG_ERROR("Selector info is empty");
-    return MakeExceptionFuture<std::vector<TrpcEndpointInfo>>(CommonException("Selector info is empty"));
-  }
-
-  std::string callee = info->name;
-  std::shared_lock<std::shared_mutex> lock(mutex_);
-  auto iter = targets_map_.find(callee);
-  if (iter == targets_map_.end()) {
-    std::string error_str = "router info of " + callee + " no found";
-    TRPC_LOG_ERROR(error_str);
-    return MakeExceptionFuture<std::vector<TrpcEndpointInfo>>(CommonException(error_str.c_str()));
-  }
-
   std::vector<TrpcEndpointInfo> endpoints;
-  if (info->policy == SelectorPolicy::MULTIPLE) {
-    SelectMultiple(iter->second.endpoints, &endpoints, info->select_num);
-  } else {
-    endpoints = iter->second.endpoints;
+  if (SelectBatch(info, &endpoints) == 0) {
+    return MakeReadyFuture<std::vector<TrpcEndpointInfo>>(std::move(endpoints));
   }
 
-  return MakeReadyFuture<std::vector<TrpcEndpointInfo>>(std::move(endpoints));
+  return MakeExceptionFuture<std::vector<TrpcEndpointInfo>>(CommonException("AsyncSelectBatch fail"));
+}
+
+bool SelectorDomain::IsSuccess(int framework_result) {
+  if (framework_result == TrpcRetCode::TRPC_INVOKE_SUCCESS) {
+    return true;
+  }
+
+  return circuitbreak_whitelist_.Contains(framework_result);
 }
 
 // Call the result reporting interface
 int SelectorDomain::ReportInvokeResult(const InvokeResult* result) {
-  if (nullptr == result) {
-    TRPC_LOG_ERROR("Invalid parameter: invoke result is empty");
+  if (nullptr == result || !config_.circuit_break_config.enable) {
     return -1;
+  }
+
+  std::shared_lock<std::shared_mutex> lock(mutex_);
+  auto it = targets_map_.find(result->name);
+  if (it != targets_map_.end()) {
+    auto& circuit_breaker = it->second.circuit_breaker;
+    if (circuit_breaker != nullptr) {
+      naming::CircuitBreakRecordKey key(result->context->GetIp(), result->context->GetPort());
+      bool success = IsSuccess(result->framework_result);
+      circuit_breaker->AddRecordData(key, GetMilliSeconds(), success);
+    }
   }
 
   return 0;
@@ -232,7 +309,6 @@ int SelectorDomain::SetEndpoints(const RouterInfo* info) {
     return -1;
   }
 
-  std::string callee_name = info->name;
   // Initialize hostname information, only support passing one hostname
   if (info->info.size() != 1) {
     TRPC_LOG_ERROR("Router info is invalid");
@@ -248,9 +324,7 @@ int SelectorDomain::SetEndpoints(const RouterInfo* info) {
     return -1;
   }
 
-  SelectorInfo selector_info;
-  selector_info.name = info->name;
-  RefreshDomainInfo(&selector_info, endpointInfo);
+  RefreshDomainInfo(info->name, endpointInfo);
   return 0;
 }
 
@@ -274,15 +348,13 @@ int SelectorDomain::UpdateEndpointInfo() {
   int targets_count = targets_map_.size();
   int success_count = 0;
 
-  for (auto item : targets_map) {
+  for (auto& item : targets_map) {
     // Update node information
     SelectorDomain::DomainEndpointInfo endpointInfo;
     if (!RefreshEndpointInfoByName(item.second.domain_name, item.second.port, endpointInfo)) {
       TRPC_LOG_DEBUG("Update endpointInfo of " << item.first << ":" << item.second.domain_name << " success");
       // Update node info to cache
-      SelectorInfo selector_info;
-      selector_info.name = item.first;
-      RefreshDomainInfo(&selector_info, endpointInfo);
+      RefreshDomainInfo(item.first, endpointInfo);
       success_count++;
     }
   }
@@ -309,6 +381,11 @@ void SelectorDomain::Stop() noexcept {
     PeripheryTaskScheduler::GetInstance()->StopInnerTask(task_id_);
     task_id_ = 0;
   }
+}
+
+bool SelectorDomain::SetCircuitBreakWhiteList(const std::vector<int>& framework_retcodes) {
+  circuitbreak_whitelist_.SetCircuitBreakWhiteList(framework_retcodes);
+  return true;
 }
 
 }  // namespace trpc
