@@ -180,17 +180,16 @@ void FiberUdpIoPoolConnectorGroup::Reclaim(uint64_t id) {
 
 void FiberUdpIoPoolConnectorGroup::Reclaim(int ret, RefPtr<FiberUdpIoPoolConnector>& connector) {
   if (connector->GetConnId() == 0) {
-    connector->Stop();
-    connector->Destroy();
+    connector->DoClose();
     return;
   }
 
   if (ret == 0) {
     Reclaim(connector->GetConnId());
   } else {
-    connector->Stop();
-    connector->Destroy();
+    connector->DoClose();
     udp_pool_[connector->GetConnId()] = nullptr;
+    Reclaim(connector->GetConnId());
   }
 }
 

@@ -61,6 +61,17 @@ void FiberUdpIoPoolConnector::Destroy() {
   }
 }
 
+void FiberUdpIoPoolConnector::DoClose() {
+  // We need to start a fiber for reclaim here to avoid having both reclaim (which depends on read_events being 0 to
+  // prevent hanging) and message handling occur in the same fiber, which would cause a deadlock.
+  bool start_fiber = StartFiberDetached([this, ref = RefPtr(ref_ptr, this)]() mutable {
+    Stop();
+    Destroy();
+  });
+
+  TRPC_ASSERT(start_fiber && "StartFiberDetached failed when CloseConnection");
+}
+
 bool FiberUdpIoPoolConnector::CreateFiberUdpTransceiver(uint64_t conn_id) {
   auto socket = Socket::CreateUdpSocket(options_.is_ipv6);
   if (!socket.IsValid()) {

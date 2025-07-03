@@ -149,6 +149,7 @@ class TrpcServer {
   void BuildTrpcRegistryInfo(const ServiceAdapterOption& option, TrpcRegistryInfo& registry_info);
   bool CheckSharedTransportConfig(const ServiceConfig& first_service_conf, const ServiceConfig& service_conf);
   std::string GetSharedKey(const ServiceConfig& config);
+  void RegisterServiceHeartBeatInfo(const std::string& service_name, const ServiceAdapterPtr& service_adapter);
 
  private:
   // stop running
