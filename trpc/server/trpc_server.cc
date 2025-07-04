@@ -167,6 +167,8 @@ bool TrpcServer::Start() {
       if (!iter.second->Listen()) {
         return false;
       }
+
+      RegisterServiceHeartBeatInfo(iter.first, iter.second);
     } else {
       TRPC_FMT_DEBUG("Service {} is not auto-started.", iter.first);
     }
@@ -310,18 +312,6 @@ TrpcServer::RegisterRetCode TrpcServer::RegisterService(const std::string& servi
     }
   }
 
-  if (TrpcConfig::GetInstance()->GetGlobalConfig().heartbeat_config.enable_heartbeat) {
-    TRPC_FMT_DEBUG("service_name:{} report heartbeat info", service_name);
-
-    ServiceHeartBeatInfo heartbeat_info;
-    auto const& option = service_adapter_it->second->GetServiceAdapterOption();
-    heartbeat_info.service_name = service_name;
-    heartbeat_info.host = option.ip;
-    heartbeat_info.port = option.port;
-    heartbeat_info.group_name = option.threadmodel_instance_name;
-    HeartBeatReport::GetInstance()->RegisterServiceHeartBeatInfo(std::move(heartbeat_info));
-  }
-
   return RegisterRetCode::kOk;
 }
 
@@ -351,6 +341,7 @@ TrpcServer::RegisterRetCode TrpcServer::RegisterService(const ServiceConfig& con
     }
   }
 
+  RegisterServiceHeartBeatInfo(config.service_name, service_adapter);
   return RegisterRetCode::kOk;
 }
 
@@ -374,6 +365,7 @@ bool TrpcServer::StartService(const std::string& service_name) {
     return false;
   }
 
+  RegisterServiceHeartBeatInfo(service_name, service_adapter_it->second);
   return true;
 }
 
@@ -470,6 +462,27 @@ std::shared_ptr<TrpcServer> GetTrpcServer() {
   static std::shared_ptr<TrpcServer> server =
       std::make_shared<TrpcServer>(TrpcConfig::GetInstance()->GetServerConfig());
   return server;
+}
+
+void TrpcServer::RegisterServiceHeartBeatInfo(const std::string& service_name,
+                                              const ServiceAdapterPtr& service_adapter) {
+  if (TrpcConfig::GetInstance()->GetGlobalConfig().heartbeat_config.enable_heartbeat) {
+    if (service_name == admin_service_name_) {
+      // Admin service does not need to report heartbeat
+      return;
+    }
+
+    TRPC_FMT_DEBUG("service_name:{} report heartbeat info", service_name);
+
+    // Register service heartbeat info to heartbeat thread
+    ServiceHeartBeatInfo heartbeat_info;
+    auto const& option = service_adapter->GetServiceAdapterOption();
+    heartbeat_info.service_name = service_name;
+    heartbeat_info.host = option.ip;
+    heartbeat_info.port = option.port;
+    heartbeat_info.group_name = option.threadmodel_instance_name;
+    HeartBeatReport::GetInstance()->RegisterServiceHeartBeatInfo(std::move(heartbeat_info));
+  }
 }
 
 }  // namespace trpc

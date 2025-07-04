@@ -52,6 +52,8 @@ class FiberUdpIoPoolConnector final : public RefCounted<FiberUdpIoPoolConnector>
 
   void Destroy();
 
+  void DoClose();
+
   void SaveCallContext(CTransportReqMsg* req_msg, CTransportRspMsg* rsp_msg, OnCompletionFunction&& cb);
 
   void SendReqMsg(CTransportReqMsg* req_msg);

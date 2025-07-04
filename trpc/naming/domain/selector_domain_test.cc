@@ -78,7 +78,7 @@ TEST(SelectorDomainTest, select_test) {
   result.context = MakeRefCounted<ClientContext>(trpc_codec);
   result.context->SetCallerName("test_service");
 
-  result.context->SetAddr("192.168.0.1", 1001);
+  result.context->SetAddr("127.0.0.1", 1001);
   int ret = ptr->ReportInvokeResult(&result);
   EXPECT_EQ(0, ret);
 
