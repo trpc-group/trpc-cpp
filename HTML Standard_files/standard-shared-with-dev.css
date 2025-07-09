@@ -1,0 +1,645 @@
+/* Styles used by HTML, HTML Dev Edition, and other Living Standards,
+   but not Review Drafts */
+
+html {
+  margin: 0;
+  padding: 0;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+}
+
+:root {
+  --whatwg-green: #3c790a;
+
+  --text: black;
+  --bg: white;
+
+  --a-normal-text: #00C;
+  --a-visited-text: #609;
+  --a-active-text: #c00;
+  --a-underline:  rgba(0, 0, 0, .3);
+
+  --mark-text: marktext;
+  --mark-bg: mark;
+
+  --code-text: #666;
+  --code-special-text: #ce3c05;
+
+  --heading-text: var(--whatwg-green);
+
+  --element-text: var(--text);
+  --element-bg: #eeffee;
+
+  --navblock-text: var(--text);
+  --navblock-a-text: var(--a-normal-text);
+  --navblock-mask-bg: rgba(255,255,255,0.9);
+
+  --note-text: green;
+  --note-bg: #dfd;
+  --note-heading-text: var(--bg);
+  --note-heading-bg: var(--note-text);
+
+  --example-text: #222;
+  --example-bg: #f7f7f7;
+  --example-heading-text: var(--bg);
+  --example-heading-bg: var(--example-text);
+
+  --xxx-text: #d50606;
+  --xxx-bg: white;
+  --xxx-heading-text: var(--bg);
+  --xxx-heading-bg: var(--xxx-text);
+  --xxx-border: var(--xxx-text);
+
+  --warning-text: #D50606;
+  --warning-bg: #FFFFCA;
+  --warning-heading-text: yellow;
+  --warning-heading-bg: var(--warning-text);
+
+  --critical-text: var(--text);
+  --critical-bg: #ffc;
+  --critical-border: #d50606;
+
+  --pre-text: var(--text);
+  --pre-bg: hsl(24, 20%, 95%);
+  --pre-idl-text: var(--text);
+  --pre-idl-bg: #f7f7f7;
+  --pre-css-text: var(--text);
+  --pre-css-bg: #ffe;
+  --pre-underline: var(--text);
+  --pre-strong-text: green;
+  --pre-strong-bg: #dfd;
+  --pre-small-text: silver;
+  --pre-small-bg: transparent;
+  --pre-mark-text: var(--mark-text);
+  --pre-mark-bg: var(--mark-bg);
+
+  --domtree-text: var(--text);
+  --domtree-bg: transparent;
+  --domtree-t1: purple;
+  --domtree-t2: var(--domtree-text);
+  --domtree-t2-name: black;
+  --domtree-t2-value: blue;
+  --domtree-t3: gray;
+  --domtree-t4: gray;
+  --domtree-t5: gray;
+  --domtree-t6: var(--domtree-text);
+  --domtree-t7: green;
+  --domtree-t8: green;
+  --domtree-t9: var(--domtree-text);
+  --domtree-t10: teal;
+
+  --dfnpanel-text: black;
+  --dfnpanel-bg: #ddd;
+
+  --mdn-bg: #EEE;
+  --mdn-shadow: #999;
+  --mdn-nosupport-text: #ccc;
+  --mdn-pass: green;
+  --mdn-fail: red;
+
+  --raretr-text: #333;
+  --raretr-bg: #f7f7f7;
+
+  --yesno-yes-bg: papayawhip;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #ddd;
+    --bg: black;
+
+    --a-normal-text: #6af;
+    --a-visited-text: #aaf;
+    --a-active-text: #c00;
+    --a-underline: rgba(255, 255, 255, .3);
+
+    --mark-text: var(--text);
+    --mark-bg: #255;
+
+    --code-text: #aaa;
+    --code-special-text: #ff7b54;
+
+    --heading-text: var(--whatwg-green);
+
+    --element-text: var(--text);
+    --element-bg: #000800;
+
+    --navblock-text: var(--text);
+    --navblock-a-text: var(--a-normal-text);
+    --navblock-mask-bg: rgba(0,0,0,0.9);
+
+    --note-text: #8f8;
+    --note-bg: #020;
+    --note-heading-text: var(--bg);
+    --note-heading-bg: var(--note-text);
+
+    --example-text: #f7f7f7;
+    --example-bg: #222;
+    --example-heading-text: var(--bg);
+    --example-heading-bg: #ccc;
+
+    --xxx-text: #d22;
+    --xxx-bg: #111;
+    --xxx-heading-text: var(--bg);
+    --xxx-heading-bg: var(--xxx-text);
+    --xxx-border: var(--xxx-text);
+
+    --warning-text: #d22;
+    --warning-bg: #033;
+    --warning-heading-text: yellow;
+    --warning-heading-bg: #d22;
+
+    --critical-text: var(--text);
+    --critical-bg: #133;
+    --critical-border: #b50505;
+
+    --pre-text: var(--text);
+    --pre-bg: #141414;
+    --pre-idl-text: var(--text);
+    --pre-idl-bg: #141414;
+    --pre-css-text: var(--text);
+    --pre-css-bg: #112;
+    --pre-underline: #888;
+    --pre-strong-text: #8f8;
+    --pre-strong-bg: #020;
+    --pre-small-text: gray;
+    --pre-small-bg: transparent;
+    --pre-mark-text: var(--mark-text);
+    --pre-mark-bg: #133;
+
+    --domtree-text: var(--text);
+    --domtree-bg: var(--bg);
+    --domtree-t1: #d6d;
+    --domtree-t2: var(--domtree-text);
+    --domtree-t2-name: var(--text);
+    --domtree-t2-value: cornflowerblue;
+    --domtree-t3: silver;
+    --domtree-t4: silver;
+    --domtree-t5: silver;
+    --domtree-t6: var(--domtree-text);
+    --domtree-t7: #690;
+    --domtree-t8: #690;
+    --domtree-t9: var(--domtree-text);
+    --domtree-t10: #03caca;
+
+    --dfnpanel-text: #ddd;
+    --dfnpanel-bg: #222;
+
+    --mdn-bg: #222;
+    --mdn-shadow: #444;
+    --mdn-nosupport-text: #666;
+    --mdn-pass: #690;
+    --mdn-fail: #d22;
+
+    --raretr-text: #bbb;
+    --raretr-bg: #040404;
+
+    --yesno-yes-bg: midnightblue;
+  }
+}
+
+
+a.self-link {
+  position: absolute;
+  top: 0;
+  left: -2.5em;
+  width: 2em;
+  height: 2em;
+  text-align: center;
+  transition: opacity 0.2s;
+  opacity: 0.5;
+  text-decoration: none;
+}
+a.self-link:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+h2 > a.self-link, h3 > a.self-link, h4 > a.self-link, h5 > a.self-link, h6 > a.self-link {
+  font-size: 83%;
+  color: inherit;
+  border-bottom: none;
+}
+
+a.self-link::before {
+  content: "¶";
+}
+
+h2 > a.self-link::before, h3 > a.self-link::before, h4 > a.self-link::before,
+h5 > a.self-link::before, h6 > a.self-link::before {
+  content: "§";
+}
+
+@media (max-width: 767px) {
+  dd { margin-left: 0; }
+  /* Don't position self-link in headings off-screen */
+  h2 > a.self-link, h3 > a.self-link, h4 > a.self-link, h5 > a.self-link, h6 > a.self-link { left: auto; top: auto; margin-left: 0.5em; }
+}
+
+
+pre, code { font-size: inherit; font-family: monospace, Droid Sans Fallback, Helvetica Neue, sans-serif; font-variant: normal; background: none; }
+pre strong { font: inherit; background: var(--pre-strong-bg); color: var(--pre-strong-text); }
+pre small { background: var(--pre-small-bg); color: var(--pre-small-text); font: inherit; }
+pre em { font-weight: bolder; font-style: normal; }
+pre mark { color: var(--pre-mark-text); background: var(--pre-mark-bg); }
+
+var sub { vertical-align: bottom; font-size: smaller; top: 0.1em; }
+var > var::before { content: "⟨"; font-style: normal; }
+var > var::after { content: "⟩"; font-style: normal; }
+
+/* For output from https://github.com/tabatkins/highlighter */
+
+c-[a] { color: #990055 } /* Keyword.Declaration */
+c-[b] { color: #990055 } /* Keyword.Type */
+c-[c] { color: #708090 } /* Comment */
+c-[d] { color: #708090 } /* Comment.Multiline */
+c-[e] { color: #0077aa } /* Name.Attribute */
+c-[f] { color: #669900 } /* Name.Tag */
+c-[g] { color: #222222 } /* Name.Variable */
+c-[k] { color: #990055 } /* Keyword */
+c-[l] { color: #000000 } /* Literal */
+c-[m] { color: #000000 } /* Literal.Number */
+c-[n] { color: #0077aa } /* Name */
+c-[o] { color: #999999 } /* Operator */
+c-[p] { color: #999999 } /* Punctuation */
+c-[s] { color: #a67f59 } /* Literal.String */
+c-[t] { color: #a67f59 } /* Literal.String.Single */
+c-[u] { color: #a67f59 } /* Literal.String.Double */
+c-[cp] { color: #708090 } /* Comment.Preproc */
+c-[c1] { color: #708090 } /* Comment.Single */
+c-[cs] { color: #708090 } /* Comment.Special */
+c-[kc] { color: #990055 } /* Keyword.Constant */
+c-[kn] { color: #990055 } /* Keyword.Namespace */
+c-[kp] { color: #990055 } /* Keyword.Pseudo */
+c-[kr] { color: #990055 } /* Keyword.Reserved */
+c-[ld] { color: #000000 } /* Literal.Date */
+c-[nc] { color: #0077aa } /* Name.Class */
+c-[no] { color: #0077aa } /* Name.Constant */
+c-[nd] { color: #0077aa } /* Name.Decorator */
+c-[ni] { color: #0077aa } /* Name.Entity */
+c-[ne] { color: #0077aa } /* Name.Exception */
+c-[nf] { color: #0077aa } /* Name.Function */
+c-[nl] { color: #0077aa } /* Name.Label */
+c-[nn] { color: #0077aa } /* Name.Namespace */
+c-[py] { color: #0077aa } /* Name.Property */
+c-[ow] { color: #999999 } /* Operator.Word */
+c-[mb] { color: #000000 } /* Literal.Number.Bin */
+c-[mf] { color: #000000 } /* Literal.Number.Float */
+c-[mh] { color: #000000 } /* Literal.Number.Hex */
+c-[mi] { color: #000000 } /* Literal.Number.Integer */
+c-[mo] { color: #000000 } /* Literal.Number.Oct */
+c-[sb] { color: #a67f59 } /* Literal.String.Backtick */
+c-[sc] { color: #a67f59 } /* Literal.String.Char */
+c-[sd] { color: #a67f59 } /* Literal.String.Doc */
+c-[se] { color: #a67f59 } /* Literal.String.Escape */
+c-[sh] { color: #a67f59 } /* Literal.String.Heredoc */
+c-[si] { color: #a67f59 } /* Literal.String.Interpol */
+c-[sx] { color: #a67f59 } /* Literal.String.Other */
+c-[sr] { color: #a67f59 } /* Literal.String.Regex */
+c-[ss] { color: #a67f59 } /* Literal.String.Symbol */
+c-[vc] { color: #0077aa } /* Name.Variable.Class */
+c-[vg] { color: #0077aa } /* Name.Variable.Global */
+c-[vi] { color: #0077aa } /* Name.Variable.Instance */
+c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
+
+@media (prefers-color-scheme: dark) {
+  c-[a] { color: #d33682 } /* Keyword.Declaration */
+  c-[b] { color: #d33682 } /* Keyword.Type */
+  c-[c] { color: #2aa198 } /* Comment */
+  c-[d] { color: #2aa198 } /* Comment.Multiline */
+  c-[e] { color: #268bd2 } /* Name.Attribute */
+  c-[f] { color: #669900 } /* Name.Tag */
+  c-[g] { color: #cb4b16 } /* Name.Variable */
+  c-[k] { color: #d33682 } /* Keyword */
+  c-[l] { color: #657b83 } /* Literal */
+  c-[m] { color: #657b83 } /* Literal.Number */
+  c-[n] { color: #268bd2 } /* Name */
+  c-[o] { color: #657b83 } /* Operator */
+  c-[p] { color: #657b83 } /* Punctuation */
+  c-[s] { color: #6c71c4 } /* Literal.String */
+  c-[t] { color: #6c71c4 } /* Literal.String.Single */
+  c-[u] { color: #6c71c4 } /* Literal.String.Double */
+  c-[ch] { color: #2aa198 } /* Comment.Hashbang */
+  c-[cp] { color: #2aa198 } /* Comment.Preproc */
+  c-[cpf] { color: #2aa198 } /* Comment.PreprocFile */
+  c-[c1] { color: #2aa198 } /* Comment.Single */
+  c-[cs] { color: #2aa198 } /* Comment.Special */
+  c-[kc] { color: #d33682 } /* Keyword.Constant */
+  c-[kn] { color: #d33682 } /* Keyword.Namespace */
+  c-[kp] { color: #d33682 } /* Keyword.Pseudo */
+  c-[kr] { color: #d33682 } /* Keyword.Reserved */
+  c-[ld] { color: #657b83 } /* Literal.Date */
+  c-[nc] { color: #268bd2 } /* Name.Class */
+  c-[no] { color: #268bd2 } /* Name.Constant */
+  c-[nd] { color: #268bd2 } /* Name.Decorator */
+  c-[ni] { color: #268bd2 } /* Name.Entity */
+  c-[ne] { color: #268bd2 } /* Name.Exception */
+  c-[nf] { color: #268bd2 } /* Name.Function */
+  c-[nl] { color: #268bd2 } /* Name.Label */
+  c-[nn] { color: #268bd2 } /* Name.Namespace */
+  c-[py] { color: #268bd2 } /* Name.Property */
+  c-[ow] { color: #657b83 } /* Operator.Word */
+  c-[mb] { color: #657b83 } /* Literal.Number.Bin */
+  c-[mf] { color: #657b83 } /* Literal.Number.Float */
+  c-[mh] { color: #657b83 } /* Literal.Number.Hex */
+  c-[mi] { color: #657b83 } /* Literal.Number.Integer */
+  c-[mo] { color: #657b83 } /* Literal.Number.Oct */
+  c-[sa] { color: #6c71c4 } /* Literal.String.Affix */
+  c-[sb] { color: #6c71c4 } /* Literal.String.Backtick */
+  c-[sc] { color: #6c71c4 } /* Literal.String.Char */
+  c-[dl] { color: #6c71c4 } /* Literal.String.Delimiter */
+  c-[sd] { color: #6c71c4 } /* Literal.String.Doc */
+  c-[se] { color: #6c71c4 } /* Literal.String.Escape */
+  c-[sh] { color: #6c71c4 } /* Literal.String.Heredoc */
+  c-[si] { color: #6c71c4 } /* Literal.String.Interpol */
+  c-[sx] { color: #6c71c4 } /* Literal.String.Other */
+  c-[sr] { color: #6c71c4 } /* Literal.String.Regex */
+  c-[ss] { color: #6c71c4 } /* Literal.String.Symbol */
+  c-[fm] { color: #268bd2 } /* Name.Function.Magic */
+  c-[vc] { color: #cb4b16 } /* Name.Variable.Class */
+  c-[vg] { color: #cb4b16 } /* Name.Variable.Global */
+  c-[vi] { color: #cb4b16 } /* Name.Variable.Instance */
+  c-[vm] { color: #cb4b16 } /* Name.Variable.Magic */
+  c-[il] { color: #657b83 } /* Literal.Number.Integer.Long */
+}
+
+/* MDN margin annotations; shared among both HTML and Bikeshed specs */
+@media (max-width: 767px) { .mdn-anno { opacity: .1 } }
+.mdn-anno {
+  font: 1em sans-serif;
+  padding: 0.3em;
+  position: absolute;
+  z-index: 8;
+  right: 0.3em;
+  background: var(--mdn-bg);
+  color: var(--mdn-text);
+  box-shadow: 0 0 3px var(--mdn-shadow);
+  overflow: hidden;
+  border-collapse: initial;
+  border-spacing: initial;
+  max-width: min-content;
+  white-space: nowrap;
+  word-wrap: normal;
+  hyphens: none;
+}
+.mdn-anno:not(.wrapped) {
+  opacity: 1;
+}
+.mdn-anno:hover {
+  z-index: 9;
+}
+.mdn-anno:focus-within {
+  z-index: 11;
+}
+.mdn-anno.wrapped {
+  min-width: 0;
+}
+.mdn-anno.wrapped > :not(button) {
+  display: none;
+}
+.mdn-anno > .mdn-anno-btn {
+  cursor: pointer;
+  border: none;
+  color: var(--text);
+  background: transparent;
+  margin: -8px;
+  float: right;
+  padding: 10px 8px 8px 8px;
+  outline: none;
+}
+.mdn-anno > .mdn-anno-btn > .less-than-two-engines-flag {
+  color: var(--mdn-fail);
+  padding-right: 2px;
+}
+.mdn-anno > .mdn-anno-btn > .all-engines-flag {
+  color: var(--mdn-pass);
+  padding-right: 2px;
+}
+.mdn-anno > .mdn-anno-btn > span {
+  color: #fff;
+  background-color: #000;
+  font-weight: normal;
+  font-family: zillaslab,Palatino,"Palatino Linotype",serif;
+  padding: 2px 3px 0px 3px;
+  line-height: 1.3em;
+  vertical-align: top;
+}
+.mdn-anno > .feature {
+  margin-top: 20px;
+}
+.mdn-anno > .feature:not(:first-of-type) {
+  border-top: 1px solid #999;
+  margin-top: 6px;
+  padding-top: 2px;
+}
+.mdn-anno > .feature > .less-than-two-engines-text {
+  color: var(--mdn-fail);
+}
+.mdn-anno > .feature > .all-engines-text {
+  color: var(--mdn-pass);
+}
+.mdn-anno > .feature > p {
+  font-size: .75em;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+.mdn-anno > .feature > p + p {
+  margin-top: 3px;
+}
+.mdn-anno > .feature > p > a[href] {
+  text-decoration: none;
+  border-bottom: 1px solid #707070;
+  padding: 0 1px 0;
+  margin: 0 -1px 0;
+}
+.mdn-anno > .feature > p > a[href]:active {
+  border-color: currentcolor;
+}
+.mdn-anno > .feature > .support {
+  display: block;
+  font-size: 0.6em;
+  margin: 0;
+  padding: 0;
+  margin-top: 2px
+}
+.mdn-anno > .feature > .support + div {
+  padding-top: 0.5em;
+}
+.mdn-anno > .feature > .support > hr {
+  display: block;
+  border: none;
+  border-top: 1px dotted #999;
+  padding: 3px 0px 0px 0px;
+  margin: 2px 3px 0px 3px;
+}
+.mdn-anno > .feature > .support > hr::before {
+  content: "";
+}
+.mdn-anno > .feature > .support > span {
+  padding: 0.2em;
+  display: block;
+  display: table;
+}
+.mdn-anno > .feature > .support > span.no,
+.mdn-anno > .feature > .support > span.unknown {
+  color: var(--mdn-nosupport-text);
+  filter: grayscale(100%);
+}
+.mdn-anno > .feature > .support > span.no::before,
+.mdn-anno > .feature > .support > span.unknown::before {
+  opacity: 0.5;
+}
+.mdn-anno > .feature > .support > span:not(.caniuse):hover {
+  color: var(--text);
+  filter: none;
+  background: var(--bg);
+}
+.mdn-anno > .feature > .support > span:first-of-type {
+  margin-top: 0.5em;
+}
+.mdn-anno > .feature > .support > span > span {
+  padding: 1px 0.5em 0 0.5em;
+  display: table-cell;
+}
+.mdn-anno > .feature > .support > span > span:first-child {
+  width: 100%;
+}
+.mdn-anno > .feature > .support > span > span:last-child {
+  width: 100%;
+  white-space: pre;
+  padding: 0;
+}
+.mdn-anno > .feature > .support > span::before {
+  content: ' ';
+  display: table-cell;
+  min-width: 1.5em;
+  height: 1.5em;
+  background: no-repeat center center;
+  background-size: contain;
+  text-align: right;
+  font-size: 0.75em;
+  font-weight: bold;
+}
+.mdn-anno > .feature > .support > .chrome_android::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/chrome.svg);
+}
+.mdn-anno > .feature > .support > .firefox_android::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/firefox.png);
+}
+.mdn-anno > .feature > .support > .chrome::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/chrome.svg);
+}
+.mdn-anno > .feature > .support > .edge_blink::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/edge.svg);
+}
+.mdn-anno > .feature > .support > .edge::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/edge_legacy.svg);
+}
+.mdn-anno > .feature > .support > .firefox::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/firefox.png);
+}
+.mdn-anno > .feature > .support > .ie::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/ie.png);
+}
+.mdn-anno > .feature > .support > .safari_ios::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/safari-ios.svg);
+}
+.mdn-anno > .feature > .support > .nodejs::before {
+  background-image: url(https://nodejs.org/static/images/favicons/favicon.ico);
+}
+.mdn-anno > .feature > .support > .opera_android::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/opera.svg);
+}
+.mdn-anno > .feature > .support > .opera::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/opera.svg);
+}
+.mdn-anno > .feature > .support > .safari::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/safari.png);
+}
+.mdn-anno > .feature > .support > .samsunginternet_android::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/samsung.svg);
+}
+.mdn-anno > .feature > .support > .webview_android::before {
+  background-image: url(https://resources.whatwg.org/browser-logos/android-webview.png);
+}
+.mdn-anno > .feature > .support > .caniuse::before {
+  background-image: url(https://caniuse.com/img/favicon-128.png);
+}
+.mdn-anno > .feature > .support > .caniuse > span,
+.mdn-anno > .feature > .support > .caniuse > span:hover,
+.mdn-anno > .feature > .support > .caniuse > span:last-child {
+  padding-left: 4px;
+  font-size: 11px
+}
+.name-slug-mismatch {
+  color: red;
+}
+/* We need this margin adjustment for MDN annos in the HTML spec, but we
+ * don’t want it for Bikeshed-generated (<body class="h-entry">) specs. */
+:not(.h-entry) p + .mdn-anno { margin-top: -45px; }
+.mdn-anno.before { margin-top: 2px; }
+td > .mdn-anno.before, dt > .mdn-anno.before { margin-top: -26px; }
+h2 + .mdn-anno { margin: -48px 0 0 0; }
+h3 + .mdn-anno { margin: -46px 0 0 0; }
+h4 + .mdn-anno { margin: -42px 0 0 0; }
+h5 + .mdn-anno { margin: -40px 0 0 0; }
+h6 + .mdn-anno { margin: -40px 0 0 0; }
+/* .domintro, .note, .warning, and .example are "position: relative", so
+ * to put anno at right margin, must move to right of containing block */
+.domintro .mdn-anno,
+.note .mdn-anno,
+.warning .mdn-anno,
+.example .mdn-anno {
+  right: -9.7em;
+}
+
+/* DOM tree borders
+   (standard.css has more styles for DOM trees that are not shared) */
+
+ul.domTree, ul.domTree ul {
+  padding: 0 0 0 1em;
+  margin: 0;
+}
+
+ul.domTree li {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  position: relative;
+}
+
+ul.domTree li li {
+  list-style: none;
+}
+
+ul.domTree li:first-child::before {
+  position: absolute;
+  top: 0;
+  height: 0.6em;
+  left: -0.75em;
+  width: 0.5em;
+  border-style: none none solid solid;
+  content: '';
+  border-width: 0.1em;
+}
+
+ul.domTree li:not(:last-child)::after {
+  position: absolute;
+  top: 0;
+  bottom: -0.6em;
+  left: -0.75em;
+  width: 0.5em;
+  border-style: none none solid solid;
+  content: '';
+  border-width: 0.1em;
+}
+
+/* Just in case, SVGs that aren't explicitly
+   marked as darkmode-aware get a white background,
+   as they might have a transparent background
+   and are assuming they're rendered against white.
+*/
+:is(img, iframe)[src$=".svg"]:not(.darkmode-aware),
+svg:not(.darkmode-aware) {
+  background: white;
+}
