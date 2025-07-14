@@ -1,0 +1,27 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+server:
+  app: video_demo
+  server: video_demo_server
+  service:
+    - name: video_stream_service
+      network: tcp
+      ip: 0.0.0.0
+      port: 8080
+      protocol: http
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1
+        sinks:
+          stdout: {}
+          local_file:
+            eol: true
+            filename: video_demo_server.log
