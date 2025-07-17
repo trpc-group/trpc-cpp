@@ -4,7 +4,7 @@
 # flatbuffers is licensed under the Apache 2.0 License.
 # The source codes in this file based on
 # https://github.com/google/flatbuffers/blob/v23.5.26/BUILD.bazel.
-# This source file may have been modified by THL A29 Limited, and licensed under the Apache 2.0 License.
+# This source file may have been modified by Tencent, and licensed under the Apache 2.0 License.
 #
 #
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
