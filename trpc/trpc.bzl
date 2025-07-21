@@ -5,7 +5,7 @@
 # The source codes in this file based on
 # https://github.com/grpc/grpc/blob/v1.39.1/bazel/protobuf.bzl.
 # https://github.com/grpc/grpc/blob/v1.39.1/bazel/cc_grpc_library.bzl
-# This source file may have been modified by THL A29 Limited, and licensed under the Apache 2.0 License.
+# This source file may have been modified by Tencent, and licensed under the Apache 2.0 License.
 #
 #
 """This module is used to generate corresponding cc/h files and stub code for pb files."""

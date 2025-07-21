@@ -100,7 +100,7 @@ std::string GetHeaderPrologue(File* file, const Parameters& params) {
     printer->Print(vars, "//\n");
     printer->Print(vars, "// Tencent is pleased to support the open source community by making tRPC available.\n");
     printer->Print(vars, "//\n");
-    printer->Print(vars, "// Copyright (C) 2023 THL A29 Limited, a Tencent company.\n");
+    printer->Print(vars, "// Copyright (C) 2023 Tencent.\n");
     printer->Print(vars, "// All rights reserved.\n");
     printer->Print(vars, "//\n");
     printer->Print(vars, "// If you have downloaded a copy of the tRPC source code from Tencent,\n");
@@ -298,7 +298,7 @@ std::string GetSourcePrologue(File* file, const Parameters& /*params*/) {
     printer->Print(vars, "//\n");
     printer->Print(vars, "// Tencent is pleased to support the open source community by making tRPC available.\n");
     printer->Print(vars, "//\n");
-    printer->Print(vars, "// Copyright (C) 2023 THL A29 Limited, a Tencent company.\n");
+    printer->Print(vars, "// Copyright (C) 2023 Tencent.\n");
     printer->Print(vars, "// All rights reserved.\n");
     printer->Print(vars, "//\n");
     printer->Print(vars, "// If you have downloaded a copy of the tRPC source code from Tencent,\n");
@@ -510,7 +510,7 @@ std::string GetMockPrologue(File* file, const Parameters& params) {
     printer->Print(vars, " * Tencent is pleased to support the open source community by making\n");
     printer->Print(vars, " * tRPC available.\n");
     printer->Print(vars, " *\n");
-    printer->Print(vars, " * Copyright (C) 2023 THL A29 Limited, a Tencent company.\n");
+    printer->Print(vars, " * Copyright (C) 2023 Tencent.\n");
     printer->Print(vars, " * All rights reserved.\n");
     printer->Print(vars, " *\n");
     printer->Print(vars, " * Licensed under the Apache License, Version 2.0 (the \"License\");\n");

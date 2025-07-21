@@ -6,7 +6,7 @@
 // https://github.com/grpc/grpc/blob/v1.39.1/test/core/util/subprocess.h.
 // https://github.com/grpc/grpc/blob/v1.39.1/test/cpp/util/subprocess.cc.
 // https://github.com/grpc/grpc/blob/v1.39.1/test/core/util/subprocess_posix.cc.
-// This source file may have been modified by THL A29 Limited, and licensed under the Apache 2.0 License.
+// This source file may have been modified by Tencent, and licensed under the Apache 2.0 License.
 //
 //
 
