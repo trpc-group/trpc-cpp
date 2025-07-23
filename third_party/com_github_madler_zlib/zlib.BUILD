@@ -4,7 +4,7 @@
 # protobuf is licensed under the BSD 3-Clause License.
 # The source codes in this file based on
 # https://github.com/protocolbuffers/protobuf/blob/v24.4/third_party/zlib.BUILD.
-# This source file may have been modified by THL A29 Limited, and licensed under the BSD 3-Clause License.
+# This source file may have been modified by Tencent, and licensed under the BSD 3-Clause License.
 #
 #
 _ZLIB_HEADERS = [

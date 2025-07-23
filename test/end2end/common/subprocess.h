@@ -4,7 +4,7 @@
 // gRPC is licensed under the Apache 2.0 License.
 // The source codes in this file based on
 // https://github.com/grpc/grpc/blob/v1.39.1/test/cpp/util/subprocess.h.
-// This source file may have been modified by THL A29 Limited, and licensed under the Apache 2.0 License.
+// This source file may have been modified by Tencent, and licensed under the Apache 2.0 License.
 //
 //
 
