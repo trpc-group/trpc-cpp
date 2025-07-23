@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package trpc.test.shopping;
+
+service StreamShopping {
+  // Client streaming
+  rpc ClientStreamShopping (stream ShoppingRequest) returns (ShoppingReply) {}
+
+  // Server streaming
+  rpc ServerStreamShopping (ShoppingRequest) returns (stream ShoppingReply) {}
+
+  // Bidi streaming
+  rpc BidiStreamShopping (stream ShoppingRequest) returns (stream ShoppingReply) {}
+}
+
+message ShoppingRequest {
+  string msg = 1;
+}
+
+message ShoppingReply {
+  string msg = 1;
+}
