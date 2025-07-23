@@ -4,7 +4,7 @@
 // taskflow is licensed under the MIT License.
 // The source codes in this file based on
 // https://github.com/taskflow/taskflow/blob/master/taskflow/core/tsq.hpp.
-// This source file may have been modified by THL A29 Limited, and licensed under the MIT License.
+// This source file may have been modified by Tencent, and licensed under the MIT License.
 //
 //
 

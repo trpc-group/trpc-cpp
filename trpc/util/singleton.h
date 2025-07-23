@@ -1,10 +1,10 @@
 //
 //
-// Copyright (C) 2016THL A29 Limited, a Tencent company. All rights reserved.
+// Copyright (C) 2016Tencent. All rights reserved.
 // TarsCpp is licensed under the BSD 3-Clause License.
 // The source codes in this file based on
 // https://github.com/TarsCloud/TarsCpp/blob/v1.0.0/util/include/util/tc_singleton.h.
-// This source file may have been modified by THL A29 Limited, and licensed under the BSD 3-Clause License.
+// This source file may have been modified by Tencent, and licensed under the BSD 3-Clause License.
 //
 //
 

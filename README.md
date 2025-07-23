@@ -79,3 +79,10 @@ If you're interested in contributing, please take a look at the [CONTRIBUTING](C
 ## Feedback
 
 Report bugs, ask questions or give suggestions by [Issues](https://github.com/trpc-group/trpc-cpp/issues)
+
+## LICENSE
+
+[LICENSE](LICENSE)
+
+The copyright notice pertaining to the Tencent code in this repo was previously in the name of “THL A29 Limited.”  That entity has now been de-registered.  You should treat all previously distributed copies of the code as if the copyright notice was in the name of “Tencent.”
+

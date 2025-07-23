@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 THL A29 Limited, a Tencent company.
+// Copyright (C) 2023 Tencent.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -12,7 +12,7 @@
 // tRPC is licensed under the Apache 2.0 License, and includes source codes from
 // the following components:
 // 1. flare
-// Copyright (C) 2019 THL A29 Limited, a Tencent company.
+// Copyright (C) 2019 Tencent.
 // flare is licensed under the BSD 3-Clause License.
 //
 

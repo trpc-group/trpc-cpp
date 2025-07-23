@@ -4,7 +4,7 @@
 // nghttp2 is licensed under the MIT License.
 // The source codes in this file based on
 // https://github.com/nghttp2/nghttp2/blob/v1.21.0/src/base64.h.
-// This source file may have been modified by THL A29 Limited, and licensed under the MIT License.
+// This source file may have been modified by Tencent, and licensed under the MIT License.
 //
 //
 
