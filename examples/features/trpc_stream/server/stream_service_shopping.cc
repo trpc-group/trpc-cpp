@@ -17,6 +17,9 @@
 
 #include "gflags/gflags.h"
 
+// 全局库存变量
+int stock = 100;
+
 namespace test::shopping {
 
 // Client streaming RPC.
@@ -159,6 +162,28 @@ RawDataStreamService::RawDataStreamService() {
     TRPC_FMT_ERROR("stream go error: {}", status.ToString());
   }
   return status;
+}
+
+// 实现 Purchase 方法
+::trpc::Status StreamShoppingServiceImpl::Purchase(const ::trpc::ServerContextPtr& context,
+                                                   const ::trpc::test::shopping::ShoppingRequest& request,
+                                                   ::trpc::test::shopping::ShoppingReply* reply) {
+  int purchase_count = request.purchase_count();
+  if (purchase_count <= 0) {
+    reply->set_msg("购买件数必须大于 0");
+    reply->set_success(false);
+    reply->set_remaining_stock(stock);
+  } else if (stock >= purchase_count) {
+    stock -= purchase_count;
+    reply->set_msg("抢购成功");
+    reply->set_success(true);
+    reply->set_remaining_stock(stock);
+  } else {
+    reply->set_msg("库存不足，抢购失败");
+    reply->set_success(false);
+    reply->set_remaining_stock(stock);
+  }
+  return ::trpc::Status::OK();
 }
 
 }  // namespace test::shopping

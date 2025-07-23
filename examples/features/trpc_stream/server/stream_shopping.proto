@@ -15,8 +15,11 @@ service StreamShopping {
 
 message ShoppingRequest {
   string msg = 1;
+  int32 purchase_count = 2;
 }
 
 message ShoppingReply {
   string msg = 1;
+  bool success = 2;
+  int32 remaining_stock = 3;
 }

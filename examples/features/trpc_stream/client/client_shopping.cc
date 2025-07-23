@@ -206,6 +206,26 @@ bool CallBidiStreamShopping(const StreamShoppingServiceProxyPtr& proxy, int requ
   return ok;
 }
 
+namespace test::shopping {
+
+bool CallPurchase(const StreamShoppingServiceProxyPtr& proxy, int purchase_count) {
+  auto context = ::trpc::MakeClientContext(proxy);
+  ::trpc::test::shopping::ShoppingRequest request;
+  ::trpc::test::shopping::ShoppingReply reply;
+  request.set_purchase_count(purchase_count);
+
+  ::trpc::Status status = proxy->Purchase(context, request, &reply);
+  if (status.OK()) {
+    std::cout << "抢购结果: " << (reply.success() ? "成功" : "失败") << std::endl;
+    std::cout << "消息: " << reply.msg() << std::endl;
+    std::cout << "剩余库存: " << reply.remaining_stock() << std::endl;
+    return reply.success();
+  } else {
+    std::cerr << "调用失败: " << status.ToString() << std::endl;
+    return false;
+  }
+}
+
 int Run() {
   bool final_ok{true};
 
@@ -245,6 +265,11 @@ int Run() {
     calling_name = "Streaming RPC, BidiStreamShopping";
     calling_executor = [&stream_shopping_proxy, request_count]() {
       return CallBidiStreamShopping(stream_shopping_proxy, request_count);
+    };
+  } else if (rpc_method == "Purchase") {
+    calling_name = "RPC, Purchase";
+    calling_executor = [&stream_shopping_proxy, request_count]() {
+      return CallPurchase(stream_shopping_proxy, request_count);
     };
   } else {
     std::cout << "RPC method is empty, nothing todo" << std::endl;

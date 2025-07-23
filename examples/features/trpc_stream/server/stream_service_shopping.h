@@ -39,6 +39,11 @@ class StreamShoppingServiceImpl : public ::trpc::test::shopping::StreamShopping 
       const ::trpc::ServerContextPtr& context,
       const ::trpc::stream::StreamReader<::trpc::test::shopping::ShoppingRequest>& reader,
       ::trpc::stream::StreamWriter<::trpc::test::shopping::ShoppingReply>* writer) override;
+
+  // 新增抢购方法声明
+  ::trpc::Status Purchase(const ::trpc::ServerContextPtr& context,
+                          const ::trpc::test::shopping::ShoppingRequest& request,
+                          ::trpc::test::shopping::ShoppingReply* reply) override;
 };
 
 class RawDataStreamService : public ::trpc::RpcServiceImpl {

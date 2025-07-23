@@ -33,7 +33,7 @@
 DEFINE_string(service_name, "trpc.test.shopping.RawDataStreamService", "callee service name");
 DEFINE_string(client_config, "trpc_cpp_fiber.yaml", "");
 DEFINE_string(addr, "127.0.0.1:24758", "ip:port");
-DEFINE_string(rpc_method, "RawDatatReadWrite", "RPC method name");
+DEFINE_string(rpc_method, "Purchase", "RPC method name");
 DEFINE_int32(request_count, 3, "count of request");
 
 namespace test::shopping {
