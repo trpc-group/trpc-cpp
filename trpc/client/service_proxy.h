@@ -21,6 +21,7 @@
 
 #include "trpc/client/client_context.h"
 #include "trpc/client/service_proxy_option.h"
+#include "trpc/naming/common/common_defs.h"
 #include "trpc/codec/client_codec.h"
 #include "trpc/common/future/future.h"
 #include "trpc/common/status.h"
@@ -135,6 +136,14 @@ class ServiceProxy {
 
   /// @brief Get the threadmodel used by service proxy.
   ThreadModel* GetThreadModel();
+
+  /// @brief Fill broadcast TrpcSelectorInfo based on ClientContext and ServiceProxy information.
+  void MakeTrpcSelectorInfoForBroadcast(const ClientContextPtr& broadcast_context,
+                                        TrpcSelectorInfo& trpc_selector_info);
+
+  /// @brief Set the actual RPC ClientContext based on user's broadcast Client and target node information.
+  void SetClientContextForBroadcast(const ClientContextPtr& broadcast_context, const TrpcEndpointInfo& endpoint,
+                                    ClientContextPtr& rpc_context);
 
   /// @brief Init transport used by service proxy. By default, the framework uses its built-in transport.
   /// @note Subclasses can implement transport by overriding this method themselves.

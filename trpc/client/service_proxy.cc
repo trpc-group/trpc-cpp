@@ -26,6 +26,8 @@
 #include "trpc/filter/filter_manager.h"
 #include "trpc/naming/selector_factory.h"
 #include "trpc/naming/trpc_naming.h"
+#include "trpc/coroutine/fiber.h"
+#include "trpc/coroutine/fiber_latch.h"
 #include "trpc/runtime/common/stats/frame_stats.h"
 #include "trpc/runtime/fiber_runtime.h"
 #include "trpc/runtime/init_runtime.h"
@@ -829,6 +831,45 @@ void ServiceProxy::SetEndpointInfo(const std::string& endpoint_info) {
   auto selector = SelectorFactory::GetInstance()->Get(option_->selector_name);
   assert(selector != nullptr);
   selector->SetEndpoints(&info);
+}
+
+void ServiceProxy::MakeTrpcSelectorInfoForBroadcast(const ClientContextPtr& broadcast_context,
+                                                    TrpcSelectorInfo& trpc_selector_info) {
+  trpc_selector_info.plugin_name = option_->selector_name;
+  SelectorInfo& selector_info = trpc_selector_info.selector_info;
+  selector_info.name = GetServiceName();
+  selector_info.context = broadcast_context;
+  // 广播默认访问IDC下节点
+  selector_info.policy = SelectorPolicy::IDC;
+  if (!option_->callee_set_name.empty()) {
+    // 如果启用了Set就优先访问同Set下节点
+    selector_info.policy = SelectorPolicy::SET;
+    selector_info.context->SetCalleeSetName(option_->callee_set_name);
+  }
+  selector_info.context->SetNamespace(option_->name_space);
+}
+
+void ServiceProxy::SetClientContextForBroadcast(const ClientContextPtr& broadcast_context,
+                                                const TrpcEndpointInfo& endpoint, ClientContextPtr& rpc_context) {
+  rpc_context->SetAddr(endpoint.host, endpoint.port);
+  rpc_context->SetCallerName(broadcast_context->GetCalleeName());
+  if (!broadcast_context->GetFuncName().empty()) {
+    rpc_context->SetFuncName(broadcast_context->GetFuncName());
+  }
+
+  // 如果用户在broadcast_context设置了超时时间，沿用
+  if (broadcast_context->GetTimeout() > 0) {
+    rpc_context->SetTimeout(broadcast_context->GetTimeout());
+  }
+
+  // 将broadcast_context中ServerContext相关内容透传给rpc_context
+  const auto& trans_info = broadcast_context->GetPbReqTransInfo();
+  if (trans_info.size() > 0) {
+    rpc_context->SetReqTransInfo(trans_info.begin(), trans_info.end());
+  }
+  rpc_context->SetMessageType(broadcast_context->GetMessageType());
+  rpc_context->SetCallerName(broadcast_context->GetCalleeName());
+  rpc_context->SetCallerFuncName(broadcast_context->GetCallerFuncName());
 }
 
 }  // namespace trpc

@@ -146,6 +146,10 @@ cc_library(
         "//trpc/codec:codec_helper",
         "//trpc/codec/trpc:trpc_client_codec",
         "//trpc/codec/trpc:trpc_protocol",
+        "//trpc/common/future:future_utility",
+        "//trpc/future:future_utility",
+        "//trpc/naming:trpc_naming",
+        "//trpc/runtime:init_runtime",
         "//trpc/serialization:serialization_factory",
         "//trpc/serialization:serialization_type",
         "//trpc/util/flatbuffers:fbs_interface",
@@ -274,5 +278,14 @@ cc_test(
         "//trpc/naming:trpc_naming_registry",
         "//trpc/runtime",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_binary(
+    name = "broadcast_test",
+    srcs = ["//:test_broadcast.cc"],
+    deps = [
+        ":rpc_service_proxy",
+        ":service_proxy",
     ],
 )
