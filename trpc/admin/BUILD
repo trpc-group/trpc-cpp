@@ -78,7 +78,6 @@ cc_library(
     srcs = ["base_funcs.cc"],
     hdrs = ["base_funcs.h"],
     deps = [
-        "//trpc/common/config:trpc_config",
         "//trpc/util/log:logging",
     ],
 )

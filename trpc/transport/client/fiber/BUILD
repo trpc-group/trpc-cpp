@@ -59,6 +59,6 @@ cc_test(
         "//trpc/stream:stream_handler",
         "//trpc/transport/client/fiber/testing:fake_server",
         "//trpc/transport/client/fiber/testing:thread_model_op",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

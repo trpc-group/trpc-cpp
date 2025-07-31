@@ -20,10 +20,8 @@ cc_library(
     srcs = ["lz4_util.cc"],
     hdrs = ["lz4_util.h"],
     deps = [
-        "//trpc/compressor",
         "//trpc/compressor:compressor_type",
         "//trpc/compressor/common:util",
-        "//trpc/util/buffer",
         "//trpc/util/buffer:zero_copy_stream",
         "//trpc/util/log:logging",
         "@com_github_lz4_lz4//:lz4",
@@ -36,6 +34,7 @@ cc_test(
     deps = [
         ":lz4_compressor",
         "//trpc/compressor/testing:compressor_testing",
+        "//trpc/util/buffer",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

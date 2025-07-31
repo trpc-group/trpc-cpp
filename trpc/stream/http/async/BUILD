@@ -36,7 +36,6 @@ cc_library(
         "//trpc/stream/http/async/client:stream",
         "//trpc/stream/http/async/server:stream",
         "//trpc/util/http:request",
-        "//trpc/util/http:response",
         "//trpc/util/http:util",
     ],
 )
