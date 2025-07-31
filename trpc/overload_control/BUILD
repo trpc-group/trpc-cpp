@@ -46,6 +46,5 @@ cc_library(
     hdrs = ["trpc_overload_control.h"],
     deps = [
         ":server_overload_controller_factory",
-        "//trpc/filter:filter_manager",
     ],
 )

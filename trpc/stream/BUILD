@@ -43,7 +43,6 @@ cc_library(
     deps = [
         ":stream_handler",
         ":stream_message",
-        ":stream_var",
         "//trpc/codec:protocol",
         "//trpc/coroutine:fiber",
     ],

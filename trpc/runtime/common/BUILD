@@ -12,7 +12,6 @@ cc_library(
         "//trpc/util:likely",
         "//trpc/util:ref_ptr",
         "//trpc/util/log:logging",
-        "//trpc/util/thread:latch",
         "//trpc/util/thread:thread_helper",
     ],
 )
@@ -22,6 +21,7 @@ cc_test(
     srcs = ["periphery_task_scheduler_test.cc"],
     deps = [
         ":periphery_task_scheduler",
+        "//trpc/util/thread:latch",
         "@com_google_googletest//:gtest_main",
     ],
 )

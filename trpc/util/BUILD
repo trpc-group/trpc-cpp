@@ -45,7 +45,6 @@ cc_test(
     srcs = ["check_test.cc"],
     deps = [
         ":check",
-        "@com_github_gflags_gflags//:gflags",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -71,7 +71,7 @@ cc_library(
     srcs = ["index_alloc_test.cc"],
     deps = [
         ":index_alloc",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 

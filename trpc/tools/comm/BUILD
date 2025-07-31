@@ -8,7 +8,6 @@ cc_library(
     hdrs = ["utils.h"],
     deps = [
         "@com_google_protobuf//:protobuf",
-        "@com_google_protobuf//:protoc_lib",
     ],
 )
 

@@ -96,6 +96,6 @@ cc_test(
         "//trpc/runtime:fiber_runtime",
         "//trpc/runtime/iomodel/reactor/fiber:fiber_reactor",
         "//trpc/util/thread:latch",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

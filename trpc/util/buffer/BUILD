@@ -36,7 +36,6 @@ cc_test(
     name = "contiguous_buffer_test",
     srcs = ["contiguous_buffer_test.cc"],
     deps = [
-        ":buffer",
         ":contiguous_buffer",
         "@com_google_googletest//:gtest_main",
     ],

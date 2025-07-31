@@ -17,7 +17,6 @@ cc_library(
     srcs = ["zlib_util.cc"],
     hdrs = ["zlib_util.h"],
     deps = [
-        "//trpc/compressor",
         "//trpc/compressor:compressor_type",
         "//trpc/util/buffer:zero_copy_stream",
         "//trpc/util/log:logging",

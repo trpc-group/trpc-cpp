@@ -8,7 +8,6 @@ cc_library(
     hdrs = ["noop_serialization.h"],
     deps = [
         "//trpc/serialization",
-        "//trpc/util/buffer:zero_copy_stream",
         "//trpc/util/log:logging",
     ],
 )

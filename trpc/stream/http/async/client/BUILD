@@ -10,7 +10,7 @@ cc_library(
         "//trpc/client:client_context",
         "//trpc/filter:client_filter_controller",
         "//trpc/stream/http/async:stream",
-        "//trpc/util/http:response",
+        "//trpc/util/http:response_hdrs",
     ],
 )
 

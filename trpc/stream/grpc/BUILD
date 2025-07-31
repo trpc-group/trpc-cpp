@@ -10,7 +10,6 @@ cc_library(
         ":util",
         "//trpc/codec:client_codec_factory",
         "//trpc/codec/grpc:grpc_protocol",
-        "//trpc/runtime/iomodel/reactor/fiber:fiber_connection",
         "//trpc/stream:client_stream_handler_factory",
         "//trpc/transport/client/fiber/common:fiber_client_connection_handler",
         "//trpc/transport/client/future/conn_complex:future_conn_complex_connection_handler",
@@ -91,7 +90,6 @@ cc_library(
     hdrs = ["grpc_server_stream.h"],
     deps = [
         ":grpc_stream",
-        "//trpc/codec/grpc/http2:server_session",
         "//trpc/filter:server_filter_controller",
         "//trpc/server:method",
         "//trpc/server:server_context",
@@ -122,7 +120,6 @@ cc_library(
     srcs = ["grpc_server_stream_connection_handler.cc"],
     hdrs = ["grpc_server_stream_connection_handler.h"],
     deps = [
-        ":grpc_io_handler",
         ":util",
         "//trpc/codec:server_codec_factory",
         "//trpc/codec/grpc:grpc_protocol",
@@ -139,6 +136,7 @@ cc_test(
     name = "grpc_server_stream_connection_handler_test",
     srcs = ["grpc_server_stream_connection_handler_test.cc"],
     deps = [
+        ":grpc_io_handler",
         ":grpc_server_stream_connection_handler",
         "//trpc/codec:codec_manager",
         "//trpc/coroutine/testing:fiber_runtime_test",
@@ -184,7 +182,7 @@ cc_library(
         "//trpc/codec/grpc:grpc_protocol",
         "//trpc/codec/grpc:grpc_stream_frame",
         "//trpc/codec/grpc/http2:session",
-        "//trpc/filter:filter_controller",
+        "//trpc/filter:filter_controller_h",
         "//trpc/stream:common_stream",
         "//trpc/stream:stream_var",
     ],
