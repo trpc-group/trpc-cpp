@@ -28,6 +28,7 @@
 #include "trpc/runtime/iomodel/reactor/fiber/fiber_reactor.h"
 #include "trpc/util/latch.h"
 #include "trpc/util/net_util.h"
+#include "trpc/util/time.h"
 
 namespace trpc {
 
@@ -105,6 +106,10 @@ class FiberTcpConnectionTestImpl {
       auto io_handle = std::make_unique<DefaultIoHandler>(server_conn_.Get());
       server_conn_->SetIoHandler(std::move(io_handle));
 
+      auto now_ms = trpc::time::GetMilliSeconds();
+      server_conn_->SetEstablishTimestamp(now_ms);
+      server_conn_->SetConnectionState(ConnectionState::kConnected);
+      server_conn_->SetConnActiveTime(now_ms);
       server_conn_->Established();
       server_conn_->StartHandshaking();
 

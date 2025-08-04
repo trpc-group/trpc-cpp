@@ -36,9 +36,13 @@ FiberTcpConnection::~FiberTcpConnection() {
 }
 
 void FiberTcpConnection::Established() {
-  SetEstablishTimestamp(trpc::time::GetMilliSeconds());
-  SetConnectionState(ConnectionState::kConnected);
-  SetConnActiveTime(trpc::time::GetMilliSeconds());
+  if (IsClient()) {
+    // The server's connection status are set separately before calling Established
+    auto now_ms = trpc::time::GetMilliSeconds();
+    SetEstablishTimestamp(now_ms);
+    SetConnectionState(ConnectionState::kConnected);
+    SetConnActiveTime(now_ms);
+  }
 
   TRPC_ASSERT(GetIoHandler());
   TRPC_ASSERT(GetConnectionHandler());

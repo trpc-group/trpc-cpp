@@ -30,7 +30,7 @@ class FiberConnectionManager {
 
   ~FiberConnectionManager();
 
-  void Add(uint64_t conn_id, RefPtr<FiberTcpConnection>&& conn);
+  void Add(uint64_t conn_id, const RefPtr<FiberTcpConnection>& conn);
 
   RefPtr<FiberTcpConnection> Del(uint64_t conn_id);
 

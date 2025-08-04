@@ -97,10 +97,11 @@ class alignas(64) LockFreeQueue {
       }
     }
 
+    // add count_ before store data to avoid Size becomes negative when dequeue execute more faster
+    count_.fetch_add(1, std::memory_order_release);
+
     elem->data = val;
     elem->sequence.store(pos + 1, std::memory_order_release);
-
-    count_.fetch_add(1, std::memory_order_release);
 
     return RT_OK;
   }
@@ -130,17 +131,17 @@ class alignas(64) LockFreeQueue {
       }
     }
 
+    count_.fetch_sub(1, std::memory_order_release);
+
     val = elem->data;
     elem->sequence.store(pos + mask_ + 1, std::memory_order_release);
-
-    count_.fetch_sub(1, std::memory_order_release);
 
     return RT_OK;
   }
 
   /// @brief The size of the queue
-  /// @return uint32_t
-  uint32_t Size() const { return count_.load(std::memory_order_relaxed); }
+  /// @return int
+  int Size() const { return count_.load(std::memory_order_relaxed); }
 
   /// @brief The capacity of the queue
   /// @return uint32_t

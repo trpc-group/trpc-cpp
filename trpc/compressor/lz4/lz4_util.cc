@@ -147,7 +147,7 @@ bool DoCompress(LZ4F_compressionContext_t& ctx, const NoncontiguousBuffer& in, N
         TRPC_FMT_ERROR("CompressedToOutputStream error, compressed_size={}", compressed_size);
         return false;
       }
-      left_to_copy = -current_size;
+      left_to_copy -= current_size;
       current_pos += current_size;
     }
   }

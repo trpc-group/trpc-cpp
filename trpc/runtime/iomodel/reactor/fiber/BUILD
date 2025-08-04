@@ -150,6 +150,7 @@ cc_test(
         "//trpc/runtime:fiber_runtime",
         "//trpc/runtime/iomodel/reactor/common:default_io_handler",
         "//trpc/util:latch",
+	"//trpc/util:time",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

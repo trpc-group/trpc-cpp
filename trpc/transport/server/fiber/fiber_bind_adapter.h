@@ -50,7 +50,7 @@ class FiberBindAdapter : public RefCounted<FiberBindAdapter> {
 
   uint64_t GenConnectionId();
 
-  void AddConnection(RefPtr<FiberTcpConnection>&& conn);
+  void AddConnection(const RefPtr<FiberTcpConnection>& conn);
 
   void UpdateConnection(Connection* conn) {}
 

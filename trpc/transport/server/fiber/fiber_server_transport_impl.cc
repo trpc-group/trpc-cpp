@@ -27,6 +27,7 @@
 #include "trpc/transport/server/fiber/fiber_server_connection_handler_factory.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/random.h"
+#include "trpc/util/time.h"
 
 namespace trpc {
 
@@ -159,11 +160,17 @@ bool FiberServerTransportImpl::AcceptConnection(AcceptConnectionInfo& connection
   conn_handler->Init();
 
   conn->SetConnectionHandler(std::move(conn_handler));
+  // The connection active time and status must be updated before executing AddConnection to avoid 
+  // the newly created connection being cleared as an idle connection, causing the assertion to fail.
+  auto now_ms = trpc::time::GetMilliSeconds();
+  conn->SetEstablishTimestamp(now_ms);
+  conn->SetConnectionState(ConnectionState::kConnected);
+  conn->SetConnActiveTime(now_ms);
+
+  bind_adapters_[scheduling_group_index]->AddConnection(conn);
 
   conn->Established();
   conn->StartHandshaking();
-
-  bind_adapters_[scheduling_group_index]->AddConnection(std::move(conn));
 
   FrameStats::GetInstance()->GetServerStats().AddConnCount(1);
 
