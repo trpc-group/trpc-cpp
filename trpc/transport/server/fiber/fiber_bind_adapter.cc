@@ -304,8 +304,8 @@ uint64_t FiberBindAdapter::GenConnectionId() {
   return (static_cast<uint64_t>(scheduling_group_index_) << 32) | ++conn_id;
 }
 
-void FiberBindAdapter::AddConnection(RefPtr<FiberTcpConnection>&& conn) {
-  connection_manager_.Add(conn->GetConnId(), std::move(conn));
+void FiberBindAdapter::AddConnection(const RefPtr<FiberTcpConnection>& conn) {
+  connection_manager_.Add(conn->GetConnId(), conn);
 }
 
 RefPtr<FiberTcpConnection> FiberBindAdapter::GetConnection(uint64_t conn_id) {
@@ -410,7 +410,7 @@ void FiberBindAdapter::DoClose(const CloseConnectionInfo& close_connection_info)
                    ", conn.ip:" << fiber_conn->GetPeerIp() << ", info.ip:" << close_connection_info.client_ip <<
                    ", conn.port:" << fiber_conn->GetPeerPort() << ", info.port:" << close_connection_info.client_port <<
                    ", conn.fd:" << fiber_conn->GetFd() << ", info.fd:" << close_connection_info.fd);
-    connection_manager_.Add(fiber_conn->GetConnId(), std::move(fiber_conn));
+    connection_manager_.Add(fiber_conn->GetConnId(), fiber_conn);
   }
 }
 

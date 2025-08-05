@@ -287,8 +287,13 @@ def _get_memory_maps_in_core_dump():
             break  # TODO(luobogao): Parse executable sections.
 
         splited = seg.split()
-        start = int(splited[0], 16)
-        end = int(splited[2], 16)
+        try:
+            start = int(splited[0], 16)
+            end = int(splited[2], 16)
+        except ValueError:
+            # May encounter data like: While running this, GDB does not access memory
+            #skip them
+            break
         objfile = splited[-1] if not splited[-1].startswith('load') else ''
         segs.append(MemorySegment(start, end, objfile))
     return segs

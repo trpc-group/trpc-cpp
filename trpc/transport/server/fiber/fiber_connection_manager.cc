@@ -37,11 +37,11 @@ FiberConnectionManager::~FiberConnectionManager() {
   }
 }
 
-void FiberConnectionManager::Add(uint64_t conn_id, RefPtr<FiberTcpConnection>&& conn) {
+void FiberConnectionManager::Add(uint64_t conn_id, const RefPtr<FiberTcpConnection>& conn) {
   auto&& shard = conn_shards_[GetHashIndex(conn_id, kShards)];
 
   std::scoped_lock _(shard.lock);
-  auto&& [it, inserted] = shard.map.emplace(conn_id, std::move(conn));
+  auto&& [it, inserted] = shard.map.insert(std::make_pair(conn_id, conn));
   (void)it;  // Suppresses compilation warnings.
 
   TRPC_ASSERT(inserted && "insert FiberConnectionManager with Duplicate conn_id");
