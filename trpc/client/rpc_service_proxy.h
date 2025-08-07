@@ -24,7 +24,13 @@
 #include "trpc/codec/client_codec_factory.h"
 #include "trpc/codec/codec_helper.h"
 #include "trpc/codec/protocol.h"
+#include "trpc/common/future/future_utility.h"
 #include "trpc/common/status.h"
+#include "trpc/coroutine/fiber.h"
+#include "trpc/coroutine/fiber_latch.h"
+#include "trpc/naming/trpc_naming.h"
+#include "trpc/naming/common/common_defs.h"
+#include "trpc/runtime/init_runtime.h"
 #include "trpc/serialization/serialization_factory.h"
 #include "trpc/serialization/serialization_type.h"
 #include "trpc/stream/stream.h"
@@ -33,6 +39,7 @@
 #include "trpc/util/flatbuffers/message_fbs.h"
 #include "trpc/util/log/logging.h"
 #include "trpc/util/time.h"
+#include "trpc/util/unique_id.h"
 
 namespace trpc {
 
@@ -43,13 +50,27 @@ class RpcServiceProxy : public ServiceProxy {
   template <class RequestMessage, class ResponseMessage>
   Status UnaryInvoke(const ClientContextPtr& context, const RequestMessage& req, ResponseMessage* rsp);
 
+  /// @brief Broadcast unary synchronous call, used by the upper-level user for input/output with the user protocol body.
+  template <class RequestMessage, class ResponseMessage>
+  Status BroadcastUnaryInvoke(const ClientContextPtr& broadcast_context, const RequestMessage& req,
+                              std::vector<std::tuple<Status, ResponseMessage>>* rsp);
+
   /// @brief Unary asynchronous call, used by the upper-level user for input/output with the user protocol body.
   template <class RequestMessage, class ResponseMessage>
   Future<ResponseMessage> AsyncUnaryInvoke(const ClientContextPtr& context, const RequestMessage& req);
 
+  /// @brief Broadcast unary asynchronous call, used by the upper-level user for input/output with the user protocol body.
+  template <class RequestMessage, class ResponseMessage>
+  Future<::trpc::Status, std::vector<std::tuple<::trpc::Status, ResponseMessage>>> AsyncBroadcastUnaryInvoke(
+      const ClientContextPtr& broadcast_context, const RequestMessage& req);
+
   /// @brief One way call, used by the upper-level user for input with the user protocol body.
   template <class RequestProtocol>
   Status OnewayInvoke(const ClientContextPtr& context, const RequestProtocol& req);
+
+  /// @brief Broadcast one way call, used by the upper-level user for input with the user protocol body.
+  template <class RequestMessage>
+  Status BroadcastOnewayInvoke(const ClientContextPtr& broadcast_context, const RequestMessage& req);
 
   /// @brief Unary synchronous call with NoncontiguousBuffer input parameter and pb output parameter.
   /// @param[in] req The NoncontiguousBuffer after PB serialization.
@@ -253,6 +274,200 @@ void RpcServiceProxy::UnaryInvokeImp(const ClientContextPtr& context, const Requ
 }
 
 template <class RequestMessage, class ResponseMessage>
+Status RpcServiceProxy::BroadcastUnaryInvoke(const ClientContextPtr& broadcast_context, const RequestMessage& req,
+                                             std::vector<std::tuple<Status, ResponseMessage>>* rsp) {
+  TrpcSelectorInfo trpc_selector_info;
+  // 构造广播类Selector路由相关信息并查询符合条件的节点
+  MakeTrpcSelectorInfoForBroadcast(broadcast_context, trpc_selector_info);
+  std::vector<TrpcEndpointInfo> endpoints;
+  if (naming::SelectBatch(trpc_selector_info, endpoints) != 0) {
+    TRPC_FMT_ERROR("BroadcastUnaryInvoke fail, error:SelectBatch failed.");
+    return Status(-1, "SelectBatch failed");
+  }
+
+  if (endpoints.empty()) {
+    TRPC_FMT_ERROR("BroadcastUnaryInvoke fail, error:SelectBatch get empty endpoint.");
+    return Status(-1, "SelectBatch get empty endpoint");
+  }
+
+  rsp->clear();
+  rsp->reserve(endpoints.size());
+
+  if (runtime::IsInFiberRuntime()) {
+    // Fiber 模式：并发访问每个下游节点并收集结果，最后汇总统一返回
+    FiberLatch fiber_latch(endpoints.size() - 1);
+    FiberMutex fiber_mutex;
+    // 遍历前endpoints.size() - 1个节点发送请求
+    for (size_t i = 0; i < endpoints.size() - 1; i++) {
+      bool start_fiber = StartFiberDetached([&] {
+        ClientContextPtr rpc_context = MakeRefCounted<ClientContext>();
+        SetClientContextForBroadcast(broadcast_context, endpoints[i], rpc_context);
+        ResponseMessage response;
+        Status rpc_status = UnaryInvoke<RequestMessage, ResponseMessage>(rpc_context, req, &response);
+        {
+          // 加锁保护rsp
+          std::unique_lock<FiberMutex> lk(fiber_mutex);
+          rsp->emplace_back(std::make_tuple(rpc_status, std::move(response)));
+        }
+
+        fiber_latch.CountDown();
+      });
+
+      if (!start_fiber) {
+        // 直接返回失败
+        return Status(-1, "StartFiber failed");
+      }
+    }
+
+    fiber_latch.Wait();
+
+    // RPC最后一个节点在直接在当前Fiber执行
+    broadcast_context->SetAddr(endpoints[endpoints.size() - 1].host, endpoints[endpoints.size() - 1].port);
+    ResponseMessage response;
+    Status rpc_status = UnaryInvoke<RequestMessage, ResponseMessage>(broadcast_context, req, &response);
+    rsp->emplace_back(std::make_tuple(rpc_status, std::move(response)));
+
+  } else {
+    // 否则使用future模式，直接用UnaryInvoke(这里是串行，而非并行，因为Future不支持单向调用)
+    // 遍历前endpoints.size() - 1个节点发送请求
+    for (size_t i = 0; i < endpoints.size() - 1; i++) {
+      ClientContextPtr rpc_context = MakeRefCounted<ClientContext>();
+      SetClientContextForBroadcast(broadcast_context, endpoints[i], rpc_context);
+      ResponseMessage response;
+      Status rpc_status = UnaryInvoke<RequestMessage, ResponseMessage>(rpc_context, req, &response);
+      rsp->emplace_back(std::make_tuple(rpc_status, std::move(response)));
+    }
+
+    // RPC最后一个节点复用broadcast_context
+    broadcast_context->SetAddr(endpoints[endpoints.size() - 1].host, endpoints[endpoints.size() - 1].port);
+    ResponseMessage response;
+    Status rpc_status = UnaryInvoke<RequestMessage, ResponseMessage>(broadcast_context, req, &response);
+    rsp->emplace_back(std::make_tuple(rpc_status, std::move(response)));
+  }
+
+  if (rsp->size() != endpoints.size()) {
+    std::string error_message = "BroadcastUnaryInvoke fail, error: rsp->size():" + std::to_string(rsp->size()) +
+                                " != endpoints.size():" + std::to_string(endpoints.size());
+    return Status(-1, error_message);
+  }
+
+  // 整合最后结果
+  ::trpc::Status boardcast_status;
+  bool is_rpc_failed = false;
+  // 获取所有节点的返回状态，有错误则设置broadcast_context状态
+  std::string error_message = "";
+  for (auto& item : *rsp) {
+    ::trpc::Status rpc_status = std::get<0>(item);
+    if (!rpc_status.OK()) {
+      // 目前是将失败RPC 信息 追加到一起
+      error_message.append("rpc peer endpoint failed err:");
+      error_message.append(rpc_status.ToString());
+      error_message.append("|");
+      is_rpc_failed = true;
+    }
+  }
+
+  if (is_rpc_failed == true) {
+    boardcast_status.SetFuncRetCode(-1);
+    boardcast_status.SetErrorMessage(error_message);
+  }
+
+  return boardcast_status;
+}
+
+template <class RequestMessage>
+Status RpcServiceProxy::BroadcastOnewayInvoke(const ClientContextPtr& broadcast_context, const RequestMessage& req) {
+  TrpcSelectorInfo trpc_selector_info;
+  // 构造广播类Selector路由相关信息并查询符合条件的节点
+  MakeTrpcSelectorInfoForBroadcast(broadcast_context, trpc_selector_info);
+  std::vector<TrpcEndpointInfo> endpoints;
+  if (naming::SelectBatch(trpc_selector_info, endpoints) != 0) {
+    TRPC_FMT_ERROR("BroadcastOnewayInvoke fail, error:SelectBatch failed.");
+    return Status(-1, "SelectBatch failed");
+  }
+
+  if (endpoints.empty()) {
+    TRPC_FMT_ERROR("BroadcastOnewayInvoke fail, error:SelectBatch get empty endpoint.");
+    return Status(-1, "SelectBatch get empty endpoint");
+  }
+
+  std::vector<Status> rsp;
+  if (runtime::IsInFiberRuntime()) {
+    // Fiber 模式：并发访问每个下游节点并收集结果，最后汇总统一返回
+    FiberLatch fiber_latch(endpoints.size() - 1);
+    FiberMutex fiber_mutex;
+    // 遍历前endpoints.size() - 1个节点发送请求
+    for (size_t i = 0; i < endpoints.size() - 1; i++) {
+      bool start_fiber = StartFiberDetached([&] {
+        ClientContextPtr rpc_context = MakeRefCounted<ClientContext>();
+        SetClientContextForBroadcast(broadcast_context, endpoints[i], rpc_context);
+        Status rpc_status = OnewayInvoke<RequestMessage>(rpc_context, req);
+        {
+          // 加锁保护rsp
+          std::unique_lock<FiberMutex> lk(fiber_mutex);
+          rsp.emplace_back(rpc_status);
+        }
+
+        fiber_latch.CountDown();
+      });
+
+      if (!start_fiber) {
+        // 直接返回失败
+        return Status(-1, "StartFiber failed");
+      }
+    }
+
+    fiber_latch.Wait();
+
+    // RPC最后一个节点在直接在当前Fiber执行
+    broadcast_context->SetAddr(endpoints[endpoints.size() - 1].host, endpoints[endpoints.size() - 1].port);
+    Status rpc_status = OnewayInvoke<RequestMessage>(broadcast_context, req);
+    rsp.emplace_back(rpc_status);
+
+  } else {
+    // 否则使用future模式，直接用OnewayInvoke(这里是串行，而非并行，因为Future不支持单向调用)
+    // 遍历前endpoints.size() - 1个节点发送请求
+    for (size_t i = 0; i < endpoints.size() - 1; i++) {
+      ClientContextPtr rpc_context = MakeRefCounted<ClientContext>();
+      SetClientContextForBroadcast(broadcast_context, endpoints[i], rpc_context);
+      rsp.emplace_back(OnewayInvoke<RequestMessage>(rpc_context, req));
+    }
+
+    // RPC最后一个节点复用broadcast_context
+    broadcast_context->SetAddr(endpoints[endpoints.size() - 1].host, endpoints[endpoints.size() - 1].port);
+    rsp.emplace_back(OnewayInvoke<RequestMessage>(broadcast_context, req));
+  }
+
+  if (rsp.size() != endpoints.size()) {
+    std::string error_message = "BroadcastOnewayInvoke fail, error: rsp.size():" + std::to_string(rsp.size()) +
+                                " != endpoints.size():" + std::to_string(endpoints.size());
+    return Status(-1, error_message);
+  }
+
+  // 整合最后结果
+  ::trpc::Status boardcast_status;
+  bool is_rpc_failed = false;
+  // 获取所有节点的返回状态，有错误则设置broadcast_context状态
+  std::string error_message = "";
+  for (auto& item : rsp) {
+    if (!item.OK()) {
+      // 目前是将失败RPC 信息 追加到一起
+      error_message.append("rpc peer endpoint failed err:");
+      error_message.append(item.ToString());
+      error_message.append("|");
+      is_rpc_failed = true;
+    }
+  }
+
+  if (is_rpc_failed == true) {
+    boardcast_status.SetFuncRetCode(-1);
+    boardcast_status.SetErrorMessage(error_message);
+  }
+
+  return boardcast_status;
+}
+
+template <class RequestMessage, class ResponseMessage>
 Future<ResponseMessage> RpcServiceProxy::AsyncUnaryInvoke(const ClientContextPtr& context, const RequestMessage& req) {
   TRPC_ASSERT(context->GetRequest() != nullptr);
 
@@ -351,6 +566,96 @@ Future<ResponseMessage> RpcServiceProxy::AsyncUnaryInvokeImp(const ClientContext
         context->SetEndTimestampUs(trpc::time::GetMicroSeconds());
 
         return MakeReadyFuture<ResponseMessage>(std::move(rsp_obj));
+      });
+}
+
+template <class RequestMessage, class ResponseMessage>
+Future<::trpc::Status, std::vector<std::tuple<::trpc::Status, ResponseMessage>>>
+RpcServiceProxy::AsyncBroadcastUnaryInvoke(const ClientContextPtr& broadcast_context, const RequestMessage& req) {
+  TrpcSelectorInfo trpc_selector_info;
+  // 构造广播类Selector路由相关信息并查询符合条件的节点
+  MakeTrpcSelectorInfoForBroadcast(broadcast_context, trpc_selector_info);
+  std::vector<TrpcEndpointInfo> endpoints;
+
+  return naming::AsyncSelectBatch(trpc_selector_info)
+      .Then([this, broadcast_context, &req](Future<std::vector<TrpcEndpointInfo>> fut) {
+        std::vector<std::tuple<::trpc::Status, ResponseMessage>> res;
+        if (fut.IsFailed()) {
+          TRPC_FMT_ERROR("AsyncBroadcastUnaryInvoke fail,error:AsyncSelectBatch naming select failed.");
+          // 这里都是Ready，通过Status返回Status
+          return MakeReadyFuture<::trpc::Status, std::vector<std::tuple<::trpc::Status, ResponseMessage>>>(
+              Status(-1, "AsyncBroadcastUnaryInvoke fail,error:AsyncSelectBatch failed"), std::move(res));
+        }
+
+        std::vector<TrpcEndpointInfo> endpoints = fut.GetValue0();
+        if (endpoints.empty()) {
+          TRPC_FMT_ERROR("AsyncBroadcastUnaryInvoke fail,error:AsyncSelectBatch get empty endpoint.");
+          // 这里都是Ready，通过Status返回Status
+          return MakeReadyFuture<::trpc::Status, std::vector<std::tuple<::trpc::Status, ResponseMessage>>>(
+              Status(-1, "AsyncBroadcastUnaryInvoke fail,error:SelectBatch get empty endpoint."), std::move(res));
+        }
+
+        std::vector<Future<ResponseMessage>> results;
+        // 遍历前endpoints.size() - 1个节点发送请求
+        for (size_t i = 0; i < endpoints.size() - 1; i++) {
+          ClientContextPtr rpc_context = MakeRefCounted<ClientContext>();
+          SetClientContextForBroadcast(broadcast_context, endpoints[i], rpc_context);
+          Future<ResponseMessage> fut = AsyncUnaryInvoke<RequestMessage, ResponseMessage>(rpc_context, req);
+          results.emplace_back(std::move(fut));
+        }
+
+        // RPC最后一个节点复用broadcast_context
+        broadcast_context->SetAddr(endpoints[endpoints.size() - 1].host, endpoints[endpoints.size() - 1].port);
+        results.emplace_back(std::move(AsyncUnaryInvoke<RequestMessage, ResponseMessage>(broadcast_context, req)));
+
+        // whenall 并行访问
+        return WhenAll(results.begin(), results.end())
+            .Then([endpoints](std::vector<Future<ResponseMessage>>&& vec_futs) {
+              std::vector<std::tuple<::trpc::Status, ResponseMessage>> res;
+              for (auto& item : vec_futs) {
+                if (item.IsReady()) {
+                  res.emplace_back(std::make_tuple(kSuccStatus, item.GetValue0()));
+                } else {
+                  auto exception = item.GetException();
+                  Status status;
+                  status.SetFuncRetCode(exception.GetExceptionCode());
+                  status.SetErrorMessage(exception.what());
+                  res.emplace_back(std::make_tuple(status, ResponseMessage{}));
+                }
+              }
+
+              if (res.size() != endpoints.size()) {
+                std::string error_message =
+                    "AsyncBroadcastUnaryInvoke fail, error: res.size():" + std::to_string(res.size()) +
+                    " != endpoints.size():" + std::to_string(endpoints.size());
+                return MakeReadyFuture<::trpc::Status, std::vector<std::tuple<::trpc::Status, ResponseMessage>>>(
+                    Status(-1, error_message), std::move(res));
+              }
+
+              // 整合最后结果
+              ::trpc::Status boardcast_status;
+              bool is_rpc_failed = false;
+              // 获取所有节点的返回状态，有错误则设置broadcast_context状态
+              std::string error_message = "";
+              for (auto& item : res) {
+                ::trpc::Status rpc_status = std::get<0>(item);
+                if (!rpc_status.OK()) {
+                  // 目前是将失败RPC 信息 追加到一起
+                  error_message.append("rpc peer endpoint failed err:");
+                  error_message.append(rpc_status.ToString());
+                  error_message.append("|");
+                  is_rpc_failed = true;
+                }
+              }
+
+              if (is_rpc_failed == true) {
+                boardcast_status.SetFuncRetCode(-1);
+                boardcast_status.SetErrorMessage(error_message);
+              }
+
+              return MakeReadyFuture<::trpc::Status, std::vector<std::tuple<::trpc::Status, ResponseMessage>>>(
+                  boardcast_status, std::move(res));
+            });
       });
 }
 
