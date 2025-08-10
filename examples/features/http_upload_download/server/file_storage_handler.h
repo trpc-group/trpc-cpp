@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 Tencent.
+// Copyright (C) 2023 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -29,6 +29,12 @@ class FileStorageHandler : public ::trpc::http::HttpStreamHandler {
   // Provides file uploading.
   ::trpc::Status Post(const ::trpc::ServerContextPtr& ctx, const ::trpc::http::RequestPtr& req,
                       ::trpc::http::Response* rsp) override;
+                      
+  ::trpc::Status DownloadMultipleFiles(
+    const ::trpc::ServerContextPtr& ctx,
+    const ::trpc::http::RequestPtr& req,
+    ::trpc::http::Response* rsp);
+
 
  private:
   std::string upload_dst_path_{"upload_dst.bin"};
