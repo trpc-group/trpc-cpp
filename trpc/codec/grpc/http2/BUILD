@@ -67,7 +67,7 @@ cc_library(
     hdrs = ["response.h"],
     deps = [
         ":http2",
-        "//trpc/util/http:response",
+        "//trpc/util/http:response_hdrs",
     ],
 )
 

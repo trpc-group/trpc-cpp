@@ -45,7 +45,6 @@ cc_library(
         "//trpc/compressor/zlib:zlib_compressor",
         "//trpc/log:trpc_log",
         "//trpc/util:likely",
-        "//trpc/util/buffer",
         "//trpc/util/log:logging",
     ],
 )

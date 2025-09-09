@@ -202,7 +202,7 @@ cc_library(
     hdrs = ["http_parser.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":response",
+        ":response_hdrs",
         "@com_github_h2o_picohttpparser//:picohttpparser",
     ],
 )

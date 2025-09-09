@@ -103,7 +103,6 @@ cc_test(
         ":client_filter_manager",
         "//trpc/client:client_context",
         "//trpc/codec/trpc:trpc_client_codec",
-        "//trpc/filter:filter_controller",
         "//trpc/filter/testing:client_filter_testing",
     ],
 )
@@ -124,7 +123,7 @@ cc_test(
     deps = [
         ":client_filter_manager",
         "//trpc/client:client_context",
-        "//trpc/filter:filter_controller",
+        ":filter_controller_h",
         "//trpc/filter/testing:client_filter_testing",
     ],
 )
@@ -143,7 +142,6 @@ cc_test(
     deps = [
         ":server_filter_controller",
         ":server_filter_manager",
-        "//trpc/filter:filter_controller",
         "//trpc/filter/testing:server_filter_testing",
         "//trpc/server:server_context",
     ],

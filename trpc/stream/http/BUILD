@@ -114,6 +114,7 @@ cc_library(
     name = "http_stream",
     deps = [
         ":http_stream_impl",
+        "//trpc/util/http:response",
     ],
 )
 
@@ -136,7 +137,7 @@ cc_library(
     deps = [
         ":http_stream_hdrs",
         "//trpc/util/http:request",
-        "//trpc/util/http:response",
+        "//trpc/util/http:response_hdrs",
     ],
 )
 

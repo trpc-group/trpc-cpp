@@ -12,7 +12,6 @@ cc_library(
         "//trpc/tools/comm:utils",
         "@com_github_fmtlib_fmt//:fmtlib",
         "@com_google_protobuf//:protobuf",
-        "@com_google_protobuf//:protoc_lib",
     ],
 )
 
@@ -40,7 +39,6 @@ cc_library(
         "//trpc/tools/comm:utils",
         "@com_github_fmtlib_fmt//:fmtlib",
         "@com_google_protobuf//:protobuf",
-        "@com_google_protobuf//:protoc_lib",
     ],
 )
 
@@ -54,7 +52,6 @@ cc_library(
         "//trpc/tools/comm:utils",
         "@com_github_fmtlib_fmt//:fmtlib",
         "@com_google_protobuf//:protobuf",
-        "@com_google_protobuf//:protoc_lib",
     ],
 )
 

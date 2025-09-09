@@ -87,7 +87,8 @@ cc_library(
     ],
     deps = [
         ":config_helper",
-        ":default_log_conf",
+        ":default_log_conf_parser",
+        ":default_log_conf_h",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )

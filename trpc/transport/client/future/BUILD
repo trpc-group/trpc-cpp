@@ -81,6 +81,5 @@ cc_test(
         "//trpc/transport/common:connection_handler_manager",
         "//trpc/util:unique_id",
         "//trpc/util/thread:latch",
-        "@com_google_googletest//:gtest_main",
     ],
 )
