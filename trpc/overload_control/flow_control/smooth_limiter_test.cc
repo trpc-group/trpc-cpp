@@ -64,6 +64,25 @@ TEST_F(SmoothLimiterTest, CheckLimit) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
+TEST_F(SmoothLimiterTest, Overload) {
+  ServerContextPtr context = MakeRefCounted<ServerContext>();
+  ProtocolPtr req_msg = std::make_shared<TrpcRequestProtocol>();
+  context->SetRequestMsg(std::move(req_msg));
+  context->SetFuncName("trpc.test.flow_control.smooth_limiter");
+
+  ASSERT_EQ(smooth_limiter_->GetMaxCounter(), 3);
+  for (int i{0}; i < 4; ++i) {
+    ASSERT_EQ(smooth_limiter_->GetCurrCounter(), 0);
+    ASSERT_EQ(smooth_limiter_->CheckLimit(context), false);
+    ASSERT_EQ(smooth_limiter_->CheckLimit(context), false);
+    ASSERT_EQ(smooth_limiter_->GetCurrCounter(), 2);
+    ASSERT_EQ(smooth_limiter_->CheckLimit(context), false);
+    ASSERT_EQ(smooth_limiter_->CheckLimit(context), true);
+    ASSERT_EQ(smooth_limiter_->CheckLimit(context), true);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+}
+
 }  // namespace testing
 
 }  // namespace trpc::overload_control

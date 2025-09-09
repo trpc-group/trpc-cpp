@@ -127,10 +127,10 @@ cc_test(
         "//trpc/overload_control/flow_control:flow_test.yaml",
     ],
     deps = [
-        "//trpc/common:trpc_plugin",
         ":flow_controller_factory",
         ":flow_controller_server_filter",
         "//trpc/codec/testing:protocol_testing",
+        "//trpc/common:trpc_plugin",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -218,8 +218,7 @@ cc_library(
     ],
     deps = [
         ":flow_controller",
-        ":hit_queue",
-        ":tick_timer",
+        ":recent_queue",
         "//trpc/overload_control/common:report",
         "//trpc/util/log:logging",
     ],
@@ -256,6 +255,31 @@ cc_test(
     srcs = ["tick_timer_test.cc"],
     deps = [
         ":tick_timer",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "recent_queue",
+    srcs = ["recent_queue.cc"],
+    hdrs = ["recent_queue.h"],
+    defines = [] +
+              select({
+                  "//trpc:trpc_include_overload_control": ["TRPC_BUILD_INCLUDE_OVERLOAD_CONTROL"],
+                  "//conditions:default": [],
+              }),
+    visibility = ["//visibility:private"],
+    deps = [
+        "//trpc/util:time",
+    ],
+)
+
+cc_test(
+    name = "recent_queue_test",
+    srcs = ["recent_queue_test.cc"],
+    deps = [
+        ":recent_queue",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
