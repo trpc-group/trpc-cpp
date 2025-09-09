@@ -21,5 +21,6 @@ cc_library(
     hdrs = ["file_storage_handler.h"],
     deps = [
         "@trpc_cpp//trpc/util/http/stream:http_stream_handler",
+        "//examples/features/http_upload_download/common:file_hasher",
     ],
 )

@@ -24,3 +24,5 @@ plugins:
           local_file:
             eol: true
             filename: http_upload_download_server.log
+          stdout:  # 添加这一块
+            format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
