@@ -56,7 +56,7 @@ Future<> HttpAsyncStream::PushSendMessage(HttpStreamFramePtr&& msg) {
   return AsyncWrite(std::move(out));
 }
 
-Future<http::HttpHeader> HttpAsyncStream::AsyncReadHeader(int timeout) {
+Future<http::HttpHeader> HttpAsyncStream::AsyncReadHeader(uint32_t timeout) {
   pending_header_.val = Promise<http::HttpHeader>();
 
   auto ft = pending_header_.val.value().GetFuture();
@@ -80,7 +80,7 @@ Future<http::HttpHeader> HttpAsyncStream::AsyncReadHeader(int timeout) {
   return ft;
 }
 
-Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadChunk(int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadChunk(uint32_t timeout) {
   // it can read only in chunked mode
   if (read_mode_ != DataMode::kChunked) {
     Status status{TRPC_STREAM_UNKNOWN_ERR, 0, "Can't read no chunk data"};
@@ -90,15 +90,15 @@ Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadChunk(int timeout) {
   return AsyncReadInner(ReadOperation::kReadChunk, 0, timeout);
 }
 
-Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadAtMost(uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadAtMost(uint64_t len, uint32_t timeout) {
   return AsyncReadInner(ReadOperation::kReadAtMost, len, timeout);
 }
 
-Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadExactly(uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadExactly(uint64_t len, uint32_t timeout) {
   return AsyncReadInner(ReadOperation::kReadExactly, len, timeout);
 }
 
-Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadInner(ReadOperation op, uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStream::AsyncReadInner(ReadOperation op, uint64_t len, uint32_t timeout) {
   if (read_mode_ == DataMode::kNoData) {
     // can not read data when content-length equal to 0
     return MakeReadyFuture<NoncontiguousBuffer>(NoncontiguousBuffer{});

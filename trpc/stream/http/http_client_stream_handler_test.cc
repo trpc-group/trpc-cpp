@@ -28,14 +28,17 @@ TEST(HttpClientStreamHandlerTest, Run) {
       stream::StreamOptions options;
       options.send = [](IoMessage&& message) { return 0; };
       stream::HttpClientStreamHandler handler(std::move(options));
-
       EXPECT_TRUE(handler.Init());
-      auto stream = handler.CreateStream(stream::StreamOptions{});
+
+      auto ctx = MakeRefCounted<ClientContext>();
+      stream::StreamOptions options2;
+      options2.context.context = ctx;
+      auto stream = handler.CreateStream(std::move(options2));
       EXPECT_TRUE(stream);
       EXPECT_TRUE(handler.GetHttpStream());
 
       NoncontiguousBuffer in = CreateBufferSlow("hello");
-      EXPECT_EQ(0, handler.SendMessage("", std::move(in)));
+      EXPECT_EQ(0, handler.SendMessage(ctx, std::move(in)));
 
       // Pushes the response header to stream.
       http::HttpResponse http_response;

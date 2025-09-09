@@ -25,6 +25,7 @@ StreamReaderWriterProviderPtr HttpClientStreamHandler::CreateStream(StreamOption
 
 int HttpClientStreamHandler::SendMessage(const std::any& msg, NoncontiguousBuffer&& send_data) {
   IoMessage io_message;
+  io_message.context_ext = std::any_cast<const ClientContextPtr>(msg)->GetCurrentContextExt();
   io_message.buffer = std::move(send_data);
   io_message.msg = msg;
   return options_.send(std::move(io_message));

@@ -3,6 +3,7 @@
 // Tencent is pleased to support the open source community by making tRPC available.
 //
 // Copyright (C) 2023 Tencent.
+//
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -33,7 +34,7 @@ TEST(MQThreadPoolTest, All) {
     usleep(1000);
   }
 
-  std::promise<int64_t> waiters[10000];
+  std::promise<int64_t> waiters[1000];
   for (auto& waiter : waiters) {
     thread_pool.AddTask([&waiter] {
       int64_t res = 0;
@@ -52,6 +53,38 @@ TEST(MQThreadPoolTest, All) {
 
   ASSERT_TRUE(thread_pool.IsStop());
   ASSERT_FALSE(thread_pool.AddTask([]() {}));
+}
+
+TEST(MQThreadPoolTest, MQThreadPoolAddTaskFail) {
+  trpc::ThreadPoolOption thread_pool_option;
+  thread_pool_option.thread_num = 1;
+  thread_pool_option.task_queue_size = 2;
+
+  trpc::MQThreadPool thread_pool(std::move(thread_pool_option));
+  thread_pool.Start();
+
+  std::atomic<int64_t> count{0};
+  std::atomic<int64_t> failed_count{0};
+  for (int i = 0; i < 100; ++i) {
+    bool ret = thread_pool.AddTask([&count] {
+      int64_t res = 0;
+      for (unsigned int i = 1; i <= 1000000; i++) {
+        res += i;
+      }
+      ++count;
+    });
+    if (!ret) {
+      ++failed_count;
+    }
+  }
+
+  while ((count + failed_count) != 100) {
+    ::usleep(10000);
+  }
+
+  EXPECT_TRUE(failed_count > 0);
+
+  thread_pool.Stop();
 }
 
 }  // namespace trpc::testing

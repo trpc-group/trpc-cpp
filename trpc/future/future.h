@@ -531,12 +531,12 @@ class FutureImpl : public FutureImplBase {
     state_.callback = new ContinuationWithValue<Func, PromiseType, T...>(std::forward<Func>(func),
                                                                          std::forward<PromiseType>(promise));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     // Got immediately executed.
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -549,12 +549,12 @@ class FutureImpl : public FutureImplBase {
   void SetTerminalCallback(Func&& func, Executor* executor) {
     state_.callback = new TerminalWithValue<Func, T...>(std::forward<Func>(func));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     // Got immediately executed.
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -571,12 +571,12 @@ class FutureImpl : public FutureImplBase {
     state_.callback = new ContinuationWithFuture<Func, PromiseType, T...>(std::forward<Func>(func),
                                                                           std::forward<PromiseType>(promise));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     // Got immediately executed.
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -589,12 +589,12 @@ class FutureImpl : public FutureImplBase {
   void SetTerminalCallbackWrapped(Func&& func, Executor* executor) {
     state_.callback = new TerminalWithFuture<Func, T...>(std::forward<Func>(func));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     // Got immediately executed.
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -603,11 +603,9 @@ class FutureImpl : public FutureImplBase {
     state_.value = std::move(value);
     state_.ready = true;
     // Result state may be looped by another thread.
-    {
-      std::lock_guard<std::mutex> lock(state_.mtx);
-      state_.has_result = true;
-    }
-    TrySchedule();
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_result = true;
+    TrySchedule(lock);
   }
 
   /// @brief Exceptional value set through promise.
@@ -615,29 +613,26 @@ class FutureImpl : public FutureImplBase {
     state_.exception = e;
     state_.failed = true;
     // Result state may be looped by another thread.
-    {
-      std::lock_guard<std::mutex> lock(state_.mtx);
-      state_.has_result = true;
-    }
-    TrySchedule();
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_result = true;
+    TrySchedule(lock);
   }
 
   /// @brief Support non const parameter.
   void SetException(Exception&& e) {
     state_.exception = std::move(e);
     state_.failed = true;
-    {
-      std::lock_guard<std::mutex> lock(state_.mtx);
-      state_.has_result = true;
-    }
-    TrySchedule();
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_result = true;
+    TrySchedule(lock);
   }
 
  private:
   /// @brief Future may or may not registered callback yet, check to inspire callback.
   /// @note Callback can only inspired once.
-  void TrySchedule() {
+  void TrySchedule(std::unique_lock<std::mutex>& lock) {
     if (state_.has_callback) {
+      lock.unlock();
       if (IsReady()) {
         if (state_.schedule_flag.test_and_set() == false) {
           state_.callback->SetValue(GetValue());
@@ -704,11 +699,11 @@ class FutureImpl<T> : public FutureImplBase {
     state_.callback =
         new ContinuationWithValue<Func, PromiseType, T>(std::forward<Func>(func), std::forward<PromiseType>(promise));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -717,11 +712,11 @@ class FutureImpl<T> : public FutureImplBase {
   void SetTerminalCallback(Func&& func, Executor* executor) {
     state_.callback = new TerminalWithValue<Func, T>(std::forward<Func>(func));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -732,11 +727,11 @@ class FutureImpl<T> : public FutureImplBase {
     state_.callback =
         new ContinuationWithFuture<Func, PromiseType, T>(std::forward<Func>(func), std::forward<PromiseType>(promise));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -745,11 +740,11 @@ class FutureImpl<T> : public FutureImplBase {
   void SetTerminalCallbackWrapped(Func&& func, Executor* executor) {
     state_.callback = new TerminalWithFuture<Func, T>(std::forward<Func>(func));
     if (executor) state_.callback->SetExecutor(executor);
-    state_.has_callback = true;
 
-    std::lock_guard<std::mutex> lock(state_.mtx);
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_callback = true;
     if (HasResult()) {
-      TrySchedule();
+      TrySchedule(lock);
     }
   }
 
@@ -757,39 +752,34 @@ class FutureImpl<T> : public FutureImplBase {
   void SetValue(T&& value) {
     state_.value = std::move(value);
     state_.ready = true;
-    {
-      std::lock_guard<std::mutex> lock(state_.mtx);
-      state_.has_result = true;
-    }
-    TrySchedule();
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_result = true;
+    TrySchedule(lock);
   }
 
   /// @brief Same as multiple version.
   void SetException(const Exception& e) {
     state_.exception = e;
     state_.failed = true;
-    {
-      std::lock_guard<std::mutex> lock(state_.mtx);
-      state_.has_result = true;
-    }
-    TrySchedule();
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_result = true;
+    TrySchedule(lock);
   }
 
   /// @brief Same as multiple version.
   void SetException(Exception&& e) {
     state_.exception = std::move(e);
     state_.failed = true;
-    {
-      std::lock_guard<std::mutex> lock(state_.mtx);
-      state_.has_result = true;
-    }
-    TrySchedule();
+    std::unique_lock<std::mutex> lock(state_.mtx);
+    state_.has_result = true;
+    TrySchedule(lock);
   }
 
  private:
   /// @brief Same as multiple version.
-  void TrySchedule() {
+  void TrySchedule(std::unique_lock<std::mutex>& lock) {
     if (state_.has_callback) {
+      lock.unlock();
       if (IsReady()) {
         if (state_.schedule_flag.test_and_set() == false) {
           state_.callback->SetValue(GetValue());

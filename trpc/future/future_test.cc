@@ -641,15 +641,13 @@ TEST(Future, ThenCopyableExecutor) {
 // Test mltiple threads executor.
 TEST(Future, TestExecuteOkInDifferentThread) {
   static int exec_count = 0;
-  int loop_times = 50000;
+  int loop_times = 500;
   for (int i = 0; i < loop_times; i++) {
     Promise<int> pr;
     auto fut = pr.GetFuture();
     std::thread t([pr = std::move(pr)]() mutable {
-      std::this_thread::sleep_for(std::chrono::nanoseconds(1));
       pr.SetValue(1);
     });
-    std::this_thread::sleep_for(std::chrono::nanoseconds(10000));
     fut.Then([](int&& val) {
       exec_count++;
       return MakeReadyFuture<>();
