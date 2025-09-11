@@ -88,8 +88,7 @@ void PrometheusMetrics::Start() noexcept {
 
 void PrometheusMetrics::Stop() noexcept {
   if (push_gateway_task_id_ != 0) {
-    PeripheryTaskScheduler::GetInstance()->StopInnerTask(push_gateway_task_id_);
-    PeripheryTaskScheduler::GetInstance()->JoinInnerTask(push_gateway_task_id_);
+    PeripheryTaskScheduler::GetInstance()->RemoveInnerTask(push_gateway_task_id_);
     push_gateway_task_id_ = 0;
   }
 }

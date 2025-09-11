@@ -74,6 +74,13 @@ void TestRemoveTask() {
   ASSERT_TRUE(PeripheryTaskScheduler::GetInstance()->RemoveInnerTask(task_id));
 }
 
+void TestDetachTask() {
+  std::uint64_t task_id = PeripheryTaskScheduler::GetInstance()->SubmitInnerTask([]() {});
+  ASSERT_TRUE(task_id > 0);
+  ASSERT_FALSE(PeripheryTaskScheduler::GetInstance()->DetachInnerTask(task_id + 1));
+  ASSERT_TRUE(PeripheryTaskScheduler::GetInstance()->DetachInnerTask(task_id));
+}
+
 void TestSubmitPeriodicTask() {
   int count = 0;
   Latch latch(1);
@@ -267,6 +274,8 @@ void TestStopAndJoinTask() {
 TEST_F(PeripheryTaskSchedulerTest, SubmitTaskTest) { TestSubmitTask(); }
 
 TEST_F(PeripheryTaskSchedulerTest, RemoveTaskTest) { TestRemoveTask(); }
+
+TEST_F(PeripheryTaskSchedulerTest, DetachTaskTest) { TestDetachTask(); }
 
 TEST_F(PeripheryTaskSchedulerTest, SubmitPeriodicTaskTest) { TestSubmitPeriodicTask(); }
 

@@ -63,6 +63,14 @@ int FiberHttpClientStreamConnectionHandler::CheckMessage(const ConnectionPtr& co
   HttpClientStreamHandlerPtr handler_ptr = static_pointer_cast<HttpClientStreamHandler>(stream_handler_);
   if (p) {
     (*p)->GetStream() = handler_ptr->GetHttpStream();
+    // When MessageCheck is repeatedly entered on a stream, the underlying objects of (*p)->GetStream() and
+    // handler_ptr->GetHttpStream()actually point to the same stream object. In this scenario, assigning the
+    // HttpClientStreamPtrwould cause its internal reference count to first decrease by 1 and then increase by 1. If the
+    // connection happens to close at this moment, it would lead to incorrect reference counting, causing the stream
+    // object to be destructed prematurely. Subsequent operations using this stream would then result in a core dump.
+    if (((*p)->GetStream()).get() != (handler_ptr->GetHttpStream()).get()) {
+      (*p)->GetStream() = handler_ptr->GetHttpStream();
+    }
     return FiberClientConnectionHandler::CheckMessage(conn, in, out);
   }
 

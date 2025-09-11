@@ -173,8 +173,7 @@ void StopReportRuntimeInfo() {
     return;
   }
 
-  PeripheryTaskScheduler::GetInstance()->StopInnerTask(report_task_id);
-  PeripheryTaskScheduler::GetInstance()->JoinInnerTask(report_task_id);
+  PeripheryTaskScheduler::GetInstance()->RemoveInnerTask(report_task_id);
 
   report_task_id = 0;
 }

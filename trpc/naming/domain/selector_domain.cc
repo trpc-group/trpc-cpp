@@ -306,7 +306,7 @@ void SelectorDomain::Start() noexcept {
 
 void SelectorDomain::Stop() noexcept {
   if (task_id_) {
-    PeripheryTaskScheduler::GetInstance()->StopInnerTask(task_id_);
+    PeripheryTaskScheduler::GetInstance()->RemoveInnerTask(task_id_);
     task_id_ = 0;
   }
 }
