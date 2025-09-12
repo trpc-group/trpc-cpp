@@ -36,11 +36,11 @@ class HttpAsyncStream : public HttpCommonStream {
 
   /// @brief Reads the header asynchronously.
   /// @param timeout time to wait for the header to be ready
-  Future<http::HttpHeader> AsyncReadHeader(int timeout = std::numeric_limits<int>::max());
+  Future<http::HttpHeader> AsyncReadHeader(uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads a chunk in chunked mode asynchronously, note that reading in non-chunked mode will fail
   /// @param timeout time to wait for the header to be ready
-  Future<NoncontiguousBuffer> AsyncReadChunk(int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> AsyncReadChunk(uint32_t timeout = std::numeric_limits<int>::max());
 
   /// @brief Reads at most len data asynchronously.
   /// @param len max size to read
@@ -50,7 +50,7 @@ class HttpAsyncStream : public HttpCommonStream {
   ///       An empty buffer means that the end has been read
   ///       Usage scenario 1: Limits the maximum length of each read When the memory is limited.
   ///       Usage scenario 2: Gets part of data in time and send it downstream on route server.
-  Future<NoncontiguousBuffer> AsyncReadAtMost(uint64_t len, int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> AsyncReadAtMost(uint64_t len, uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads data with a fixed length. If eof is read, it will return as much data as there is in the network
   /// @param len size to read
@@ -58,7 +58,7 @@ class HttpAsyncStream : public HttpCommonStream {
   /// @note If the read buffer size is less than the required length, it means that eof has been read.
   ///       Usage scenario 1: The requested data is compressed by a fixed size, and needs to be read and decompressed by
   ///       a fixed size.
-  Future<NoncontiguousBuffer> AsyncReadExactly(uint64_t len, int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> AsyncReadExactly(uint64_t len, uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
  protected:
   template <class T>
@@ -98,7 +98,7 @@ class HttpAsyncStream : public HttpCommonStream {
 
   /// @brief Creates a scheduled waiting task
   template <class T>
-  void CreatePendingTimer(PendingVal<T>* pending, int timeout);
+  void CreatePendingTimer(PendingVal<T>* pending, uint32_t timeout);
 
   /// @brief Checks the pending state
   template <class T>
@@ -110,7 +110,7 @@ class HttpAsyncStream : public HttpCommonStream {
 
   void NotifyPendingDataQueue();
 
-  Future<NoncontiguousBuffer> AsyncReadInner(ReadOperation op, uint64_t len, int timeout);
+  Future<NoncontiguousBuffer> AsyncReadInner(ReadOperation op, uint64_t len, uint32_t timeout);
 
  protected:
   /// @brief Used to store asynchronous data request
@@ -147,7 +147,7 @@ void HttpAsyncStream::PendingDone(PendingVal<T>* pending) {
 }
 
 template <class T>
-void HttpAsyncStream::CreatePendingTimer(PendingVal<T>* pending, int timeout) {
+void HttpAsyncStream::CreatePendingTimer(PendingVal<T>* pending, uint32_t timeout) {
   TRPC_CHECK_EQ(pending->timer_id, iotimer::InvalidID);
   pending->timer_id = iotimer::Create(timeout, 0, [this, pending]() {
     if (!pending->val) {
