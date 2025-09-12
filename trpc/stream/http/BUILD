@@ -36,6 +36,8 @@ cc_library(
         "//trpc/util/http:common",
         "//trpc/util/http:reply",
         "//trpc/util/http:util",
+        "//trpc/util/http/sse:http_sse",
+        "//trpc/codec/http_sse:http_sse_protocol",
     ],
 )
 
@@ -46,6 +48,7 @@ cc_test(
         ":http_client_stream",
         ":http_client_stream_handler",
         "//trpc/coroutine/testing:fiber_runtime_test",
+        "//trpc/util/http/sse:http_sse",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -127,6 +130,7 @@ cc_library(
         "//trpc/server:server_context",
         "//trpc/stream:stream_handler",
         "//trpc/util/http:util",
+        "//trpc/util/http/sse:http_sse",
     ],
 )
 
@@ -157,7 +161,42 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+cc_library(
+    name = "http_sse_stream",
+    srcs = ["http_sse_stream.cc"],
+    hdrs = ["http_sse_stream.h"],
+    deps = [
+        "//trpc/common:status",
+        "//trpc/server:server_context",
+        "//trpc/util/buffer:noncontiguous_buffer",
+        "//trpc/util/http/sse:http_sse",
+        "//trpc/util/http:request",
+        "//trpc/util/http:response",
+        "//trpc/util/http:util",
+        "//trpc/codec/http_sse:http_sse_protocol",   # for HttpSseResponseProtocol
+        "//trpc/codec/http_sse:http_sse_server_codec",  # 如果WriteHeader用到
+    ],
+    visibility = ["//visibility:public"],
+)
 
+cc_test(
+    name = "http_sse_stream_test",
+    srcs = ["http_sse_stream_test.cc"],
+    deps = [
+        ":http_sse_stream",
+        "//trpc/codec:codec_manager",
+        "//trpc/coroutine/testing:fiber_runtime_test",
+        "//trpc/serialization:trpc_serialization",
+        "//trpc/server:http_service",
+        "//trpc/util/http/sse:http_sse",
+        "//trpc/server/testing:server_context_testing",
+        "//trpc/transport/server/testing:server_transport_testing",
+        "//trpc/util/http:request",
+        "//trpc/util/http:response",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
 cc_library(
     name = "http_stream_provider",
     hdrs = ["http_stream_provider.h"],

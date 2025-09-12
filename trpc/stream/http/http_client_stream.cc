@@ -169,6 +169,88 @@ Status HttpClientStream::SendMessage(const std::any& item, NoncontiguousBuffer&&
   return kDefaultStatus;
 }
 
+/// @brief Reads response header in a fiber-friendly way (non-blocking)
+/// @note This method avoids blocking the entire fiber by using non-blocking reads
+///       and yielding control to other fibers when data is not immediately available.
+template <typename Clock, typename Dur>
+Status HttpClientStream::ReadHeadersNonBlocking(int& code, trpc::http::HttpHeader& http_header,
+                              const std::chrono::time_point<Clock, Dur>& expiry) {
+  TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Starting header read operation");
+  
+  std::unique_lock<FiberMutex> lk(http_response_mutex_);
+  
+  // Check if headers are already available through normal mechanism
+  if (http_response_) {
+    TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Headers already available through normal mechanism");
+    code = http_response_->GetStatus();
+    http_header = http_response_->GetHeader();
+    return kDefaultStatus;
+  }
+  
+  // Check if stream is closed
+  if (state_ & kClosed) {
+    TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Stream is closed");
+    return kStreamStatusClientNetworkError;
+  }
+  
+  // Since we're in a separate thread (not fiber context), we need to actively poll
+  // for the headers rather than waiting for a notification that may never come
+  TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Will actively poll for headers");
+  
+  // Use the same clock type for comparison
+  auto start_time = Clock::now();
+  
+  while (start_time < expiry) {
+    // Unlock while we do non-critical work
+    lk.unlock();
+    
+    // Small delay to prevent busy waiting
+    if (::trpc::IsRunningInFiberWorker()) {
+      TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Yielding fiber");
+      FiberYield();
+      FiberSleepFor(std::chrono::milliseconds(10));
+    } else {
+      TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Sleeping thread");
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    
+    // Lock again to check conditions
+    lk.lock();
+    
+    // Check if headers became available
+    if (http_response_) {
+      TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Headers became available during polling");
+      code = http_response_->GetStatus();
+      http_header = http_response_->GetHeader();
+      TRPC_FMT_DEBUG("ReadHeadersNonBlocking: HTTP Status: {}, Headers count: {}", 
+                     code, http_header.Pairs().size());
+      for (const auto& [key, value] : http_header.Pairs()) {
+        TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Header: {}: {}", key, value);
+      }
+      return kDefaultStatus;
+    }
+    
+    // Check if stream is closed
+    if (state_ & kClosed) {
+      TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Stream closed during polling");
+      return kStreamStatusClientNetworkError;
+    }
+    
+    TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Headers still not available, continuing to poll");
+    start_time = Clock::now();
+  }
+  
+  TRPC_FMT_DEBUG("ReadHeadersNonBlocking: Timeout reached while polling for headers");
+  return kStreamStatusClientReadTimeout;
+}
+
+/// @brief Reads response header in a fiber-friendly way (non-blocking) with duration timeout
+template <typename Rep, typename Period>
+Status HttpClientStream::ReadHeadersNonBlocking(int& code, trpc::http::HttpHeader& http_header, 
+                              const std::chrono::duration<Rep, Period>& expiry) {
+  return ReadHeadersNonBlocking(code, http_header, trpc::ReadSteadyClock() + expiry);
+}
+
 FilterStatus HttpClientStream::RunMessageFilter(const FilterPoint& point, const ClientContextPtr& context) {
   if (filter_controller_) {
     return filter_controller_->RunMessageClientFilters(point, context);
@@ -196,5 +278,114 @@ HttpClientStreamReaderWriter& HttpClientStreamReaderWriter::operator=(HttpClient
   }
   return *this;
 }
+
+// SSE-specific method implementations
+Status HttpClientStream::ConfigureSseMode() {
+  if (sse_mode_) {
+    return kSuccStatus;  // Already configured
+  }
+
+  if (!req_protocol_) {
+    return kStreamStatusClientNetworkError;
+  }
+
+  // Set SSE-specific headers
+  req_protocol_->request->SetHeader("Accept", "text/event-stream");
+  req_protocol_->request->SetHeader("Cache-Control", "no-cache");
+  req_protocol_->request->SetHeader("Connection", "keep-alive");
+
+  sse_mode_ = true;
+  return kSuccStatus;
+}
+
+Status HttpClientStream::ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes) {
+  return ReadSseEvent(event, max_bytes, default_deadline_);
+}
+
+template <typename Clock, typename Dur>
+Status HttpClientStream::ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes,
+                                      const std::chrono::time_point<Clock, Dur>& expiry) {
+  if (!sse_mode_) {
+    return kStreamStatusClientNetworkError;
+  }
+
+  // Read data from the stream
+  NoncontiguousBuffer buffer;
+  Status status = Read(buffer, max_bytes, expiry);
+  if (!status.OK()) {
+    return status;
+  }
+
+  // Convert buffer to string and append to SSE buffer
+  std::string new_data = FlattenSlow(buffer);
+  sse_buffer_ += new_data;
+
+  // Try to parse complete SSE events
+  std::vector<http::sse::SseEvent> events;
+  if (!ParseSseEvents(buffer, events)) {
+    return kStreamStatusClientNetworkError;
+  }
+
+  if (events.empty()) {
+    // No complete event found, continue reading
+    return ReadSseEvent(event, max_bytes, expiry);
+  }
+
+  // Return the first complete event
+  event = events[0];
+  
+  // Remove the parsed event data from the buffer
+  // This is a simplified approach - in a production implementation,
+  // you'd want to track exactly how much data was consumed
+  size_t event_end = sse_buffer_.find("\n\n");
+  if (event_end != std::string::npos) {
+    sse_buffer_ = sse_buffer_.substr(event_end + 2);
+  }
+
+  return kSuccStatus;
+}
+
+// Explicit template instantiations for common clock types
+template Status HttpClientStream::ReadSseEvent<std::chrono::steady_clock, std::chrono::nanoseconds>(
+    http::sse::SseEvent&, size_t, const std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>&);
+template Status HttpClientStream::ReadSseEvent<std::chrono::system_clock, std::chrono::nanoseconds>(
+    http::sse::SseEvent&, size_t, const std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>&);
+
+bool HttpClientStream::ParseSseEvents(const NoncontiguousBuffer& buffer, std::vector<http::sse::SseEvent>& events) {
+  try {
+    // Convert buffer to string
+    std::string data = FlattenSlow(buffer);
+    
+    // Use the existing SSE parser
+    events = trpc::http::sse::SseParser::ParseEvents(data);
+    return true;
+  } catch (const std::exception& e) {
+    return false;
+  }
+}
+
+// Explicit template instantiations for ReadHeadersNonBlocking
+template Status trpc::stream::HttpClientStream::ReadHeadersNonBlocking<std::chrono::_V2::steady_clock, std::chrono::nanoseconds>(
+    int&, trpc::http::HttpHeader&, const std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::nanoseconds>&);
+template Status trpc::stream::HttpClientStream::ReadHeadersNonBlocking<std::chrono::_V2::system_clock, std::chrono::nanoseconds>(
+    int&, trpc::http::HttpHeader&, const std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::nanoseconds>&);
+
+// Explicit template instantiations for ReadHeadersNonBlocking with duration
+template Status trpc::stream::HttpClientStream::ReadHeadersNonBlocking<int64_t, std::milli>(
+    int&, trpc::http::HttpHeader&, const std::chrono::duration<int64_t, std::milli>&);
+template Status trpc::stream::HttpClientStream::ReadHeadersNonBlocking<int64_t, std::ratio<1, 1>>(
+    int&, trpc::http::HttpHeader&, const std::chrono::duration<int64_t, std::ratio<1, 1>>&);
+
+// Explicit template instantiations for ReadHeaders
+template Status trpc::stream::HttpClientStream::ReadHeaders<std::chrono::_V2::steady_clock, std::chrono::nanoseconds>(
+    int&, trpc::http::HttpHeader&, const std::chrono::time_point<std::chrono::_V2::steady_clock, std::chrono::nanoseconds>&);
+template Status trpc::stream::HttpClientStream::ReadHeaders<std::chrono::_V2::system_clock, std::chrono::nanoseconds>(
+    int&, trpc::http::HttpHeader&, const std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::nanoseconds>&);
+
+// Explicit template instantiations for ReadHeaders with duration
+template Status trpc::stream::HttpClientStream::ReadHeaders<int64_t, std::milli>(
+    int&, trpc::http::HttpHeader&, const std::chrono::duration<int64_t, std::milli>&);
+template Status trpc::stream::HttpClientStream::ReadHeaders<int64_t, std::ratio<1, 1>>(
+    int&, trpc::http::HttpHeader&, const std::chrono::duration<int64_t, std::ratio<1, 1>>&);
 
 }  // namespace trpc::stream
