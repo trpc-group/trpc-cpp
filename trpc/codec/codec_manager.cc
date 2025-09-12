@@ -24,6 +24,10 @@
 #include "trpc/codec/http/http_client_codec.h"
 #include "trpc/codec/http/http_server_codec.h"
 
+// codec http_sse
+#include "trpc/codec/http_sse/http_sse_client_codec.h"
+#include "trpc/codec/http_sse/http_sse_server_codec.h"
+
 // codec trpc_http
 // #include "trpc/codec/trpc_http/trpc_http_server_codec.h"
 
@@ -66,6 +70,12 @@ bool Init() {
 
   // redis
   ret = InitCodecPlugins<RedisClientCodec>();
+  TRPC_ASSERT(ret);
+
+  // http_sse
+  ret = InitCodecPlugins<HttpSseClientCodec>();
+  TRPC_ASSERT(ret);
+  ret = InitCodecPlugins<HttpSseServerCodec>();
   TRPC_ASSERT(ret);
 
   return ret;

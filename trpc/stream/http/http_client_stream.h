@@ -21,6 +21,10 @@
 #include "trpc/stream/stream_handler.h"
 #include "trpc/util/http/common.h"
 #include "trpc/util/http/response.h"
+// Add SSE related includes
+#include "trpc/util/http/sse/sse_event.h"
+#include "trpc/util/http/sse/sse_parser.h"
+#include "trpc/coroutine/fiber.h"
 
 namespace trpc::stream {
 
@@ -202,6 +206,62 @@ class HttpClientStream : public HttpStreamReaderWriterProvider {
   /// @brief Sets the filter.
   void SetFilterController(ClientFilterController* filter_controller) { filter_controller_ = filter_controller; }
 
+  /// @brief Reads response header in a fiber-friendly way (non-blocking)
+  /// @note This method avoids blocking the entire fiber by using non-blocking reads
+  ///       and yielding control to other fibers when data is not immediately available.
+  template <typename Clock, typename Dur>
+  Status ReadHeadersNonBlocking(int& code, trpc::http::HttpHeader& http_header,
+                                const std::chrono::time_point<Clock, Dur>& expiry);
+
+  /// @brief Reads response header in a fiber-friendly way (non-blocking) with duration timeout
+  template <typename Rep, typename Period>
+  Status ReadHeadersNonBlocking(int& code, trpc::http::HttpHeader& http_header, 
+                                const std::chrono::duration<Rep, Period>& expiry);
+
+  // SSE-specific methods
+  /// @brief Configures the client stream for Server-Sent Events (SSE) mode.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientNetworkError on error.
+  /// @note This method sets SSE-specific headers and enables SSE mode for the stream.
+  Status ConfigureSseMode();
+
+  /// @brief Reads and parses an SSE event from the stream.
+  /// @param event Output parameter to store the parsed SSE event.
+  /// @param max_bytes Maximum bytes to read for the event.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientReadTimeout on timeout,
+  ///         kStreamStatusClientNetworkError on error, kStreamStatusReadEof on end of stream.
+  Status ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes = 8192);
+
+  /// @brief Reads and parses an SSE event from the stream with custom timeout.
+  /// @param event Output parameter to store the parsed SSE event.
+  /// @param max_bytes Maximum bytes to read for the event.
+  /// @param expiry Custom timeout for reading.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientReadTimeout on timeout,
+  ///         kStreamStatusClientNetworkError on error, kStreamStatusReadEof on end of stream.
+  template <typename T>
+  Status ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes, const T& expiry) {
+    return ReadSseEvent(event, max_bytes, std::chrono::time_point_cast<std::chrono::steady_clock::duration>(trpc::ReadSteadyClock() + expiry));
+  }
+
+  /// @brief Reads and parses an SSE event from the stream with custom timeout.
+  /// @param event Output parameter to store the parsed SSE event.
+  /// @param max_bytes Maximum bytes to read for the event.
+  /// @param expiry Custom timeout for reading.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientReadTimeout on timeout,
+  ///         kStreamStatusClientNetworkError on error, kStreamStatusReadEof on end of stream.
+  template <typename Clock, typename Dur>
+  Status ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes,
+                      const std::chrono::time_point<Clock, Dur>& expiry);
+
+  /// @brief Checks if the stream is configured for SSE mode.
+  /// @return Returns true if SSE mode is enabled, false otherwise.
+  bool IsSseMode() const { return sse_mode_; }
+
+  /// @brief Parses SSE events from a buffer.
+  /// @param buffer The buffer containing SSE data.
+  /// @param events Output vector to store parsed events.
+  /// @return Returns true if parsing was successful, false otherwise.
+  bool ParseSseEvents(const NoncontiguousBuffer& buffer, std::vector<http::sse::SseEvent>& events);
+
  private:
   using HttpStreamReaderWriterProvider::Close;
   using HttpStreamReaderWriterProvider::Read;
@@ -224,6 +284,8 @@ class HttpClientStream : public HttpStreamReaderWriterProvider {
   FiberConditionVariable http_response_can_read_;
   std::optional<trpc::http::HttpResponse> http_response_;
   ClientFilterController* filter_controller_{nullptr};
+  bool sse_mode_{false};  ///< Whether the stream is configured for SSE mode
+  std::string sse_buffer_;  ///< Buffer for accumulating SSE data
 };
 
 using HttpClientStreamPtr = RefPtr<HttpClientStream>;
@@ -294,6 +356,35 @@ class HttpClientStreamReaderWriter {
 
   /// @brief Closes the stream.
   void Close() { provider_->Close(); }
+
+  // SSE-specific methods
+  /// @brief Configures the client stream for Server-Sent Events (SSE) mode.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientNetworkError on error.
+  Status ConfigureSseMode() { return provider_->ConfigureSseMode(); }
+
+  /// @brief Reads and parses an SSE event from the stream.
+  /// @param event Output parameter to store the parsed SSE event.
+  /// @param max_bytes Maximum bytes to read for the event.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientReadTimeout on timeout,
+  ///         kStreamStatusClientNetworkError on error, kStreamStatusReadEof on end of stream.
+  Status ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes = 8192) {
+    return provider_->ReadSseEvent(event, max_bytes);
+  }
+
+  /// @brief Reads and parses an SSE event from the stream with custom timeout.
+  /// @param event Output parameter to store the parsed SSE event.
+  /// @param max_bytes Maximum bytes to read for the event.
+  /// @param expiry Custom timeout for reading.
+  /// @return Returns kSuccStatus on success, kStreamStatusClientReadTimeout on timeout,
+  ///         kStreamStatusClientNetworkError on error, kStreamStatusReadEof on end of stream.
+  template <typename T>
+  Status ReadSseEvent(http::sse::SseEvent& event, size_t max_bytes, const T& expiry) {
+    return provider_->ReadSseEvent(event, max_bytes, std::chrono::time_point_cast<std::chrono::steady_clock::duration>(trpc::ReadSteadyClock() + expiry));
+  }
+
+  /// @brief Checks if the stream is configured for SSE mode.
+  /// @return Returns true if SSE mode is enabled, false otherwise.
+  bool IsSseMode() const { return provider_->IsSseMode(); }
 
  private:
   HttpClientStreamPtr provider_;
