@@ -22,15 +22,15 @@ HttpAsyncStreamReader::HttpAsyncStreamReader(HttpAsyncStreamPtr stream) : stream
   TRPC_ASSERT(stream_ && "HttpAsyncStreamPtr can't be nullptr");
 }
 
-Future<http::HttpHeader> HttpAsyncStreamReader::ReadHeader(int timeout) { return stream_->AsyncReadHeader(timeout); }
+Future<http::HttpHeader> HttpAsyncStreamReader::ReadHeader(uint32_t timeout) { return stream_->AsyncReadHeader(timeout); }
 
-Future<NoncontiguousBuffer> HttpAsyncStreamReader::ReadChunk(int timeout) { return stream_->AsyncReadChunk(timeout); }
+Future<NoncontiguousBuffer> HttpAsyncStreamReader::ReadChunk(uint32_t timeout) { return stream_->AsyncReadChunk(timeout); }
 
-Future<NoncontiguousBuffer> HttpAsyncStreamReader::ReadAtMost(uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStreamReader::ReadAtMost(uint64_t len, uint32_t timeout) {
   return stream_->AsyncReadAtMost(len, timeout);
 }
 
-Future<NoncontiguousBuffer> HttpAsyncStreamReader::ReadExactly(uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStreamReader::ReadExactly(uint64_t len, uint32_t timeout) {
   return stream_->AsyncReadExactly(len, timeout);
 }
 
@@ -87,15 +87,15 @@ HttpAsyncStreamReaderWriter::HttpAsyncStreamReaderWriter(HttpAsyncStreamPtr stre
   TRPC_ASSERT(stream_ && "HttpAsyncStreamPtr can't be nullptr");
 }
 
-Future<http::HttpHeader> HttpAsyncStreamReaderWriter::ReadHeader(int timeout) { return reader_->ReadHeader(timeout); }
+Future<http::HttpHeader> HttpAsyncStreamReaderWriter::ReadHeader(uint32_t timeout) { return reader_->ReadHeader(timeout); }
 
-Future<NoncontiguousBuffer> HttpAsyncStreamReaderWriter::ReadChunk(int timeout) { return reader_->ReadChunk(timeout); }
+Future<NoncontiguousBuffer> HttpAsyncStreamReaderWriter::ReadChunk(uint32_t timeout) { return reader_->ReadChunk(timeout); }
 
-Future<NoncontiguousBuffer> HttpAsyncStreamReaderWriter::ReadAtMost(uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStreamReaderWriter::ReadAtMost(uint64_t len, uint32_t timeout) {
   return reader_->ReadAtMost(len, timeout);
 }
 
-Future<NoncontiguousBuffer> HttpAsyncStreamReaderWriter::ReadExactly(uint64_t len, int timeout) {
+Future<NoncontiguousBuffer> HttpAsyncStreamReaderWriter::ReadExactly(uint64_t len, uint32_t timeout) {
   return reader_->ReadExactly(len, timeout);
 }
 
@@ -177,34 +177,34 @@ http::HttpRequestPtr ConstructHttpRequest(HttpRequestLine&& start_line, trpc::ht
 }
 
 template <typename T>
-Future<http::HttpRequestPtr> ReadFullRequestImpl(T rw, int timeout) {
+Future<http::HttpRequestPtr> ReadFullRequestImpl(T rw, uint32_t timeout) {
   HttpRequestLine start_line = rw->GetRequestLine();  // reads request line
   http::PathParameters param = rw->GetParameters();
   // Reads header first, then read the body.
-  return rw->ReadHeader(timeout).Then(
-      [rw, start_line = std::move(start_line), param = std::move(param)](trpc::http::HttpHeader&& header) mutable {
-        // Read full request body if it has any.
-        bool has_data = false;
-        uint64_t read_bytes = std::numeric_limits<uint64_t>::max();
-        if (header.Get(http::kHeaderTransferEncoding) == http::kTransferEncodingChunked) {
-          has_data = true;
-        }
-        if (const std::string& len = header.Get(http::kHeaderContentLength); !len.empty()) {
-          has_data = true;
-          // The |len| here is valid(a failure will occur if it has bad length).
-          read_bytes = trpc::TryParse<uint64_t>(len).value();
-        }
-        if (has_data) {
-          return rw->ReadExactly(read_bytes)
-              .Then([start_line = std::move(start_line), param = std::move(param),
-                     header = std::move(header)](NoncontiguousBuffer&& data) mutable {
-                return MakeReadyFuture<trpc::http::HttpRequestPtr>(
-                    ConstructHttpRequest(std::move(start_line), std::move(param), std::move(header), std::move(data)));
-              });
-        }
-        return MakeReadyFuture<trpc::http::HttpRequestPtr>(
-            ConstructHttpRequest(std::move(start_line), std::move(param), std::move(header), NoncontiguousBuffer{}));
-      });
+  return rw->ReadHeader(timeout).Then([rw, timeout, start_line = std::move(start_line),
+                                       param = std::move(param)](trpc::http::HttpHeader&& header) mutable {
+    // Read full request body if it has any.
+    bool has_data = false;
+    uint64_t read_bytes = std::numeric_limits<uint64_t>::max();
+    if (header.Get(http::kHeaderTransferEncoding) == http::kTransferEncodingChunked) {
+      has_data = true;
+    }
+    if (const std::string& len = header.Get(http::kHeaderContentLength); !len.empty()) {
+      has_data = true;
+      // The |len| here is valid(a failure will occur if it has bad length).
+      read_bytes = trpc::TryParse<uint64_t>(len).value();
+    }
+    if (has_data) {
+      return rw->ReadExactly(read_bytes, timeout)
+          .Then([start_line = std::move(start_line), param = std::move(param),
+                 header = std::move(header)](NoncontiguousBuffer&& data) mutable {
+            return MakeReadyFuture<trpc::http::HttpRequestPtr>(
+                ConstructHttpRequest(std::move(start_line), std::move(param), std::move(header), std::move(data)));
+          });
+    }
+    return MakeReadyFuture<trpc::http::HttpRequestPtr>(
+        ConstructHttpRequest(std::move(start_line), std::move(param), std::move(header), NoncontiguousBuffer{}));
+  });
 }
 
 }  // namespace
@@ -217,11 +217,11 @@ Future<> WriteFullResponse(HttpServerAsyncStreamWriterPtr rw, http::HttpResponse
   return WriteFullResponseImpl(rw, std::move(rsp));
 }
 
-Future<http::HttpRequestPtr> ReadFullRequest(HttpServerAsyncStreamReaderWriterPtr rw, int timeout) {
+Future<http::HttpRequestPtr> ReadFullRequest(HttpServerAsyncStreamReaderWriterPtr rw, uint32_t timeout) {
   return ReadFullRequestImpl(rw, timeout);
 }
 
-Future<http::HttpRequestPtr> ReadFullRequest(HttpServerAsyncStreamReaderPtr rw, int timeout) {
+Future<http::HttpRequestPtr> ReadFullRequest(HttpServerAsyncStreamReaderPtr rw, uint32_t timeout) {
   return ReadFullRequestImpl(rw, timeout);
 }
 
@@ -283,9 +283,10 @@ trpc::http::HttpResponsePtr ConstructHttpResponse(HttpStatusLine&& staus_line, h
 }
 
 template <typename T>
-Future<trpc::http::HttpResponsePtr> ReadFullResponseImpl(T rw, int timeout) {
-  return rw->ReadStatusLine().Then([rw](HttpStatusLine&& start_line) {
-    return rw->ReadHeader().Then([rw, start_line = std::move(start_line)](trpc::http::HttpHeader&& header) mutable {
+Future<trpc::http::HttpResponsePtr> ReadFullResponseImpl(T rw, uint32_t timeout) {
+  return rw->ReadStatusLine(timeout).Then([rw, timeout](HttpStatusLine&& start_line) {
+    return rw->ReadHeader(timeout).Then([rw, timeout,
+                                         start_line = std::move(start_line)](trpc::http::HttpHeader&& header) mutable {
       // Reads content if it has.
       bool has_data = false;
       uint64_t read_bytes = std::numeric_limits<uint64_t>::max();
@@ -298,7 +299,7 @@ Future<trpc::http::HttpResponsePtr> ReadFullResponseImpl(T rw, int timeout) {
         read_bytes = trpc::TryParse<uint64_t>(len).value();
       }
       if (has_data) {
-        return rw->ReadExactly(read_bytes)
+        return rw->ReadExactly(read_bytes, timeout)
             .Then([start_line = std::move(start_line), header = std::move(header)](NoncontiguousBuffer&& data) mutable {
               return MakeReadyFuture<trpc::http::HttpResponsePtr>(
                   ConstructHttpResponse(std::move(start_line), std::move(header), std::move(data)));
@@ -311,10 +312,10 @@ Future<trpc::http::HttpResponsePtr> ReadFullResponseImpl(T rw, int timeout) {
 }
 }  // namespace
 
-Future<trpc::http::HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderWriterPtr rw, int timeout) {
+Future<trpc::http::HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderWriterPtr rw, uint32_t timeout) {
   return ReadFullResponseImpl(rw, timeout);
 }
-Future<trpc::http::HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderPtr rw, int timeout) {
+Future<trpc::http::HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderPtr rw, uint32_t timeout) {
   return ReadFullResponseImpl(rw, timeout);
 }
 

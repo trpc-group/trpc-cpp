@@ -55,11 +55,14 @@ bool MQThreadPool::AddTask(Function<void()>&& job) {
     return true;
   }
 
+  auto task = new MQThreadPoolTask(std::move(job));
   // Other threads add tasks to the global queue
-  if (global_task_queue_.Push(new MQThreadPoolTask(std::move(job)))) {
+  if (global_task_queue_.Push(task)) {
     // notify consume
     notifier_.Notify(false);
     return true;
+  } else {
+    delete task;
   }
 
   return false;

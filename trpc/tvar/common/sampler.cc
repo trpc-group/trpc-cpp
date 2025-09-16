@@ -124,22 +124,21 @@ class SamplerCollector : public WriteMostly<CollectorTraits> {
   void Run() {
     SetCurrentThreadName("sampler_collector");
 
-    std::list<SamplerPtr> root;
     int consecutive_no_sleep = 0;
     while (!stop_) {
       auto abs_time = trpc::time::GetSteadyMicroSeconds();
       if (auto s = Reset(); !s.empty()) {
-        root.splice(root.end(), s);
+        root_.splice(root_.end(), s);
       }
       int removed_num = 0;
       int sampled_num = 0;
 
-      for (auto itr = root.begin(); itr != root.end();) {
+      for (auto itr = root_.begin(); itr != root_.end();) {
         // We may remove p from the list, save next first.
         std::unique_lock<std::mutex> lc((*itr)->mutex_);
         if (!(*itr)->used_) {
           lc.unlock();
-          itr = root.erase(itr);
+          itr = root_.erase(itr);
           ++removed_num;
         } else {
           (*itr)->TakeSample();
@@ -174,6 +173,7 @@ class SamplerCollector : public WriteMostly<CollectorTraits> {
   bool stop_{false};
   std::unique_ptr<std::thread> thread_{nullptr};
   int64_t calculated_time_us_{0};
+  std::list<SamplerPtr> root_{};
 };
 
 Sampler::Sampler() : used_(true) {}

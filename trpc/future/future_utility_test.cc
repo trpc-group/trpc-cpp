@@ -629,4 +629,24 @@ TEST(BlockingTryGet, test) {
   ASSERT_TRUE(TestBlockingTryGet(100, 1000));
 }
 
+// Test in the capture promise by reference situation, the promise object is not destroyed during SetValue
+TEST(BlockingGet, capture_promise_by_ref) {
+  constexpr int kMaxLoopTimes = 10000;
+  std::atomic<int> execute_times = 0;
+  for (int i = 0; i < kMaxLoopTimes; ++i) {
+    std::unique_ptr<std::thread> t;
+    {
+      trpc::Promise<> pr;
+      auto fut = pr.GetFuture();
+      t = std::make_unique<std::thread>([&]() {
+        pr.SetValue();
+        execute_times++;
+      });
+      future::BlockingGet(std::move(fut));
+    }
+    t->join();
+  }
+  EXPECT_EQ(execute_times.load(), kMaxLoopTimes);
+}
+
 }  // namespace trpc

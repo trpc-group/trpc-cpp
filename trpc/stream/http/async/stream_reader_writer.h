@@ -32,11 +32,11 @@ class HttpAsyncStreamReader : public RefCounted<HttpAsyncStreamReader> {
 
   /// @brief Reads Header
   /// @param timeout time to wait for the header to be ready
-  Future<http::HttpHeader> ReadHeader(int timeout = std::numeric_limits<int>::max());
+  Future<http::HttpHeader> ReadHeader(uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads a chunk in chunked mode, note that reading in non-chunked mode will fail
   /// @param timeout time to wait for the header to be ready
-  Future<NoncontiguousBuffer> ReadChunk(int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> ReadChunk(uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads at most len data.
   /// @param len max size to read
@@ -46,7 +46,7 @@ class HttpAsyncStreamReader : public RefCounted<HttpAsyncStreamReader> {
   ///       An empty buffer means that the end has been read
   ///       Usage scenario 1: Limits the maximum length of each read When the memory is limited.
   ///       Usage scenario 2: Gets part of data in time and send it downstream on route server.
-  Future<NoncontiguousBuffer> ReadAtMost(uint64_t len, int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> ReadAtMost(uint64_t len, uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads data with a fixed length. If eof is read, it will return as much data as there is in the network
   /// @param len size to read
@@ -54,7 +54,7 @@ class HttpAsyncStreamReader : public RefCounted<HttpAsyncStreamReader> {
   /// @note If the read buffer size is less than the required length, it means that eof has been read.
   ///       Usage scenario 1: The requested data is compressed by a fixed size, and needs to be read and decompressed by
   ///       a fixed size.
-  Future<NoncontiguousBuffer> ReadExactly(uint64_t len, int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> ReadExactly(uint64_t len, uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
  private:
   HttpAsyncStreamPtr stream_{nullptr};
@@ -87,7 +87,7 @@ class HttpClientAsyncStreamReader : public HttpAsyncStreamReader {
   }
 
   /// @brief Reads the status line of response.
-  Future<HttpStatusLine> ReadStatusLine(int timeout = std::numeric_limits<int>::max()) {
+  Future<HttpStatusLine> ReadStatusLine(uint32_t timeout = std::numeric_limits<uint32_t>::max()) {
     return stream_->ReadStatusLine(timeout);
   }
 
@@ -160,11 +160,11 @@ class HttpAsyncStreamReaderWriter : public RefCounted<HttpAsyncStreamReaderWrite
 
   /// @brief Reads Header
   /// @param timeout time to wait for the header to be ready
-  Future<http::HttpHeader> ReadHeader(int timeout = std::numeric_limits<int>::max());
+  Future<http::HttpHeader> ReadHeader(uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads a chunk in chunked mode, note that reading in non-chunked mode will fail
   /// @param timeout time to wait for the header to be ready
-  Future<NoncontiguousBuffer> ReadChunk(int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> ReadChunk(uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads at most len data.
   /// @param len max size to read
@@ -174,7 +174,7 @@ class HttpAsyncStreamReaderWriter : public RefCounted<HttpAsyncStreamReaderWrite
   ///       An empty buffer means that the end has been read
   ///       Usage scenario 1: Limits the maximum length of each read When the memory is limited.
   ///       Usage scenario 2: Gets part of data in time and send it downstream on route server.
-  Future<NoncontiguousBuffer> ReadAtMost(uint64_t len, int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> ReadAtMost(uint64_t len, uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Reads data with a fixed length. If eof is read, it will return as much data as there is in the network
   /// @param len size to read
@@ -182,7 +182,7 @@ class HttpAsyncStreamReaderWriter : public RefCounted<HttpAsyncStreamReaderWrite
   /// @note If the read buffer size is less than the required length, it means that eof has been read.
   ///       Usage scenario 1: The requested data is compressed by a fixed size, and needs to be read and decompressed by
   ///       a fixed size.
-  Future<NoncontiguousBuffer> ReadExactly(uint64_t len, int timeout = std::numeric_limits<int>::max());
+  Future<NoncontiguousBuffer> ReadExactly(uint64_t len, uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
   /// @brief Writes header or trailer
   Future<> WriteHeader(http::HttpHeader&& header);
@@ -247,7 +247,7 @@ class HttpClientAsyncStreamReaderWriter : public HttpAsyncStreamReaderWriter {
   Future<> WriteRequestLine(HttpRequestLine&& req_line) { return writer_->WriteRequestLine(std::move(req_line)); }
 
   /// @brief Reads status line of response.
-  Future<HttpStatusLine> ReadStatusLine(int timeout = std::numeric_limits<int>::max()) {
+  Future<HttpStatusLine> ReadStatusLine(uint32_t timeout = std::numeric_limits<uint32_t>::max()) {
     return reader_->ReadStatusLine(timeout);
   }
 
@@ -279,14 +279,14 @@ Future<> WriteFullResponse(HttpServerAsyncStreamWriterPtr rw, http::HttpResponse
 
 /// @brief Reads a complete request from the stream.
 Future<http::HttpRequestPtr> ReadFullRequest(HttpServerAsyncStreamReaderWriterPtr rw,
-                                             int timeout = std::numeric_limits<int>::max());
+                                             uint32_t timeout = std::numeric_limits<uint32_t>::max());
 Future<http::HttpRequestPtr> ReadFullRequest(HttpServerAsyncStreamReaderPtr rw,
-                                             int timeout = std::numeric_limits<int>::max());
+                                             uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
 /// @brief Reads a complete response from the stream.
 Future<trpc::http::HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderWriterPtr rw,
-                                                     int timeout = std::numeric_limits<int>::max());
+                                                     uint32_t timeout = std::numeric_limits<uint32_t>::max());
 Future<trpc::http::HttpResponsePtr> ReadFullResponse(HttpClientAsyncStreamReaderPtr rw,
-                                                     int timeout = std::numeric_limits<int>::max());
+                                                     uint32_t timeout = std::numeric_limits<uint32_t>::max());
 
 }  // namespace trpc::stream
