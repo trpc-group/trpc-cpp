@@ -62,7 +62,7 @@ class ServerContext : public RefCounted<ServerContext> {
  public:
   ServerContext();
 
-  ~ServerContext();
+  virtual ~ServerContext();
 
   //////////////////////////////////////////////////////////////////////////
 
@@ -549,7 +549,7 @@ class ServerContext : public RefCounted<ServerContext> {
   /// @return the sending result
   /// @note  before calling this method, you should call `SetResponse(false)` in the rpc interface implemented
   ///        it is generally used in custom protocol data transmission scenarios
-  Status SendResponse(NoncontiguousBuffer&& buffer);
+  virtual Status SendResponse(NoncontiguousBuffer&& buffer);
 
   /// @brief Set the remote log field information in the context extension.
   /// @note  Based on the filterIndex Settings, the business can specify the field information
@@ -566,7 +566,7 @@ class ServerContext : public RefCounted<ServerContext> {
 
   /// @brief Framwork use. To actively close a connection on the server-side.
   /// @private
-  void CloseConnection();
+  virtual void CloseConnection();
 
   /// @brief Connection throttling is a technique used to control the flow of data over a connection by
   ///        pausing the reading of data from the connection

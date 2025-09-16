@@ -11,6 +11,7 @@ cc_library(
         "//trpc/stream/http:common",
         "//trpc/util:string_helper",
         "//trpc/util/http:common",
+        "//trpc/util/http/sse:http_sse",
     ],
 )
 
