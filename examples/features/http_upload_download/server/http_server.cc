@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 Tencent.
+// Copyright (C) 2023 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -31,11 +31,19 @@ class HttpdServer : public ::trpc::TrpcApp {
   int Initialize() override {
     auto file_storage_handler = std::make_shared<FileStorageHandler>(FLAGS_upload_dst_path, FLAGS_download_src_path);
 
+
+
+
+
     auto SetHttpRoutes = [file_storage_handler](::trpc::http::HttpRoutes& r) -> void {
       // Provides file downloading.
       r.Add(::trpc::http::MethodType::GET, ::trpc::http::Path("/download"), file_storage_handler);
       // Provides file uploading.
       r.Add(::trpc::http::MethodType::POST, ::trpc::http::Path("/upload"), file_storage_handler);
+
+       // 多文件下载的路由注册，注意 lambda 捕获 & 返回类型
+  
+      r.Add(::trpc::http::MethodType::GET, ::trpc::http::Path("/multi-download"), file_storage_handler);
     };
 
     auto http_service = std::make_shared<::trpc::HttpService>();
