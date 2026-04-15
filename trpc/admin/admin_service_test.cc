@@ -74,7 +74,7 @@ TEST_F(TestAdminService, CheckAdminService) {
   r.Handle("/cmds", context, req1, reply1);
   std::cout << reply1.GetContent() << std::endl;
   rapidjson::Document rsp1_json;
-  rsp1_json.Parse(reply1.GetContent());
+  rsp1_json.Parse<rapidjson::kParseIterativeFlag>(reply1.GetContent());
   ASSERT_FALSE(rsp1_json.HasParseError());
   const rapidjson::Value& cmds = rsp1_json["cmds"];
   ASSERT_TRUE(cmds.IsArray());
@@ -96,7 +96,7 @@ TEST_F(TestAdminService, CheckAdminService) {
   r.Handle("/cmds/loglevel", context, req3, reply3);
   std::cout << reply3.GetContent() << std::endl;
   rapidjson::Document rsp3_json;
-  rsp3_json.Parse(reply3.GetContent());
+  rsp3_json.Parse<rapidjson::kParseIterativeFlag>(reply3.GetContent());
   ASSERT_FALSE(rsp3_json.HasParseError());
   ASSERT_STREQ(rsp3_json["level"].GetString(), "INFO");
 
@@ -107,7 +107,7 @@ TEST_F(TestAdminService, CheckAdminService) {
   r.Handle("/cmds/loglevel", context, req4, reply4);
   std::cout << reply4.GetContent() << std::endl;
   rapidjson::Document rsp4_json;
-  rsp4_json.Parse(reply4.GetContent());
+  rsp4_json.Parse<rapidjson::kParseIterativeFlag>(reply4.GetContent());
   ASSERT_FALSE(rsp4_json.HasParseError());
   ASSERT_STREQ(rsp4_json["level"].GetString(), "ERROR");
 
@@ -125,7 +125,7 @@ TEST_F(TestAdminService, CheckAdminService) {
   r.Handle("/cmds/reload-config", context, req6, reply6);
   std::cout << reply6.GetContent() << std::endl;
   rapidjson::Document rsp6_json;
-  rsp6_json.Parse(reply6.GetContent());
+  rsp6_json.Parse<rapidjson::kParseIterativeFlag>(reply6.GetContent());
   ASSERT_FALSE(rsp6_json.HasParseError());
   ASSERT_STREQ(rsp6_json["message"].GetString(), "reload config ok");
 
@@ -136,7 +136,7 @@ TEST_F(TestAdminService, CheckAdminService) {
   r.Handle("/cmds/watch", context, req7, reply7);
   std::cout << reply7.GetContent() << std::endl;
   rapidjson::Document rsp7_json;
-  rsp7_json.Parse(reply7.GetContent());
+  rsp7_json.Parse<rapidjson::kParseIterativeFlag>(reply7.GetContent());
   ASSERT_FALSE(rsp7_json.HasParseError());
   ASSERT_STREQ(rsp7_json["message"].GetString(), "watching unsupported");
 

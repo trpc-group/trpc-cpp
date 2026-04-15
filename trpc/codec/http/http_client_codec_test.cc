@@ -170,7 +170,7 @@ TEST_F(HttpClientCodecTest, FillRequestAsJson) {
 
   rapidjson::Document json;
   std::string request_json = "{\"age\":\"18\",\"height\":180}";
-  json.Parse(request_json);
+  json.Parse<rapidjson::kParseIterativeFlag>(request_json);
 
   ASSERT_TRUE(codec_.FillRequest(context, req_protocol, reinterpret_cast<void*>(&json)));
 

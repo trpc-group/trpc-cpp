@@ -350,7 +350,7 @@ TEST_F(RpcServiceImplTest, RapidJsonMessage) {
   std::string json_str = "{\"age\":\"18\",\"height\":180}";
 
   rapidjson::Document hello_req;
-  hello_req.Parse(json_str.c_str());
+  hello_req.Parse<rapidjson::kParseIterativeFlag>(json_str.c_str());
 
   ASSERT_TRUE(!hello_req.HasParseError());
 
