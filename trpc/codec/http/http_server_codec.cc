@@ -85,7 +85,7 @@ bool SerializationTypeToContentType(uint32_t serialization_type, std::string* co
 
 void ParseTrpcTransInfo(std::string& value, HttpRequestProtocol* req) {
   rapidjson::Document document;
-  document.Parse(value.c_str());
+  document.Parse<rapidjson::kParseIterativeFlag>(value.c_str());
   if (document.IsObject()) {
     for (auto& mem : document.GetObject()) {
       std::string key = mem.name.GetString();

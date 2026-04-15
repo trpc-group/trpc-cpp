@@ -1357,7 +1357,7 @@ TEST_F(HttpServiceProxyTest, SuccessRspPostJson) {
 
   rapidjson::Document data;
   std::string request_json = "{\"age\":\"18\",\"height\":180}";
-  data.Parse(request_json);
+  data.Parse<rapidjson::kParseIterativeFlag>(request_json);
 
   rapidjson::Document doc;
   Status st = proxy->Post(ctx, "http://127.0.0.1:10002/hello", data, &doc);
@@ -1421,7 +1421,7 @@ TEST_F(HttpServiceProxyTest, SuccessRspPostJsonEmpty) {
   ctx->SetAddr("127.0.0.1", 10002);
   rapidjson::Document data;
   std::string request_json = "{\"age\":\"18\",\"height\":180}";
-  data.Parse(request_json);
+  data.Parse<rapidjson::kParseIterativeFlag>(request_json);
 
   rapidjson::Document doc;
   Status st = proxy->Post(ctx, "http://127.0.0.1:10002/hello", data, &doc);
@@ -2051,7 +2051,7 @@ TEST_F(HttpServiceProxyTest, SuccessRspPutJson) {
 
   rapidjson::Document data;
   std::string request_json = "{\"age\":\"18\",\"height\":180}";
-  data.Parse(request_json);
+  data.Parse<rapidjson::kParseIterativeFlag>(request_json);
 
   rapidjson::Document doc;
   Status st = proxy->Put(ctx, "http://127.0.0.1:10002/hello", data, &doc);
@@ -2115,7 +2115,7 @@ TEST_F(HttpServiceProxyTest, SuccessRspPutJsonEmpty) {
   ctx->SetAddr("127.0.0.1", 10002);
   rapidjson::Document data;
   std::string request_json = "{\"age\":\"18\",\"height\":180}";
-  data.Parse(request_json);
+  data.Parse<rapidjson::kParseIterativeFlag>(request_json);
 
   rapidjson::Document doc;
   Status st = proxy->Put(ctx, "http://127.0.0.1:10002/hello", data, &doc);

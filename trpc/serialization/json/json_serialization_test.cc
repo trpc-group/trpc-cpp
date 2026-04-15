@@ -38,7 +38,7 @@ TEST(JsonSerializationTest, JsonSerializationRapidjsonTest) {
   std::string json_str = "{\"age\":\"18\",\"height\":180}";
 
   rapidjson::Document serialize_document;
-  serialize_document.Parse(json_str.c_str());
+  serialize_document.Parse<rapidjson::kParseIterativeFlag>(json_str.c_str());
 
   ASSERT_TRUE(!serialize_document.HasParseError());
 
@@ -65,7 +65,7 @@ TEST(JsonSerializationTest, EmptyStringJsonDerializationRapidjsonTest) {
   std::string json_str = "";
 
   rapidjson::Document serialize_document;
-  serialize_document.Parse(json_str.c_str());
+  serialize_document.Parse<rapidjson::kParseIterativeFlag>(json_str.c_str());
 
   ASSERT_TRUE(serialize_document.HasParseError());
 

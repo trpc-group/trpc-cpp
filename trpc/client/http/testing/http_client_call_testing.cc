@@ -75,7 +75,7 @@ bool UnaryRpcCallWithPb(const HttpServiceProxyPtr& proxy) {
 bool UnaryRpcCallWithPostingJson(const HttpServiceProxyPtr& proxy) {
   auto ctx = MakeClientContext(proxy);
   rapidjson::Document req_json;
-  req_json.Parse(R"({"msg": "hello world!"})");
+  req_json.Parse<rapidjson::kParseIterativeFlag>(R"({"msg": "hello world!"})"); 
   rapidjson::Document rsp_json;
   auto status = proxy->Post(ctx, "http://example.com/trpc.test.helloworld.Greeter/SayHello", req_json, &rsp_json);
   if (!status.OK()) {
@@ -231,7 +231,7 @@ bool PostString(const HttpServiceProxyPtr& proxy) {
 bool PostJson(const HttpServiceProxyPtr& proxy) {
   auto ctx = MakeClientContext(proxy);
   rapidjson::Document req_json;
-  req_json.Parse(R"({"msg": "hello world!"})");
+  req_json.Parse<rapidjson::kParseIterativeFlag>(R"({"msg": "hello world!"})"); 
   rapidjson::Document rsp_json;
   auto status = proxy->Post(ctx, "http://example.com/foo", req_json, &rsp_json);
   if (!status.OK()) {

@@ -815,7 +815,7 @@ Future<rapidjson::Document> HttpServiceProxy::AsyncHttpUnaryInvokeJson(const Cli
       auto* rsp = static_cast<HttpResponseProtocol*>(p.get());
       auto rsp_str = FlattenSlow(rsp->GetNonContiguousProtocolBody());
       rapidjson::Document rsp_json;
-      rsp_json.Parse(rsp_str.c_str(), rsp_str.size());
+      rsp_json.Parse<rapidjson::kParseIterativeFlag>(rsp_str.c_str(), rsp_str.size());
       if (!rsp_str.empty() && rsp_json.HasParseError()) {
         std::string error{
             fmt::format("Http JsonParse Failed: {}", rapidjson::GetParseError_En(rsp_json.GetParseError()))};
@@ -853,7 +853,7 @@ Future<rapidjson::Document> HttpServiceProxy::AsyncHttpUnaryInvokeJson(const Cli
       auto* rsp = static_cast<HttpResponseProtocol*>(p.get());
       auto rsp_str = FlattenSlow(rsp->GetNonContiguousProtocolBody());
       rapidjson::Document rsp_json;
-      rsp_json.Parse(rsp_str.c_str(), rsp_str.size());
+      rsp_json.Parse<rapidjson::kParseIterativeFlag>(rsp_str.c_str(), rsp_str.size());
       if (!rsp_str.empty() && rsp_json.HasParseError()) {
         std::string error{
             fmt::format("Http JsonParse Failed: {}", rapidjson::GetParseError_En(rsp_json.GetParseError()))};
