@@ -1,0 +1,30 @@
+global:
+  threadmodel:
+    fiber:
+      - instance_name: fiber_instance
+
+server:
+  app: test
+  server: test1
+  service:
+    - name: default_http_sse_service
+      network: tcp
+      ip: 0.0.0.0
+      port: 24856
+      protocol: http
+
+plugins:
+  log:
+    default:
+      - name: default
+        min_level: 2  # 0-trace, 1-debug, 2-info, 3-warn, 4-error, 5-critical
+        format: "[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] [%@] %v"
+        mode: 1 # 1-sync 2-async, 3-fast
+        sinks:
+          console:               # 新增：输出到控制台
+            eol: true
+          local_file:
+            eol: true
+            # 文件名按日期区分，例如 http_sse_server_2025-09-04.log
+            filename: http_sse_server_%Y-%m-%d.log
+
