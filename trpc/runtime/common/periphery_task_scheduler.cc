@@ -47,9 +47,9 @@ void PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::Stop() {
 }
 
 void PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::Join() {
-  for (unsigned i = 0; i < thread_num_; ++i) {
-    if (workers_[i].joinable()) {
-      workers_[i].join();
+  for (auto & worker : workers_) {
+    if (worker.joinable()) {
+      worker.join();
     }
   }
   workers_.clear();
@@ -61,6 +61,11 @@ void PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::Join() {
   }
 
   while (!tasks_.empty()) {
+    // Compatibility handling for scenarios where the user does not call DetachTask/RemoveTask: 
+    // actively call Deref when program exit.
+    if (tasks_.top()->UnsafeRefCount() > 1) {
+      tasks_.top()->Deref();
+    }
     tasks_.pop();
   }
 }
@@ -135,6 +140,19 @@ bool PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::StopTaskImpl(uint64_t t
   return StopAndDestroyTask(task_id, false);
 }
 
+bool PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::DetachTaskImpl(uint64_t task_id) {
+  if (TRPC_UNLIKELY(exited_.load(std::memory_order_relaxed))) {
+    return false;
+  }
+
+  TaskPtr task_ptr = GetTaskPtr(task_id);
+  if (task_ptr.Get() == nullptr) {
+    return false;
+  }
+
+  return true;
+}
+
 bool PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::JoinTaskImpl(uint64_t task_id) {
   if (TRPC_UNLIKELY(exited_.load(std::memory_order_relaxed))) {
     TRPC_FMT_ERROR("PeripheryTaskScheduler is already exited.");
@@ -176,6 +194,10 @@ void PeripheryTaskScheduler::PeripheryTaskSchedulerImpl::Schedule() {
     }
 
     // get and execute task
+    if (tasks_.empty()) {
+      continue;
+    }
+
     auto task = tasks_.top();
     tasks_.pop();
 
@@ -323,6 +345,13 @@ bool PeripheryTaskScheduler::RemoveTask(uint64_t task_id) {
   return scheduler_->RemoveTaskImpl(task_id);
 }
 
+bool PeripheryTaskScheduler::DetachTask(std::uint64_t task_id) {
+  if (!scheduler_) {
+    return false;
+  }
+  return scheduler_->DetachTaskImpl(task_id);
+}
+
 bool PeripheryTaskScheduler::StopTask(uint64_t task_id) {
   if (!scheduler_) {
     return false;
@@ -366,6 +395,13 @@ bool PeripheryTaskScheduler::RemoveInnerTask(uint64_t task_id) {
     return false;
   }
   return inner_scheduler_->RemoveTaskImpl(task_id);
+}
+
+bool PeripheryTaskScheduler::DetachInnerTask(std::uint64_t task_id) {
+  if (!inner_scheduler_) {
+    return false;
+  }
+  return inner_scheduler_->DetachTaskImpl(task_id);
 }
 
 bool PeripheryTaskScheduler::StopInnerTask(uint64_t task_id) {

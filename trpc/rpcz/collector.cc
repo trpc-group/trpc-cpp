@@ -84,7 +84,7 @@ void RpczCollectorTask::Destroy() {
 
 void RpczCollectorTask::Stop() {
   if (task_id_) {
-    trpc::PeripheryTaskScheduler::GetInstance()->StopInnerTask(task_id_);
+    trpc::PeripheryTaskScheduler::GetInstance()->RemoveInnerTask(task_id_);
     task_id_ = 0;
   }
 }

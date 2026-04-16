@@ -102,8 +102,15 @@ class PeripheryTaskScheduler {
   /// @brief Remove task, used in scenarios where it is not necessary to wait for tasks to complete before exiting.
   /// @param task_id task id
   /// @return on success, return true. on error, return false
-  /// @note This interface can only be called once with the same ID.
+  /// @note This interface can only be called once with the same ID. After call it, the task_id can't be used again
   bool RemoveTask(std::uint64_t task_id);
+
+  /// @brief Detach task, after calling this interface, the lifecycle of this task will be managed by the scheduler, 
+  //         users no longer need to concern themselves with the release of the task.
+  /// @param task_id task id
+  /// @return on success return true, otherwise return false
+  /// @note the task_id can't be used again after calling this interface
+  bool DetachTask(std::uint64_t task_id);
 
   /// @brief Same as 'SubmitTask', but is used only internally by the framework.
   std::uint64_t SubmitInnerTask(Function<void()>&& task, const std::string& name = "");
@@ -119,10 +126,13 @@ class PeripheryTaskScheduler {
   /// @brief Same as 'RemoveTask', but is used only internally by the framework.
   bool RemoveInnerTask(std::uint64_t task_id);
 
-  /// @brief Same as 'Stoptask', but is used only internally by the framework.
+  /// @brief Same as 'DetachTask', but is used only internally by the framework.
+  bool DetachInnerTask(std::uint64_t task_id);
+
+  /// @brief Same as 'StopTask', but is used only internally by the framework.
   bool StopInnerTask(std::uint64_t task_id);
 
-  /// @brief Same as 'Jointask', but is used only internally by the framework.
+  /// @brief Same as 'JoinTask', but is used only internally by the framework.
   bool JoinInnerTask(std::uint64_t task_id);
 
   /// @brief Used to destroy resources accessed by scheduled tasks after all scheduled task execution threads have
@@ -158,6 +168,7 @@ class PeripheryTaskScheduler {
     bool StopTaskImpl(std::uint64_t task_id);
     bool JoinTaskImpl(std::uint64_t task_id);
     bool RemoveTaskImpl(std::uint64_t task_id);
+    bool DetachTaskImpl(uint64_t task_id);
 
     void Init(size_t thread_num);
     void Start();

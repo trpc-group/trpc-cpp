@@ -194,6 +194,8 @@ FiberConnection::EventAction FiberTcpConnection::OnReadable() {
   do {
     status = ReadData();
     if (TRPC_LIKELY(status != ReadStatus::kError)) {
+      SetConnActiveTime(trpc::time::GetMilliSeconds());
+      GetConnectionHandler()->UpdateConnection();
       auto rc = ConsumeReadData();
       if (TRPC_UNLIKELY(rc != EventAction::kReady)) {
         TRPC_LOG_WARN("FiberTcpConnection::OnReadable ConsumeReadData failed, ip:"
@@ -255,9 +257,6 @@ FiberConnection::EventAction FiberTcpConnection::ConsumeReadData() {
     if (!GetConnectionHandler()->HandleMessage(ref, data)) {
       return EventAction::kLeaving;
     }
-
-    SetConnActiveTime(trpc::time::GetMilliSeconds());
-    GetConnectionHandler()->UpdateConnection();
 
     return EventAction::kReady;
   } else if (checker_ret == kPacketError) {

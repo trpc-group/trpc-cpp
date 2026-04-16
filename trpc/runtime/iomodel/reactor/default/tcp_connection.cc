@@ -180,6 +180,9 @@ int TcpConnection::HandleReadEvent() {
 
   int ret = ReadIoData(read_buffer_.buffer);
   if (ret > 0) {
+    SetConnActiveTime(trpc::time::GetMilliSeconds());
+    GetConnectionHandler()->UpdateConnection();
+
     std::deque<std::any> data;
     RefPtr ref(ref_ptr, this);
     int checker_ret = GetConnectionHandler()->CheckMessage(ref, read_buffer_.buffer, data);
@@ -197,9 +200,6 @@ int TcpConnection::HandleReadEvent() {
         if (TRPC_UNLIKELY(GetConnectionState() == ConnectionState::kUnconnected)) {
           return -1;
         }
-
-        SetConnActiveTime(trpc::time::GetMilliSeconds());
-        GetConnectionHandler()->UpdateConnection();
       }
     } else if (checker_ret == kPacketError) {
       TRPC_LOG_ERROR("TcpConnection::HandleReadEvent fd:" << socket_.GetFd() << ", ip:" << GetPeerIp()

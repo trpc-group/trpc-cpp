@@ -117,7 +117,22 @@ void InitializeProcessorInfoOnce() {
   // I don't think it's possible to print log reliably here, unfortunately.
   static std::once_flag once;
   std::call_once(once, [&] {
-    node_of_cpus.resize(GetNumberOfProcessorsConfigured(), -1);
+    // In a container environment with strict CPU affinity binding, the number of CPU cores obtained by
+    // GetNumberOfProcessorsConfigured may reflect the actual number of cores allocated to the container (rather than
+    // the total cores of the deployment host). For example, if the host machine has 48 cores [0,47) and the container
+    // is bound to 6 cores [2-7], the corresponding CPU affinity would be {2, 3, 4, 5, 6, 7}. However, in this case,
+    // GetNumberOfProcessorsConfigured returns 6 (the container's available cores) instead of 48 (the host's total
+    // cores). This causes CPUs 6 and 7 to be incorrectly judged as inaccessible, preventing fiber worker threads from
+    // running on these CPUs. Therefore, we adjust the actual number of machine cores based on the maximum CPU index in
+    // the CPU affinity, to prevent certain CPUs from being misidentified as inaccessible in container environments.
+    std::size_t number_of_processors = GetNumberOfProcessorsConfigured();
+    auto affinity = GetCurrentThreadAffinity();
+    if (!affinity.empty()) {
+      if (affinity.back() >= number_of_processors) {
+        number_of_processors = affinity.back() + 1;
+      }
+    }
+    node_of_cpus.resize(number_of_processors, -1); 
     for (std::size_t i = 0; i != node_of_cpus.size(); ++i) {
       auto n = GetNodeOfProcessorImpl(static_cast<unsigned>(i));
       if (n == -1) {
