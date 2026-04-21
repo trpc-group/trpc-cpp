@@ -68,7 +68,7 @@ bool JsonSerialization::Deserialize(NoncontiguousBuffer* in, DataType out_type, 
   switch (out_type) {
     case kRapidJson: {
       rapidjson::Document* rapidjson_doc = static_cast<rapidjson::Document*>(out);
-      rapidjson_doc->Parse(buffer.c_str(), buffer.size());
+      rapidjson_doc->Parse<rapidjson::kParseIterativeFlag>(buffer.c_str(), buffer.size());
       if (!buffer.empty() && rapidjson_doc->HasParseError()) {
         TRPC_LOG_ERROR("JsonParse Failed:" << rapidjson::GetParseError_En(rapidjson_doc->GetParseError()));
       } else {
