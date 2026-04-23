@@ -20,8 +20,7 @@
 #include <string>
 
 #include "trpc/overload_control/flow_control/flow_controller.h"
-#include "trpc/overload_control/flow_control/hit_queue.h"
-#include "trpc/overload_control/flow_control/tick_timer.h"
+#include "trpc/overload_control/flow_control/recent_queue.h"
 
 namespace trpc {
 namespace overload_control {
@@ -34,8 +33,6 @@ class SmoothLimiter : public FlowController {
  public:
   explicit SmoothLimiter(int64_t limit, bool is_report = false, int32_t window_size = kDefaultNumFps);
 
-  virtual ~SmoothLimiter();
-
   // Check if the request is restricted.
   bool CheckLimit(const ServerContextPtr& check_param) override;
 
@@ -46,20 +43,16 @@ class SmoothLimiter : public FlowController {
   int64_t GetMaxCounter() const override { return limit_; }
 
  protected:
-  // Call when the next time slice arrives.
-  void OnNextFrame();
-
- protected:
   // Maximum number of requests per second.
   int64_t limit_;
   // Whether to report monitoring data.
   bool is_report_{false};
   // Window size
   int32_t window_size_{kDefaultNumFps};
-  // Hit queue
-  HitQueue hit_queue_;
-  // Timer implemented using system clock ticks.
-  TickTimer tick_timer_;
+
+  RecentQueuePtr recent_queue_;
+  // Nanoseconds per second, 1s = 10^9 ns
+  static constexpr auto nsecs_per_sec_ = static_cast<uint64_t>(1e9);
 };
 }  // namespace overload_control
 
