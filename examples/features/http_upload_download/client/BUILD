@@ -6,6 +6,7 @@ cc_binary(
     name = "download_client",
     srcs = ["download_client.cc"],
     linkopts = ["-ldl"],
+   
     deps = [
         "@trpc_cpp//trpc/client:trpc_client",
         "@trpc_cpp//trpc/client:make_client_context",
@@ -15,6 +16,7 @@ cc_binary(
         "@trpc_cpp//trpc/common/config:trpc_config",
         "@trpc_cpp//trpc/coroutine:fiber",
         "@trpc_cpp//trpc/util/log:logging",
+        "//examples/features/http_upload_download/common:file_hasher", 
     ],
 )
 
@@ -31,5 +33,7 @@ cc_binary(
         "@trpc_cpp//trpc/common/config:trpc_config",
         "@trpc_cpp//trpc/coroutine:fiber",
         "@trpc_cpp//trpc/util/log:logging",
+
+        "//examples/features/http_upload_download/common:file_hasher",
     ],
 )

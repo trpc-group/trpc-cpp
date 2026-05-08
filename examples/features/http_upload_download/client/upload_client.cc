@@ -2,7 +2,7 @@
 //
 // Tencent is pleased to support the open source community by making tRPC available.
 //
-// Copyright (C) 2023 Tencent.
+// Copyright (C) 2023 THL A29 Limited, a Tencent company.
 // All rights reserved.
 //
 // If you have downloaded a copy of the tRPC source code from Tencent,
@@ -27,20 +27,27 @@
 #include "trpc/coroutine/fiber_latch.h"
 #include "trpc/util/log/logging.h"
 
+#include "examples/features/http_upload_download/common/file_hasher.h"
+
+
 DEFINE_string(service_name, "http_upload_download_client", "callee service name");
 DEFINE_string(client_config, "trpc_cpp_fiber.yaml", "");
 DEFINE_string(addr, "127.0.0.1:24858", "ip:port");
 DEFINE_string(src_path, "upload_src.bin", "file path to store the content which will be upload to the server");
 DEFINE_bool(use_chunked, true, "send request content in chunked");
 
+DEFINE_bool(enable_upload_hash, true, "Enable SHA256 hash verification during upload");
+
+
+
 namespace http::demo {
 using HttpServiceProxyPtr = std::shared_ptr<::trpc::http::HttpServiceProxy>;
 
 bool UploadWithChunked(const HttpServiceProxyPtr& proxy, const std::string& url, const std::string src_path) {
-  TRPC_FMT_INFO("upload a file with chunked");
+  TRPC_FMT_INFO("[Upload Request] upload a file with chunked");
   auto fin = std::ifstream(src_path, std::ios::binary);
   if (!fin.is_open()) {
-    TRPC_FMT_ERROR("failed to open file, file_path: {}", src_path);
+    TRPC_FMT_ERROR("[Upload Request] failed to open file, file_path: {}", src_path);
     return false;
   }
 
@@ -48,10 +55,17 @@ bool UploadWithChunked(const HttpServiceProxyPtr& proxy, const std::string& url,
   ctx->SetTimeout(5000);
   // Send request content in chunked.
   ctx->SetHttpHeader(::trpc::http::kHeaderTransferEncoding, ::trpc::http::kTransferEncodingChunked);
+
+  if (FLAGS_enable_upload_hash) {
+    std::string hash = CalculateSHA256(src_path);
+
+    ctx->SetHttpHeader("X-File-Hash", hash);
+  }
+
   // Creates HTTP stream.
   auto stream = proxy->Post(ctx, url);
   if (!stream.GetStatus().OK()) {
-    TRPC_FMT_ERROR("failed to create client stream");
+    TRPC_FMT_ERROR("[Upload Request] failed to create client stream");
     return false;
   }
 
@@ -70,7 +84,7 @@ bool UploadWithChunked(const HttpServiceProxyPtr& proxy, const std::string& url,
         nwrite += n;
         continue;
       }
-      TRPC_FMT_ERROR("failed to write request content: {}", status.ToString());
+      TRPC_FMT_ERROR("[Upload Request] failed to write request content: {}", status.ToString());
       return false;
     } else if (fin.eof()) {
       status = stream.WriteDone();
@@ -78,7 +92,7 @@ bool UploadWithChunked(const HttpServiceProxyPtr& proxy, const std::string& url,
       TRPC_FMT_ERROR("failed to send write-done: {}", status.ToString());
       return false;
     }
-    TRPC_FMT_ERROR("failed to read file");
+    TRPC_FMT_ERROR("[Upload Request] failed to read file");
     return false;
   }
 
@@ -87,19 +101,19 @@ bool UploadWithChunked(const HttpServiceProxyPtr& proxy, const std::string& url,
   // Reads response header.
   ::trpc::Status status = stream.ReadHeaders(http_status, http_header);
   if (!status.OK()) {
-    TRPC_FMT_ERROR("failed to read http header: {}", status.ToString());
+    TRPC_FMT_ERROR("[Upload Request] failed to read http header: {}", status.ToString());
     return false;
   } else if (http_status != ::trpc::http::ResponseStatus::kOk) {
-    TRPC_FMT_ERROR("http response status: {}", http_status);
+    TRPC_FMT_ERROR("[Upload Request] http response status: {}", http_status);
     return false;
   }
 
-  TRPC_FMT_INFO("finish uploading, write size: {}", nwrite);
+  TRPC_FMT_INFO("[Upload Request] finish uploading, write size: {}", nwrite);
   return true;
 }
 
 bool UploadWithContentLength(const HttpServiceProxyPtr& proxy, const std::string& url, const std::string src_path) {
-  TRPC_FMT_INFO("upload a file with content-length");
+  TRPC_FMT_INFO("[Upload Request] upload a file with content-length");
   auto fin = std::ifstream(src_path, std::ios::binary);
   if (!fin.is_open()) {
     TRPC_FMT_ERROR("failed to open file, file_path: {}", src_path);
@@ -114,7 +128,7 @@ bool UploadWithContentLength(const HttpServiceProxyPtr& proxy, const std::string
     return fsize;
   }(fin);
   if (fsize <= 0) {
-    TRPC_FMT_ERROR("failed to read file size, file_path: {}", src_path);
+    TRPC_FMT_ERROR("[Upload Request] failed to read file size, file_path: {}", src_path);
     return false;
   }
 
@@ -122,10 +136,16 @@ bool UploadWithContentLength(const HttpServiceProxyPtr& proxy, const std::string
   ctx->SetTimeout(5000);
   // Send request content with content-length.
   ctx->SetHttpHeader(::trpc::http::kHeaderContentLength, std::to_string(fsize));
+
+  if (FLAGS_enable_upload_hash) {
+    std::string hash = CalculateSHA256(src_path);
+    ctx->SetHttpHeader("X-File-Hash", hash);
+  }
+
   // Creates HTTP stream.
   auto stream = proxy->Post(ctx, url);
   if (!stream.GetStatus().OK()) {
-    TRPC_FMT_ERROR("failed to create client stream");
+    TRPC_FMT_ERROR("[Upload Request] failed to create client stream");
     return false;
   }
 
@@ -144,7 +164,7 @@ bool UploadWithContentLength(const HttpServiceProxyPtr& proxy, const std::string
         nwrite += n;
         continue;
       }
-      TRPC_FMT_ERROR("failed to write request content: {}", status.ToString());
+      TRPC_FMT_ERROR("[Upload Request] failed to write request content: {}", status.ToString());
       return false;
     } else if (fin.eof()) {
       status = stream.WriteDone();
@@ -152,7 +172,7 @@ bool UploadWithContentLength(const HttpServiceProxyPtr& proxy, const std::string
       TRPC_FMT_ERROR("failed to send write-done: {}", status.ToString());
       return false;
     }
-    TRPC_FMT_ERROR("failed to read file");
+    TRPC_FMT_ERROR("[Upload Request] failed to read file");
     return false;
   }
 
@@ -161,14 +181,14 @@ bool UploadWithContentLength(const HttpServiceProxyPtr& proxy, const std::string
   // Reads response header.
   status = stream.ReadHeaders(http_status, http_header);
   if (!status.OK()) {
-    TRPC_FMT_ERROR("failed to read http header: {}", status.ToString());
+    TRPC_FMT_ERROR("[Upload Request] failed to read http header: {}", status.ToString());
     return false;
   } else if (http_status != ::trpc::http::ResponseStatus::kOk) {
-    TRPC_FMT_ERROR("http response status: {}", http_status);
+    TRPC_FMT_ERROR("[Upload Request] http response status: {}", http_status);
     return false;
   }
 
-  TRPC_FMT_INFO("finish uploading, write size: {}", nwrite);
+  TRPC_FMT_INFO("[Upload Request] finish uploading, write size: {}", nwrite);
   return true;
 }
 
