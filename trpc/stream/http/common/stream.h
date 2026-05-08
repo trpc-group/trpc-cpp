@@ -17,6 +17,7 @@
 #include "trpc/stream/stream_handler.h"
 #include "trpc/stream/stream_message.h"
 #include "trpc/stream/stream_provider.h"
+#include "trpc/util/http/sse/sse_event.h"
 
 namespace trpc::stream {
 
@@ -51,6 +52,8 @@ class HttpCommonStream : public StreamReaderWriterProvider {
 
   /// @brief Closes the connection in exceptional cases.
   void Reset(Status status = kUnknownErrorStatus) override { TRPC_ASSERT(false && "Should implement"); }
+
+
 
  protected:
   /// @brief The status of the stream
@@ -160,6 +163,8 @@ class HttpCommonStream : public StreamReaderWriterProvider {
   std::unordered_set<std::string> write_trailers_;
   /// @brief The content length to write, used in kContentLength DataMode
   std::size_t write_content_length_{0};
+
+
 
  private:
   // Handles the header received

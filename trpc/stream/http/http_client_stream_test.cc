@@ -18,6 +18,8 @@
 #include "trpc/coroutine/fiber_latch.h"
 #include "trpc/coroutine/testing/fiber_runtime.h"
 #include "trpc/stream/http/http_client_stream_handler.h"
+// Include SSE related headers for testing
+#include "trpc/util/http/sse/sse_event.h"
 
 namespace trpc::testing {
 
@@ -159,6 +161,130 @@ TEST(HttpClientStreamTest, CreateStreamReaderWriter) {
               StreamReaderWriter.WriteDone().GetFrameworkRetCode());
 
     StreamReaderWriter.Close();
+  });
+}
+
+// Test for SSE mode configuration
+TEST(HttpClientStreamTest, TestConfigureSseMode) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamPtr stream = GetClientStream();
+    
+    // Set up HTTP request protocol as required by ConfigureSseMode
+    HttpRequestProtocol protocol{std::make_shared<http::Request>()};
+    stream->SetHttpRequestProtocol(&protocol);
+    
+    // Test configuring SSE mode
+    ASSERT_TRUE(stream->ConfigureSseMode().OK());
+    
+    // Test that SSE mode is enabled
+    ASSERT_TRUE(stream->IsSseMode());
+    
+    // Test configuring SSE mode again (should still succeed)
+    ASSERT_TRUE(stream->ConfigureSseMode().OK());
+    
+    // Verify that SSE-specific headers were set
+    ASSERT_EQ("text/event-stream", protocol.request->GetHeader("Accept"));
+    ASSERT_EQ("no-cache", protocol.request->GetHeader("Cache-Control"));
+    ASSERT_EQ("keep-alive", protocol.request->GetHeader("Connection"));
+  });
+}
+
+// Test for SSE mode configuration on StreamReaderWriter
+TEST(HttpClientStreamTest, TestStreamReaderWriterConfigureSseMode) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamReaderWriter stream_reader_writer = 
+        Create(GetClientStream());
+    
+    // Note: For StreamReaderWriter, we can't directly set the protocol
+    // The ConfigureSseMode should fail because the underlying stream doesn't have a protocol set
+    ASSERT_FALSE(stream_reader_writer.ConfigureSseMode().OK());
+  });
+}
+
+// Test for ReadHeadersNonBlocking
+TEST(HttpClientStreamTest, TestReadHeadersNonBlocking) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamPtr stream = GetClientStream();
+    
+    // Test reading headers with timeout (should timeout since no headers are available)
+    int code = 0;
+    http::HttpHeader http_header;
+    std::chrono::milliseconds timeout(10);
+    ASSERT_EQ(stream::kStreamStatusClientReadTimeout.GetFrameworkRetCode(),
+              stream->ReadHeadersNonBlocking(code, http_header, timeout).GetFrameworkRetCode());
+  });
+}
+
+// Test for ReadHeadersNonBlocking on StreamReaderWriter
+TEST(HttpClientStreamTest, TestStreamReaderWriterReadHeadersNonBlocking) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamReaderWriter stream_reader_writer = 
+        Create(GetClientStream());
+    
+    // Test reading headers with timeout (should timeout since no headers are available)
+    int code = 0;
+    http::HttpHeader http_header;
+    std::chrono::milliseconds timeout(10);
+    ASSERT_EQ(stream::kStreamStatusClientReadTimeout.GetFrameworkRetCode(),
+              stream_reader_writer.ReadHeaders(code, http_header, timeout).GetFrameworkRetCode());
+  });
+}
+
+// Test for ReadSseEvent
+TEST(HttpClientStreamTest, TestReadSseEvent) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamPtr stream = GetClientStream();
+    
+    // Set up HTTP request protocol as required by ConfigureSseMode
+    HttpRequestProtocol protocol{std::make_shared<http::Request>()};
+    stream->SetHttpRequestProtocol(&protocol);
+    
+    // Configure SSE mode first
+    ASSERT_TRUE(stream->ConfigureSseMode().OK());
+    
+    // Test reading SSE event with timeout (should timeout since no events are available)
+    http::sse::SseEvent event;
+    size_t max_bytes = 1024;
+    std::chrono::milliseconds timeout(10);
+    ASSERT_EQ(stream::kStreamStatusClientReadTimeout.GetFrameworkRetCode(),
+              stream->ReadSseEvent(event, max_bytes, timeout).GetFrameworkRetCode());
+  });
+}
+
+// Test for ReadSseEvent on StreamReaderWriter
+TEST(HttpClientStreamTest, TestStreamReaderWriterReadSseEvent) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamReaderWriter stream_reader_writer = 
+        Create(GetClientStream());
+    
+    // Note: For StreamReaderWriter, we can't directly set the protocol
+    // The ReadSseEvent should fail because the underlying stream doesn't have a protocol set
+    http::sse::SseEvent event;
+    size_t max_bytes = 1024;
+    std::chrono::milliseconds timeout(10);
+    ASSERT_EQ(stream::kStreamStatusClientNetworkError.GetFrameworkRetCode(),
+              stream_reader_writer.ReadSseEvent(event, max_bytes, timeout).GetFrameworkRetCode());
+  });
+}
+
+// Test for ParseSseEvents
+TEST(HttpClientStreamTest, TestParseSseEvents) {
+  RunAsFiber([&]() {
+    stream::HttpClientStreamPtr stream = GetClientStream();
+    
+    // Test parsing valid SSE event data
+    NoncontiguousBuffer buffer = CreateBufferSlow("data: test message\n\n");
+    std::vector<http::sse::SseEvent> events;
+    ASSERT_TRUE(stream->ParseSseEvents(buffer, events));
+    ASSERT_EQ(1, events.size());
+    ASSERT_EQ("test message", events[0].data);
+    
+    // Test parsing multiple SSE events
+    buffer = CreateBufferSlow("data: first message\n\n" "data: second message\n\n");
+    ASSERT_TRUE(stream->ParseSseEvents(buffer, events));
+    ASSERT_EQ(2, events.size());
+    ASSERT_EQ("first message", events[0].data);
+    ASSERT_EQ("second message", events[1].data);
   });
 }
 

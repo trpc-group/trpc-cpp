@@ -64,6 +64,11 @@ bool InitConnectionHandler() {
   });
   TRPC_ASSERT(register_ret && "Register http client connection handler failed at fiber mode");
 
+  register_ret = FiberClientConnectionHandlerFactory::GetInstance()->Register("http_sse", [](Connection* c, TransInfo* t) {
+    return std::make_unique<stream::FiberHttpClientStreamConnectionHandler>(c, t);
+  });
+  TRPC_ASSERT(register_ret && "Register http_sse client connection handler failed at fiber mode");
+
   // Registers default connection handler which used by server in separate/merge threadmodel
   register_ret = DefaultServerConnectionHandlerFactory::GetInstance()->Register(
       "trpc", [](Connection* c, BindAdapter* a, BindInfo* i) {
@@ -82,6 +87,12 @@ bool InitConnectionHandler() {
         return std::make_unique<stream::DefaultHttpServerStreamConnectionHandler>(c, a, i);
       });
   TRPC_ASSERT(register_ret && "Register http server connection handler failed at default mode");
+
+  register_ret = DefaultServerConnectionHandlerFactory::GetInstance()->Register(
+      "http_sse", [](Connection* c, BindAdapter* a, BindInfo* i) {
+        return std::make_unique<stream::DefaultHttpServerStreamConnectionHandler>(c, a, i);
+      });
+  TRPC_ASSERT(register_ret && "Register http_sse server connection handler failed at default mode");
 
   // Registers default connection handler which used by client in separate/merge threadmodel
   // 1. For conn_complex.
@@ -113,6 +124,12 @@ bool InitConnectionHandler() {
         return std::make_unique<stream::HttpClientAsyncStreamConnectionHandler>(options, handler);
       });
   TRPC_ASSERT(register_ret && "Register http client connection handler failed at default mode(use conn_pool)");
+
+  register_ret = FutureConnPoolConnectionHandlerFactory::GetIntance()->Register(
+      "http_sse", [](const FutureConnectorOptions& options, FutureConnPoolMessageTimeoutHandler& handler) {
+        return std::make_unique<stream::HttpClientAsyncStreamConnectionHandler>(options, handler);
+      });
+  TRPC_ASSERT(register_ret && "Register http_sse client connection handler failed at default mode(use conn_pool)");
 
   return register_ret;
 }

@@ -263,4 +263,139 @@ TEST_F(HttpWriteStreamTest, WriteForNonChunkedResponse) {
   write_stream.Close();
 }
 
+// SSE-specific tests for HttpWriteStream
+TEST_F(HttpWriteStreamTest, ConfigureSseMode) {
+  http::RequestPtr request = std::make_shared<http::Request>(1000, false);
+  std::shared_ptr<HttpService> service = std::make_shared<HttpService>();
+  std::shared_ptr<TestServerTransport> transport = std::make_shared<TestServerTransport>();
+  service->SetServerTransport(transport.get());
+  ServerContextPtr context = MakeTestServerContext("http", service.get(), std::move(request));
+  Connection connection;
+  context->SetReserved(&connection);
+  http::Response response;
+  stream::HttpWriteStream write_stream(&response, context.get());
+
+  // Test that SSE mode is not enabled initially
+  ASSERT_FALSE(write_stream.IsSseMode());
+
+  // Configure SSE mode
+  Status status = write_stream.ConfigureSseMode();
+  ASSERT_TRUE(status.OK());
+  ASSERT_TRUE(write_stream.IsSseMode());
+
+  // Test that configuring again doesn't fail
+  status = write_stream.ConfigureSseMode();
+  ASSERT_TRUE(status.OK());
+  ASSERT_TRUE(write_stream.IsSseMode());
+
+  write_stream.Close();
+}
+
+TEST_F(HttpWriteStreamTest, WriteSseEvent) {
+  http::RequestPtr request = std::make_shared<http::Request>(1000, false);
+  std::shared_ptr<HttpService> service = std::make_shared<HttpService>();
+  std::shared_ptr<TestServerTransport> transport = std::make_shared<TestServerTransport>();
+  service->SetServerTransport(transport.get());
+  ServerContextPtr context = MakeTestServerContext("http", service.get(), std::move(request));
+  Connection connection;
+  context->SetReserved(&connection);
+  http::Response response;
+  stream::HttpWriteStream write_stream(&response, context.get());
+
+  // Configure SSE mode first
+  Status status = write_stream.ConfigureSseMode();
+  ASSERT_TRUE(status.OK());
+
+  // Create an SSE event
+  trpc::http::sse::SseEvent event;
+  event.event_type = "test";
+  event.data = "Hello, SSE World!";
+  event.id = "123";
+  event.retry = 5000;
+
+  // Write the SSE event
+  status = write_stream.WriteSseEvent(event);
+  ASSERT_TRUE(status.OK());
+
+  write_stream.Close();
+}
+
+TEST_F(HttpWriteStreamTest, WriteSseEventWithoutSseMode) {
+  http::RequestPtr request = std::make_shared<http::Request>(1000, false);
+  std::shared_ptr<HttpService> service = std::make_shared<HttpService>();
+  std::shared_ptr<TestServerTransport> transport = std::make_shared<TestServerTransport>();
+  service->SetServerTransport(transport.get());
+  ServerContextPtr context = MakeTestServerContext("http", service.get(), std::move(request));
+  Connection connection;
+  context->SetReserved(&connection);
+  http::Response response;
+  stream::HttpWriteStream write_stream(&response, context.get());
+
+  // Don't configure SSE mode
+  ASSERT_FALSE(write_stream.IsSseMode());
+
+  // Try to write SSE event without SSE mode
+  trpc::http::sse::SseEvent event;
+  event.event_type = "test";
+  event.data = "Hello, SSE World!";
+
+  Status status = write_stream.WriteSseEvent(event);
+  ASSERT_FALSE(status.OK());
+  ASSERT_EQ(status.GetFrameworkRetCode(), stream::kStreamStatusServerNetworkError.GetFrameworkRetCode());
+
+  write_stream.Close();
+}
+
+TEST_F(HttpWriteStreamTest, WriteSseComment) {
+  http::RequestPtr request = std::make_shared<http::Request>(1000, false);
+  std::shared_ptr<HttpService> service = std::make_shared<HttpService>();
+  std::shared_ptr<TestServerTransport> transport = std::make_shared<TestServerTransport>();
+  service->SetServerTransport(transport.get());
+  ServerContextPtr context = MakeTestServerContext("http", service.get(), std::move(request));
+  Connection connection;
+  context->SetReserved(&connection);
+  http::Response response;
+  stream::HttpWriteStream write_stream(&response, context.get());
+
+  // Configure SSE mode first
+  Status status = write_stream.ConfigureSseMode();
+  ASSERT_TRUE(status.OK());
+
+  // Write SSE comment
+  status = write_stream.WriteSseComment("Keep-alive comment");
+  ASSERT_TRUE(status.OK());
+
+  // Write another comment
+  status = write_stream.WriteSseComment("Another comment");
+  ASSERT_TRUE(status.OK());
+
+  write_stream.Close();
+}
+
+TEST_F(HttpWriteStreamTest, WriteSseRetry) {
+  http::RequestPtr request = std::make_shared<http::Request>(1000, false);
+  std::shared_ptr<HttpService> service = std::make_shared<HttpService>();
+  std::shared_ptr<TestServerTransport> transport = std::make_shared<TestServerTransport>();
+  service->SetServerTransport(transport.get());
+  ServerContextPtr context = MakeTestServerContext("http", service.get(), std::move(request));
+  Connection connection;
+  context->SetReserved(&connection);
+  http::Response response;
+  stream::HttpWriteStream write_stream(&response, context.get());
+
+  // Configure SSE mode first
+  Status status = write_stream.ConfigureSseMode();
+  ASSERT_TRUE(status.OK());
+
+  // Write SSE retry directive
+  status = write_stream.WriteSseRetry(3000);
+  ASSERT_TRUE(status.OK());
+
+  // Write another retry directive
+  status = write_stream.WriteSseRetry(10000);
+  ASSERT_TRUE(status.OK());
+
+  write_stream.Close();
+}
+
 }  // namespace trpc::testing

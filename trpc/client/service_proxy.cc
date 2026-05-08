@@ -690,8 +690,8 @@ bool ServiceProxy::SelectTarget(const ClientContextPtr& context) {
 
 stream::StreamReaderWriterProviderPtr ServiceProxy::SelectStreamProvider(const ClientContextPtr& context,
                                                                          void* rpc_reply_msg) {
-  // Currently, only the trpc or http protocol supports streaming RPC.
-  TRPC_ASSERT(codec_->Name() == "trpc" || codec_->Name() == "http");
+  // Currently, only the trpc, http, or http_sse protocol supports streaming RPC.
+  TRPC_ASSERT(codec_->Name() == "trpc" || codec_->Name() == "http" || codec_->Name() == "http_sse");
   TRPC_ASSERT(thread_model_ != nullptr);
 
   if (context->GetResponse() == nullptr) {

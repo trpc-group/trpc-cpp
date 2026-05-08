@@ -82,6 +82,7 @@ cc_library(
         "//trpc/codec/grpc:grpc_server_codec",
         "//trpc/codec/http:http_client_codec",
         "//trpc/codec/http:http_server_codec",
+        "//trpc/codec/http_sse:http_sse_codec",
         "//trpc/codec/redis:redis_client_codec",
         "//trpc/codec/trpc:trpc_client_codec",
         "//trpc/codec/trpc:trpc_server_codec",
